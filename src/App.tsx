@@ -31,6 +31,8 @@ import {
   SubscriptionPage,
   TeamPage,
   ViewReportPage,
+  ReportV2Page,
+  ReportV2PublicPage,
 } from "./pages";
 
 function App() {
@@ -43,6 +45,7 @@ function App() {
           <Route path="/r/:shareToken" element={<CustomerReportPage />} />
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />
           <Route path="/r/:shareToken/print" element={<PrintReportPage />} />
+          <Route path="/r/:shareToken/v2" element={<ReportV2PublicPage />} />
 
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingPage />} />
@@ -70,6 +73,7 @@ function App() {
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/reports/:reportId" element={<ViewReportPage />} />
               <Route path="/reports/:reportId/flipbook" element={<FlipbookPage />} />
+              <Route path="/reports/:reportId/v2" element={<ReportV2Page />} />
               <Route path="/verify" element={<DealerVerificationPage />} />
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/platform" element={<PlatformPage />} />

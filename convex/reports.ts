@@ -199,6 +199,11 @@ export const getReport = query({
       solutionProductImage: company?.solutionProductImage,
       solutionProductDescription: company?.solutionProductDescription,
       solutionProductBullets: company?.solutionProductBullets,
+      additionalProducts: company?.additionalProducts,
+      testNotes: report.testNotes,
+      repName: report.repName,
+      repDate: report.repDate,
+      repPhone: report.repPhone,
     };
   },
 });
@@ -256,6 +261,12 @@ export const getPublicReport = query({
       solutionProductImage: company?.solutionProductImage,
       solutionProductDescription: company?.solutionProductDescription,
       solutionProductBullets: company?.solutionProductBullets,
+      additionalProducts: company?.additionalProducts,
+      customerPhone: report.customerPhone,
+      testNotes: report.testNotes,
+      repName: report.repName,
+      repDate: report.repDate,
+      repPhone: report.repPhone,
     };
   },
 });
@@ -294,6 +305,10 @@ export const updateInHomeReadings = mutation({
     tds: v.optional(v.number()),
     ph: v.optional(v.number()),
     waterScore: v.optional(v.number()),
+    testNotes: v.optional(v.string()),
+    repName: v.optional(v.string()),
+    repDate: v.optional(v.string()),
+    repPhone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "sales_rep");
@@ -307,6 +322,10 @@ export const updateInHomeReadings = mutation({
       hardness: args.hardness,
       tds: args.tds,
       ph: args.ph,
+      testNotes: args.testNotes,
+      repName: args.repName,
+      repDate: args.repDate,
+      repPhone: args.repPhone,
       waterScore: args.waterScore,
       scoreMode: "aqua_score_v1",
     });

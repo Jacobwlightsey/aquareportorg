@@ -14,6 +14,13 @@ const schema = defineSchema({
     solutionProductImage: v.optional(v.string()),
     solutionProductDescription: v.optional(v.string()),
     solutionProductBullets: v.optional(v.array(v.string())),
+    // Additional solution products (array of {name, description, image, bullets})
+    additionalProducts: v.optional(v.array(v.object({
+      name: v.string(),
+      description: v.string(),
+      image: v.optional(v.string()),
+      bullets: v.array(v.string()),
+    }))),
     customDomain: v.optional(v.string()),
     brandMode: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -86,6 +93,11 @@ const schema = defineSchema({
     aiEmailDraft: v.optional(v.string()),
     // Shareable link
     shareToken: v.optional(v.string()),
+    // On-site test results (editable by dealer)
+    testNotes: v.optional(v.string()),
+    repName: v.optional(v.string()),
+    repDate: v.optional(v.string()),
+    repPhone: v.optional(v.string()),
   })
     .index("by_company", ["companyId"])
     .index("by_generatedBy", ["generatedBy"])

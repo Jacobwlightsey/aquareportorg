@@ -129,6 +129,12 @@ export const updateCompany = mutation({
     solutionProductImage: v.optional(v.string()),
     solutionProductDescription: v.optional(v.string()),
     solutionProductBullets: v.optional(v.array(v.string())),
+    additionalProducts: v.optional(v.array(v.object({
+      name: v.string(),
+      description: v.string(),
+      image: v.optional(v.string()),
+      bullets: v.array(v.string()),
+    }))),
     customDomain: v.optional(v.string()),
     brandMode: v.optional(v.string()),
     reportLimitOverride: v.optional(v.number()),

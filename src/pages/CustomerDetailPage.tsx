@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Phone,
   Play,
+  FileText,
   Shield,
   Wrench,
 } from "lucide-react";
@@ -457,6 +458,11 @@ export function CustomerDetailPage() {
             }}
           />
         </PlanGate>
+        <QuickAction
+          icon={FileText}
+          label="Full Report"
+          href={`/reports/${reportId}/v2`}
+        />
       </div>
 
       {/* Consumer Referral Banner */}

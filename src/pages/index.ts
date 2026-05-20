@@ -22,3 +22,5 @@ export { CustomersPage } from "./CustomersPage";
 export { CreateCustomerPage } from "./CreateCustomerPage";
 export { CustomerDetailPage } from "./CustomerDetailPage";
 export { DemoWizardPage } from "./DemoWizardPage";
+export { ReportV2Page } from "./ReportV2Page";
+export { ReportV2PublicPage } from "./ReportV2PublicPage";
