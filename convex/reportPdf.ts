@@ -1,0 +1,172 @@
+"use node";
+
+import { Buffer } from "node:buffer";
+import { v } from "convex/values";
+import { action } from "./_generated/server";
+import { api } from "./_generated/api";
+import { buildReportHtml } from "./lib/reportTemplate";
+
+function requiredEnv(name: string) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing environment variable ${name}`);
+  return value;
+}
+
+function optionalEnv(name: string) {
+  const value = process.env[name];
+  return value && value.trim() ? value : undefined;
+}
+
+async function htmlToPdf(html: string): Promise<Buffer> {
+  const apiKey = optionalEnv("PDFSHIFT_API_KEY");
+  if (!apiKey) {
+    throw new Error("PDF_PROVIDER_NOT_CONFIGURED");
+  }
+  const response = await fetch("https://api.pdfshift.io/v3/convert/pdf", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString("base64")}`,
+    },
+    body: JSON.stringify({
+      source: html,
+      format: "Letter",
+      landscape: false,
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`PDF generation failed with ${response.status}${detail ? `: ${detail}` : ""}`);
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+}
+
+async function createFlipbook(pdfUrl: string, title: string, subtitle: string) {
+  const clientId = requiredEnv("HEYZINE_CLIENT_ID");
+  const apiKey = process.env.HEYZINE_API_KEY;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+
+  const response = await fetch("https://heyzine.com/api1/rest", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      pdf: pdfUrl,
+      client_id: clientId,
+      title,
+      subtitle,
+      download: true,
+      full_screen: true,
+      share: true,
+      prev_next: true,
+      page_effect: "magazine",
+      background_color: "0b1a2e",
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Heyzine flipbook creation failed with ${response.status}${detail ? `: ${detail}` : ""}`);
+  }
+
+  const data = await response.json();
+  return {
+    id: typeof data.id === "string" ? data.id : undefined,
+    url: typeof data.url === "string" ? data.url : undefined,
+    thumbnail: typeof data.thumbnail === "string" ? data.thumbnail : undefined,
+  };
+}
+
+function computePdfAquaScore(contaminants: any[]) {
+  const hasContaminantSignal = contaminants.some((contaminant) => contaminant?.over_legal || contaminant?.over_health);
+  if (!hasContaminantSignal) return 100;
+
+  const legalPenalty = Math.min(30, contaminants.filter((contaminant) => contaminant?.over_legal).length * 18);
+  const healthPenalty = Math.min(
+    59,
+    contaminants.reduce((total, contaminant) => {
+      if (!contaminant?.over_health || contaminant?.over_legal) return total;
+      const multiple = contaminant?.times_above_ewg ?? 1;
+      if (multiple >= 100) return total + 9;
+      if (multiple >= 25) return total + 7;
+      if (multiple >= 10) return total + 5;
+      return total + 3;
+    }, 0),
+  );
+  const detectionPenalty = Math.min(10, contaminants.length * 0.5);
+  return Math.max(0, Math.min(100, Math.round(100 - legalPenalty - healthPenalty - detectionPenalty)));
+}
+
+export const generateReportPdf = action({
+  args: { reportId: v.id("reports") },
+  handler: async (ctx, args) => {
+    if (!optionalEnv("PDFSHIFT_API_KEY")) {
+      return {
+        ok: false,
+        reason: "PDF_PROVIDER_NOT_CONFIGURED",
+        message: "Add PDFSHIFT_API_KEY in Convex environment variables to generate PDF and Heyzine flipbooks.",
+      };
+    }
+
+    const report = await ctx.runQuery(api.reports.getReport, { reportId: args.reportId });
+    if (!report) throw new Error("Report not found");
+
+    let contaminants: any[] = [];
+    try {
+      contaminants = JSON.parse(report.contaminants);
+    } catch {
+      contaminants = [];
+    }
+
+    const html = buildReportHtml({
+      customerName: report.customerName || "Homeowner",
+      customerAddress: report.customerAddress,
+      customerCityStateZip: `${report.customerCity || report.city}, ${report.customerState || report.state} ${report.customerZip || report.zip}`,
+      companyName: report.companyName || "AquaReport",
+      accentColor: report.companyColor || "#2563eb",
+      score: computePdfAquaScore(contaminants),
+      utilityName: report.utilityName,
+      waterSource: report.waterSource || "Unknown",
+      contaminants,
+      overHealth: report.overHealthGuidelines,
+      overLegal: report.overLegalLimits,
+      chlorine: report.chlorine,
+      hardness: report.hardness,
+      tds: report.tds,
+      ph: report.ph,
+    });
+
+    const pdfBuffer = await htmlToPdf(html);
+    const pdfStorageId = await ctx.storage.store(
+      new Blob([new Uint8Array(pdfBuffer)], { type: "application/pdf" }),
+    );
+    const pdfUrl = await ctx.storage.getUrl(pdfStorageId);
+    if (!pdfUrl) throw new Error("Could not create public PDF URL");
+
+    const flipbook = await createFlipbook(
+      pdfUrl,
+      `${report.customerName || "Homeowner"} Water Quality Report`,
+      `${report.city}, ${report.state} ${report.zip}`,
+    );
+
+    await ctx.runMutation(api.reports.updateReportUrls, {
+      reportId: args.reportId,
+      pdfStorageId,
+      pdfUrl,
+      flipbookUrl: flipbook.url,
+      flipbookThumbnail: flipbook.thumbnail,
+      flipbookId: flipbook.id,
+    });
+
+    return {
+      ok: true,
+      pdfUrl,
+      flipbookUrl: flipbook.url,
+      flipbookThumbnail: flipbook.thumbnail,
+      flipbookId: flipbook.id,
+    };
+  },
+});
