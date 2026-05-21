@@ -19,7 +19,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -248,6 +248,7 @@ function StatCard({
 
 export function CustomerDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
+  const navigate = useNavigate();
   const report = useQuery(
     api.reports.getReport,
     reportId ? { reportId: reportId as any } : "skip"
@@ -495,7 +496,7 @@ export function CustomerDetailPage() {
             className="rounded-lg"
             onClick={() => {
               if (report.flipbookUrl) {
-                window.open(report.flipbookUrl, "_blank");
+                navigate(`/reports/${report._id}/flipbook`);
               } else {
                 toast.info("Generating PDF & Flipbook…");
                 handleGeneratePdf();
