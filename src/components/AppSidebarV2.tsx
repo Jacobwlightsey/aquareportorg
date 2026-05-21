@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import {
   Building2,
   ChartNoAxesCombined,
+  CreditCard,
   LogOut,
   Moon,
   Settings,
@@ -46,6 +47,7 @@ const mainNav = [
 const settingsNav = [
   { href: "/team", label: "Team", icon: ShieldCheck },
   { href: "/company", label: "Company", icon: Building2 },
+  { href: "/subscription", label: "Subscription", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

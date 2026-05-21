@@ -3,6 +3,7 @@ import { Droplets, Loader2, Printer } from "lucide-react";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { computeAquaScore } from "@/lib/waterScore";
 import { api } from "../../convex/_generated/api";
 
 /**
@@ -115,7 +116,15 @@ export function ReportV2PublicPage() {
   if (report === undefined) return <div className="flex min-h-screen items-center justify-center bg-slate-100"><Loader2 className="size-10 animate-spin text-blue-500" /></div>;
   if (!report) return <div className="flex min-h-screen items-center justify-center bg-slate-100"><p className="text-slate-500">Report not found.</p></div>;
 
-  const score = report.waterScore ?? 50;
+  // Compute score using unified algorithm (matches myaquareport.com)
+  const score = useMemo(() => {
+    try {
+      const parsed = JSON.parse(report.contaminants || "[]");
+      return computeAquaScore(report.waterScore, parsed, {});
+    } catch {
+      return report.waterScore ?? 50;
+    }
+  }, [report.contaminants, report.waterScore]);
   const dateStr = new Date(report.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long" });
   const name = report.customerName || "Homeowner";
   const addr = report.customerAddress || "";

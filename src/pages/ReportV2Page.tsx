@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { computeAquaScore } from "@/lib/waterScore";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -1028,7 +1029,20 @@ export function ReportV2Page() {
     );
   }
 
-  const score = report.waterScore ?? 50;
+  // Compute score using unified algorithm (matches myaquareport.com)
+  const score = useMemo(() => {
+    try {
+      const parsed = JSON.parse(report.contaminants || "[]");
+      return computeAquaScore(report.waterScore, parsed, {
+        chlorine: report.chlorine,
+        hardness: report.hardness,
+        tds: report.tds,
+        ph: report.ph,
+      });
+    } catch {
+      return report.waterScore ?? 50;
+    }
+  }, [report.contaminants, report.waterScore, report.chlorine, report.hardness, report.tds, report.ph]);
   const dateStr = new Date(report._creationTime).toLocaleDateString("en-US", { year: "numeric", month: "long" });
   const customerName = report.customerName || "Homeowner";
   const customerAddress = report.customerAddress || "";

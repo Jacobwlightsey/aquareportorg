@@ -11,6 +11,10 @@ export interface ScoreContaminant {
   times_above_ewg?: number | null;
   detected?: boolean | null;
   detection_status?: string | null;
+  detected_level?: number | null;
+  value?: number | null;
+  legal_limit?: number | null;
+  health_guideline?: number | null;
 }
 
 function clampScore(score: number): number {
@@ -81,6 +85,45 @@ export function computeFieldReadingPenalty(readings: FieldWaterReadings = {}): n
   return Math.max(0, -computeFieldReadingAdjustment(readings));
 }
 
+/**
+ * Unified AquaScore algorithm — matches myaquareport.com scoring.
+ *
+ * Starts at 100, subtracts based on each contaminant's actual
+ * detected-value-to-limit ratio rather than flat boolean penalties.
+ * This produces the same scores the consumer side shows.
+ */
+export function calculateAquaScoreFromContaminants(
+  contaminants: ScoreContaminant[],
+  readings: FieldWaterReadings = {},
+): number {
+  const detected = contaminants.filter(isScoreDetected);
+  let score = 100;
+
+  for (const c of detected) {
+    const val = c.detected_level ?? c.value ?? 0;
+    const legal = c.legal_limit;
+    const health = c.health_guideline;
+
+    if (legal && legal > 0 && val > 0) {
+      const ratio = val / legal;
+      if (ratio > 1.5) score -= 12;       // Significantly over legal limit
+      else if (ratio > 1.0) score -= 8;   // Over legal limit
+      else if (ratio > 0.75) score -= 3;  // Approaching legal limit
+      else if (ratio > 0.5) score -= 1;   // Moderate vs legal
+    } else if (health && health > 0 && val > 0) {
+      const ratio = val / health;
+      if (ratio > 3.0) score -= 6;        // Far above health guideline
+      else if (ratio > 1.5) score -= 4;   // Well above health guideline
+      else if (ratio > 1.0) score -= 2;   // Above health guideline
+    }
+  }
+
+  // Apply field-reading adjustment (dealer-side bonus)
+  score += computeFieldReadingAdjustment(readings);
+
+  return clampScore(score);
+}
+
 export function computeWaterRiskScore(
   contaminants: ScoreContaminant[],
   readings: FieldWaterReadings = {},
@@ -88,46 +131,16 @@ export function computeWaterRiskScore(
   return 100 - computeAquaScore(undefined, contaminants, readings);
 }
 
-export function calculateAquaScoreFromContaminants(
-  contaminants: ScoreContaminant[],
-  readings: FieldWaterReadings = {},
-): number {
-  const detectedContaminants = contaminants.filter(isScoreDetected);
-  const hasContaminantSignal = detectedContaminants.some((contaminant) => contaminant.over_legal || contaminant.over_health);
-  let score = 100;
-
-  if (hasContaminantSignal) {
-    const legalPenalty = Math.min(30, detectedContaminants.filter((contaminant) => contaminant.over_legal).length * 18);
-    const healthPenalty = Math.min(
-      59,
-      detectedContaminants.reduce((total, contaminant) => {
-        if (!contaminant.over_health || contaminant.over_legal) return total;
-        const multiple = contaminant.times_above_ewg ?? 1;
-        if (multiple >= 100) return total + 9;
-        if (multiple >= 25) return total + 7;
-        if (multiple >= 10) return total + 5;
-        return total + 3;
-      }, 0),
-    );
-    const detectionPenalty = Math.min(10, detectedContaminants.length * 0.5);
-    score = 100 - legalPenalty - healthPenalty - detectionPenalty;
-  }
-
-  score += computeFieldReadingAdjustment(readings);
-  return clampScore(score);
-}
-
+/**
+ * Primary entry point.  Uses the unified ratio-based algorithm
+ * that matches the myaquareport.com consumer scoring system.
+ */
 export function computeAquaScore(
-  baseScore: number | null | undefined,
+  _baseScore: number | null | undefined,
   contaminants: ScoreContaminant[],
   readings: FieldWaterReadings = {},
 ): number {
-  const parsedBaseScore = readingNumber(baseScore);
-  if (contaminants.filter(isScoreDetected).some((contaminant) => contaminant.over_legal || contaminant.over_health)) {
-    return calculateAquaScoreFromContaminants(contaminants, readings);
-  }
-
-  return clampScore((parsedBaseScore ?? 100) + computeFieldReadingAdjustment(readings));
+  return calculateAquaScoreFromContaminants(contaminants, readings);
 }
 
 export function normalizeRiskScore(score: number | null | undefined, scoreMode?: string | null): number | undefined {
