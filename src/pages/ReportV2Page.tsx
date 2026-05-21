@@ -1028,6 +1028,23 @@ export function ReportV2Page() {
     }
   }, [reportId, testResults, updateReadings]);
 
+  // Compute score using unified algorithm (matches myaquareport.com)
+  // NOTE: this useMemo MUST come before any early returns to satisfy React's Rules of Hooks
+  const score = useMemo(() => {
+    if (!report) return 50;
+    try {
+      const parsed = JSON.parse(report.contaminants || "[]");
+      return computeAquaScore(report.waterScore, parsed, {
+        chlorine: report.chlorine,
+        hardness: report.hardness,
+        tds: report.tds,
+        ph: report.ph,
+      });
+    } catch {
+      return report.waterScore ?? 50;
+    }
+  }, [report?.contaminants, report?.waterScore, report?.chlorine, report?.hardness, report?.tds, report?.ph]);
+
   if (report === undefined || company === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100">
@@ -1044,21 +1061,6 @@ export function ReportV2Page() {
       </div>
     );
   }
-
-  // Compute score using unified algorithm (matches myaquareport.com)
-  const score = useMemo(() => {
-    try {
-      const parsed = JSON.parse(report.contaminants || "[]");
-      return computeAquaScore(report.waterScore, parsed, {
-        chlorine: report.chlorine,
-        hardness: report.hardness,
-        tds: report.tds,
-        ph: report.ph,
-      });
-    } catch {
-      return report.waterScore ?? 50;
-    }
-  }, [report.contaminants, report.waterScore, report.chlorine, report.hardness, report.tds, report.ph]);
   const dateStr = new Date(report._creationTime).toLocaleDateString("en-US", { year: "numeric", month: "long" });
   const customerName = report.customerName || "Homeowner";
   const customerAddress = report.customerAddress || "";
