@@ -3,9 +3,6 @@ import { useQuery } from "convex/react";
 import {
   Building2,
   ChartNoAxesCombined,
-  CreditCard,
-
-  Lock,
   LogOut,
   Moon,
   Settings,
@@ -17,7 +14,6 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { APP_NAME } from "@/lib/constants";
-import { hasLeadPipeline, upgradeMessage } from "@/lib/planGate";
 import { api } from "../../convex/_generated/api";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
@@ -40,22 +36,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "./ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
 
 const mainNav = [
   { href: "/customers", label: "Customers", icon: UsersIcon },
-  { href: "/leads", label: "Leads", icon: Users2, minPlan: "pro" as const },
+  { href: "/leads", label: "Leads", icon: Users2 },
   { href: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
 ];
 
 const settingsNav = [
   { href: "/team", label: "Team", icon: ShieldCheck },
-  { href: "/subscription", label: "Subscription", icon: CreditCard },
   { href: "/company", label: "Company", icon: Building2 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -66,49 +55,14 @@ function NavLink({
   icon: Icon,
   isActive,
   badge,
-  locked,
-  lockedMessage,
-  lockedPlan,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
   badge?: number;
-  locked?: boolean;
-  lockedMessage?: string;
-  lockedPlan?: string;
 }) {
   const { setOpenMobile } = useSidebar();
-
-  if (locked) {
-    return (
-      <SidebarMenuItem>
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton className="opacity-40 cursor-not-allowed pointer-events-auto">
-                <Icon />
-                <span>{label}</span>
-                <span className="ml-auto flex items-center gap-1">
-                  <Lock className="size-3 text-muted-foreground" />
-                  {lockedPlan && (
-                    <span className="text-[10px] font-semibold text-muted-foreground">{lockedPlan}</span>
-                  )}
-                </span>
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs max-w-[200px]">
-              <p>{lockedMessage || "Upgrade your plan to unlock this feature"}</p>
-              <Link to="/subscription" className="mt-1 inline-block text-blue-500 hover:text-blue-400 font-medium">
-                View plans →
-              </Link>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </SidebarMenuItem>
-    );
-  }
 
   return (
     <SidebarMenuItem>
@@ -129,7 +83,6 @@ function NavLink({
 
 function SidebarNav() {
   const location = useLocation();
-  const company = useQuery(api.companies.getMyCompany);
   const newLeadCount = useQuery(api.leads.getNewLeadCount);
 
   return (
@@ -138,25 +91,19 @@ function SidebarNav() {
         <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-cyan-400/80">MAIN</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {mainNav.map((item) => {
-              const planLocked = item.minPlan ? !hasLeadPipeline(company) : false;
-              return (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={
-                    location.pathname === item.href ||
-                    (item.href === "/customers" && location.pathname.startsWith("/customers"))
-                  }
-                  badge={item.href === "/leads" ? newLeadCount ?? 0 : undefined}
-                  locked={planLocked}
-                  lockedPlan={planLocked ? "Pro" : undefined}
-                  lockedMessage={planLocked ? upgradeMessage("lead_pipeline") : undefined}
-                />
-              );
-            })}
+            {mainNav.map((item) => (
+              <NavLink
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                icon={item.icon}
+                isActive={
+                  location.pathname === item.href ||
+                  (item.href === "/customers" && location.pathname.startsWith("/customers"))
+                }
+                badge={item.href === "/leads" ? newLeadCount ?? 0 : undefined}
+              />
+            ))}
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -180,8 +127,18 @@ function SidebarNav() {
   );
 }
 
+function getInitials(name?: string): string {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return parts[0][0].toUpperCase();
+}
+
 function SidebarUserMenu() {
   const user = useQuery(api.auth.currentUser);
+  const company = useQuery(api.companies.getMyCompany);
   const { signOut } = useAuthActions();
   const { theme, toggleTheme, switchable } = useTheme();
   const { setOpenMobile } = useSidebar();
@@ -194,8 +151,8 @@ function SidebarUserMenu() {
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton size="lg">
                 <Avatar className="size-8">
-                  <AvatarFallback className="bg-blue-600 text-white text-sm font-medium">
-                    {user?.name?.charAt(0).toUpperCase() || "U"}
+                  <AvatarFallback className="bg-emerald-600 text-white text-xs font-bold">
+                    {getInitials(user?.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start text-left">
@@ -203,7 +160,7 @@ function SidebarUserMenu() {
                     {user?.name || "User"}
                   </span>
                   <span className="text-xs text-muted-foreground truncate">
-                    {user?.email}
+                    {company?.name || APP_NAME}
                   </span>
                 </div>
               </SidebarMenuButton>
@@ -221,7 +178,7 @@ function SidebarUserMenu() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/subscription" onClick={() => setOpenMobile(false)}>
-                  <CreditCard className="size-4" />
+                  <Building2 className="size-4" />
                   Subscription
                 </Link>
               </DropdownMenuItem>

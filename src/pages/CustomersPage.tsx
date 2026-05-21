@@ -2,12 +2,7 @@ import { useQuery } from "convex/react";
 import {
   ChevronRight,
   Droplets,
-  Filter,
-  LayoutGrid,
   Plus,
-  Search,
-  Table2,
-  Trello,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -30,7 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   derivePipelineStage,
   PIPELINE_STAGES,
@@ -38,7 +32,6 @@ import {
   stageMeta,
   type PipelineStage,
 } from "@/lib/pipeline";
-/* No plan gate needed on Customers — all tiers can view & create customers */
 import { api } from "../../convex/_generated/api";
 
 type ViewMode = "cards" | "kanban" | "table";
@@ -46,7 +39,7 @@ type ViewMode = "cards" | "kanban" | "table";
 function ScoreBadge({ score }: { score?: number }) {
   return (
     <div
-      className={`flex size-11 shrink-0 items-center justify-center rounded-full border-2 text-sm font-black ${scoreClass(score)}`}
+      className={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-base font-black ${scoreClass(score)}`}
     >
       {score ?? "--"}
     </div>
@@ -71,7 +64,7 @@ function CustomerCard({ report }: { report: any }) {
 
   return (
     <Link to={`/customers/${report._id}`}>
-      <Card className="transition-all hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 active:scale-[0.99]">
+      <Card className="transition-all hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/50 active:scale-[0.99] bg-card/50 backdrop-blur-sm">
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -91,22 +84,22 @@ function CustomerCard({ report }: { report: any }) {
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {report.overLegalLimits > 0 && (
-              <Badge variant="destructive" className="text-[10px]">
+              <Badge variant="destructive" className="text-[10px] rounded-md">
                 {report.overLegalLimits} legal
               </Badge>
             )}
             {report.overHealthGuidelines > 0 && (
-              <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200">
+              <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30 bg-amber-500/10 rounded-md">
                 {report.overHealthGuidelines} health
               </Badge>
             )}
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="text-[10px] rounded-md">
               {report.totalContaminants} total
             </Badge>
           </div>
-          <div className="mt-2 flex items-center justify-between">
-            <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${meta.badge} rounded-full px-2 py-0.5`}>
-              <span className="size-1.5 rounded-full bg-current" />
+          <div className="mt-3 flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium">
+              <span className={`size-2 rounded-full ${meta.color}`} />
               {meta.label}
             </span>
             {created && (
@@ -206,7 +199,7 @@ function TableView({ reports }: { reports: any[] }) {
                   <TableCell className="hidden sm:table-cell">
                     <div className="flex gap-1">
                       {r.overHealthGuidelines > 0 && (
-                        <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200">
+                        <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/30">
                           {r.overHealthGuidelines}h
                         </Badge>
                       )}
@@ -227,6 +220,36 @@ function TableView({ reports }: { reports: any[] }) {
       </CardContent>
     </Card>
   );
+}
+
+function ViewToggle({ view, onViewChange }: { view: ViewMode; onViewChange: (v: ViewMode) => void }) {
+  const modes: { key: ViewMode; label: string }[] = [
+    { key: "cards", label: "Cards" },
+    { key: "kanban", label: "Kanban" },
+    { key: "table", label: "Table" },
+  ];
+  return (
+    <div className="inline-flex items-center rounded-lg bg-muted/50 p-0.5">
+      {modes.map((m) => (
+        <button
+          key={m.key}
+          onClick={() => onViewChange(m.key)}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            view === m.key
+              ? "bg-cyan-500 text-white shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function recentCount(reports: any[]): number {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  return reports.filter((r: any) => r._creationTime > weekAgo).length;
 }
 
 export function CustomersPage() {
@@ -263,6 +286,8 @@ export function CustomersPage() {
     );
   }
 
+  const thisWeek = recentCount(reports);
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -270,10 +295,10 @@ export function CustomersPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Customers</h1>
           <p className="text-sm text-muted-foreground">
-            {reports.length} customer{reports.length !== 1 ? "s" : ""} · Track from report through certification
+            {reports.length} customer{reports.length !== 1 ? "s" : ""} · {thisWeek} this week
           </p>
         </div>
-        <Button asChild size="sm" className="w-full sm:w-auto">
+        <Button asChild className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white rounded-full px-5 shadow-lg shadow-red-500/20">
           <Link to="/customers/new">
             <Plus className="size-4" />
             New Customer
@@ -284,22 +309,21 @@ export function CustomersPage() {
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name, email, city, ZIP..."
+            placeholder="Search customers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10"
+            className="h-10 rounded-full bg-muted/40 border-0 pl-4 pr-4 placeholder:text-muted-foreground/50"
           />
         </div>
         <div className="flex items-center gap-2">
+          <ViewToggle view={view} onViewChange={setView} />
           <Select value={stageFilter} onValueChange={setStageFilter}>
-            <SelectTrigger className="h-10 w-[140px]">
-              <Filter className="size-3.5 mr-1.5" />
-              <SelectValue placeholder="All stages" />
+            <SelectTrigger className="h-9 w-[130px] rounded-lg bg-muted/40 border-0">
+              <SelectValue placeholder="All Stages" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All stages</SelectItem>
+              <SelectItem value="all">All Stages</SelectItem>
               {PIPELINE_STAGES.map((s) => (
                 <SelectItem key={s.key} value={s.key}>
                   {s.label}
@@ -307,28 +331,12 @@ export function CustomersPage() {
               ))}
             </SelectContent>
           </Select>
-          <ToggleGroup
-            type="single"
-            value={view}
-            onValueChange={(v: ViewMode) => v && setView(v)}
-            className="hidden sm:flex"
-          >
-            <ToggleGroupItem value="cards" aria-label="Cards">
-              <LayoutGrid className="size-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="kanban" aria-label="Kanban">
-              <Trello className="size-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="table" aria-label="Table">
-              <Table2 className="size-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
         </div>
       </div>
 
       {/* Content */}
       {filtered.length === 0 ? (
-        <Card>
+        <Card className="bg-card/50">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Droplets className="mb-4 size-12 text-muted-foreground/30" />
             <h2 className="font-semibold">
@@ -342,7 +350,7 @@ export function CustomersPage() {
                 : "Create your first customer to get started"}
             </p>
             {!search && stageFilter === "all" && (
-              <Button asChild className="mt-4">
+              <Button asChild className="mt-4 bg-red-500 hover:bg-red-600 text-white rounded-full px-5">
                 <Link to="/customers/new">
                   <Plus className="size-4" />
                   Create Customer
