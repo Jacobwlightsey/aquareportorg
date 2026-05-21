@@ -133,6 +133,161 @@ function formatNum(n: number | undefined | null): string {
   return n.toLocaleString("en-US");
 }
 
+function filtrationReduction(name: string): number {
+  const n = name.toLowerCase();
+  if (n.includes("chlor") || n.includes("trihalomethane") || n.includes("tthm") || n.includes("haloacetic") || n.includes("haa")) return 0.05;
+  if (n.includes("lead") || n.includes("mercury") || n.includes("arsenic") || n.includes("cadmium") || n.includes("chromium") || n.includes("copper") || n.includes("barium")) return 0.1;
+  if (n.includes("benzene") || n.includes("butadiene") || n.includes("ethylene") || n.includes("vinyl") || n.includes("tetrachloro") || n.includes("trichloro")) return 0.08;
+  if (n.includes("radium") || n.includes("uranium") || n.includes("radon") || n.includes("gross alpha") || n.includes("gross beta")) return 0.2;
+  if (n.includes("nitrate") || n.includes("nitrite")) return 0.25;
+  if (n.includes("fluoride")) return 0.3;
+  return 0.35;
+}
+
+function computeScoreFromContaminants(contaminants: Contaminant[]): number {
+  let score = 100;
+  for (const c of contaminants) {
+    const val = c.detected_level ?? (c as any).value ?? 0;
+    const legal = c.legal_limit;
+    const health = c.health_guideline;
+    if (legal && legal > 0 && val > 0) {
+      const ratio = val / legal;
+      if (ratio > 1.5) score -= 12;
+      else if (ratio > 1.0) score -= 8;
+      else if (ratio > 0.75) score -= 3;
+      else if (ratio > 0.5) score -= 1;
+    } else if (health && health > 0 && val > 0) {
+      const ratio = val / health;
+      if (ratio > 3.0) score -= 6;
+      else if (ratio > 1.5) score -= 4;
+      else if (ratio > 1.0) score -= 2;
+    }
+  }
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function buildScoreImprovementPage(params: ReportTemplateParams): string {
+  const detected = params.contaminants.filter(c => isDetected(c) && (c.detected_level ?? 0) > 0);
+  const currentScore = params.score;
+  const currentGrade = letterGrade(currentScore);
+
+  // Simulate filtration
+  const simulated = detected.map(c => ({
+    ...c,
+    detected_level: (c.detected_level ?? 0) * filtrationReduction(cName(c)),
+  }));
+  const projectedScore = computeScoreFromContaminants(simulated);
+  const projectedGrade = letterGrade(projectedScore);
+  const scoreDelta = projectedScore - currentScore;
+
+  // Build improvement rows for contaminants over health/legal guidelines
+  const improvements = detected
+    .filter(c => c.over_health || c.over_legal)
+    .map(c => {
+      const factor = filtrationReduction(cName(c));
+      const current = c.detected_level ?? 0;
+      const projected = +(current * factor).toFixed(3);
+      const guideline = c.health_guideline ?? c.legal_limit ?? 0;
+      const nowSafe = guideline > 0 && projected <= guideline;
+      return { name: cName(c), current, projected, unit: c.unit ?? "", guideline, nowSafe, reduction: Math.round((1 - factor) * 100) };
+    })
+    .sort((a, b) => b.reduction - a.reduction);
+
+  const resolved = improvements.filter(i => i.nowSafe).length;
+
+  const rows = improvements.slice(0, 8).map((item, i) =>
+    `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
+      <td style="padding:8px 12px;font-weight:500;color:#1e293b">${esc(item.name)}</td>
+      <td style="padding:8px 12px;text-align:right;color:#dc2626;font-weight:600">${esc(item.current)} ${esc(item.unit)}</td>
+      <td style="padding:8px 12px;text-align:right;color:#16a34a;font-weight:600">${esc(item.projected)} ${esc(item.unit)}</td>
+      <td style="padding:8px 12px;text-align:right;color:#64748b">${item.guideline ? `${esc(item.guideline)} ${esc(item.unit)}` : '—'}</td>
+      <td style="padding:8px 12px;text-align:center">${item.nowSafe
+        ? '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600">✓ Safe</span>'
+        : '<span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600">↓ Reduced</span>'
+      }</td>
+    </tr>`
+  ).join("\n");
+
+  return `<div class="page" style="padding:40px">
+  <div class="page-header">
+    <span class="section-label">Score Improvement Projection</span>
+    <span class="utility-label">${esc(params.utilityName)}</span>
+  </div>
+
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">How Filtration Improves Your Score</h2>
+  <p style="margin-top:8px;font-size:12px;color:#475569">
+    Installing a whole-home advanced filtration system can dramatically improve your water quality. Here's what your AquaScore could look like after professional filtration.
+  </p>
+
+  <!-- Before / After cards -->
+  <div style="margin-top:24px;display:flex;align-items:center;gap:16px">
+    <div style="flex:1;border:2px solid #e2e8f0;border-radius:12px;padding:24px;text-align:center;background:#fff">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#64748b;text-transform:uppercase">Current Score</div>
+      <div style="margin-top:8px;font-size:56px;font-weight:700;color:${currentGrade.color}" class="serif">${currentScore}</div>
+      <div style="margin-top:4px;font-size:13px;font-weight:600;color:${currentGrade.color}">${currentGrade.tier}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
+      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#10b981);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px">→</div>
+      <span style="font-size:11px;font-weight:700;color:#16a34a">+${scoreDelta} pts</span>
+    </div>
+    <div style="flex:1;border:2px solid ${projectedGrade.color}40;border-radius:12px;padding:24px;text-align:center;background:#fff">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#64748b;text-transform:uppercase">After Filtration</div>
+      <div style="margin-top:8px;font-size:56px;font-weight:700;color:${projectedGrade.color}" class="serif">${projectedScore}</div>
+      <div style="margin-top:4px;font-size:13px;font-weight:600;color:${projectedGrade.color}">${projectedGrade.tier}</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:24px;font-weight:700;color:#15803d">+${scoreDelta}</div>
+      <div style="margin-top:4px;font-size:10px;font-weight:500;color:#16a34a">Point Improvement</div>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:24px;font-weight:700;color:#1d4ed8">${resolved}</div>
+      <div style="margin-top:4px;font-size:10px;font-weight:500;color:#2563eb">Contaminants Resolved</div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:24px;font-weight:700;color:#b45309">${improvements.length}</div>
+      <div style="margin-top:4px;font-size:10px;font-weight:500;color:#d97706">Contaminants Improved</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div style="margin-top:20px">
+    <div style="font-size:13px;font-weight:700;color:#0f172a">📈 Projected Contaminant Reductions</div>
+    <table style="width:100%;margin-top:8px;border-collapse:collapse;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+      <thead>
+        <tr style="background:#f1f5f9">
+          <th style="padding:8px 12px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Contaminant</th>
+          <th style="padding:8px 12px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Current</th>
+          <th style="padding:8px 12px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">After Filtration</th>
+          <th style="padding:8px 12px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Guideline</th>
+          <th style="padding:8px 12px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Status</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+
+  <!-- CTA -->
+  <div style="margin-top:20px;background:linear-gradient(135deg,#0f2444,#1a3a6c);border-radius:12px;padding:24px;color:#fff;text-align:center">
+    <div style="font-size:28px">⚡</div>
+    <div style="margin-top:8px;font-size:20px;font-weight:700">Take Action Today</div>
+    <p style="margin-top:8px;font-size:12px;color:#bfdbfe;max-width:400px;margin-left:auto;margin-right:auto">
+      A whole-home filtration system from ${esc(params.companyName)} could raise your AquaScore
+      from <strong style="color:#fff">${currentScore}</strong> to <strong style="color:#6ee7b7">${projectedScore}</strong> —
+      resolving ${resolved} contaminant${resolved !== 1 ? 's' : ''} and protecting your family's health.
+    </p>
+    <p style="margin-top:12px;font-size:11px;color:rgba(191,219,254,0.8);font-style:italic">
+      Contact your water specialist for a free in-home consultation.
+    </p>
+  </div>
+
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 6</span></div></div>
+</div>`;
+}
+
 export function buildReportHtml(params: ReportTemplateParams): string {
   const junk = [
     "reverse osmosis", "how your levels compare", "surface water treatment rule",
@@ -623,6 +778,11 @@ export function buildReportHtml(params: ReportTemplateParams): string {
 
   <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 5</span></div></div>
 </div>
+
+<!-- ═════════════════════════════════════════════════
+     PAGE 6.5 — SCORE IMPROVEMENT PROJECTION
+     ═════════════════════════════════════════════════ -->
+${buildScoreImprovementPage(params)}
 
 <!-- ═════════════════════════════════════════════════
      PAGE 7 — ON-SITE TEST RESULTS

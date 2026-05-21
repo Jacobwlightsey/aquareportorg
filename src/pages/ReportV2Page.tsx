@@ -2,6 +2,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   Check,
   Droplets,
   Edit3,
@@ -11,7 +12,9 @@ import {
   Save,
   Shield,
   Sparkles,
+  TrendingUp,
   Users,
+  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -745,6 +748,212 @@ function SolutionsPage({
 }
 
 /* ================================================================
+   SCORE IMPROVEMENT PAGE (Page 6.5) — Before vs After Filtration
+   ================================================================ */
+
+/** Estimate which contaminant categories a whole-home filtration system addresses */
+function filtrationReductionFactor(contaminantName: string): number {
+  const n = contaminantName.toLowerCase();
+  // Chlorine / disinfection byproducts — excellent removal (90-99%)
+  if (n.includes("chlor") || n.includes("trihalomethane") || n.includes("tthm") || n.includes("haloacetic") || n.includes("haa"))
+    return 0.05;
+  // Heavy metals — very good removal (85-95%)
+  if (n.includes("lead") || n.includes("mercury") || n.includes("arsenic") || n.includes("cadmium") || n.includes("chromium") || n.includes("copper") || n.includes("barium"))
+    return 0.1;
+  // VOCs / industrial — good removal (80-95%)
+  if (n.includes("benzene") || n.includes("butadiene") || n.includes("ethylene") || n.includes("vinyl") || n.includes("tetrachloro") || n.includes("trichloro"))
+    return 0.08;
+  // Radionuclides — moderate removal (70-90%)
+  if (n.includes("radium") || n.includes("uranium") || n.includes("radon") || n.includes("gross alpha") || n.includes("gross beta"))
+    return 0.2;
+  // Nitrates/nitrites — moderate removal with RO (60-85%)
+  if (n.includes("nitrate") || n.includes("nitrite"))
+    return 0.25;
+  // Fluoride — moderate
+  if (n.includes("fluoride"))
+    return 0.3;
+  // General — moderate reduction
+  return 0.35;
+}
+
+function ScoreImprovementPage({
+  utilityName,
+  currentScore,
+  contaminants,
+  companyName,
+  readings,
+}: {
+  utilityName: string;
+  currentScore: number;
+  contaminants: Contaminant[];
+  companyName: string;
+  readings: { chlorine?: number; hardness?: number; tds?: number; ph?: number };
+}) {
+  // Simulate post-filtration contaminant levels
+  const { projectedScore, improvements } = useMemo(() => {
+    const simulated = contaminants.map((c) => {
+      const factor = filtrationReductionFactor(cName(c));
+      return {
+        ...c,
+        detected_level: c.detected_level * factor,
+        value: (c as any).value ? (c as any).value * factor : undefined,
+      };
+    });
+    const projected = computeAquaScore(null, simulated, readings);
+
+    // Build improvement list — only contaminants that were over health guidelines
+    const improved = contaminants
+      .filter((c) => c.over_health || c.over_legal)
+      .map((c) => {
+        const factor = filtrationReductionFactor(cName(c));
+        const reduction = Math.round((1 - factor) * 100);
+        return {
+          name: cName(c),
+          currentLevel: c.detected_level,
+          projectedLevel: +(c.detected_level * factor).toFixed(3),
+          unit: c.unit,
+          healthGuideline: c.health_guideline,
+          legalLimit: c.legal_limit,
+          reduction,
+          wasOverHealth: c.over_health,
+          wasOverLegal: c.over_legal,
+          nowSafe: c.health_guideline ? c.detected_level * factor <= c.health_guideline : false,
+        };
+      })
+      .sort((a, b) => b.reduction - a.reduction);
+
+    return { projectedScore: projected, improvements: improved };
+  }, [contaminants, readings]);
+
+  const currentGrade = letterGrade(currentScore);
+  const projectedGrade = letterGrade(projectedScore);
+  const scoreDelta = projectedScore - currentScore;
+  const contaminantsResolved = improvements.filter((i) => i.nowSafe).length;
+
+  return (
+    <Page className="p-10">
+      <PageHeader section="Score Improvement Projection" utility={utilityName} />
+
+      <h2 className="text-3xl font-bold text-slate-900" style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}>
+        How Filtration Improves Your Score
+      </h2>
+      <p className="mt-2 text-[12px] text-slate-600">
+        Installing a whole-home advanced filtration system can dramatically improve your water quality.
+        Here's what your AquaScore could look like after professional filtration.
+      </p>
+
+      {/* Before → After Score Cards */}
+      <div className="mt-6 flex items-center gap-4">
+        {/* Current Score */}
+        <div className="flex-1 rounded-xl border-2 border-slate-200 bg-white p-6 text-center">
+          <span className="text-[10px] font-bold tracking-[0.15em] text-slate-500 uppercase">Current Score</span>
+          <div className="mt-2 text-[56px] font-bold" style={{ color: currentGrade.color, fontFamily: "'Playfair Display', 'Georgia', serif" }}>
+            {currentScore}
+          </div>
+          <p className="mt-1 text-[13px] font-semibold" style={{ color: currentGrade.color }}>{currentGrade.tier}</p>
+        </div>
+
+        {/* Arrow */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 flex items-center justify-center">
+            <ArrowRight className="size-7 text-white" />
+          </div>
+          <span className="text-[11px] font-bold text-emerald-600">+{scoreDelta} pts</span>
+        </div>
+
+        {/* Projected Score */}
+        <div className="flex-1 rounded-xl border-2 bg-white p-6 text-center" style={{ borderColor: `${projectedGrade.color}60` }}>
+          <span className="text-[10px] font-bold tracking-[0.15em] text-slate-500 uppercase">After Filtration</span>
+          <div className="mt-2 text-[56px] font-bold" style={{ color: projectedGrade.color, fontFamily: "'Playfair Display', 'Georgia', serif" }}>
+            {projectedScore}
+          </div>
+          <p className="mt-1 text-[13px] font-semibold" style={{ color: projectedGrade.color }}>{projectedGrade.tier}</p>
+        </div>
+      </div>
+
+      {/* Key stats */}
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-center">
+          <div className="text-2xl font-bold text-emerald-700">+{scoreDelta}</div>
+          <p className="mt-0.5 text-[10px] text-emerald-600 font-medium">Point Improvement</p>
+        </div>
+        <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-center">
+          <div className="text-2xl font-bold text-blue-700">{contaminantsResolved}</div>
+          <p className="mt-0.5 text-[10px] text-blue-600 font-medium">Contaminants Resolved</p>
+        </div>
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-center">
+          <div className="text-2xl font-bold text-amber-700">{improvements.length}</div>
+          <p className="mt-0.5 text-[10px] text-amber-600 font-medium">Contaminants Improved</p>
+        </div>
+      </div>
+
+      {/* Contaminant improvement table */}
+      <div className="mt-5">
+        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <TrendingUp className="size-4 text-emerald-600" /> Projected Contaminant Reductions
+        </h3>
+        <div className="mt-2 rounded-lg border border-slate-200 overflow-hidden">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-3 py-2 text-left font-semibold text-slate-600">Contaminant</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600">Current</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600">After Filtration</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600">Guideline</th>
+                <th className="px-3 py-2 text-center font-semibold text-slate-600">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {improvements.slice(0, 8).map((item, i) => (
+                <tr key={i} className={`border-b border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
+                  <td className="px-3 py-2 font-medium text-slate-800">{item.name}</td>
+                  <td className="px-3 py-2 text-right text-red-600 font-semibold">
+                    {safe(item.currentLevel)} {safe(item.unit)}
+                  </td>
+                  <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
+                    {safe(item.projectedLevel)} {safe(item.unit)}
+                  </td>
+                  <td className="px-3 py-2 text-right text-slate-500">
+                    {safe(item.healthGuideline ?? item.legalLimit, "—")} {(item.healthGuideline ?? item.legalLimit) != null ? safe(item.unit) : ""}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {item.nowSafe ? (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                        <Check className="size-3" /> Safe
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                        <TrendingUp className="size-3" /> Reduced
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="mt-5 rounded-xl bg-gradient-to-r from-[#0f2444] to-[#1a3a6c] p-6 text-white text-center">
+        <Zap className="size-8 mx-auto text-amber-300" />
+        <h3 className="mt-2 text-xl font-bold">Take Action Today</h3>
+        <p className="mt-2 text-[12px] text-blue-200 max-w-md mx-auto">
+          A whole-home filtration system from {companyName} could raise your AquaScore
+          from <strong className="text-white">{currentScore}</strong> to <strong className="text-emerald-300">{projectedScore}</strong> —
+          resolving {contaminantsResolved} contaminant{contaminantsResolved !== 1 ? "s" : ""} and protecting your family's health.
+        </p>
+        <p className="mt-3 text-[11px] text-blue-300/80 italic">
+          Contact your water specialist for a free in-home consultation.
+        </p>
+      </div>
+
+      <PageFooter page={6} />
+    </Page>
+  );
+}
+
+/* ================================================================
    ON-SITE TEST RESULTS (Page 7) — Editable
    ================================================================ */
 
@@ -1170,6 +1379,19 @@ export function ReportV2Page() {
             companyPhone={companyPhone}
           />
         )}
+
+        <ScoreImprovementPage
+          utilityName={report.utilityName}
+          currentScore={score}
+          contaminants={allContaminants}
+          companyName={companyName}
+          readings={{
+            chlorine: report.chlorine,
+            hardness: report.hardness,
+            tds: report.tds,
+            ph: report.ph,
+          }}
+        />
 
         <TestResultsPage
           utilityName={report.utilityName}
