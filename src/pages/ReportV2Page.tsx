@@ -25,6 +25,14 @@ import type { Id } from "../../convex/_generated/dataModel";
    TYPES & HELPERS
    ================================================================ */
 
+/** Safely convert any value to a renderable string — prevents React #310 */
+function safe(v: unknown, fallback = ""): string | number {
+  if (v === null || v === undefined) return fallback;
+  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return typeof v === "boolean" ? String(v) : v;
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
 interface Contaminant {
   name?: string;
   contaminant: string;
@@ -409,9 +417,9 @@ function ContaminantsTablePage({
               return (
                 <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                   <td className="px-3 py-2.5 font-semibold text-slate-900">{cName(c)}</td>
-                  <td className="px-2 py-2.5 text-slate-700">{c.detected_level} {c.unit}</td>
-                  <td className="px-2 py-2.5 text-slate-500">{c.health_guideline ?? "N/A"} {c.health_guideline != null ? c.unit : ""}</td>
-                  <td className="px-2 py-2.5 text-slate-500">{c.legal_limit ?? "N/A"} {c.legal_limit != null ? c.unit : ""}</td>
+                  <td className="px-2 py-2.5 text-slate-700">{safe(c.detected_level)} {safe(c.unit)}</td>
+                  <td className="px-2 py-2.5 text-slate-500">{safe(c.health_guideline, "N/A")} {c.health_guideline != null ? safe(c.unit) : ""}</td>
+                  <td className="px-2 py-2.5 text-slate-500">{safe(c.legal_limit, "N/A")} {c.legal_limit != null ? safe(c.unit) : ""}</td>
                   <td className="px-2 py-2.5 font-bold text-slate-900">{timesOver}</td>
                   <td className="px-2 py-2.5">
                     <span className="inline-block rounded px-2 py-0.5 text-[9px] font-bold tracking-wide text-white bg-red-600 uppercase">Exceeds</span>
@@ -447,8 +455,8 @@ function ContaminantsTablePage({
             {belowHealth.map((c, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                 <td className="px-3 py-2.5 font-semibold text-slate-900">{cName(c)}</td>
-                <td className="px-2 py-2.5 text-slate-700">{c.detected_level} {c.unit}</td>
-                <td className="px-2 py-2.5 text-slate-500">{c.legal_limit ?? "N/A"} {c.legal_limit != null ? c.unit : ""}</td>
+                <td className="px-2 py-2.5 text-slate-700">{safe(c.detected_level)} {safe(c.unit)}</td>
+                <td className="px-2 py-2.5 text-slate-500">{safe(c.legal_limit, "N/A")} {c.legal_limit != null ? safe(c.unit) : ""}</td>
                 <td className="px-2 py-2.5">
                   <span className="inline-block rounded px-2 py-0.5 text-[9px] font-bold tracking-wide text-white bg-emerald-600 uppercase">Meets</span>
                 </td>
@@ -503,9 +511,9 @@ function ContaminantDetailsPage({
                 {renderBold(healthDescription(c))}
               </p>
               <div className="mt-3 flex items-center gap-6 border-t border-slate-100 pt-3 text-[11px]">
-                <span>Detected: <strong className="text-slate-900">{c.detected_level} {c.unit}</strong></span>
-                <span>Guideline: <strong className="text-slate-900">{c.health_guideline ?? "N/A"} {c.health_guideline != null ? c.unit : ""}</strong></span>
-                <span>Legal: <strong className="text-slate-900">{c.legal_limit ?? "N/A"} {c.legal_limit != null ? c.unit : ""}</strong></span>
+                <span>Detected: <strong className="text-slate-900">{safe(c.detected_level)} {safe(c.unit)}</strong></span>
+                <span>Guideline: <strong className="text-slate-900">{safe(c.health_guideline, "N/A")} {c.health_guideline != null ? safe(c.unit) : ""}</strong></span>
+                <span>Legal: <strong className="text-slate-900">{safe(c.legal_limit, "N/A")} {c.legal_limit != null ? safe(c.unit) : ""}</strong></span>
               </div>
             </div>
           );

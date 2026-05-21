@@ -113,6 +113,14 @@ function AquaScoreGauge({ score }: { score?: number }) {
 
 /* ── Contaminant Table Row ──────────────────────────────── */
 
+/** Safely convert any value to a renderable string — prevents React #310 */
+function safe(v: unknown, fallback = ""): string | number {
+  if (v === null || v === undefined) return fallback;
+  if (typeof v === "string" || typeof v === "number") return v;
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
 function ContaminantTableRow({ c }: { c: any }) {
   return (
     <div className="flex items-center justify-between py-3 px-1 border-b border-muted/20 last:border-0">
@@ -121,16 +129,16 @@ function ContaminantTableRow({ c }: { c: any }) {
         <div>
           <p className="text-[10px] text-muted-foreground">DETECTED</p>
           <p className={`font-bold ${c.over_legal ? "text-red-400" : ""}`}>
-            {c.detected_level} {c.unit}
+            {safe(c.detected_level)} {safe(c.unit)}
           </p>
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground">LEGAL</p>
-          <p className="font-medium">{c.legal_limit ?? "—"} {c.legal_limit ? c.unit : ""}</p>
+          <p className="font-medium">{safe(c.legal_limit, "—")} {c.legal_limit ? safe(c.unit) : ""}</p>
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground">HEALTH</p>
-          <p className="font-medium">{c.health_guideline ?? "—"} {c.health_guideline ? c.unit : ""}</p>
+          <p className="font-medium">{safe(c.health_guideline, "—")} {c.health_guideline ? safe(c.unit) : ""}</p>
         </div>
       </div>
     </div>
