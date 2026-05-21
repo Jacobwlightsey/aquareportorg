@@ -32,6 +32,8 @@ import {
   stageMeta,
   type PipelineStage,
 } from "@/lib/pipeline";
+import { FreeTierBanner } from "@/components/FreeTierCTA";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { api } from "../../convex/_generated/api";
 
 type ViewMode = "cards" | "kanban" | "table";
@@ -254,6 +256,7 @@ function recentCount(reports: any[]): number {
 
 export function CustomersPage() {
   const reports = useQuery(api.reports.getMyReports);
+  const { isFree, hasUsedTrial, canCreateReport, totalReports } = useFreeTrial();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>("cards");
   const [stageFilter, setStageFilter] = useState<string>("all");
@@ -290,6 +293,9 @@ export function CustomersPage() {
 
   return (
     <div className="space-y-5">
+      {/* Free tier upgrade banner */}
+      {isFree && hasUsedTrial && <FreeTierBanner totalReports={totalReports} />}
+
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -298,12 +304,20 @@ export function CustomersPage() {
             {reports.length} customer{reports.length !== 1 ? "s" : ""} · {thisWeek} this week
           </p>
         </div>
-        <Button asChild className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white rounded-full px-5 shadow-lg shadow-red-500/20">
-          <Link to="/customers/new">
-            <Plus className="size-4" />
-            New Customer
-          </Link>
-        </Button>
+        {canCreateReport ? (
+          <Button asChild className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white rounded-full px-5 shadow-lg shadow-red-500/20">
+            <Link to="/customers/new">
+              <Plus className="size-4" />
+              New Customer
+            </Link>
+          </Button>
+        ) : (
+          <Button asChild className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white rounded-full px-5 shadow-lg shadow-amber-500/20">
+            <Link to="/subscription">
+              Upgrade to Create More
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Filters */}

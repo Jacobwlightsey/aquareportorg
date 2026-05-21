@@ -2,6 +2,22 @@ export const APP_NAME = "AquaReport";
 
 export const SUBSCRIPTION_PLANS = [
   {
+    id: "free",
+    name: "Free",
+    price: "$0",
+    priceId: null,
+    reportLimit: 1,
+    reportLimitLabel: "1 trial report",
+    userLimit: 1,
+    features: [
+      "1 trial report",
+      "1 user",
+      "Water quality score",
+      "Basic contaminant table",
+      "Preview starter features",
+    ],
+  },
+  {
     id: "starter",
     name: "Starter",
     price: "$99/mo",

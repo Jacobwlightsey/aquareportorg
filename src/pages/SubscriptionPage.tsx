@@ -135,18 +135,19 @@ export function SubscriptionPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {SUBSCRIPTION_PLANS.map((plan) => {
-          const selected = currentPlan === plan.id && isActive;
+          const isFreeCard = plan.id === "free";
+          const selected = currentPlan === plan.id && (isFreeCard ? !isActive : isActive);
           return (
-            <Card key={plan.id} className={selected ? "border-blue-500 shadow-sm" : ""}>
+            <Card key={plan.id} className={selected ? "border-blue-500 shadow-sm" : isFreeCard ? "border-dashed opacity-80" : ""}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <CardTitle>{plan.name}</CardTitle>
                     <CardDescription>{plan.reportLimitLabel}</CardDescription>
                   </div>
-                  {selected && <Badge variant="success">Active</Badge>}
+                  {selected && <Badge variant={isFreeCard ? "secondary" : "success"}>{isFreeCard ? "Current" : "Active"}</Badge>}
                 </div>
                 <p className="text-3xl font-bold">{plan.price}</p>
               </CardHeader>
@@ -159,7 +160,11 @@ export function SubscriptionPage() {
                     </div>
                   ))}
                 </div>
-                {plan.id === "enterprise" ? (
+                {isFreeCard ? (
+                  <Button className="w-full" variant="outline" disabled>
+                    {selected ? "Current Plan" : "Included"}
+                  </Button>
+                ) : plan.id === "enterprise" ? (
                   <Dialog open={enterpriseOpen} onOpenChange={setEnterpriseOpen}>
                     <DialogTrigger asChild>
                       <Button className="w-full" variant="outline">

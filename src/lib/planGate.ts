@@ -33,6 +33,15 @@ export function hasPlan(company: any, minPlan: Plan): boolean {
   return (PLAN_RANK[activePlan(company)] ?? 0) >= (PLAN_RANK[minPlan] ?? 999);
 }
 
+/**
+ * Check plan access using an overridden effective plan.
+ * Used by the free-trial system: free users who haven't used their trial
+ * get "starter"-level access so they can preview features during their first report.
+ */
+export function hasPlanOverride(effectivePlan: Plan, minPlan: Plan): boolean {
+  return (PLAN_RANK[effectivePlan] ?? 0) >= (PLAN_RANK[minPlan] ?? 999);
+}
+
 /*──────────────────────────────────────────────────────────────
  * Feature gates — mirrors FEATURE_MIN_PLAN in convex/security.ts
  * ─────────────────────────────────────────────────────────────*/

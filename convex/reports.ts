@@ -203,12 +203,32 @@ export const getReportUsageStatus = query({
     if (!company) return null;
     const usage = await reportUsageStatus(ctx, company);
     const companyRecord = company as any;
+    const plan = companyRecord.stripePlan || "free";
+    const isActive = companyRecord.stripeStatus === "active";
+    const effectivePlan = isActive ? plan : "free";
+
+    // Count total reports ever created (not just this month) — for free trial tracking
+    const allReports = await ctx.db
+      .query("reports")
+      .withIndex("by_company", (q: any) => q.eq("companyId", result.membership.companyId))
+      .collect();
+    const totalReportsEver = allReports.length;
+
+    // Free trial state
+    const isFree = effectivePlan === "free";
+    const hasUsedFreeTrial = isFree && totalReportsEver >= 1;
+    const freeTrialRemaining = isFree ? Math.max(0, 1 - totalReportsEver) : null;
+
     return {
-      plan: companyRecord.stripePlan || "free",
+      plan: effectivePlan,
       status: companyRecord.stripeStatus || "none",
       limit: Number.isFinite(usage.limit) ? usage.limit : null,
       used: usage.used,
       remaining: Number.isFinite(usage.remaining) ? usage.remaining : null,
+      totalReportsEver,
+      isFree,
+      hasUsedFreeTrial,
+      freeTrialRemaining,
     };
   },
 });

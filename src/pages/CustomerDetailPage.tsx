@@ -45,6 +45,8 @@ import {
   type FieldWaterReadings,
 } from "@/lib/waterScore";
 import { hasDemoWizard, hasConsumerLinks, hasVerification, hasFiltration, hasFlipbook, upgradeMessage } from "@/lib/planGate";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
+import { FreeTierBanner } from "@/components/FreeTierCTA";
 import { PlanGate } from "@/components/PlanGate";
 import { api } from "../../convex/_generated/api";
 
@@ -253,7 +255,17 @@ export function CustomerDetailPage() {
     api.reports.getReport,
     reportId ? { reportId: reportId as any } : "skip"
   );
-  const company = useQuery(api.companies.getMyCompany);
+  const rawCompany = useQuery(api.companies.getMyCompany);
+  const { isFree, hasUsedTrial, effectivePlan, totalReports } = useFreeTrial();
+  // For free-trial users who haven't exhausted their trial, override the plan
+  // so PlanGate helpers see "starter" level access
+  const company = useMemo(() => {
+    if (!rawCompany) return rawCompany;
+    if (isFree && !hasUsedTrial) {
+      return { ...rawCompany, stripePlan: "starter", stripeStatus: "active" };
+    }
+    return rawCompany;
+  }, [rawCompany, isFree, hasUsedTrial]);
   const createReferral = useAction(api.referrals.createConsumerReferral);
   const [referralUrl, setReferralUrl] = useState<string>("");
   const [, setSendingReferral] = useState(false);
@@ -339,6 +351,9 @@ export function CustomerDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
+      {/* Free tier upgrade banner */}
+      {isFree && hasUsedTrial && <FreeTierBanner totalReports={totalReports} />}
+
       {/* Breadcrumb */}
       <nav className="text-sm text-muted-foreground">
         <Link to="/customers" className="hover:text-foreground transition-colors">

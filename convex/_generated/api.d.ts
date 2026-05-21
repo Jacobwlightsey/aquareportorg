@@ -10,6 +10,7 @@
 
 import type * as AquaReportEmail from "../AquaReportEmail.js";
 import type * as admin from "../admin.js";
+import type * as adminCleanup from "../adminCleanup.js";
 import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
 import type * as companies from "../companies.js";
@@ -23,6 +24,7 @@ import type * as lib_reportTemplate from "../lib/reportTemplate.js";
 import type * as publicApi from "../publicApi.js";
 import type * as referrals from "../referrals.js";
 import type * as reportPdf from "../reportPdf.js";
+import type * as reportPdfClient from "../reportPdfClient.js";
 import type * as reports from "../reports.js";
 import type * as security from "../security.js";
 import type * as stripe from "../stripe.js";
@@ -38,6 +40,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   AquaReportEmail: typeof AquaReportEmail;
   admin: typeof admin;
+  adminCleanup: typeof adminCleanup;
   ai: typeof ai;
   auth: typeof auth;
   companies: typeof companies;
@@ -51,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   publicApi: typeof publicApi;
   referrals: typeof referrals;
   reportPdf: typeof reportPdf;
+  reportPdfClient: typeof reportPdfClient;
   reports: typeof reports;
   security: typeof security;
   stripe: typeof stripe;

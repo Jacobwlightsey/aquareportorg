@@ -21,6 +21,8 @@ import { Separator } from "@/components/ui/separator";
 import { contaminantName, isDetectedContaminant, type WaterReport } from "@/lib/supabase";
 import { computeAquaScore } from "@/lib/waterScore";
 import { scoreClass } from "@/lib/pipeline";
+import { FreeTrialExhausted } from "@/components/FreeTierCTA";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { api } from "../../convex/_generated/api";
 
 interface LeadInfo {
@@ -101,6 +103,7 @@ function StepIndicator({ step }: { step: number }) {
 
 export function CreateCustomerPage() {
   const navigate = useNavigate();
+  const { canCreateReport, isFree, hasUsedTrial, loading: trialLoading } = useFreeTrial();
   const [step, setStep] = useState(1);
   const [lead, setLead] = useState<LeadInfo>({
     name: "",
@@ -117,6 +120,11 @@ export function CreateCustomerPage() {
   const [selectedUtility, setSelectedUtility] = useState<UtilityOption | null>(null);
   const [report, setReport] = useState<WaterReport | null>(null);
   const [error, setError] = useState("");
+
+  // Block free users who've exhausted their trial
+  if (!trialLoading && isFree && hasUsedTrial) {
+    return <FreeTrialExhausted />;
+  }
 
   const company = useQuery(api.companies.getMyCompany);
   const saveReport = useMutation(api.reports.saveReport);

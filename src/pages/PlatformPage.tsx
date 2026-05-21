@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useState } from "react";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -79,7 +80,8 @@ export function PlatformPage() {
   const [webhookUrl, setWebhookUrl] = useState("");
 
   const connected = new Set((connections ?? []).map((connection) => connection.provider));
-  const currentPlan = subscription?.status === "active" ? subscription.plan : "free";
+  const { effectivePlan: trialEffectivePlan, isFree: trialIsFree } = useFreeTrial();
+  const currentPlan = trialIsFree ? trialEffectivePlan : (subscription?.status === "active" ? subscription.plan : "free");
   const planRank: Record<string, number> = { free: 0, starter: 1, growth: 2, pro: 3, enterprise: 4 };
   const hasGrowth = (planRank[currentPlan] ?? 0) >= 2;
   const hasPro = (planRank[currentPlan] ?? 0) >= 3;

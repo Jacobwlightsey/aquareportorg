@@ -18,9 +18,10 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -124,8 +125,10 @@ export function ViewReportPage() {
   const baseAquaScore = report.waterScore === undefined ? undefined : report.waterScore - savedFieldAdjustment;
   const editedWaterScore = computeAquaScore(baseAquaScore, detectedContaminants, readings);
   const fieldReadingAdjustment = computeFieldReadingAdjustment(readings);
+  const { effectivePlan: trialEffectivePlan, isFree: trialIsFree, hasUsedTrial } = useFreeTrial();
   const planRank: Record<string, number> = { free: 0, starter: 1, growth: 2, pro: 3, enterprise: 4 };
-  const currentPlan = subscription?.status === "active" ? subscription.plan : "free";
+  // Use effective plan from free trial system (free users pre-trial get starter access)
+  const currentPlan = trialIsFree ? trialEffectivePlan : (subscription?.status === "active" ? subscription.plan : "free");
   const aiUnlocked = (planRank[currentPlan] ?? 0) >= 2;
   const consumerReferralUnlocked = (planRank[currentPlan] ?? 0) >= 2;
   const effectivePdfUrl = generatedLinks.pdfUrl || report.pdfUrl;
