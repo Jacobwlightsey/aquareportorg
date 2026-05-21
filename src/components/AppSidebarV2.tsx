@@ -4,7 +4,7 @@ import {
   Building2,
   ChartNoAxesCombined,
   CreditCard,
-  Droplets,
+
   Lock,
   LogOut,
   Moon,
@@ -57,7 +57,7 @@ const settingsNav = [
   { href: "/team", label: "Team", icon: ShieldCheck },
   { href: "/subscription", label: "Subscription", icon: CreditCard },
   { href: "/company", label: "Company", icon: Building2 },
-  { href: "/settings", label: "Account", icon: Settings },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 function NavLink({
@@ -135,7 +135,7 @@ function SidebarNav() {
   return (
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-cyan-400/80">MAIN</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {mainNav.map((item) => {
@@ -161,7 +161,7 @@ function SidebarNav() {
         </SidebarGroupContent>
       </SidebarGroup>
       <SidebarGroup>
-        <SidebarGroupLabel>Settings</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-muted-foreground/60">SETTINGS</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {settingsNav.map((item) => (
@@ -264,8 +264,8 @@ export function AppSidebarV2() {
           onClick={() => setOpenMobile(false)}
           className="flex items-center gap-2.5 px-2 py-1 font-semibold text-lg"
         >
-          <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center">
-            <Droplets className="size-4 text-white" />
+          <div className="size-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-400 flex items-center justify-center">
+            <span className="text-sm font-bold text-white">AQ</span>
           </div>
           <span>{APP_NAME}</span>
         </Link>

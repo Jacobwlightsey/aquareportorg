@@ -4,9 +4,6 @@ import {
   Droplets,
   Filter,
   LayoutGrid,
-  Mail,
-  MapPin,
-  Phone,
   Plus,
   Search,
   Table2,
@@ -68,59 +65,52 @@ function StagePill({ report }: { report: any }) {
 function CustomerCard({ report }: { report: any }) {
   const stage = derivePipelineStage(report);
   const meta = stageMeta(stage);
+  const created = report._creationTime
+    ? new Date(report._creationTime).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : "";
 
   return (
     <Link to={`/customers/${report._id}`}>
       <Card className="transition-all hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 active:scale-[0.99]">
         <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <ScoreBadge score={report.waterScore} />
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate font-semibold text-sm">
-                  {report.customerName || report.utilityName}
-                </p>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badge}`}>
-                  {meta.label}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-muted-foreground flex items-center gap-1">
-                <MapPin className="size-3 shrink-0" />
-                <span className="truncate">
-                  {report.customerCity || report.city}, {report.customerState || report.state} · ZIP{" "}
-                  {report.customerZip || report.zip}
-                </span>
+              <p className="truncate font-semibold text-sm">
+                {report.customerName || report.utilityName}
               </p>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                {report.customerEmail && (
-                  <span className="flex items-center gap-1 truncate">
-                    <Mail className="size-3" />
-                    <span className="truncate max-w-[140px]">{report.customerEmail}</span>
-                  </span>
-                )}
-                {report.customerPhone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="size-3" />
-                    {report.customerPhone}
-                  </span>
-                )}
-              </div>
+              {report.customerEmail && (
+                <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                  {report.customerEmail}
+                </p>
+              )}
+              <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                {report.customerCity || report.city}, {report.customerState || report.state} {report.customerZip || report.zip}
+              </p>
             </div>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 mt-1" />
+            <ScoreBadge score={report.waterScore} />
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Badge variant="outline" className="text-[10px]">
-              {report.totalContaminants} detected
-            </Badge>
+            {report.overLegalLimits > 0 && (
+              <Badge variant="destructive" className="text-[10px]">
+                {report.overLegalLimits} legal
+              </Badge>
+            )}
             {report.overHealthGuidelines > 0 && (
               <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200">
                 {report.overHealthGuidelines} health
               </Badge>
             )}
-            {report.overLegalLimits > 0 && (
-              <Badge variant="destructive" className="text-[10px]">
-                {report.overLegalLimits} legal
-              </Badge>
+            <Badge variant="outline" className="text-[10px]">
+              {report.totalContaminants} total
+            </Badge>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${meta.badge} rounded-full px-2 py-0.5`}>
+              <span className="size-1.5 rounded-full bg-current" />
+              {meta.label}
+            </span>
+            {created && (
+              <span className="text-[11px] text-muted-foreground">{created}</span>
             )}
           </div>
         </CardContent>
