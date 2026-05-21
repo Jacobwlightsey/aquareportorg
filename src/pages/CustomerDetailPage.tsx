@@ -1,4 +1,4 @@
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import {
   AlertTriangle,
   Check,
@@ -255,11 +255,9 @@ export function CustomerDetailPage() {
   );
   const company = useQuery(api.companies.getMyCompany);
   const createReferral = useAction(api.referrals.createConsumerReferral);
-  const finalizePdf = useAction(api.reportPdfClient.finalizePdf);
-  const generateUploadUrl = useMutation(api.dealerShared.generateUploadUrl);
   const [referralUrl, setReferralUrl] = useState<string>("");
   const [, setSendingReferral] = useState(false);
-  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [generatingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
   const contaminants = useMemo(
@@ -299,87 +297,11 @@ export function CustomerDetailPage() {
     setSendingReferral(false);
   }, [reportId, createReferral]);
 
-  const handleGeneratePdf = useCallback(async () => {
+  const handleGeneratePdf = useCallback(() => {
     if (!reportId) return;
-    setGeneratingPdf(true);
-    try {
-      // 1. Navigate to the report preview in a hidden iframe to capture pages
-      toast.info("Generating PDF from preview…");
-
-      // Dynamically import client-side PDF generator
-      const { generatePdfFromDom } = await import("@/lib/generatePdfClient");
-
-      // Find the report preview on the ReportV2Page (opened via /reports/:id)
-      // We'll open it in a hidden iframe to capture the rendered pages
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.left = "-9999px";
-      iframe.style.top = "0";
-      iframe.style.width = "816px";
-      iframe.style.height = "8000px";
-      iframe.style.border = "none";
-      iframe.style.opacity = "0";
-      document.body.appendChild(iframe);
-
-      iframe.src = `/reports/${reportId}`;
-
-      // Wait for iframe to load
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("Report page load timed out")), 30000);
-        iframe.onload = () => {
-          clearTimeout(timeout);
-          // Wait for React to render + fonts to load
-          setTimeout(resolve, 3000);
-        };
-        iframe.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error("Failed to load report page"));
-        };
-      });
-
-      const iframeDoc = iframe.contentDocument;
-      if (!iframeDoc) throw new Error("Cannot access report iframe");
-
-      const container = iframeDoc.getElementById("report-pages-container") ||
-        iframeDoc.querySelector("[data-report-page]")?.parentElement;
-      if (!container) throw new Error("Report pages container not found");
-
-      // 2. Generate PDF from the rendered DOM
-      toast.info("Capturing pages…");
-      const pdfBlob = await generatePdfFromDom(container as HTMLElement);
-
-      // Clean up iframe
-      document.body.removeChild(iframe);
-
-      // 3. Upload PDF to Convex storage
-      toast.info("Uploading PDF…");
-      const uploadUrl = await generateUploadUrl();
-      const uploadRes = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/pdf" },
-        body: pdfBlob,
-      });
-      if (!uploadRes.ok) throw new Error("Failed to upload PDF");
-      const { storageId } = await uploadRes.json();
-
-      // 4. Create flipbook from uploaded PDF
-      toast.info("Creating flipbook…");
-      const result = await finalizePdf({
-        reportId: reportId as any,
-        pdfStorageId: storageId,
-      });
-
-      if (result?.ok) {
-        toast.success("PDF & Flipbook generated!");
-      } else {
-        toast.error("Something went wrong finalizing the PDF");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to generate PDF");
-      console.error("PDF generation error:", err);
-    }
-    setGeneratingPdf(false);
-  }, [reportId, finalizePdf, generateUploadUrl]);
+    // Navigate to report preview page which handles PDF generation client-side
+    navigate(`/reports/${reportId}?action=pdf`);
+  }, [reportId, navigate]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {

@@ -1,22 +1,22 @@
-﻿import { useMutation, useQuery } from "convex/react";
+﻿import { useAction, useMutation, useQuery } from "convex/react";
 import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
+  Download,
   Droplets,
   Edit3,
   Heart,
   Loader2,
-  Printer,
   Save,
   Shield,
   TrendingUp,
   Users,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { computeAquaScore } from "@/lib/waterScore";
@@ -1068,9 +1068,15 @@ function TestResultsPage({
 
 export function ReportV2Page() {
   const { reportId } = useParams<{ reportId: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const report = useQuery(api.reports.getReport, reportId ? { reportId: reportId as Id<"reports"> } : "skip");
   const company = useQuery(api.companies.getMyCompany);
   const updateReadings = useMutation(api.reports.updateInHomeReadings);
+  const finalizePdf = useAction(api.reportPdfClient.finalizePdf);
+  const generateUploadUrl = useMutation(api.dealerShared.generateUploadUrl);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const pdfAutoTriggered = useRef(false);
 
   const [editing, setEditing] = useState(false);
   const [testResults, setTestResults] = useState<TestResults>({
@@ -1199,6 +1205,69 @@ export function ReportV2Page() {
     }
   }, [report?.contaminants, report?.waterScore, report?.chlorine, report?.hardness, report?.tds, report?.ph]);
 
+  // Client-side PDF generation: captures rendered pages → PDF → upload → flipbook
+  const handleGeneratePdf = useCallback(async () => {
+    if (!reportId || generatingPdf) return;
+    setGeneratingPdf(true);
+    try {
+      const container = document.getElementById("report-pages-container");
+      if (!container) throw new Error("Report container not found");
+
+      toast.info("Capturing report pages…");
+      const { generatePdfFromDom } = await import("@/lib/generatePdfClient");
+      const pdfBlob = await generatePdfFromDom(container);
+
+      // Also trigger a download for the user
+      const downloadUrl = URL.createObjectURL(pdfBlob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `water-report-${reportId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(downloadUrl);
+
+      // Upload to Convex storage
+      toast.info("Uploading & creating flipbook…");
+      const uploadUrl = await generateUploadUrl();
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/pdf" },
+        body: pdfBlob,
+      });
+      if (!uploadRes.ok) throw new Error("Failed to upload PDF");
+      const { storageId } = await uploadRes.json();
+
+      // Finalize: store URL + create Heyzine flipbook
+      await finalizePdf({ reportId: reportId as any, pdfStorageId: storageId });
+      toast.success("PDF downloaded & flipbook created!");
+
+      // If auto-triggered from customer detail page, navigate back
+      if (searchParams.get("action") === "pdf") {
+        navigate(`/customers/${reportId}`, { replace: true });
+      }
+    } catch (err: any) {
+      toast.error(err.message || "PDF generation failed");
+      console.error("PDF generation error:", err);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }, [reportId, generatingPdf, generateUploadUrl, finalizePdf, searchParams, navigate]);
+
+  // Auto-trigger PDF generation when navigated with ?action=pdf
+  useEffect(() => {
+    if (
+      searchParams.get("action") === "pdf" &&
+      report &&
+      company &&
+      !pdfAutoTriggered.current &&
+      !generatingPdf
+    ) {
+      pdfAutoTriggered.current = true;
+      // Delay to allow the pages to fully render
+      const timer = setTimeout(() => handleGeneratePdf(), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, report, company, generatingPdf, handleGeneratePdf]);
+
   if (report === undefined || company === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100">
@@ -1264,10 +1333,12 @@ export function ReportV2Page() {
             </Button>
             <Button
               size="sm"
-              onClick={() => window.print()}
+              onClick={handleGeneratePdf}
+              disabled={generatingPdf}
               className="bg-slate-900 text-white shadow-lg"
             >
-              <Printer className="size-4 mr-1" /> Print / PDF
+              {generatingPdf ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Download className="size-4 mr-1" />}
+              {generatingPdf ? "Generating…" : "Download PDF"}
             </Button>
           </>
         )}
