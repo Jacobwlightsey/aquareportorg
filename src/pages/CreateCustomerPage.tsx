@@ -195,7 +195,7 @@ export function CreateCustomerPage() {
     const waterScore = computeAquaScore(undefined, contaminants);
 
     try {
-      const reportId = await saveReport({
+      const result = await saveReport({
         zip: lead.zip,
         utilityName: selectedUtility.utility_name,
         pwsid: selectedUtility.pwsid,
@@ -219,7 +219,7 @@ export function CreateCustomerPage() {
       });
 
       toast.success("Customer created! Report generated and consumer link ready.");
-      navigate(`/customers/${reportId}`);
+      navigate(`/customers/${result.reportId}`);
     } catch (err: any) {
       toast.error(err.message || "Failed to save");
     }
