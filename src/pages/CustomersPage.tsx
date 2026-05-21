@@ -13,7 +13,7 @@ import {
   Trello,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,6 @@ import {
   PIPELINE_STAGES,
   scoreClass,
   stageMeta,
-  stageRank,
   type PipelineStage,
 } from "@/lib/pipeline";
 /* No plan gate needed on Customers — all tiers can view & create customers */
@@ -172,6 +171,8 @@ function KanbanView({ reports }: { reports: any[] }) {
 }
 
 function TableView({ reports }: { reports: any[] }) {
+  const navigate = useNavigate();
+
   return (
     <Card>
       <CardContent className="p-0">
@@ -189,8 +190,11 @@ function TableView({ reports }: { reports: any[] }) {
           </TableHeader>
           <TableBody>
             {reports.map((r) => (
-              <TableRow key={r._id} className="cursor-pointer" asChild>
-                <Link to={`/customers/${r._id}`} className="contents">
+              <TableRow
+                key={r._id}
+                className="cursor-pointer"
+                onClick={() => navigate(`/customers/${r._id}`)}
+              >
                   <TableCell>
                     <ScoreBadge score={r.waterScore} />
                   </TableCell>
@@ -227,7 +231,6 @@ function TableView({ reports }: { reports: any[] }) {
                   <TableCell>
                     <ChevronRight className="size-4 text-muted-foreground/50" />
                   </TableCell>
-                </Link>
               </TableRow>
             ))}
           </TableBody>

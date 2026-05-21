@@ -28,14 +28,19 @@ function parseContaminants(raw: string) {
   }
 }
 
+function isDetectedContaminant(contaminant: any) {
+  return contaminant?.detected !== false && contaminant?.detection_status !== "not_detected";
+}
+
 function computeReferralAquaScore(contaminants: any[]) {
-  const hasContaminantSignal = contaminants.some((contaminant) => contaminant?.over_legal || contaminant?.over_health);
+  const detectedContaminants = contaminants.filter(isDetectedContaminant);
+  const hasContaminantSignal = detectedContaminants.some((contaminant) => contaminant?.over_legal || contaminant?.over_health);
   if (!hasContaminantSignal) return 100;
 
-  const legalPenalty = Math.min(30, contaminants.filter((contaminant) => contaminant?.over_legal).length * 18);
+  const legalPenalty = Math.min(30, detectedContaminants.filter((contaminant) => contaminant?.over_legal).length * 18);
   const healthPenalty = Math.min(
     59,
-    contaminants.reduce((total, contaminant) => {
+    detectedContaminants.reduce((total, contaminant) => {
       if (!contaminant?.over_health || contaminant?.over_legal) return total;
       const multiple = contaminant?.times_above_ewg ?? 1;
       if (multiple >= 100) return total + 9;
@@ -44,7 +49,7 @@ function computeReferralAquaScore(contaminants: any[]) {
       return total + 3;
     }, 0),
   );
-  const detectionPenalty = Math.min(10, contaminants.length * 0.5);
+  const detectionPenalty = Math.min(10, detectedContaminants.length * 0.5);
   return Math.max(0, Math.min(100, Math.round(100 - legalPenalty - healthPenalty - detectionPenalty)));
 }
 

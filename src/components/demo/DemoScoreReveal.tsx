@@ -51,7 +51,7 @@ function tierInfo(score: number) {
   };
 }
 
-export function DemoScoreReveal({ score, contaminants, report, onNext, onBack }: Props) {
+export function DemoScoreReveal({ score, contaminants, report, onNext: _onNext, onBack: _onBack }: Props) {
   const [revealed, setRevealed] = useState(false);
   const [animatedScore, setAnimatedScore] = useState(0);
   const s = score ?? 0;

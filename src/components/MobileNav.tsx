@@ -38,7 +38,7 @@ export function MobileNav() {
                     location.pathname !== "/customers/new")
                 : location.pathname === tab.href;
 
-          if (tab.accent) {
+          if ("accent" in tab && tab.accent) {
             return (
               <Link
                 key={tab.href}

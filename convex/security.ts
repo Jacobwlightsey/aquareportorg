@@ -108,6 +108,9 @@ export function planReportLimit(company: any) {
   if (typeof company?.reportLimitOverride === "number") {
     return company.reportLimitOverride;
   }
+  if (company?.stripePlan === "admin" || company?.stripePlan === "internal") {
+    return Number.POSITIVE_INFINITY;
+  }
   const plan = company?.stripePlan || "free";
   if (plan === "enterprise") return Number.POSITIVE_INFINITY;
   if (plan === "pro") return 150;
@@ -171,13 +174,22 @@ export async function requireTierAccess(ctx: any, companyId: any, feature: strin
   return company;
 }
 
-export async function enforceReportLimit(ctx: any, company: any) {
+export async function reportUsageStatus(ctx: any, company: any) {
   const limit = planReportLimit(company);
-  if (!Number.isFinite(limit)) return;
+  if (!Number.isFinite(limit)) {
+    return { limit, used: 0, remaining: Number.POSITIVE_INFINITY };
+  }
 
   const used = await countMonthlyUsage(ctx, company._id, "report.created");
-  if (used >= limit) {
-    throw new Error("Monthly report limit reached. Upgrade your plan to continue.");
+  return { limit, used, remaining: Math.max(0, limit - used) };
+}
+
+export async function enforceReportLimit(ctx: any, company: any) {
+  const usage = await reportUsageStatus(ctx, company);
+  if (Number.isFinite(usage.limit) && usage.used >= usage.limit) {
+    throw new Error(
+      `Monthly report limit reached (${usage.used}/${usage.limit}). Upgrade your plan or ask support to raise your report limit.`
+    );
   }
 }
 

@@ -1,5 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
+import type { ComponentType } from "react";
 import {
   Building2,
   ChartNoAxesCombined,
@@ -17,7 +18,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { APP_NAME } from "@/lib/constants";
-import { hasLeadPipeline, activePlan, upgradeMessage } from "@/lib/planGate";
+import { hasLeadPipeline, upgradeMessage } from "@/lib/planGate";
 import { api } from "../../convex/_generated/api";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
@@ -72,7 +73,7 @@ function NavLink({
 }: {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   isActive: boolean;
   badge?: number;
   locked?: boolean;

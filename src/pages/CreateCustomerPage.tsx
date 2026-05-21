@@ -4,13 +4,10 @@ import {
   ArrowRight,
   Check,
   Droplets,
-  ExternalLink,
   FlaskConical,
   Loader2,
-  MapPin,
   Search,
   User,
-  Users,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,12 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { contaminantName, isDetectedContaminant, type WaterReport } from "@/lib/supabase";
-import {
-  computeAquaScore,
-  computeFieldReadingAdjustment,
-  readingPayload,
-  type FieldWaterReadings,
-} from "@/lib/waterScore";
+import { computeAquaScore } from "@/lib/waterScore";
 import { scoreClass } from "@/lib/pipeline";
 import { api } from "../../convex/_generated/api";
 
@@ -48,6 +40,51 @@ interface UtilityOption {
   state: string;
   population_served: number;
   water_source: string;
+}
+
+function normalizeUtilityOption(raw: any): UtilityOption | null {
+  if (!raw || typeof raw !== "object") return null;
+  const pwsid = String(raw.pwsid ?? raw.pws_id ?? raw.pwsId ?? "").trim();
+  if (!pwsid) return null;
+  return {
+    pwsid,
+    utility_name: String(raw.utility_name ?? raw.utilityName ?? raw.name ?? raw.utility ?? "Unknown Utility"),
+    city: String(raw.city ?? raw.City ?? ""),
+    state: String(raw.state ?? raw.State ?? ""),
+    population_served: Number(raw.population_served ?? raw.populationServed ?? raw.population ?? 0) || 0,
+    water_source: String(raw.water_source ?? raw.waterSource ?? raw.source ?? "unknown"),
+  };
+}
+
+function finiteNumber(value: unknown, fallback = 0): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function utilityFromReport(report: WaterReport, fallback?: UtilityOption | null): UtilityOption {
+  const utility = normalizeUtilityOption(report.utility_info) ?? fallback;
+  return {
+    pwsid: utility?.pwsid || report.utility_info?.pwsid || "",
+    utility_name: utility?.utility_name || report.utility_info?.utility_name || "Unknown Utility",
+    city: utility?.city || report.utility_info?.city || "",
+    state: utility?.state || report.utility_info?.state || "",
+    population_served: finiteNumber(
+      utility?.population_served || report.utility_info?.population_served,
+    ),
+    water_source: utility?.water_source || report.utility_info?.water_source || "unknown",
+  };
+}
+
+function reportAquaScore(report: WaterReport, contaminants = report.contaminants) {
+  return finiteNumber(computeAquaScore(report.waterScore ?? report.water_score, contaminants));
+}
+
+function aquaTier(score?: number) {
+  if (score === undefined) return "Unknown";
+  if (score >= 80) return "Gold";
+  if (score >= 60) return "Silver";
+  if (score >= 40) return "Bronze";
+  return "At Risk";
 }
 
 function StepIndicator({ step }: { step: number }) {
@@ -94,6 +131,7 @@ export function CreateCustomerPage() {
   const [error, setError] = useState("");
 
   const company = useQuery(api.companies.getMyCompany);
+  const usage = useQuery(api.reports.getReportUsageStatus);
   const saveReport = useMutation(api.reports.saveReport);
   const lookupByZip = useAction(api.supabase.lookupByZip);
   const getWaterReport = useAction(api.supabase.getWaterReport);
@@ -107,8 +145,10 @@ export function CreateCustomerPage() {
     setSelectedUtility(null);
     setReport(null);
     try {
-      const result = await lookupByZip({ zip: lead.zip });
-      const list = Array.isArray(result) ? result : result?.utilities ?? [];
+      const result: any = await lookupByZip({ zip: lead.zip });
+      const list = (Array.isArray(result) ? result : result?.utilities ?? [])
+        .map(normalizeUtilityOption)
+        .filter(Boolean) as UtilityOption[];
       if (list.length === 0) {
         setError("No utilities found for this ZIP code.");
       } else if (list.length === 1) {
@@ -129,16 +169,17 @@ export function CreateCustomerPage() {
     setLoading(true);
     try {
       const result = await getWaterReport({ pwsid: utility.pwsid });
+      if (!result) {
+        setError("No report data available for this water system.");
+        return;
+      }
       setReport(result);
-      setSelectedUtility(utility);
+      setSelectedUtility(utilityFromReport(result, utility));
     } catch (err: any) {
       setError(err.message || "Failed to get water report");
     }
     setLoading(false);
   };
-
-  const canAdvance =
-    lead.name.trim() && lead.zip.length >= 5 && selectedUtility && report;
 
   const handleGoToReview = async () => {
     if (!selectedUtility) {
@@ -154,51 +195,64 @@ export function CreateCustomerPage() {
 
   const computeScore = () => {
     if (!report) return undefined;
-    return computeAquaScore(undefined, report.contaminants);
+    return reportAquaScore(report);
   };
 
   const handleSave = async () => {
     if (!report || !company || !selectedUtility) return;
     setSaving(true);
 
-    const contaminants = report.contaminants.filter(isDetectedContaminant);
+    const utility = utilityFromReport(report, selectedUtility);
+    const reportContaminants = report.contaminants ?? [];
+    const contaminants = reportContaminants.filter(isDetectedContaminant);
     const overHealth = contaminants.filter((c) => c.over_health).length;
     const overLegal = contaminants.filter((c) => c.over_legal).length;
-    const waterScore = computeAquaScore(undefined, contaminants);
+    const waterScore = reportAquaScore(report, contaminants);
 
     try {
-      const reportId = await saveReport({
+      if (usage?.limit !== null && usage?.remaining === 0) {
+        throw new Error(
+          `Monthly report limit reached (${usage.used}/${usage.limit}). Open Subscription to upgrade or apply your promo.`
+        );
+      }
+      const savedReport = await saveReport({
         zip: lead.zip,
-        utilityName: selectedUtility.utility_name,
-        pwsid: selectedUtility.pwsid,
-        city: selectedUtility.city || lead.city,
-        state: selectedUtility.state || lead.state,
-        populationServed: selectedUtility.population_served,
-        waterSource: selectedUtility.water_source,
-        totalContaminants: contaminants.length,
-        overHealthGuidelines: overHealth,
-        overLegalLimits: overLegal,
-        contaminants: JSON.stringify(contaminants),
+        utilityName: utility.utility_name,
+        pwsid: utility.pwsid,
+        city: utility.city || lead.city,
+        state: utility.state || lead.state,
+        populationServed: utility.population_served,
+        waterSource: utility.water_source,
+        totalContaminants: finiteNumber(report.total_detected, contaminants.length),
+        overHealthGuidelines: finiteNumber(report.total_above_health_guideline, overHealth),
+        overLegalLimits: finiteNumber(report.total_above_legal_limit, overLegal),
+        contaminants: JSON.stringify(reportContaminants),
         waterScore,
         scoreMode: "aqua_score_v1",
         customerName: lead.name,
         customerAddress: lead.address,
-        customerCity: lead.city || selectedUtility.city,
-        customerState: lead.state || selectedUtility.state,
+        customerCity: lead.city || utility.city,
+        customerState: lead.state || utility.state,
         customerZip: lead.zip,
         customerPhone: lead.phone,
         customerEmail: lead.email,
       });
+      const reportId =
+        typeof savedReport === "string" ? savedReport : savedReport.reportId;
 
       toast.success("Customer created! Report generated and consumer link ready.");
       navigate(`/customers/${reportId}`);
     } catch (err: any) {
-      toast.error(err.message || "Failed to save");
+      const message = String(err?.message || "Failed to save");
+      toast.error(message.includes("Server Error") && usage?.remaining === 0
+        ? `Monthly report limit reached (${usage.used}/${usage.limit}). Open Subscription to upgrade or apply your promo.`
+        : message);
     }
     setSaving(false);
   };
 
   const score = computeScore();
+  const reportLimitReached = usage?.limit !== null && usage?.remaining === 0;
   const detected = report?.contaminants.filter(isDetectedContaminant) ?? [];
   const overHealth = detected.filter((c) => c.over_health);
   const overLegal = detected.filter((c) => c.over_legal);
@@ -362,7 +416,9 @@ export function CreateCustomerPage() {
                     </p>
                     <p className="text-xs text-emerald-600 dark:text-emerald-400">
                       {detected.length} contaminants detected · AquaScore{" "}
-                      <span className="font-bold">{score ?? "--"}</span>
+                      <span className="font-bold">
+                        {score ?? "--"} {score !== undefined ? aquaTier(score) : ""}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -373,6 +429,11 @@ export function CreateCustomerPage() {
               <p className="rounded-lg bg-red-50 dark:bg-red-950/20 px-3 py-2 text-sm text-red-600">
                 {error}
               </p>
+            )}
+            {reportLimitReached && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300">
+                Monthly report limit reached ({usage.used}/{usage.limit}). Upgrade or apply your promo code in Subscription before creating another report.
+              </div>
             )}
 
             <div className="flex gap-3 pt-2">
@@ -386,9 +447,7 @@ export function CreateCustomerPage() {
               <Button
                 className="flex-1 sm:flex-none"
                 onClick={handleGoToReview}
-                disabled={
-                  !lead.name.trim() || lead.zip.length < 5 || loading
-                }
+                disabled={!lead.name.trim() || lead.zip.length < 5 || loading || reportLimitReached}
               >
                 {loading ? (
                   <>
@@ -423,6 +482,9 @@ export function CreateCustomerPage() {
                 >
                   {score ?? "--"}
                 </div>
+                <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                  {aquaTier(score)}
+                </p>
                 <p className="mt-2 text-lg font-bold">{lead.name}</p>
                 <p className="text-sm text-muted-foreground">
                   {selectedUtility?.utility_name} · {selectedUtility?.city},{" "}
@@ -524,7 +586,7 @@ export function CreateCustomerPage() {
               <ArrowLeft className="size-4" />
               Back
             </Button>
-            <Button className="flex-1" onClick={handleSave} disabled={saving}>
+            <Button className="flex-1" onClick={handleSave} disabled={saving || reportLimitReached}>
               {saving ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />

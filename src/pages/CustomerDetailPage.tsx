@@ -1,14 +1,13 @@
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowUpRight,
   Check,
-  ChevronDown,
   ClipboardCopy,
   Download,
   Droplets,
   ExternalLink,
+  FileText,
   FlaskConical,
   Loader2,
   Mail,
@@ -20,6 +19,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -31,26 +31,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   derivePipelineStage,
   parseContaminants,
-  scoreClass,
   stageMeta,
 } from "@/lib/pipeline";
 import { contaminantName } from "@/lib/supabase";
 import {
-  calculateAquaScoreFromContaminants,
   computeAquaScore,
-  readingNumber,
   readingPayload,
   type FieldWaterReadings,
 } from "@/lib/waterScore";
@@ -117,13 +108,11 @@ function QuickAction({
   label,
   onClick,
   href,
-  variant = "outline",
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   onClick?: () => void;
   href?: string;
-  variant?: "outline" | "default";
 }) {
   const cls =
     "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center text-[11px] font-medium transition-colors active:scale-95";
@@ -260,7 +249,7 @@ export function CustomerDetailPage() {
   const company = useQuery(api.companies.getMyCompany);
   const createReferral = useAction(api.referrals.createConsumerReferral);
   const [referralUrl, setReferralUrl] = useState<string>("");
-  const [sendingReferral, setSendingReferral] = useState(false);
+  const [, setSendingReferral] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
   const contaminants = useMemo(
@@ -451,12 +440,17 @@ export function CustomerDetailPage() {
                   : `/customers`
             }
             onClick={() => {
-              if (report.flipbookUrl) window.open(report.flipbookUrl, "_blank");
+              if (reportId) window.open(`/reports/${reportId}/flipbook`, "_blank");
               else if (shareUrl) window.open(`${shareUrl}/flipbook`, "_blank");
               else toast.error("No flipbook available");
             }}
           />
         </PlanGate>
+        <QuickAction
+          icon={FileText}
+          label="Full Report"
+          href={`/reports/${reportId}/v2`}
+        />
       </div>
 
       {/* Consumer Referral Banner */}

@@ -206,7 +206,7 @@ function generateLocalResponse(
   question: string,
   report: any,
   contaminants: any[],
-  step: string
+  _step: string
 ): string {
   const q = question.toLowerCase();
   const overLegal = contaminants.filter((c: any) => c.over_legal).length;

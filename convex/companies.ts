@@ -129,6 +129,12 @@ export const updateCompany = mutation({
     solutionProductImage: v.optional(v.string()),
     solutionProductDescription: v.optional(v.string()),
     solutionProductBullets: v.optional(v.array(v.string())),
+    additionalProducts: v.optional(v.array(v.object({
+      name: v.string(),
+      description: v.string(),
+      image: v.optional(v.string()),
+      bullets: v.array(v.string()),
+    }))),
     customDomain: v.optional(v.string()),
     brandMode: v.optional(v.string()),
     reportLimitOverride: v.optional(v.number()),
@@ -136,9 +142,9 @@ export const updateCompany = mutation({
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "admin");
 
-    const update: Record<string, string | number | string[] | undefined> = {};
+    const update: Record<string, unknown> = {};
     for (const key of Object.keys(args) as Array<keyof typeof args>) {
-      if (args[key] !== undefined) update[key] = args[key] as string | number | string[];
+      if (args[key] !== undefined) update[key] = args[key];
     }
 
     await ctx.db.patch(membership.companyId, update);

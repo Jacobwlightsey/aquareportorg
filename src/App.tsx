@@ -17,14 +17,13 @@ import {
   DemoWizardPage,
   FlipbookPage,
   PrintReportPage,
-  DashboardPage,
-  GenerateReportPage,
+  ReportV2Page,
+  ReportV2PublicPage,
   InvitePage,
   LandingPage,
   LeadsPage,
   LoginPage,
   PlatformPage,
-  PipelinePage,
   ReportsPage,
   SettingsPage,
   SignupPage,
@@ -43,6 +42,7 @@ function App() {
           <Route path="/r/:shareToken" element={<CustomerReportPage />} />
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />
           <Route path="/r/:shareToken/print" element={<PrintReportPage />} />
+          <Route path="/r/:shareToken/v2" element={<ReportV2PublicPage />} />
 
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingPage />} />
@@ -57,19 +57,17 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayoutV2 />}>
-              {/* ═══ NEW: Customer-centric hub ═══ */}
               <Route path="/customers" element={<CustomersPage />} />
               <Route path="/customers/new" element={<CreateCustomerPage />} />
               <Route path="/customers/:reportId" element={<CustomerDetailPage />} />
               <Route path="/customers/:reportId/demo" element={<DemoWizardPage />} />
-
-              {/* ═══ Existing pages (kept for backward-compat) ═══ */}
               <Route path="/dashboard" element={<Navigate to="/customers" replace />} />
               <Route path="/pipeline" element={<Navigate to="/customers" replace />} />
               <Route path="/generate" element={<Navigate to="/customers/new" replace />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/reports/:reportId" element={<ViewReportPage />} />
               <Route path="/reports/:reportId/flipbook" element={<FlipbookPage />} />
+              <Route path="/reports/:reportId/v2" element={<ReportV2Page />} />
               <Route path="/verify" element={<DealerVerificationPage />} />
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/platform" element={<PlatformPage />} />

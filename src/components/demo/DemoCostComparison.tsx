@@ -1,4 +1,4 @@
-import { DollarSign, Droplet, Package, ShoppingCart, Truck } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
@@ -24,7 +24,7 @@ const DEFAULT_EXPENSES: ExpenseItem[] = [
 
 const FILTRATION_MONTHLY = 39; // typical monthly cost
 
-export function DemoCostComparison({ onNext, onBack }: Props) {
+export function DemoCostComparison({ onNext: _onNext, onBack: _onBack }: Props) {
   const [expenses, setExpenses] = useState(
     DEFAULT_EXPENSES.map((e) => ({ ...e, enabled: true }))
   );

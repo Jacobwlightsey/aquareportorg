@@ -74,8 +74,8 @@ export function DemoLiveTest({
   contaminants,
   liveReadings,
   onUpdateReadings,
-  onNext,
-  onBack,
+  onNext: _onNext,
+  onBack: _onBack,
 }: Props) {
   const [local, setLocal] = useState({
     chlorine: liveReadings.chlorine?.toString() || "",

@@ -1,4 +1,4 @@
-import { AlertTriangle, ChevronLeft, ChevronRight, FlaskConical, Shield, Skull } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, FlaskConical, Skull } from "lucide-react";
 import { useState } from "react";
 import { contaminantName } from "@/lib/supabase";
 
@@ -26,7 +26,7 @@ function SeverityBar({ ratio }: { ratio: number }) {
   );
 }
 
-export function DemoContaminantWalkthrough({ contaminants, onNext, onBack }: Props) {
+export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBack: _onBack }: Props) {
   // Prioritize: legal violations first, then health, then by times_above_ewg
   const sorted = [...contaminants].sort((a, b) => {
     if (a.over_legal !== b.over_legal) return a.over_legal ? -1 : 1;

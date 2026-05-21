@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Droplets, Shield, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Check, Shield, Sparkles, Star } from "lucide-react";
 
 interface Props {
   score?: number;
@@ -37,7 +37,7 @@ const SYSTEMS = [
   },
 ];
 
-export function DemoSolution({ score, company, report, onNext, onBack }: Props) {
+export function DemoSolution({ score, company, report: _report, onNext: _onNext, onBack: _onBack }: Props) {
   const currentScore = score ?? 0;
 
   // Use company's custom product if configured, otherwise show default systems

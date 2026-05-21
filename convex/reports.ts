@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { audit, enforceReportLimit, getMembership, requireRole, trackUsage } from "./security";
+import { audit, enforceReportLimit, getMembership, reportUsageStatus, requireRole, trackUsage } from "./security";
 
 function generateShareToken(): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -18,6 +18,15 @@ function normalizeAquaScore(score: number | undefined, scoreMode: string | undef
   return Math.max(0, Math.min(100, Math.round(aquaScore)));
 }
 
+function finiteNumber(value: unknown, fallback = 0) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function optionalString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
 function parseReportContaminants(raw?: string) {
   if (!raw) return [];
   try {
@@ -28,13 +37,18 @@ function parseReportContaminants(raw?: string) {
   }
 }
 
+function isDetectedContaminant(contaminant: any) {
+  return contaminant?.detected !== false && contaminant?.detection_status !== "not_detected";
+}
+
 function calculateAquaScoreFromContaminants(contaminants: any[]) {
-  const hasContaminantSignal = contaminants.some((contaminant) => contaminant?.over_legal || contaminant?.over_health);
+  const detectedContaminants = contaminants.filter(isDetectedContaminant);
+  const hasContaminantSignal = detectedContaminants.some((contaminant) => contaminant?.over_legal || contaminant?.over_health);
   if (!hasContaminantSignal) return undefined;
-  const legalPenalty = Math.min(30, contaminants.filter((contaminant) => contaminant?.over_legal).length * 18);
+  const legalPenalty = Math.min(30, detectedContaminants.filter((contaminant) => contaminant?.over_legal).length * 18);
   const healthPenalty = Math.min(
     59,
-    contaminants.reduce((total, contaminant) => {
+    detectedContaminants.reduce((total, contaminant) => {
       if (!contaminant?.over_health || contaminant?.over_legal) return total;
       const multiple = contaminant?.times_above_ewg ?? 1;
       if (multiple >= 100) return total + 9;
@@ -43,7 +57,7 @@ function calculateAquaScoreFromContaminants(contaminants: any[]) {
       return total + 3;
     }, 0),
   );
-  const detectionPenalty = Math.min(10, contaminants.length * 0.5);
+  const detectionPenalty = Math.min(10, detectedContaminants.length * 0.5);
   return Math.max(0, Math.min(100, Math.round(100 - legalPenalty - healthPenalty - detectionPenalty)));
 }
 
@@ -64,11 +78,11 @@ export const saveReport = mutation({
     pwsid: v.string(),
     city: v.string(),
     state: v.string(),
-    populationServed: v.number(),
-    waterSource: v.string(),
-    totalContaminants: v.number(),
-    overHealthGuidelines: v.number(),
-    overLegalLimits: v.number(),
+    populationServed: v.union(v.number(), v.string(), v.null()),
+    waterSource: v.union(v.string(), v.null()),
+    totalContaminants: v.union(v.number(), v.string(), v.null()),
+    overHealthGuidelines: v.union(v.number(), v.string(), v.null()),
+    overLegalLimits: v.union(v.number(), v.string(), v.null()),
     contaminants: v.string(),
     customerName: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
@@ -77,7 +91,7 @@ export const saveReport = mutation({
     customerZip: v.optional(v.string()),
     customerPhone: v.optional(v.string()),
     customerEmail: v.optional(v.string()),
-    waterScore: v.optional(v.number()),
+    waterScore: v.optional(v.union(v.number(), v.string(), v.null())),
     scoreMode: v.optional(v.string()),
     chlorine: v.optional(v.number()),
     hardness: v.optional(v.number()),
@@ -100,20 +114,20 @@ export const saveReport = mutation({
       pwsid: args.pwsid,
       city: args.city,
       state: args.state,
-      populationServed: args.populationServed,
-      waterSource: args.waterSource,
-      totalContaminants: args.totalContaminants,
-      overHealthGuidelines: args.overHealthGuidelines,
-      overLegalLimits: args.overLegalLimits,
+      populationServed: finiteNumber(args.populationServed),
+      waterSource: args.waterSource || "unknown",
+      totalContaminants: finiteNumber(args.totalContaminants),
+      overHealthGuidelines: finiteNumber(args.overHealthGuidelines),
+      overLegalLimits: finiteNumber(args.overLegalLimits),
       contaminants: args.contaminants,
-      customerName: args.customerName,
-      customerAddress: args.customerAddress,
-      customerCity: args.customerCity,
-      customerState: args.customerState,
-      customerZip: args.customerZip,
-      customerPhone: args.customerPhone,
-      customerEmail: args.customerEmail,
-      waterScore: args.waterScore,
+      customerName: optionalString(args.customerName),
+      customerAddress: optionalString(args.customerAddress),
+      customerCity: optionalString(args.customerCity),
+      customerState: optionalString(args.customerState),
+      customerZip: optionalString(args.customerZip),
+      customerPhone: optionalString(args.customerPhone),
+      customerEmail: optionalString(args.customerEmail),
+      waterScore: args.waterScore === null || args.waterScore === undefined ? undefined : finiteNumber(args.waterScore),
       scoreMode: args.scoreMode,
       chlorine: args.chlorine,
       hardness: args.hardness,
@@ -168,6 +182,25 @@ export const getMyReports = query({
   },
 });
 
+export const getReportUsageStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const result = await getMembership(ctx);
+    if (!result) return null;
+    const company = await ctx.db.get(result.membership.companyId);
+    if (!company) return null;
+    const usage = await reportUsageStatus(ctx, company);
+    const companyRecord = company as any;
+    return {
+      plan: companyRecord.stripePlan || "free",
+      status: companyRecord.stripeStatus || "none",
+      limit: Number.isFinite(usage.limit) ? usage.limit : null,
+      used: usage.used,
+      remaining: Number.isFinite(usage.remaining) ? usage.remaining : null,
+    };
+  },
+});
+
 export const getReport = query({
   args: { reportId: v.id("reports") },
   handler: async (ctx, args) => {
@@ -199,6 +232,11 @@ export const getReport = query({
       solutionProductImage: company?.solutionProductImage,
       solutionProductDescription: company?.solutionProductDescription,
       solutionProductBullets: company?.solutionProductBullets,
+      additionalProducts: company?.additionalProducts,
+      testNotes: report.testNotes,
+      repName: report.repName,
+      repDate: report.repDate,
+      repPhone: report.repPhone,
     };
   },
 });
@@ -256,6 +294,12 @@ export const getPublicReport = query({
       solutionProductImage: company?.solutionProductImage,
       solutionProductDescription: company?.solutionProductDescription,
       solutionProductBullets: company?.solutionProductBullets,
+      additionalProducts: company?.additionalProducts,
+      customerPhone: report.customerPhone,
+      testNotes: report.testNotes,
+      repName: report.repName,
+      repDate: report.repDate,
+      repPhone: report.repPhone,
     };
   },
 });
@@ -294,6 +338,10 @@ export const updateInHomeReadings = mutation({
     tds: v.optional(v.number()),
     ph: v.optional(v.number()),
     waterScore: v.optional(v.number()),
+    testNotes: v.optional(v.string()),
+    repName: v.optional(v.string()),
+    repDate: v.optional(v.string()),
+    repPhone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "sales_rep");
@@ -307,6 +355,10 @@ export const updateInHomeReadings = mutation({
       hardness: args.hardness,
       tds: args.tds,
       ph: args.ph,
+      testNotes: optionalString(args.testNotes),
+      repName: optionalString(args.repName),
+      repDate: optionalString(args.repDate),
+      repPhone: optionalString(args.repPhone),
       waterScore: args.waterScore,
       scoreMode: "aqua_score_v1",
     });

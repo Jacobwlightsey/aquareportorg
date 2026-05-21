@@ -9,10 +9,16 @@ export interface ScoreContaminant {
   over_legal?: boolean | null;
   over_health?: boolean | null;
   times_above_ewg?: number | null;
+  detected?: boolean | null;
+  detection_status?: string | null;
 }
 
 function clampScore(score: number): number {
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function isScoreDetected(contaminant: ScoreContaminant): boolean {
+  return contaminant.detected !== false && contaminant.detection_status !== "not_detected";
 }
 
 export function readingNumber(value: string | number | null | undefined): number | undefined {
@@ -86,14 +92,15 @@ export function calculateAquaScoreFromContaminants(
   contaminants: ScoreContaminant[],
   readings: FieldWaterReadings = {},
 ): number {
-  const hasContaminantSignal = contaminants.some((contaminant) => contaminant.over_legal || contaminant.over_health);
+  const detectedContaminants = contaminants.filter(isScoreDetected);
+  const hasContaminantSignal = detectedContaminants.some((contaminant) => contaminant.over_legal || contaminant.over_health);
   let score = 100;
 
   if (hasContaminantSignal) {
-    const legalPenalty = Math.min(30, contaminants.filter((contaminant) => contaminant.over_legal).length * 18);
+    const legalPenalty = Math.min(30, detectedContaminants.filter((contaminant) => contaminant.over_legal).length * 18);
     const healthPenalty = Math.min(
       59,
-      contaminants.reduce((total, contaminant) => {
+      detectedContaminants.reduce((total, contaminant) => {
         if (!contaminant.over_health || contaminant.over_legal) return total;
         const multiple = contaminant.times_above_ewg ?? 1;
         if (multiple >= 100) return total + 9;
@@ -102,7 +109,7 @@ export function calculateAquaScoreFromContaminants(
         return total + 3;
       }, 0),
     );
-    const detectionPenalty = Math.min(10, contaminants.length * 0.5);
+    const detectionPenalty = Math.min(10, detectedContaminants.length * 0.5);
     score = 100 - legalPenalty - healthPenalty - detectionPenalty;
   }
 
@@ -116,7 +123,7 @@ export function computeAquaScore(
   readings: FieldWaterReadings = {},
 ): number {
   const parsedBaseScore = readingNumber(baseScore);
-  if (contaminants.some((contaminant) => contaminant.over_legal || contaminant.over_health)) {
+  if (contaminants.filter(isScoreDetected).some((contaminant) => contaminant.over_legal || contaminant.over_health)) {
     return calculateAquaScoreFromContaminants(contaminants, readings);
   }
 
