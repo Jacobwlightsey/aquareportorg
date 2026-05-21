@@ -1,6 +1,8 @@
 type Contaminant = {
   contaminant?: string;
   name?: string;
+  detected?: boolean;
+  detection_status?: "detected" | "not_detected" | "trace" | "unknown";
   detected_level?: number;
   value?: number;
   unit?: string;
@@ -13,15 +15,28 @@ type Contaminant = {
   source_type?: string;
 };
 
+type SolutionProduct = {
+  name: string;
+  description: string;
+  image?: string;
+  bullets: string[];
+};
+
 type ReportTemplateParams = {
   customerName: string;
   customerAddress?: string;
   customerCityStateZip: string;
+  customerPhone?: string;
   companyName: string;
+  companyPhone?: string;
   accentColor: string;
   score: number;
   utilityName: string;
   waterSource: string;
+  populationServed?: number;
+  city?: string;
+  state?: string;
+  zip?: string;
   contaminants: Contaminant[];
   overHealth: number;
   overLegal: number;
@@ -29,6 +44,11 @@ type ReportTemplateParams = {
   hardness?: number;
   tds?: number;
   ph?: number;
+  testNotes?: string;
+  repName?: string;
+  repDate?: string;
+  repPhone?: string;
+  products?: SolutionProduct[];
 };
 
 function esc(value: unknown): string {
@@ -40,291 +60,655 @@ function esc(value: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
-function contaminantName(item: Contaminant) {
-  return item.contaminant || item.name || "Unknown contaminant";
+function cName(c: Contaminant) {
+  return c.contaminant || c.name || "Unknown";
 }
 
-function scoreLabel(score: number) {
-  if (score >= 80) return "Gold";
-  if (score >= 60) return "Silver";
-  if (score >= 40) return "Bronze";
-  return "At Risk";
+function isDetected(c: Contaminant): boolean {
+  return c.detected !== false && c.detection_status !== "not_detected";
 }
 
-function scoreGrade(score: number) {
-  if (score >= 80) return "Gold";
-  if (score >= 60) return "Silver";
-  if (score >= 40) return "Bronze";
-  return "At Risk";
-}
-
-function scoreColor(score: number) {
-  if (score >= 80) return "#ffb000";
-  if (score >= 60) return "#a8c7e8";
-  if (score >= 40) return "#ff8a00";
-  return "#ff4b5c";
-}
-
-function valueWithUnit(value?: number | null, unit?: string) {
-  if (value === undefined || value === null) return "N/A";
-  return `${esc(value)} ${esc(unit || "")}`.trim();
-}
-
-function categoryFor(item: Contaminant) {
-  const name = contaminantName(item).toLowerCase();
-  if (name.includes("trihalomethane") || name.includes("haloacetic") || name.includes("chloroform")) {
+function guessCategory(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("trihalomethane") || n.includes("tthm") || n.includes("bromate"))
     return "Disinfection Byproduct";
-  }
-  if (name.includes("lead") || name.includes("mercury") || name.includes("chromium") || name.includes("arsenic")) {
+  if (n.includes("haloacetic")) return "Haloacetic Acid";
+  if (n.includes("radium") || n.includes("uranium") || n.includes("radon") || n.includes("gross alpha"))
+    return "Radioactive Element";
+  if (n.includes("lead") || n.includes("chromium") || n.includes("mercury") || n.includes("arsenic") || n.includes("cadmium"))
     return "Heavy Metal";
-  }
-  if (name.includes("nitrate") || name.includes("atrazine") || name.includes("metolachlor")) {
-    return "Agricultural Runoff";
-  }
-  if (name.includes("radium") || name.includes("uranium")) return "Radioactive Element";
-  if (name.includes("fluoride")) return "Water Additive";
+  if (n.includes("butadiene") || n.includes("benzene") || n.includes("vinyl"))
+    return "Industrial Chemical";
+  if (n.includes("barium") || n.includes("molybdenum") || n.includes("strontium") || n.includes("vanadium") || n.includes("manganese"))
+    return "Heavy Metal / Mineral";
+  if (n.includes("fluoride")) return "Water Additive";
+  if (n.includes("nitrate") || n.includes("nitrite")) return "Fertilizer / Runoff";
   return "Chemical";
 }
 
-function explainContaminant(item: Contaminant) {
-  const name = contaminantName(item).toLowerCase();
-  if (name.includes("trihalomethane") || name.includes("chloroform")) {
-    return "These compounds can form when disinfectants react with organic matter in water. They are important because families are exposed through drinking water, cooking steam, and hot showers.";
-  }
-  if (name.includes("haloacetic")) {
-    return "Haloacetic acids can form during chlorine disinfection. They are often invisible in the home, so a report or test is usually the only way a homeowner knows they are present.";
-  }
-  if (name.includes("lead")) {
-    return "Lead is commonly associated with plumbing and service lines. It is especially important for children, infants, and pregnant women.";
-  }
-  if (name.includes("mercury")) {
-    return "Mercury is a serious contaminant when confirmed. It should be treated as a priority finding and verified with current in-home testing.";
-  }
-  if (item.effect) return item.effect;
-  return "This contaminant was detected in the water profile and should be reviewed in the context of the health guideline and legal limit shown in this report.";
+function healthDescription(c: Contaminant): string {
+  const n = cName(c).toLowerCase();
+  if (n.includes("trihalomethane") || n.includes("tthm"))
+    return "THMs form when chlorine reacts with organic matter. Long-term exposure is linked to increased risk of bladder cancer, colon cancer, and reproductive problems.";
+  if (n.includes("haloacetic"))
+    return "Haloacetic acids form during chlorine disinfection. Associated with liver and kidney damage, nervous system effects, and increased cancer risk.";
+  if (n.includes("bromate"))
+    return "Bromate forms as a byproduct of water disinfection with ozone. Long-term exposure is associated with increased cancer risk and kidney damage.";
+  if (n.includes("radium"))
+    return "Radium is a naturally occurring radioactive element. Long-term exposure increases risk of bone cancer and other cancers.";
+  if (n.includes("chromium"))
+    return "Hexavalent chromium is a known carcinogen linked to stomach cancer, liver damage, and reproductive harm.";
+  if (n.includes("butadiene"))
+    return "1,3-Butadiene is classified as a known human carcinogen linked to leukemia and lymphoma.";
+  if (n.includes("lead"))
+    return "Lead is a toxic heavy metal with no safe level. It causes brain damage in children, kidney disease, and cardiovascular problems.";
+  if (c.effect) return c.effect;
+  return "Elevated levels may pose health risks with long-term exposure.";
 }
 
-function rowStatus(item: Contaminant) {
-  if (item.over_legal) return '<span class="status bad">Legal issue</span>';
-  if (item.over_health) return '<span class="status warn">Exceeds health</span>';
-  return '<span class="status ok">Meets guideline</span>';
+function letterGrade(score: number): { letter: string; label: string; color: string; bg: string } {
+  if (score >= 80) return { letter: "A", label: "Very Good", color: "#16a34a", bg: "#f0fdf4" };
+  if (score >= 70) return { letter: "B", label: "Good", color: "#d97706", bg: "#fffbeb" };
+  if (score >= 60) return { letter: "B", label: "Above Average", color: "#d97706", bg: "#fffbeb" };
+  if (score >= 50) return { letter: "C", label: "Average", color: "#ea580c", bg: "#fff7ed" };
+  if (score >= 40) return { letter: "C", label: "Below Average", color: "#ea580c", bg: "#fff7ed" };
+  if (score >= 20) return { letter: "D", label: "Poor", color: "#dc2626", bg: "#fef2f2" };
+  return { letter: "F", label: "Very Poor", color: "#991b1b", bg: "#fef2f2" };
 }
 
-function tableRows(items: Contaminant[], compact = false) {
-  if (!items.length) {
-    return '<tr><td colspan="6" class="empty">No contaminants in this section.</td></tr>';
-  }
-  return items
-    .map((item) => {
-      const multiple = item.times_above_ewg && item.times_above_ewg > 1 ? `${esc(item.times_above_ewg)}x` : "-";
-      return `<tr>
-        <td><strong>${esc(contaminantName(item))}</strong>${compact ? "" : `<br><span>${esc(categoryFor(item))}</span>`}</td>
-        <td>${valueWithUnit(item.detected_level ?? item.value, item.unit)}</td>
-        <td>${valueWithUnit(item.health_guideline, item.unit)}</td>
-        <td>${valueWithUnit(item.legal_limit, item.unit)}</td>
-        <td>${multiple}</td>
-        <td>${rowStatus(item)}</td>
-      </tr>`;
-    })
-    .join("");
+function legalGradeInfo(violations: number): { letter: string; label: string; color: string } {
+  if (violations === 0) return { letter: "A", label: "No violations", color: "#16a34a" };
+  if (violations === 1) return { letter: "B", label: `${violations} legal violation`, color: "#d97706" };
+  if (violations <= 3) return { letter: "C", label: `${violations} legal violations`, color: "#ea580c" };
+  return { letter: "D", label: `${violations} legal violations`, color: "#dc2626" };
+}
+
+function healthGradeInfo(exceeding: number): { letter: string; label: string; color: string } {
+  if (exceeding === 0) return { letter: "A", label: "All within guidelines", color: "#16a34a" };
+  if (exceeding <= 2) return { letter: "B", label: `${exceeding} contaminants exceed`, color: "#d97706" };
+  if (exceeding <= 5) return { letter: "C", label: `${exceeding} contaminants exceed`, color: "#ea580c" };
+  return { letter: "D", label: `${exceeding} contaminants exceed`, color: "#dc2626" };
+}
+
+function formatNum(n: number | undefined | null): string {
+  if (n == null) return "0";
+  return n.toLocaleString("en-US");
 }
 
 export function buildReportHtml(params: ReportTemplateParams): string {
-  const accent = params.accentColor || "#0b5d91";
-  const score = Math.max(0, Math.min(100, Math.round(params.score)));
-  const scoreAccent = scoreColor(score);
-  const detected = params.contaminants.filter((item) => item.detected_level !== undefined || item.value !== undefined);
-  const priority = detected
-    .filter((item) => item.over_legal || item.over_health)
-    .sort((a, b) => {
-      if (a.over_legal && !b.over_legal) return -1;
-      if (!a.over_legal && b.over_legal) return 1;
-      return (b.times_above_ewg ?? 0) - (a.times_above_ewg ?? 0);
-    });
-  const otherDetected = detected.filter((item) => !item.over_legal && !item.over_health);
-  const topDetails = priority.slice(0, 4);
-  const reportDate = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  const sourceDescription = params.waterSource.toLowerCase().includes("ground")
-    ? "Your water is drawn from underground sources. Groundwater can pick up naturally occurring minerals, heavy metals, and dissolved substances as it moves through rock and soil."
-    : "Your water is drawn from surface water sources. Surface water can be affected by treatment byproducts, runoff, industrial activity, and seasonal changes.";
+  const junk = [
+    "reverse osmosis", "how your levels compare", "surface water treatment rule",
+    "consumer confidence rule", "lead and copper rule", "total coliform rule",
+    "ground water rule", "filter backwash", "disinfection byproducts rule",
+    "enhanced surface water", "aircraft drinking water",
+  ];
+  const filtered = params.contaminants
+    .filter((item) => !junk.some((blocked) => cName(item).toLowerCase().includes(blocked)))
+    .filter(isDetected);
 
-  return `<!doctype html>
+  const overHealthList = filtered.filter((c) => c.over_health);
+  const belowHealthList = filtered.filter((c) => !c.over_health);
+  const legalViolations = filtered.filter((c) => c.over_legal).length;
+  const totalContaminants = filtered.length;
+  const healthExceedances = overHealthList.length;
+  const belowGuidelines = belowHealthList.length;
+
+  const overall = letterGrade(params.score);
+  const legal = legalGradeInfo(legalViolations);
+  const health = healthGradeInfo(healthExceedances);
+
+  // Top contaminants by severity
+  const topContaminants = [...overHealthList]
+    .sort((a, b) => {
+      const aScore = (a.over_legal ? 1000 : 0) + (a.times_above_ewg ?? 0);
+      const bScore = (b.over_legal ? 1000 : 0) + (b.times_above_ewg ?? 0);
+      return bScore - aScore;
+    })
+    .slice(0, 4);
+
+  const reportDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" });
+  const city = params.city || "";
+  const state = params.state || "";
+  const zip = params.zip || "";
+  const populationServed = params.populationServed || 0;
+  const waterSource = params.waterSource || "Unknown";
+
+  // Products / solutions
+  const products = params.products && params.products.length > 0
+    ? params.products
+    : [{
+        name: "Whole Home Advanced Filtration System",
+        description: "Hand-picked for this home's water profile and designed to protect every tap.",
+        bullets: ["Reduces chemicals, heavy metals, and harmful contaminants", "Protects your health and home", "Improves taste, skin, and hair", "High capacity, low maintenance"],
+      }];
+
+  // ─── Exceeding table rows ───
+  const exceedingRows = overHealthList
+    .map(
+      (c, i) => `<tr style="background:${i % 2 === 0 ? "#fff" : "#f8fafc"}">
+        <td style="padding:8px 10px;font-weight:600;color:#0f172a">${esc(cName(c))}</td>
+        <td style="padding:8px 6px;color:#334155">${c.detected_level ?? "–"} ${esc(c.unit ?? "")}</td>
+        <td style="padding:8px 6px;color:#64748b">${c.health_guideline != null ? `${c.health_guideline} ${esc(c.unit ?? "")}` : "N/A"}</td>
+        <td style="padding:8px 6px;color:#64748b">${c.legal_limit != null ? `${c.legal_limit} ${esc(c.unit ?? "")}` : "N/A"}</td>
+        <td style="padding:8px 6px;font-weight:700;color:#0f172a">${c.times_above_ewg ? `${Math.round(c.times_above_ewg)}×` : "–"}</td>
+        <td style="padding:8px 6px"><span style="display:inline-block;background:#dc2626;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px">Exceeds</span></td>
+        <td style="padding:8px 6px;color:#64748b">${esc(guessCategory(cName(c)))}</td>
+      </tr>`,
+    )
+    .join("");
+
+  // ─── Below-guideline table rows ───
+  const belowRows = belowHealthList
+    .map(
+      (c, i) => `<tr style="background:${i % 2 === 0 ? "#fff" : "#f8fafc"}">
+        <td style="padding:8px 10px;font-weight:600;color:#0f172a">${esc(cName(c))}</td>
+        <td style="padding:8px 6px;color:#334155">${c.detected_level ?? "–"} ${esc(c.unit ?? "")}</td>
+        <td style="padding:8px 6px;color:#64748b">${c.legal_limit != null ? `${c.legal_limit} ${esc(c.unit ?? "")}` : "N/A"}</td>
+        <td style="padding:8px 6px"><span style="display:inline-block;background:#059669;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px">Meets</span></td>
+        <td style="padding:8px 6px;color:#64748b">${esc(guessCategory(cName(c)))}</td>
+      </tr>`,
+    )
+    .join("");
+
+  // ─── Contaminant details cards ───
+  const detailCards = topContaminants
+    .map((c) => {
+      const timesOver = c.times_above_ewg ? `${Math.round(c.times_above_ewg)}× above guideline` : "";
+      const cat = guessCategory(cName(c));
+      return `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:14px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a">${esc(cName(c))}</div>
+        <div style="margin-top:2px;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:1px">${esc(cat)}${timesOver ? ` · ${timesOver}` : ""}</div>
+        <p style="margin-top:12px;font-size:12px;line-height:1.6;color:#334155">${esc(healthDescription(c))}</p>
+        <div style="margin-top:12px;border-top:1px solid #f1f5f9;padding-top:10px;font-size:11px;color:#64748b;display:flex;gap:24px">
+          <span>Detected: <strong style="color:#0f172a">${c.detected_level ?? "–"} ${esc(c.unit ?? "")}</strong></span>
+          <span>Guideline: <strong style="color:#0f172a">${c.health_guideline != null ? `${c.health_guideline} ${esc(c.unit ?? "")}` : "N/A"}</strong></span>
+          <span>Legal: <strong style="color:#0f172a">${c.legal_limit != null ? `${c.legal_limit} ${esc(c.unit ?? "")}` : "N/A"}</strong></span>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  // ─── Products cards ───
+  const productCards = products
+    .map((p) => {
+      const bulletHtml = p.bullets
+        .map(
+          (b) => `<div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#334155;margin-bottom:5px">
+            <span style="color:#059669;font-weight:bold;flex-shrink:0">✓</span>
+            <span>${esc(b)}</span>
+          </div>`,
+        )
+        .join("");
+      return `<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:14px">
+        <div style="display:flex">
+          <div style="width:160px;flex-shrink:0;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:16px;border-right:1px solid #e2e8f0">
+            ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" style="max-height:140px;max-width:100%;object-fit:contain" />` : `<div style="color:#cbd5e1;text-align:center"><div style="font-size:40px">🛡️</div><div style="font-size:10px;margin-top:4px">Filtration System</div></div>`}
+          </div>
+          <div style="flex:1;padding:20px">
+            <div style="font-size:15px;font-weight:700;color:#0f172a">${esc(p.name)}</div>
+            <p style="margin-top:6px;font-size:12px;color:#475569;line-height:1.5">${esc(p.description)}</p>
+            <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">${bulletHtml}</div>
+          </div>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  return `<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>${esc(params.customerName)} Water Report</title>
-  <style>
-    @page { size: Letter; margin: 0; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #12243a; background: #eaf4fb; }
-    .page { width: 8.5in; min-height: 11in; margin: 0 auto; padding: 0.42in; background: #fff; page-break-after: always; position: relative; overflow: hidden; }
-    .page:before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at top right, ${accent}18, transparent 40%); }
-    .content { position: relative; z-index: 1; }
-    .cover { color: white; background: linear-gradient(140deg, #06182f 0%, #0a3564 52%, ${accent} 100%); }
-    .cover:before { background: radial-gradient(circle at 75% 18%, rgba(255,255,255,.22), transparent 30%); }
-    .eyebrow { text-transform: uppercase; letter-spacing: .16em; font-size: 12px; font-weight: 800; color: ${accent}; }
-    .cover .eyebrow { color: #a7e7ff; }
-    h1 { margin: 0; font-size: 58px; line-height: .95; letter-spacing: -0.04em; }
-    h2 { margin: 0 0 16px; font-size: 28px; letter-spacing: -0.03em; color: #0b2d50; }
-    h3 { margin: 0 0 8px; font-size: 16px; color: #0b2d50; }
-    p { margin: 0 0 10px; line-height: 1.45; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 28px; }
-    .brand { font-size: 24px; font-weight: 900; letter-spacing: -0.03em; }
-    .brand small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .22em; font-weight: 800; opacity: .7; }
-    .powered { text-align: right; font-weight: 800; }
-    .cover-card { position: absolute; left: .42in; right: .42in; bottom: .46in; display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; align-items: end; }
-    .prepared { padding: 24px; border: 1px solid rgba(255,255,255,.24); border-radius: 18px; background: rgba(255,255,255,.12); backdrop-filter: blur(8px); }
-    .prepared strong { display: block; font-size: 22px; margin-bottom: 8px; }
-    .score-box { padding: 22px; border-radius: 18px; background: #fff; color: #0b2441; text-align: center; box-shadow: 0 22px 55px rgba(0,0,0,.22); }
-    .score-number { font-size: 72px; line-height: 1; font-weight: 950; color: ${scoreAccent}; }
-    .score-grade { display: inline-flex; align-items: center; justify-content: center; min-width: 104px; height: 38px; padding: 0 14px; border-radius: 999px; background: ${scoreAccent}; color: white; font-size: 16px; text-transform: uppercase; letter-spacing: .08em; font-weight: 950; margin-top: 12px; }
-    .grid { display: grid; gap: 16px; }
-    .two { grid-template-columns: 1fr 1fr; }
-    .three { grid-template-columns: repeat(3, 1fr); }
-    .four { grid-template-columns: repeat(4, 1fr); }
-    .card { border: 1px solid #d7e8f4; border-radius: 14px; background: #fff; padding: 18px; box-shadow: 0 10px 28px rgba(9,44,78,.06); }
-    .dark-card { background: #062b4f; color: white; border-color: #062b4f; }
-    .metric { border-radius: 14px; padding: 16px; background: #f1f8fc; border: 1px solid #d7e8f4; }
-    .metric strong { display: block; font-size: 34px; line-height: 1; color: #0b2d50; }
-    .metric span { color: #506478; font-size: 12px; font-weight: 800; text-transform: uppercase; }
-    .grade-row { display: grid; grid-template-columns: 70px 1fr; gap: 16px; align-items: center; padding: 13px 0; border-bottom: 1px solid #dcebf4; }
-    .grade { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 950; background: ${scoreAccent}; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { text-align: left; padding: 10px 8px; color: #31506d; background: #ecf6fc; text-transform: uppercase; font-size: 10px; letter-spacing: .05em; }
-    td { padding: 10px 8px; border-top: 1px solid #dbeaf4; vertical-align: top; }
-    td span { color: #687b8e; font-size: 10px; }
-    .status { display: inline-block; padding: 5px 7px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; white-space: nowrap; }
-    .bad { color: #991b1b; background: #fee2e2; }
-    .warn { color: #92400e; background: #fef3c7; }
-    .ok { color: #166534; background: #dcfce7; }
-    .empty { text-align: center; color: #60748a; padding: 20px; }
-    .detail { padding: 16px 0; border-bottom: 1px solid #dbeaf4; }
-    .detail-title { display: flex; justify-content: space-between; gap: 12px; color: #0b2d50; font-size: 18px; font-weight: 900; }
-    .detail-meta { color: ${accent}; text-transform: uppercase; font-size: 10px; letter-spacing: .08em; font-weight: 900; margin: 3px 0 8px; }
-    .callout { padding: 18px; border-radius: 14px; background: #fff7ed; border: 1px solid #fed7aa; color: #7c2d12; }
-    .solution { background: linear-gradient(135deg, #08213d, ${accent}); color: white; border: none; }
-    .solution h2, .solution h3 { color: white; }
-    .test-row { display: grid; grid-template-columns: 1fr 180px; gap: 16px; align-items: center; padding: 17px 0; border-bottom: 1px solid #dbeaf4; }
-    .blank { height: 34px; border: 1px solid #b7cedd; border-radius: 8px; background: #fff; }
-    .footer { position: absolute; left: .42in; right: .42in; bottom: .22in; color: #75879a; font-size: 10px; display: flex; justify-content: space-between; }
-  </style>
+<meta charset="utf-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .page {
+    width: 816px;
+    min-height: 1056px;
+    margin: 0 auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    background: #fff;
+  }
+
+  .serif { font-family: 'Playfair Display', Georgia, serif; }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+  }
+  .page-header .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #1e293b;
+    text-transform: uppercase;
+  }
+  .page-header .utility-label {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .page-footer {
+    margin-top: auto;
+    padding-top: 24px;
+  }
+  .page-footer-inner {
+    border-top: 1px solid #cbd5e1;
+    padding-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #94a3b8;
+  }
+
+  .amber-callout {
+    border: 1px solid #fde68a;
+    background: rgba(254, 243, 199, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 20px;
+  }
+  .amber-callout .title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #92400e;
+  }
+  .amber-callout p {
+    margin-top: 6px;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: #334155;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th {
+    background: #1a2332;
+    color: #fff;
+    text-align: left;
+    padding: 10px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  th:first-child { padding-left: 10px; }
+</style>
 </head>
 <body>
-  <section class="page cover">
-    <div class="content">
-      <div class="topbar">
-        <div class="brand">${esc(params.companyName)}<small>Water Solutions</small></div>
-        <div class="powered">Powered by<br>AquaReport</div>
-      </div>
-      <div class="eyebrow">Personalized Water Quality Analysis</div>
-      <h1>Your Home's<br>Water Report</h1>
-      <p style="font-size:20px;max-width:470px;margin-top:20px;color:#d8f3ff">A detailed analysis of contaminants detected in your local water supply by ${esc(params.utilityName)}.</p>
-      <div class="cover-card">
-        <div class="prepared">
-          <div class="eyebrow">Prepared For</div>
-          <strong>${esc(params.customerName || "Homeowner")}</strong>
-          <p>${esc(params.customerAddress || "Home address")}<br>${esc(params.customerCityStateZip)}</p>
-          <p>${esc(reportDate)}</p>
-        </div>
-        <div class="score-box">
-          <div class="eyebrow">AquaScore</div>
-          <div class="score-number">${score}</div>
-          <div>${esc(scoreLabel(score))}</div>
-          <div class="score-grade">${scoreGrade(score)}</div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <section class="page">
-    <div class="content">
-      <div class="topbar"><div><div class="eyebrow">Water Quality Overview</div><h2>${esc(params.utilityName)}</h2></div><div class="brand">AquaReport</div></div>
-      <div class="grid two">
-        <div class="card">
-          <h3>AquaScore Certification</h3>
-          <div class="grade-row"><div class="grade" style="font-size:12px;text-transform:uppercase">${scoreGrade(score)}</div><div><strong>Overall AquaScore: ${score}</strong><p>${esc(scoreLabel(score))} rating. Properties are certified based on their AquaScore rating.</p></div></div>
-          <div class="grade-row"><div class="grade" style="background:${params.overLegal > 0 ? "#dc2626" : "#16a34a"}">${params.overLegal > 0 ? "D" : "A"}</div><div><strong>Legal Compliance</strong><p>${esc(params.overLegal)} legal limit violation${params.overLegal === 1 ? "" : "s"} found.</p></div></div>
-          <div class="grade-row"><div class="grade" style="background:${params.overHealth > 0 ? "#d97706" : "#16a34a"}">${params.overHealth > 0 ? "D" : "A"}</div><div><strong>Health Guidelines</strong><p>${esc(params.overHealth)} contaminant${params.overHealth === 1 ? "" : "s"} exceed health-based guidelines.</p></div></div>
-        </div>
-        <div class="card dark-card">
-          <h3>Your Water Utility</h3>
-          <p><strong>Provider</strong><br>${esc(params.utilityName)}</p>
-          <p><strong>Water Source</strong><br>${esc(params.waterSource || "Unknown")}</p>
-          <p><strong>Location</strong><br>${esc(params.customerCityStateZip)}</p>
-          <p>${esc(sourceDescription)}</p>
-        </div>
-      </div>
-      <div class="grid four" style="margin-top:16px">
-        <div class="metric"><strong>${detected.length}</strong><span>Total detected</span></div>
-        <div class="metric"><strong>${params.overHealth}</strong><span>Over health</span></div>
-        <div class="metric"><strong>${otherDetected.length}</strong><span>Below guideline</span></div>
-        <div class="metric"><strong>${params.overLegal}</strong><span>Legal violations</span></div>
-      </div>
-      <div class="callout" style="margin-top:16px"><strong>What does this mean?</strong><br>Some water can meet minimum legal standards while still exceeding stricter health-based guidelines. This report is designed to help homeowners understand what was detected and why whole-home protection may be worth discussing.</div>
+<!-- ═════════════════════════════════════════════════
+     PAGE 1 — COVER
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:0">
+  <div style="flex:1;display:flex;flex-direction:column;padding:48px;color:#fff;background:linear-gradient(160deg,#0a1628 0%,#0f2444 40%,#162d50 70%,#0a1628 100%)">
+    <div style="height:96px"></div>
+    <div style="border:1px solid rgba(100,116,139,0.4);border-radius:4px;padding:8px 16px;display:inline-block;align-self:flex-start">
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.2em;color:#cbd5e1;text-transform:uppercase">Personalized Water Quality Analysis</span>
     </div>
-    <div class="footer"><span>Personalized Water Report</span><span>Page 1</span></div>
-  </section>
+    <h1 style="margin-top:32px" class="serif">
+      <span style="display:block;font-size:56px;font-weight:700;line-height:1.1;color:#fff">Your Home's</span>
+      <span style="display:block;font-size:56px;font-weight:700;line-height:1.1;color:#6ba3d6">Water Report</span>
+    </h1>
+    <p style="margin-top:20px;font-size:15px;line-height:1.6;color:#cbd5e1;max-width:420px">
+      A detailed analysis of contaminants detected in your local water supply by ${esc(params.utilityName)}.
+    </p>
+    <div style="margin-top:48px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:24px;max-width:340px;backdrop-filter:blur(4px)">
+      <span style="font-size:10px;font-weight:700;letter-spacing:0.2em;color:#94a3b8;text-transform:uppercase">Prepared For</span>
+      <div style="margin-top:8px;font-size:20px;font-weight:700;color:#fff" class="serif">${esc(params.customerName)}</div>
+      <div style="margin-top:8px;font-size:13px;color:#cbd5e1;line-height:1.6">
+        ${params.customerAddress ? `<div>${esc(params.customerAddress)}</div>` : ""}
+        <div>${esc(params.customerCityStateZip)}</div>
+        ${params.customerPhone ? `<div>${esc(params.customerPhone)}</div>` : ""}
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="border-top:1px solid rgba(71,85,105,0.4);padding-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#94a3b8">
+      <span>${esc(reportDate)}</span>
+      <span>Powered by AquaReport</span>
+    </div>
+  </div>
+</div>
 
-  <section class="page">
-    <div class="content">
-      <div class="topbar"><div><div class="eyebrow">Contaminants Detected</div><h2>${esc(params.utilityName)}</h2></div><div class="brand">AquaReport</div></div>
-      <h3>Contaminants Exceeding Health Guidelines</h3>
-      <p>These contaminants were detected at levels above health-based guidelines or legal limits.</p>
-      <table><thead><tr><th>Contaminant</th><th>Detected</th><th>Health Guideline</th><th>Legal Limit</th><th>Over</th><th>Status</th></tr></thead><tbody>${tableRows(priority.slice(0, 12))}</tbody></table>
-      <h3 style="margin-top:22px">Other Contaminants Detected</h3>
-      <p>These contaminants were detected but are lower priority compared with the findings above.</p>
-      <table><thead><tr><th>Contaminant</th><th>Detected</th><th>Health Guideline</th><th>Legal Limit</th><th>Over</th><th>Status</th></tr></thead><tbody>${tableRows(otherDetected.slice(0, 10), true)}</tbody></table>
-    </div>
-    <div class="footer"><span>Personalized Water Report</span><span>Page 2</span></div>
-  </section>
+<!-- ═════════════════════════════════════════════════
+     PAGE 2 — WATER QUALITY OVERVIEW
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:40px">
+  <div class="page-header">
+    <span class="section-label">Water Quality Overview</span>
+    <span class="utility-label">${esc(params.utilityName)}</span>
+  </div>
 
-  <section class="page">
-    <div class="content">
-      <div class="topbar"><div><div class="eyebrow">Contaminant Details and Health Risks</div><h2>${esc(params.utilityName)}</h2></div><div class="brand">AquaReport</div></div>
-      <p>Detailed breakdown of the most significant contaminants found in the water profile and why they matter for a home.</p>
-      ${topDetails
-        .map((item) => `<div class="detail">
-          <div class="detail-title"><span>${esc(contaminantName(item))}</span><span>${item.times_above_ewg && item.times_above_ewg > 1 ? `${esc(item.times_above_ewg)}x` : ""}</span></div>
-          <div class="detail-meta">${esc(categoryFor(item))}${item.over_legal ? " - legal limit issue" : item.over_health ? " - above health guideline" : ""}</div>
-          <p>${esc(explainContaminant(item))}</p>
-          <p><strong>Detected:</strong> ${valueWithUnit(item.detected_level ?? item.value, item.unit)} &nbsp; <strong>Guideline:</strong> ${valueWithUnit(item.health_guideline, item.unit)} &nbsp; <strong>Legal:</strong> ${valueWithUnit(item.legal_limit, item.unit)}</p>
-        </div>`)
-        .join("")}
-      <div class="callout" style="margin-top:18px"><strong>"Legal" does not always mean "ideal."</strong><br>Federal standards and health-based guidelines are not the same thing. A homeowner may still want filtration when contaminants are below a legal limit but above a more protective health guideline.</div>
-    </div>
-    <div class="footer"><span>Personalized Water Report</span><span>Page 3</span></div>
-  </section>
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">Water Quality Score</h2>
+  <p style="margin-top:8px;font-size:14px;color:#475569">
+    Your water is supplied by ${esc(params.utilityName)}, serving approximately ~${formatNum(populationServed)} residents in the ${esc(city)}, ${esc(state)} area.
+  </p>
 
-  <section class="page">
-    <div class="content">
-      <div class="topbar"><div><div class="eyebrow">Health Overview</div><h2>What This Means For Your Family</h2></div><div class="brand">AquaReport</div></div>
-      <div class="grid two">
-        <div class="card"><div class="metric"><strong>${params.overHealth}</strong><span>Health guideline exceedances</span></div><p style="margin-top:14px">These are the findings most useful in a homeowner conversation because they show where water quality may fall short of modern health-based recommendations.</p></div>
-        <div class="card"><div class="metric"><strong>${params.overLegal}</strong><span>Legal limit violations</span></div><p style="margin-top:14px">${params.overLegal > 0 ? "Legal-limit issues should be treated as priority findings and verified with current testing." : "No legal-limit violation is shown in this report, but health guideline concerns may still matter."}</p></div>
-      </div>
-      <div class="card" style="margin-top:16px"><h3>Who Is Most at Risk?</h3><p><strong>Children and infants:</strong> Developing bodies are more vulnerable to contaminant exposure.</p><p><strong>Pregnant women:</strong> Disinfection byproducts and heavy metals may be more concerning during pregnancy.</p><p><strong>Older adults and immunocompromised people:</strong> Added contaminant exposure can matter more when health is already fragile.</p></div>
-      <div class="card solution" style="margin-top:16px"><h2>Your Personalized Recommendation</h2><p>Based on the contaminants detected in this water profile, a whole-home advanced filtration system is the strongest conversation to have. It helps address drinking, cooking, bathing, laundry, and shower exposure instead of only treating one faucet.</p><p><strong>Recommended next step:</strong> confirm current tap conditions with an in-home test, then match treatment to the specific contaminant profile shown here.</p></div>
+  <!-- Score cards -->
+  <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+    <div style="border-radius:8px;border:1px solid ${overall.color}30;background:${overall.bg};padding:20px;text-align:center">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#475569;text-transform:uppercase">Overall Score</div>
+      <div style="margin-top:8px;font-size:60px;font-weight:700;color:${overall.color}" class="serif">${overall.letter}</div>
+      <div style="margin-top:4px;font-size:11px;color:#64748b">${overall.label}</div>
     </div>
-    <div class="footer"><span>Personalized Water Report</span><span>Page 4</span></div>
-  </section>
+    <div style="border-radius:8px;border:1px solid ${legal.color}30;background:#fffbeb;padding:20px;text-align:center">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#475569;text-transform:uppercase">Legal Compliance</div>
+      <div style="margin-top:8px;font-size:60px;font-weight:700;color:${legal.color}" class="serif">${legal.letter}</div>
+      <div style="margin-top:4px;font-size:11px;color:#64748b">${legal.label}</div>
+    </div>
+    <div style="border-radius:8px;border:1px solid ${health.color}30;background:#fef2f2;padding:20px;text-align:center">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#475569;text-transform:uppercase">Health Guidelines</div>
+      <div style="margin-top:8px;font-size:60px;font-weight:700;color:${health.color}" class="serif">${health.letter}</div>
+      <div style="margin-top:4px;font-size:11px;color:#64748b">${health.label}</div>
+    </div>
+  </div>
 
-  <section class="page">
-    <div class="content">
-      <div class="topbar"><div><div class="eyebrow">On-Site Water Quality Test Results</div><h2>Completed During Consultation</h2></div><div class="brand">AquaReport</div></div>
-      <div class="card">
-        <div class="test-row"><div><strong>Water Hardness Level</strong><p>GPG or ppm</p></div><div class="blank">${params.hardness === undefined ? "" : esc(params.hardness)}</div></div>
-        <div class="test-row"><div><strong>Chlorine Level</strong><p>ppm</p></div><div class="blank">${params.chlorine === undefined ? "" : esc(params.chlorine)}</div></div>
-        <div class="test-row"><div><strong>TDS Level</strong><p>ppm</p></div><div class="blank">${params.tds === undefined ? "" : esc(params.tds)}</div></div>
-        <div class="test-row"><div><strong>pH Level</strong><p>Ideal range: 6.5 - 8.5</p></div><div class="blank">${params.ph === undefined ? "" : esc(params.ph)}</div></div>
+  <!-- What does this mean -->
+  <div class="amber-callout">
+    <div class="title">⚠️ What does this mean?</div>
+    <p>While your water may meet EPA legal minimums, it does <strong>not</strong> meet stricter health-based guidelines recommended by independent health organizations. Many federal standards have not been updated in decades, while scientific research has identified health risks at far lower concentrations.</p>
+  </div>
+
+  <!-- Utility info -->
+  <div style="margin-top:20px;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
+    <div style="font-size:14px;font-weight:700;color:#0f172a">Your Water Utility</div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:12px">
+      <span style="color:#64748b">Provider</span><span style="font-weight:600;color:#1e293b">${esc(params.utilityName)}</span>
+      <span style="color:#64748b">Population Served</span><span style="font-weight:600;color:#1e293b">~${formatNum(populationServed)}</span>
+      <span style="color:#64748b">Water Source</span><span style="font-weight:600;color:#1e293b">${esc(waterSource)}</span>
+      <span style="color:#64748b">Location</span><span style="font-weight:600;color:#1e293b">${esc(city)}, ${esc(state)} ${esc(zip)}</span>
+    </div>
+  </div>
+
+  <!-- Stat boxes -->
+  <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+    <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#0f172a">${totalContaminants}</div>
+      <div style="margin-top:4px;font-size:10px;color:#64748b;line-height:1.3">Total Contaminants<br/>Detected</div>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#dc2626">${healthExceedances}</div>
+      <div style="margin-top:4px;font-size:10px;color:#64748b;line-height:1.3">Exceeding Health<br/>Guidelines</div>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#16a34a">${belowGuidelines}</div>
+      <div style="margin-top:4px;font-size:10px;color:#64748b;line-height:1.3">Detected Below<br/>Guidelines</div>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#d97706">${legalViolations}</div>
+      <div style="margin-top:4px;font-size:10px;color:#64748b;line-height:1.3">EPA Legal Limit<br/>Violations</div>
+    </div>
+  </div>
+
+  <!-- Water source info -->
+  <div style="margin-top:20px;border:1px solid #e2e8f0;border-radius:8px;padding:16px">
+    <div style="font-size:12px;font-weight:600;color:#1e293b">💧 About Your Water Source</div>
+    <p style="margin-top:6px;font-size:11.5px;line-height:1.6;color:#475569">
+      Your water is drawn from <strong>${waterSource.toLowerCase().includes("ground") ? "underground aquifers (groundwater)" : esc(waterSource.toLowerCase())}</strong> serving the ${esc(city)} area.
+      ${waterSource.toLowerCase().includes("ground") ? "Groundwater picks up minerals and naturally occurring contaminants as it filters through rock and soil layers." : "Surface water can be affected by agricultural runoff, industrial discharge, and natural contaminants."}
+    </p>
+  </div>
+
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 1</span></div></div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+     PAGE 3 — CONTAMINANTS TABLE
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:40px">
+  <div class="page-header">
+    <span class="section-label">Contaminants Detected</span>
+    <span class="utility-label">${esc(params.utilityName)}</span>
+  </div>
+
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">Contaminants Exceeding Health Guidelines</h2>
+  <p style="margin-top:8px;font-size:12px;color:#475569">
+    These ${healthExceedances} contaminants were detected at levels above health-based guidelines set by independent health organizations.
+  </p>
+
+  <div style="margin-top:16px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+    <table>
+      <thead>
+        <tr><th>Contaminant</th><th>Detected</th><th>Health Guideline</th><th>Legal Limit</th><th>× Over</th><th>Status</th><th>Category</th></tr>
+      </thead>
+      <tbody>${exceedingRows}</tbody>
+    </table>
+  </div>
+
+  <h2 style="margin-top:32px;font-size:24px;font-weight:700;color:#0f172a" class="serif">Other Contaminants Detected</h2>
+  <p style="margin-top:8px;font-size:12px;color:#475569">
+    These ${belowGuidelines} contaminants were detected but at levels within health-based guidelines.
+  </p>
+
+  <div style="margin-top:16px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+    <table>
+      <thead>
+        <tr><th>Contaminant</th><th>Detected</th><th>Legal Limit</th><th>Status</th><th>Category</th></tr>
+      </thead>
+      <tbody>${belowRows}</tbody>
+    </table>
+  </div>
+
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 2</span></div></div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+     PAGE 4 — CONTAMINANT DETAILS
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:40px">
+  <div class="page-header">
+    <span class="section-label">Contaminant Details &amp; Health Risks</span>
+    <span class="utility-label">${esc(params.utilityName)}</span>
+  </div>
+
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">Understanding Your Contaminants</h2>
+  <p style="margin-top:8px;font-size:12px;color:#475569">
+    Detailed breakdown of the most significant contaminants found in your water and their potential health effects.
+  </p>
+
+  <div style="margin-top:20px">${detailCards}</div>
+
+  <div class="amber-callout">
+    <div class="title">⚠️ "Legal" Does Not Mean "Safe"</div>
+    <p>Federal EPA standards were set years — sometimes decades — ago. Independent health organizations set stricter guidelines based on <strong>current scientific research</strong>. Contaminants like chromium-6, trihalomethanes, and nitrates are colorless, odorless, and tasteless — they cannot be detected without testing.</p>
+  </div>
+
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 3</span></div></div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+     PAGE 5 — HEALTH OVERVIEW
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:40px">
+  <div class="page-header">
+    <span class="section-label">Health Overview</span>
+    <span class="utility-label">${esc(params.utilityName)}</span>
+  </div>
+
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">What This Means For Your Family</h2>
+  <p style="margin-top:8px;font-size:12px;color:#475569">
+    A summary of the health implications of the contaminants found in your water supply and recommended actions.
+  </p>
+
+  <div style="margin-top:20px">
+    <div style="border:1px solid #fde68a;background:rgba(254,243,199,0.2);border-radius:8px;padding:20px;margin-bottom:12px">
+      <div style="font-size:28px;font-weight:700;color:#b45309">${healthExceedances}</div>
+      <div style="margin-top:4px;font-size:14px;font-weight:700;color:#0f172a">Health Guideline Exceedances</div>
+      <p style="margin-top:8px;font-size:12px;color:#475569;line-height:1.6">Contaminants detected above levels that independent health organizations consider safe for long-term consumption.</p>
+    </div>
+    <div style="border:1px solid #fecaca;background:rgba(254,226,226,0.2);border-radius:8px;padding:20px;margin-bottom:12px">
+      <div style="font-size:28px;font-weight:700;color:#b91c1c">${legalViolations}</div>
+      <div style="margin-top:4px;font-size:14px;font-weight:700;color:#0f172a">Legal Limit Violations</div>
+      <p style="margin-top:8px;font-size:12px;color:#475569;line-height:1.6">Your water has ${legalViolations} contaminant(s) exceeding EPA legal limits. This is a serious concern requiring immediate attention.</p>
+    </div>
+  </div>
+
+  <!-- Who is at risk -->
+  <div style="margin-top:8px;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
+    <div style="font-size:13px;font-weight:700;color:#0f172a">💧 Who Is Most at Risk?</div>
+    <div style="margin-top:12px;font-size:12px;color:#334155;line-height:1.6">
+      <p><strong>Children &amp; infants:</strong> Developing brains and bodies are more vulnerable to lead, nitrates, and chemical exposure.</p>
+      <p style="margin-top:8px"><strong>Pregnant women:</strong> Disinfection byproducts and heavy metals are linked to reproductive complications.</p>
+      <p style="margin-top:8px"><strong>Elderly &amp; immunocompromised:</strong> Weakened immune systems are less equipped to handle contaminant exposure.</p>
+    </div>
+  </div>
+
+  <!-- What can you do -->
+  <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
+    <div style="font-size:13px;font-weight:700;color:#0f172a">✓ What Can You Do?</div>
+    <div style="margin-top:12px;font-size:12px;color:#334155;line-height:1.6">
+      <p><strong>Whole-home filtration</strong> is the most effective solution — it protects every tap, shower, and appliance in your home.</p>
+      <p style="margin-top:6px">Point-of-use filters (pitcher, faucet) help for drinking but don't address shower/bath exposure where chemicals are absorbed through skin and inhaled as steam.</p>
+    </div>
+  </div>
+
+  <div class="amber-callout">
+    <div class="title">⚠️ Why Filtration Matters</div>
+    <p>Studies show that exposure to water contaminants occurs not just through drinking, but through <strong>showering, bathing, cooking, and dishwashing</strong>. Chlorine and volatile organic compounds are absorbed through the skin and inhaled as steam during hot showers.</p>
+  </div>
+
+  <!-- Recommendation -->
+  <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
+    <div style="font-size:13px;font-weight:700;color:#0f172a">✨ Your Personalized Recommendation</div>
+    <p style="margin-top:8px;font-size:12px;color:#334155;line-height:1.6">
+      Based on the ${totalContaminants} contaminants detected in your water — including ${healthExceedances} exceeding health guidelines — we recommend a <strong>whole-home advanced filtration system</strong> customized for your water profile.
+    </p>
+  </div>
+
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 4</span></div></div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+     PAGE 6 — SOLUTIONS
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:40px">
+  <div class="page-header">
+    <span class="section-label">Recommended Solutions</span>
+    <span class="utility-label">${esc(params.utilityName)}</span>
+  </div>
+
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">Best Solutions For Your Water</h2>
+  <p style="margin-top:8px;font-size:12px;color:#475569">
+    Based on your water quality profile, ${esc(params.companyName)} recommends the following solutions customized for your home.
+  </p>
+
+  <div style="margin-top:20px">${productCards}</div>
+
+  <!-- Why Choose Us -->
+  <div style="margin-top:24px;background:#0f2444;border-radius:8px;padding:24px;color:#fff">
+    <div style="font-size:18px;font-weight:700">Why Choose ${esc(params.companyName)}?</div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:12px">
+      <div>
+        <div style="font-weight:600">🛡️ Custom Solutions</div>
+        <div style="margin-top:4px;color:rgba(191,219,254,0.8)">Systems matched to your specific water profile</div>
       </div>
-      <div class="card" style="margin-top:18px"><h3>Additional Notes / Observations</h3><div style="height:160px;border:1px solid #b7cedd;border-radius:10px;background:#fff"></div></div>
-      <div class="grid two" style="margin-top:18px">
-        <div class="card"><h3>Water Quality Test Performed By</h3><div class="blank"></div><p style="margin-top:8px">Representative name</p></div>
-        <div class="card"><h3>Date / Phone</h3><div class="blank"></div><p style="margin-top:8px">Contact information</p></div>
+      <div>
+        <div style="font-weight:600">👥 Expert Installation</div>
+        <div style="margin-top:4px;color:rgba(191,219,254,0.8)">Professional setup by certified technicians</div>
+      </div>
+      <div>
+        <div style="font-weight:600">❤️ Family Protection</div>
+        <div style="margin-top:4px;color:rgba(191,219,254,0.8)">Clean water at every tap in your home</div>
       </div>
     </div>
-    <div class="footer"><span>Personalized Water Report - ${esc(params.utilityName)} Service Area</span><span>${esc(reportDate)}</span></div>
-  </section>
+    ${params.companyPhone ? `<div style="margin-top:16px;text-align:center;font-size:14px;font-weight:600;color:#bfdbfe">Call us today: ${esc(params.companyPhone)}</div>` : ""}
+  </div>
+
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 5</span></div></div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+     PAGE 7 — ON-SITE TEST RESULTS
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:40px">
+  <div style="text-align:center;margin-top:16px">
+    <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">On-Site Water Quality Test Results</h2>
+    <p style="margin-top:8px;font-size:13px;color:#64748b">Completed at the time of the in-home water quality consultation</p>
+  </div>
+
+  <div style="margin-top:8px;border-top:2px solid #3b82f6"></div>
+
+  <!-- Test Results -->
+  <div style="margin-top:24px;border:1px solid #e2e8f0;border-radius:8px;padding:24px">
+    <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:24px">Test Results</div>
+
+    <div style="margin-bottom:20px;display:flex;align-items:center;gap:16px">
+      <span style="font-size:24px;width:40px;text-align:center">💧</span>
+      <span style="font-size:13px;font-weight:600;color:#1e293b;width:160px">Water Hardness Level</span>
+      <div style="flex:1;border-bottom:1px solid #cbd5e1;padding:4px 8px;min-height:28px;font-size:14px;font-weight:600;color:#0f172a">${params.hardness !== undefined ? esc(String(params.hardness)) : ""}</div>
+      <span style="font-size:11px;color:#94a3b8;width:140px;text-align:right">GPG (grains per gallon)</span>
+    </div>
+
+    <div style="margin-bottom:20px;display:flex;align-items:center;gap:16px">
+      <span style="font-size:24px;width:40px;text-align:center">🧪</span>
+      <span style="font-size:13px;font-weight:600;color:#1e293b;width:160px">Chlorine Level</span>
+      <div style="flex:1;border-bottom:1px solid #cbd5e1;padding:4px 8px;min-height:28px;font-size:14px;font-weight:600;color:#0f172a">${params.chlorine !== undefined ? esc(String(params.chlorine)) : ""}</div>
+      <span style="font-size:11px;color:#94a3b8;width:140px;text-align:right">ppm (parts per million)</span>
+    </div>
+
+    <div style="margin-bottom:20px;display:flex;align-items:center;gap:16px">
+      <span style="font-size:24px;width:40px;text-align:center">⚗️</span>
+      <span style="font-size:13px;font-weight:600;color:#1e293b;width:160px">TDS Level</span>
+      <div style="flex:1;border-bottom:1px solid #cbd5e1;padding:4px 8px;min-height:28px;font-size:14px;font-weight:600;color:#0f172a">${params.tds !== undefined ? esc(String(params.tds)) : ""}</div>
+      <span style="font-size:11px;color:#94a3b8;width:140px;text-align:right">ppm (parts per million)</span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:16px">
+      <span style="font-size:24px;width:40px;text-align:center">📊</span>
+      <span style="font-size:13px;font-weight:600;color:#1e293b;width:160px">pH Level</span>
+      <div style="flex:1;border-bottom:1px solid #cbd5e1;padding:4px 8px;min-height:28px;font-size:14px;font-weight:600;color:#0f172a">${params.ph !== undefined ? esc(String(params.ph)) : ""}</div>
+      <span style="font-size:11px;color:#94a3b8;width:140px;text-align:right">(ideal: 6.5 – 8.5)</span>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div style="margin-top:24px">
+    <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:12px">Additional Notes / Observations</div>
+    <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:24px;font-size:14px;color:#0f172a;margin-bottom:12px">${params.testNotes ? esc(params.testNotes) : ""}</div>
+    <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:24px;margin-bottom:12px"></div>
+    <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:24px;margin-bottom:12px"></div>
+    <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:24px"></div>
+  </div>
+
+  <!-- Performed by -->
+  <div style="margin-top:32px;border-top:2px solid #3b82f6;padding-top:24px">
+    <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:24px">Water Quality Test Performed By</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px 48px">
+      <div>
+        <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:28px;font-size:14px;font-weight:600;color:#0f172a">${params.repName ? esc(params.repName) : ""}</div>
+        <div style="margin-top:6px;font-size:11px;color:#64748b">Representative Name</div>
+      </div>
+      <div>
+        <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:28px;font-size:14px;font-weight:600;color:#0f172a">${params.repDate ? esc(params.repDate) : ""}</div>
+        <div style="margin-top:6px;font-size:11px;color:#64748b">Date</div>
+      </div>
+      <div>
+        <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:28px;font-size:14px;font-style:italic;color:#94a3b8">&nbsp;</div>
+        <div style="margin-top:6px;font-size:11px;color:#64748b">Representative Signature</div>
+      </div>
+      <div>
+        <div style="border-bottom:1px solid #cbd5e1;padding:4px 0;min-height:28px;font-size:14px;font-weight:600;color:#0f172a">${params.repPhone ? esc(params.repPhone) : ""}</div>
+        <div style="margin-top:6px;font-size:11px;color:#64748b">Phone Number</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <div class="page-footer-inner" style="justify-content:center">
+      <span>Personalized Water Report · ${esc(params.utilityName)} Service Area · ${esc(reportDate)}</span>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>`;
 }
