@@ -10,9 +10,11 @@ import {
   Loader2,
   Mail,
 
+  FileText,
   MessageSquare,
   Phone,
   Play,
+  RefreshCw,
   Shield,
   Wrench,
 } from "lucide-react";
@@ -244,8 +246,10 @@ export function CustomerDetailPage() {
   );
   const company = useQuery(api.companies.getMyCompany);
   const createReferral = useAction(api.referrals.createConsumerReferral);
+  const generatePdf = useAction(api.reportPdf.generateReportPdf);
   const [referralUrl, setReferralUrl] = useState<string>("");
   const [, setSendingReferral] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
   const contaminants = useMemo(
@@ -284,6 +288,22 @@ export function CustomerDetailPage() {
     }
     setSendingReferral(false);
   }, [reportId, createReferral]);
+
+  const handleGeneratePdf = useCallback(async () => {
+    if (!reportId) return;
+    setGeneratingPdf(true);
+    try {
+      const result = await generatePdf({ reportId: reportId as any });
+      if (result && typeof result === "object" && "ok" in result && result.ok) {
+        toast.success("PDF & Flipbook generated!");
+      } else if (result && typeof result === "object" && "message" in result) {
+        toast.error(String(result.message));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate PDF");
+    }
+    setGeneratingPdf(false);
+  }, [reportId, generatePdf]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -444,28 +464,51 @@ export function CustomerDetailPage() {
         <Button
           variant="outline"
           className="rounded-lg"
-          onClick={() => {
-            if (report.pdfUrl) window.open(report.pdfUrl, "_blank");
-            else if (shareUrl) window.open(`${shareUrl}/print`, "_blank");
-            else toast.error("No PDF available");
-          }}
+          asChild
         >
-          <Download className="size-4" />
-          PDF
+          <Link to={`/reports/${reportId}/v2`} target="_blank">
+            <FileText className="size-4" />
+            Report
+          </Link>
         </Button>
+        {report.pdfUrl && (
+          <Button
+            variant="outline"
+            className="rounded-lg"
+            onClick={() => window.open(report.pdfUrl, "_blank")}
+          >
+            <Download className="size-4" />
+            PDF
+          </Button>
+        )}
         <PlanGate locked={!hasFlipbook(company)} message={upgradeMessage("flipbook")} requiredPlan="Starter">
           <Button
             variant="outline"
             className="rounded-lg"
             onClick={() => {
-              if (reportId) window.open(`/reports/${reportId}/flipbook`, "_blank");
-              else toast.error("No flipbook available");
+              if (report.flipbookUrl) {
+                window.open(report.flipbookUrl, "_blank");
+              } else {
+                toast.info("Generating PDF & Flipbook…");
+                handleGeneratePdf();
+              }
             }}
+            disabled={generatingPdf}
           >
-            <MessageSquare className="size-4" />
+            {generatingPdf ? <Loader2 className="size-4 animate-spin" /> : <MessageSquare className="size-4" />}
             Flipbook
           </Button>
         </PlanGate>
+        <Button
+          variant="outline"
+          className="rounded-lg"
+          onClick={handleGeneratePdf}
+          disabled={generatingPdf}
+          title="Regenerate PDF &amp; Flipbook with latest data"
+        >
+          {generatingPdf ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+          {report.pdfUrl ? "Regen" : "Generate"}
+        </Button>
       </div>
 
       {/* Consumer Sync Banner — always visible */}

@@ -17,7 +17,7 @@ export function FlipbookPage() {
     shareToken ? { shareToken } : "skip",
   );
   const report = reportId ? privateReport : publicReport;
-  const backUrl = shareToken ? `/r/${shareToken}` : reportId ? `/reports/${reportId}` : "/reports";
+  const backUrl = shareToken ? `/r/${shareToken}` : reportId ? `/customers/${reportId}` : "/customers";
 
   if (report === undefined) {
     return (

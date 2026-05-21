@@ -1023,7 +1023,7 @@ export function ReportV2Page() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-100">
         <p className="text-slate-500">Report not found.</p>
-        <Button variant="outline" asChild><Link to="/reports"><ArrowLeft className="size-4 mr-1" /> Back</Link></Button>
+        <Button variant="outline" asChild><Link to="/customers"><ArrowLeft className="size-4 mr-1" /> Back</Link></Button>
       </div>
     );
   }
@@ -1064,7 +1064,7 @@ export function ReportV2Page() {
         ) : (
           <>
             <Button size="sm" variant="outline" asChild className="bg-white shadow-lg">
-              <Link to={`/reports/${reportId}`}>
+              <Link to={`/customers/${reportId}`}>
                 <ArrowLeft className="size-4 mr-1" /> Back
               </Link>
             </Button>
