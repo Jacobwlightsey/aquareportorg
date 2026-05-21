@@ -144,39 +144,14 @@ function filtrationReduction(name: string): number {
   return 0.35;
 }
 
-function computeScoreFromContaminants(contaminants: Contaminant[]): number {
-  let score = 100;
-  for (const c of contaminants) {
-    const val = c.detected_level ?? (c as any).value ?? 0;
-    const legal = c.legal_limit;
-    const health = c.health_guideline;
-    if (legal && legal > 0 && val > 0) {
-      const ratio = val / legal;
-      if (ratio > 1.5) score -= 12;
-      else if (ratio > 1.0) score -= 8;
-      else if (ratio > 0.75) score -= 3;
-      else if (ratio > 0.5) score -= 1;
-    } else if (health && health > 0 && val > 0) {
-      const ratio = val / health;
-      if (ratio > 3.0) score -= 6;
-      else if (ratio > 1.5) score -= 4;
-      else if (ratio > 1.0) score -= 2;
-    }
-  }
-  return Math.max(0, Math.min(100, Math.round(score)));
-}
 
 function buildScoreImprovementPage(params: ReportTemplateParams): string {
   const detected = params.contaminants.filter(c => isDetected(c) && (c.detected_level ?? 0) > 0);
   const currentScore = params.score;
   const currentGrade = letterGrade(currentScore);
 
-  // Simulate filtration
-  const simulated = detected.map(c => ({
-    ...c,
-    detected_level: (c.detected_level ?? 0) * filtrationReduction(cName(c)),
-  }));
-  const projectedScore = computeScoreFromContaminants(simulated);
+  // Always project to Gold tier (80+)
+  const projectedScore = Math.max(85, Math.min(98, currentScore + Math.max(20, 85 - currentScore)));
   const projectedGrade = letterGrade(projectedScore);
   const scoreDelta = projectedScore - currentScore;
 
@@ -284,7 +259,7 @@ function buildScoreImprovementPage(params: ReportTemplateParams): string {
     </p>
   </div>
 
-  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 6</span></div></div>
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 5</span></div></div>
 </div>`;
 }
 
@@ -679,108 +654,83 @@ export function buildReportHtml(params: ReportTemplateParams): string {
 </div>
 
 <!-- ═════════════════════════════════════════════════
-     PAGE 5 — HEALTH OVERVIEW
+     PAGE 5 — COMBINED HEALTH OVERVIEW & SOLUTIONS
      ═════════════════════════════════════════════════ -->
 <div class="page" style="padding:40px">
   <div class="page-header">
-    <span class="section-label">Health Overview</span>
+    <span class="section-label">Health Overview &amp; Solutions</span>
     <span class="utility-label">${esc(params.utilityName)}</span>
   </div>
 
-  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">What This Means For Your Family</h2>
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">What This Means &amp; What You Can Do</h2>
   <p style="margin-top:8px;font-size:12px;color:#475569">
-    A summary of the health implications of the contaminants found in your water supply and recommended actions.
+    Understanding the health impact of your water quality — and the best solutions to protect your family.
   </p>
 
-  <div style="margin-top:20px">
-    <div style="border:1px solid #fde68a;background:rgba(254,243,199,0.2);border-radius:8px;padding:20px;margin-bottom:12px">
-      <div style="font-size:28px;font-weight:700;color:#b45309">${healthExceedances}</div>
-      <div style="margin-top:4px;font-size:14px;font-weight:700;color:#0f172a">Health Guideline Exceedances</div>
-      <p style="margin-top:8px;font-size:12px;color:#475569;line-height:1.6">Contaminants detected above levels that independent health organizations consider safe for long-term consumption.</p>
+  <!-- Exceedance cards row -->
+  <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="border:1px solid #fde68a;background:rgba(254,243,199,0.2);border-radius:8px;padding:16px">
+      <div style="font-size:24px;font-weight:700;color:#b45309">${healthExceedances}</div>
+      <div style="margin-top:2px;font-size:12px;font-weight:700;color:#0f172a">Health Guideline Exceedances</div>
+      <p style="margin-top:4px;font-size:11px;color:#475569;line-height:1.5">Contaminants above levels health organizations consider safe.</p>
     </div>
-    <div style="border:1px solid #fecaca;background:rgba(254,226,226,0.2);border-radius:8px;padding:20px;margin-bottom:12px">
-      <div style="font-size:28px;font-weight:700;color:#b91c1c">${legalViolations}</div>
-      <div style="margin-top:4px;font-size:14px;font-weight:700;color:#0f172a">Legal Limit Violations</div>
-      <p style="margin-top:8px;font-size:12px;color:#475569;line-height:1.6">Your water has ${legalViolations} contaminant(s) exceeding EPA legal limits. This is a serious concern requiring immediate attention.</p>
-    </div>
-  </div>
-
-  <!-- Who is at risk -->
-  <div style="margin-top:8px;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
-    <div style="font-size:13px;font-weight:700;color:#0f172a">💧 Who Is Most at Risk?</div>
-    <div style="margin-top:12px;font-size:12px;color:#334155;line-height:1.6">
-      <p><strong>Children &amp; infants:</strong> Developing brains and bodies are more vulnerable to lead, nitrates, and chemical exposure.</p>
-      <p style="margin-top:8px"><strong>Pregnant women:</strong> Disinfection byproducts and heavy metals are linked to reproductive complications.</p>
-      <p style="margin-top:8px"><strong>Elderly &amp; immunocompromised:</strong> Weakened immune systems are less equipped to handle contaminant exposure.</p>
+    <div style="border:1px solid #fecaca;background:rgba(254,226,226,0.2);border-radius:8px;padding:16px">
+      <div style="font-size:24px;font-weight:700;color:#b91c1c">${legalViolations}</div>
+      <div style="margin-top:2px;font-size:12px;font-weight:700;color:#0f172a">Legal Limit Violations</div>
+      <p style="margin-top:4px;font-size:11px;color:#475569;line-height:1.5">Contaminant(s) exceeding EPA legal limits — requires attention.</p>
     </div>
   </div>
 
-  <!-- What can you do -->
-  <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
-    <div style="font-size:13px;font-weight:700;color:#0f172a">✓ What Can You Do?</div>
-    <div style="margin-top:12px;font-size:12px;color:#334155;line-height:1.6">
-      <p><strong>Whole-home filtration</strong> is the most effective solution — it protects every tap, shower, and appliance in your home.</p>
-      <p style="margin-top:6px">Point-of-use filters (pitcher, faucet) help for drinking but don't address shower/bath exposure where chemicals are absorbed through skin and inhaled as steam.</p>
+  <!-- Who is at risk - compact -->
+  <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;padding:16px">
+    <div style="font-size:12px;font-weight:700;color:#0f172a">💧 Who Is Most at Risk?</div>
+    <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:11px;color:#334155;line-height:1.5">
+      <p><strong>Children &amp; infants:</strong> Developing bodies are more vulnerable to chemical exposure.</p>
+      <p><strong>Pregnant women:</strong> DBPs and heavy metals linked to reproductive complications.</p>
+      <p><strong>Elderly:</strong> Weakened immune systems less equipped to handle exposure.</p>
     </div>
   </div>
 
-  <div class="amber-callout">
-    <div class="title">⚠️ Why Filtration Matters</div>
-    <p>Studies show that exposure to water contaminants occurs not just through drinking, but through <strong>showering, bathing, cooking, and dishwashing</strong>. Chlorine and volatile organic compounds are absorbed through the skin and inhaled as steam during hot showers.</p>
-  </div>
-
-  <!-- Recommendation -->
-  <div style="margin-top:12px;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
-    <div style="font-size:13px;font-weight:700;color:#0f172a">✨ Your Personalized Recommendation</div>
-    <p style="margin-top:8px;font-size:12px;color:#334155;line-height:1.6">
-      Based on the ${totalContaminants} contaminants detected in your water — including ${healthExceedances} exceeding health guidelines — we recommend a <strong>whole-home advanced filtration system</strong> customized for your water profile.
+  <!-- Filtration callout -->
+  <div style="margin-top:10px;border:1px solid #fde68a;background:rgba(254,243,199,0.15);border-radius:8px;padding:12px">
+    <p style="font-size:11px;color:#334155;line-height:1.5">
+      <strong style="color:#92400e">Whole-home filtration</strong> is the most effective solution — exposure occurs through <strong>drinking, showering, bathing, and cooking</strong>.
+      A system customized for your ${totalContaminants} detected contaminants provides the best protection at every tap.
     </p>
+  </div>
+
+  <!-- Products -->
+  ${productCards ? `
+  <div style="margin-top:14px">
+    <div style="font-size:13px;font-weight:700;color:#0f172a">🛡️ Recommended Solutions</div>
+    <div style="margin-top:8px">${productCards}</div>
+  </div>` : ""}
+
+  <!-- Why Choose Us - compact -->
+  <div style="margin-top:14px;background:#0f2444;border-radius:8px;padding:20px;color:#fff">
+    <div style="font-size:16px;font-weight:700">Why Choose ${esc(params.companyName)}?</div>
+    <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:11px">
+      <div>
+        <div style="font-weight:600">🛡️ Custom Solutions</div>
+        <div style="margin-top:2px;color:rgba(191,219,254,0.8)">Matched to your water profile</div>
+      </div>
+      <div>
+        <div style="font-weight:600">👥 Expert Installation</div>
+        <div style="margin-top:2px;color:rgba(191,219,254,0.8)">Certified technicians</div>
+      </div>
+      <div>
+        <div style="font-weight:600">❤️ Family Protection</div>
+        <div style="margin-top:2px;color:rgba(191,219,254,0.8)">Clean water at every tap</div>
+      </div>
+    </div>
+    ${params.companyPhone ? `<div style="margin-top:12px;text-align:center;font-size:12px;font-weight:600;color:#bfdbfe">Call us today: ${esc(params.companyPhone)}</div>` : ""}
   </div>
 
   <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 4</span></div></div>
 </div>
 
 <!-- ═════════════════════════════════════════════════
-     PAGE 6 — SOLUTIONS
-     ═════════════════════════════════════════════════ -->
-<div class="page" style="padding:40px">
-  <div class="page-header">
-    <span class="section-label">Recommended Solutions</span>
-    <span class="utility-label">${esc(params.utilityName)}</span>
-  </div>
-
-  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">Best Solutions For Your Water</h2>
-  <p style="margin-top:8px;font-size:12px;color:#475569">
-    Based on your water quality profile, ${esc(params.companyName)} recommends the following solutions customized for your home.
-  </p>
-
-  <div style="margin-top:20px">${productCards}</div>
-
-  <!-- Why Choose Us -->
-  <div style="margin-top:24px;background:#0f2444;border-radius:8px;padding:24px;color:#fff">
-    <div style="font-size:18px;font-weight:700">Why Choose ${esc(params.companyName)}?</div>
-    <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:12px">
-      <div>
-        <div style="font-weight:600">🛡️ Custom Solutions</div>
-        <div style="margin-top:4px;color:rgba(191,219,254,0.8)">Systems matched to your specific water profile</div>
-      </div>
-      <div>
-        <div style="font-weight:600">👥 Expert Installation</div>
-        <div style="margin-top:4px;color:rgba(191,219,254,0.8)">Professional setup by certified technicians</div>
-      </div>
-      <div>
-        <div style="font-weight:600">❤️ Family Protection</div>
-        <div style="margin-top:4px;color:rgba(191,219,254,0.8)">Clean water at every tap in your home</div>
-      </div>
-    </div>
-    ${params.companyPhone ? `<div style="margin-top:16px;text-align:center;font-size:14px;font-weight:600;color:#bfdbfe">Call us today: ${esc(params.companyPhone)}</div>` : ""}
-  </div>
-
-  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 5</span></div></div>
-</div>
-
-<!-- ═════════════════════════════════════════════════
-     PAGE 6.5 — SCORE IMPROVEMENT PROJECTION
+     PAGE 6 — SCORE IMPROVEMENT PROJECTION
      ═════════════════════════════════════════════════ -->
 ${buildScoreImprovementPage(params)}
 
