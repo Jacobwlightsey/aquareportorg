@@ -106,14 +106,12 @@ function healthDescription(c: Contaminant): string {
   return "Elevated levels may pose health risks with long-term exposure.";
 }
 
-function letterGrade(score: number): { letter: string; label: string; color: string; bg: string } {
-  if (score >= 80) return { letter: "A", label: "Very Good", color: "#16a34a", bg: "#f0fdf4" };
-  if (score >= 70) return { letter: "B", label: "Good", color: "#d97706", bg: "#fffbeb" };
-  if (score >= 60) return { letter: "B", label: "Above Average", color: "#d97706", bg: "#fffbeb" };
-  if (score >= 50) return { letter: "C", label: "Average", color: "#ea580c", bg: "#fff7ed" };
-  if (score >= 40) return { letter: "C", label: "Below Average", color: "#ea580c", bg: "#fff7ed" };
-  if (score >= 20) return { letter: "D", label: "Poor", color: "#dc2626", bg: "#fef2f2" };
-  return { letter: "F", label: "Very Poor", color: "#991b1b", bg: "#fef2f2" };
+function letterGrade(score: number): { letter: string; label: string; color: string; bg: string; tier: string } {
+  if (score >= 80) return { letter: "A", label: "Gold", color: "#16a34a", bg: "#f0fdf4", tier: "Gold" };
+  if (score >= 60) return { letter: "B", label: "Silver", color: "#d97706", bg: "#fffbeb", tier: "Silver" };
+  if (score >= 40) return { letter: "C", label: "Bronze", color: "#ea580c", bg: "#fff7ed", tier: "Bronze" };
+  if (score >= 20) return { letter: "D", label: "At Risk", color: "#dc2626", bg: "#fef2f2", tier: "At Risk" };
+  return { letter: "F", label: "At Risk", color: "#991b1b", bg: "#fef2f2", tier: "At Risk" };
 }
 
 function legalGradeInfo(violations: number): { letter: string; label: string; color: string } {
@@ -396,9 +394,9 @@ export function buildReportHtml(params: ReportTemplateParams): string {
   <!-- Score cards -->
   <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
     <div style="border-radius:8px;border:1px solid ${overall.color}30;background:${overall.bg};padding:20px;text-align:center">
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#475569;text-transform:uppercase">Overall Score</div>
-      <div style="margin-top:8px;font-size:60px;font-weight:700;color:${overall.color}" class="serif">${overall.letter}</div>
-      <div style="margin-top:4px;font-size:11px;color:#64748b">${overall.label}</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#475569;text-transform:uppercase">AquaScore</div>
+      <div style="margin-top:8px;font-size:52px;font-weight:700;color:${overall.color}" class="serif">${params.score}</div>
+      <div style="margin-top:4px;font-size:12px;font-weight:600;color:${overall.color}">${overall.tier}</div>
     </div>
     <div style="border-radius:8px;border:1px solid ${legal.color}30;background:#fffbeb;padding:20px;text-align:center">
       <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#475569;text-transform:uppercase">Legal Compliance</div>

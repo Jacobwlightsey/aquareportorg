@@ -86,16 +86,13 @@ function healthDescription(c: Contaminant): string {
   return "Elevated levels may pose health risks with long-term exposure. Consult a water treatment specialist for personalized recommendations.";
 }
 
-/** Letter grade from numeric score (0-100) */
-function letterGrade(score: number): { letter: string; label: string; color: string; bg: string } {
-  if (score >= 90) return { letter: "A", label: "Excellent", color: "#16a34a", bg: "#f0fdf4" };
-  if (score >= 80) return { letter: "A", label: "Very Good", color: "#16a34a", bg: "#f0fdf4" };
-  if (score >= 70) return { letter: "B", label: "Good", color: "#d97706", bg: "#fffbeb" };
-  if (score >= 60) return { letter: "B", label: "Above Average", color: "#d97706", bg: "#fffbeb" };
-  if (score >= 50) return { letter: "C", label: "Average", color: "#ea580c", bg: "#fff7ed" };
-  if (score >= 40) return { letter: "C", label: "Below Average", color: "#ea580c", bg: "#fff7ed" };
-  if (score >= 20) return { letter: "D", label: "Poor", color: "#dc2626", bg: "#fef2f2" };
-  return { letter: "F", label: "Very Poor", color: "#991b1b", bg: "#fef2f2" };
+/** AquaScore tier from numeric score (0-100) — matches myaquareport.com */
+function letterGrade(score: number): { letter: string; label: string; tier: string; color: string; bg: string } {
+  if (score >= 80) return { letter: "A", label: "Gold", tier: "Gold", color: "#16a34a", bg: "#f0fdf4" };
+  if (score >= 60) return { letter: "B", label: "Silver", tier: "Silver", color: "#d97706", bg: "#fffbeb" };
+  if (score >= 40) return { letter: "C", label: "Bronze", tier: "Bronze", color: "#ea580c", bg: "#fff7ed" };
+  if (score >= 20) return { letter: "D", label: "At Risk", tier: "At Risk", color: "#dc2626", bg: "#fef2f2" };
+  return { letter: "F", label: "At Risk", tier: "At Risk", color: "#991b1b", bg: "#fef2f2" };
 }
 
 function legalGrade(violations: number): { letter: string; label: string; color: string } {
@@ -282,15 +279,26 @@ function OverviewPage({
 
       {/* Score cards */}
       <div className="mt-5 grid grid-cols-3 gap-4">
+        {/* AquaScore card — numeric */}
+        <div
+          className="rounded-lg border p-5 text-center"
+          style={{ borderColor: `${overall.color}30`, backgroundColor: overall.bg }}
+        >
+          <span className="text-[10px] font-bold tracking-[0.15em] text-slate-600 uppercase">AQUASCORE</span>
+          <div className="mt-2 text-[52px] font-bold" style={{ color: overall.color, fontFamily: "'Playfair Display', 'Georgia', serif" }}>
+            {score}
+          </div>
+          <p className="mt-1 text-[12px] font-semibold" style={{ color: overall.color }}>{overall.tier}</p>
+        </div>
+        {/* Legal & Health cards — keep letter grades */}
         {[
-          { title: "OVERALL SCORE", ...overall },
           { title: "LEGAL COMPLIANCE", letter: legal.letter, label: legal.label, color: legal.color, bg: "#fffbeb" },
           { title: "HEALTH GUIDELINES", letter: health.letter, label: health.label, color: health.color, bg: "#fef2f2" },
         ].map((card) => (
           <div
             key={card.title}
             className="rounded-lg border p-5 text-center"
-            style={{ borderColor: `${card.color}30`, backgroundColor: card.bg || "#f0fdf4" }}
+            style={{ borderColor: `${card.color}30`, backgroundColor: card.bg }}
           >
             <span className="text-[10px] font-bold tracking-[0.15em] text-slate-600 uppercase">{card.title}</span>
             <div className="mt-2 text-6xl font-bold" style={{ color: card.color, fontFamily: "'Playfair Display', 'Georgia', serif" }}>
