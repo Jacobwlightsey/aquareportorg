@@ -162,6 +162,7 @@ function PageFooter({ page, label = "Personalized Water Report" }: { page?: numb
 function Page({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div
+      data-report-page
       className={`relative bg-white w-[816px] min-h-[1056px] mx-auto shadow-lg print:shadow-none print:break-after-page flex flex-col ${className}`}
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
     >
@@ -1273,7 +1274,7 @@ export function ReportV2Page() {
       </div>
 
       {/* Report pages */}
-      <div className="space-y-6 print:space-y-0">
+      <div id="report-pages-container" className="space-y-6 print:space-y-0">
         <CoverPage
           customerName={customerName}
           customerAddress={customerAddress}

@@ -1,4 +1,4 @@
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import {
   AlertTriangle,
   Check,
@@ -255,7 +255,8 @@ export function CustomerDetailPage() {
   );
   const company = useQuery(api.companies.getMyCompany);
   const createReferral = useAction(api.referrals.createConsumerReferral);
-  const generatePdf = useAction(api.reportPdf.generateReportPdf);
+  const finalizePdf = useAction(api.reportPdfClient.finalizePdf);
+  const generateUploadUrl = useMutation(api.dealerShared.generateUploadUrl);
   const [referralUrl, setReferralUrl] = useState<string>("");
   const [, setSendingReferral] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -302,17 +303,83 @@ export function CustomerDetailPage() {
     if (!reportId) return;
     setGeneratingPdf(true);
     try {
-      const result = await generatePdf({ reportId: reportId as any });
-      if (result && typeof result === "object" && "ok" in result && result.ok) {
+      // 1. Navigate to the report preview in a hidden iframe to capture pages
+      toast.info("Generating PDF from preview…");
+
+      // Dynamically import client-side PDF generator
+      const { generatePdfFromDom } = await import("@/lib/generatePdfClient");
+
+      // Find the report preview on the ReportV2Page (opened via /reports/:id)
+      // We'll open it in a hidden iframe to capture the rendered pages
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.left = "-9999px";
+      iframe.style.top = "0";
+      iframe.style.width = "816px";
+      iframe.style.height = "8000px";
+      iframe.style.border = "none";
+      iframe.style.opacity = "0";
+      document.body.appendChild(iframe);
+
+      iframe.src = `/reports/${reportId}`;
+
+      // Wait for iframe to load
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("Report page load timed out")), 30000);
+        iframe.onload = () => {
+          clearTimeout(timeout);
+          // Wait for React to render + fonts to load
+          setTimeout(resolve, 3000);
+        };
+        iframe.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error("Failed to load report page"));
+        };
+      });
+
+      const iframeDoc = iframe.contentDocument;
+      if (!iframeDoc) throw new Error("Cannot access report iframe");
+
+      const container = iframeDoc.getElementById("report-pages-container") ||
+        iframeDoc.querySelector("[data-report-page]")?.parentElement;
+      if (!container) throw new Error("Report pages container not found");
+
+      // 2. Generate PDF from the rendered DOM
+      toast.info("Capturing pages…");
+      const pdfBlob = await generatePdfFromDom(container as HTMLElement);
+
+      // Clean up iframe
+      document.body.removeChild(iframe);
+
+      // 3. Upload PDF to Convex storage
+      toast.info("Uploading PDF…");
+      const uploadUrl = await generateUploadUrl();
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/pdf" },
+        body: pdfBlob,
+      });
+      if (!uploadRes.ok) throw new Error("Failed to upload PDF");
+      const { storageId } = await uploadRes.json();
+
+      // 4. Create flipbook from uploaded PDF
+      toast.info("Creating flipbook…");
+      const result = await finalizePdf({
+        reportId: reportId as any,
+        pdfStorageId: storageId,
+      });
+
+      if (result?.ok) {
         toast.success("PDF & Flipbook generated!");
-      } else if (result && typeof result === "object" && "message" in result) {
-        toast.error(String(result.message));
+      } else {
+        toast.error("Something went wrong finalizing the PDF");
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to generate PDF");
+      console.error("PDF generation error:", err);
     }
     setGeneratingPdf(false);
-  }, [reportId, generatePdf]);
+  }, [reportId, finalizePdf, generateUploadUrl]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
