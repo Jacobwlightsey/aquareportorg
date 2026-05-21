@@ -172,7 +172,6 @@ function KanbanView({ reports }: { reports: any[] }) {
 
 function TableView({ reports }: { reports: any[] }) {
   const navigate = useNavigate();
-
   return (
     <Card>
       <CardContent className="p-0">

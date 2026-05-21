@@ -7,7 +7,6 @@ import {
   Download,
   Droplets,
   ExternalLink,
-  FileText,
   FlaskConical,
   Loader2,
   Mail,
@@ -19,7 +18,6 @@ import {
   Wrench,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +29,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   derivePipelineStage,
@@ -109,7 +109,7 @@ function QuickAction({
   onClick,
   href,
 }: {
-  icon: ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   onClick?: () => void;
   href?: string;
@@ -446,11 +446,6 @@ export function CustomerDetailPage() {
             }}
           />
         </PlanGate>
-        <QuickAction
-          icon={FileText}
-          label="Full Report"
-          href={`/reports/${reportId}/v2`}
-        />
       </div>
 
       {/* Consumer Referral Banner */}

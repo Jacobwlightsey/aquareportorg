@@ -1,6 +1,5 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import type { ComponentType } from "react";
 import {
   Building2,
   ChartNoAxesCombined,
@@ -73,7 +72,7 @@ function NavLink({
 }: {
   href: string;
   label: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
   badge?: number;
   locked?: boolean;
