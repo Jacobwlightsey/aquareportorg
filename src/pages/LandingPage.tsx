@@ -37,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SUBSCRIPTION_PLANS } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
 
-const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL || "";
+const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL || "https://groovy-basilisk-939.convex.site";
 
 interface Contaminant {
   name?: string;
