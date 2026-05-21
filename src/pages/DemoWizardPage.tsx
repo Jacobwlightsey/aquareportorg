@@ -1,6 +1,7 @@
 import { useQuery } from "convex/react";
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   ChevronLeft,
   Clock,
@@ -61,14 +62,6 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
-function scoreTier(score?: number) {
-  const s = score ?? 0;
-  if (s >= 80) return { label: "Gold", className: "border-amber-400/40 bg-amber-400/10 text-amber-200" };
-  if (s >= 60) return { label: "Silver", className: "border-slate-300/40 bg-slate-300/10 text-slate-100" };
-  if (s >= 40) return { label: "Bronze", className: "border-orange-400/40 bg-orange-400/10 text-orange-200" };
-  return { label: "At Risk", className: "border-rose-400/40 bg-rose-500/10 text-rose-200" };
-}
-
 export function DemoWizardPage() {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
@@ -86,6 +79,8 @@ export function DemoWizardPage() {
 
   // Live test readings (mutable during demo)
   const [liveReadings, setLiveReadings] = useState<FieldWaterReadings>({});
+  
+
   // Start timer on mount
   useEffect(() => {
     timerRef.current = setInterval(() => {
@@ -111,7 +106,6 @@ export function DemoWizardPage() {
     };
     return computeAquaScore(report.waterScore, contaminants, readings);
   }, [report, contaminants, liveReadings]);
-  const tier = scoreTier(score);
 
   const goNext = useCallback(() => {
     setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
@@ -176,30 +170,11 @@ export function DemoWizardPage() {
     );
   }
 
+
   return (
-    <div className="fixed inset-0 flex flex-col bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.18),transparent_32%),linear-gradient(135deg,#061222,#0d1b34_52%,#06111f)] text-white">
+    <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white">
       {/* Top Bar */}
-      <div className="shrink-0 px-4 pt-3 pb-2 safe-area-top">
-        <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.06] p-3 shadow-2xl shadow-blue-950/30 backdrop-blur">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-200/70">
-                AquaReport interactive demo
-              </p>
-              <h1 className="truncate text-lg font-black">
-                {report.customerName || report.utilityName}
-              </h1>
-              <p className="truncate text-xs text-white/50">
-                {report.utilityName} · {report.city}, {report.state}
-              </p>
-            </div>
-            <div className={`shrink-0 rounded-2xl border px-4 py-2 text-center ${tier.className}`}>
-              <p className="text-2xl font-black leading-none">{score ?? "--"}</p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-wider">{tier.label}</p>
-            </div>
-          </div>
-        </div>
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between px-4 pt-3 pb-2 safe-area-top">
         <button
           onClick={() => setShowEndModal(true)}
           className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 active:bg-white/10"
@@ -218,7 +193,6 @@ export function DemoWizardPage() {
             {currentStep + 1}/{STEPS.length}
           </span>
         </div>
-      </div>
       </div>
 
       {/* Progress Bar */}
@@ -320,7 +294,8 @@ export function DemoWizardPage() {
           report={report}
           demoTime={demoTimer}
           onClose={() => setShowEndModal(false)}
-          onFinished={(_outcome: string) => {
+          onFinished={(outcome) => {
+            
             exitDemo();
           }}
         />

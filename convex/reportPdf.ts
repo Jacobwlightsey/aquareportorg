@@ -80,24 +80,34 @@ async function createFlipbook(pdfUrl: string, title: string, subtitle: string) {
   };
 }
 
+function isDetectedContaminant(c: any): boolean {
+  return c?.detected !== false && c?.detection_status !== "not_detected";
+}
+
 function computePdfAquaScore(contaminants: any[]) {
-  const hasContaminantSignal = contaminants.some((contaminant) => contaminant?.over_legal || contaminant?.over_health);
+  const detected = contaminants.filter(isDetectedContaminant);
+  const hasContaminantSignal = detected.some((c) => c?.over_legal || c?.over_health);
   if (!hasContaminantSignal) return 100;
 
-  const legalPenalty = Math.min(30, contaminants.filter((contaminant) => contaminant?.over_legal).length * 18);
+  const legalPenalty = Math.min(30, detected.filter((c) => c?.over_legal).length * 18);
   const healthPenalty = Math.min(
     59,
-    contaminants.reduce((total, contaminant) => {
-      if (!contaminant?.over_health || contaminant?.over_legal) return total;
-      const multiple = contaminant?.times_above_ewg ?? 1;
+    detected.reduce((total, c) => {
+      if (!c?.over_health || c?.over_legal) return total;
+      const multiple = c?.times_above_ewg ?? 1;
       if (multiple >= 100) return total + 9;
       if (multiple >= 25) return total + 7;
       if (multiple >= 10) return total + 5;
       return total + 3;
     }, 0),
   );
-  const detectionPenalty = Math.min(10, contaminants.length * 0.5);
+  const detectionPenalty = Math.min(10, detected.length * 0.5);
   return Math.max(0, Math.min(100, Math.round(100 - legalPenalty - healthPenalty - detectionPenalty)));
+}
+
+function finiteNumber(value: unknown, fallback = 0): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 export const generateReportPdf = action({
@@ -111,7 +121,7 @@ export const generateReportPdf = action({
       };
     }
 
-    const report = await ctx.runQuery(api.reports.getReport, { reportId: args.reportId });
+    const report: any = await ctx.runQuery(api.reports.getReport, { reportId: args.reportId });
     if (!report) throw new Error("Report not found");
 
     let contaminants: any[] = [];
@@ -121,22 +131,37 @@ export const generateReportPdf = action({
       contaminants = [];
     }
 
+    const city = report.customerCity || report.city || "";
+    const state = report.customerState || report.state || "";
+    const zip = report.customerZip || report.zip || "";
+
     const html = buildReportHtml({
       customerName: report.customerName || "Homeowner",
       customerAddress: report.customerAddress,
-      customerCityStateZip: `${report.customerCity || report.city}, ${report.customerState || report.state} ${report.customerZip || report.zip}`,
+      customerCityStateZip: `${city}, ${state} ${zip}`,
+      customerPhone: report.customerPhone,
       companyName: report.companyName || "AquaReport",
+      companyPhone: report.companyPhone,
       accentColor: report.companyColor || "#2563eb",
       score: computePdfAquaScore(contaminants),
       utilityName: report.utilityName,
       waterSource: report.waterSource || "Unknown",
+      populationServed: finiteNumber(report.populationServed),
+      city,
+      state,
+      zip,
       contaminants,
-      overHealth: report.overHealthGuidelines,
-      overLegal: report.overLegalLimits,
+      overHealth: finiteNumber(report.overHealthGuidelines),
+      overLegal: finiteNumber(report.overLegalLimits),
       chlorine: report.chlorine,
       hardness: report.hardness,
       tds: report.tds,
       ph: report.ph,
+      testNotes: report.testNotes,
+      repName: report.repName,
+      repDate: report.repDate,
+      repPhone: report.repPhone,
+      products: report.additionalProducts,
     });
 
     const pdfBuffer = await htmlToPdf(html);
@@ -149,7 +174,7 @@ export const generateReportPdf = action({
     const flipbook = await createFlipbook(
       pdfUrl,
       `${report.customerName || "Homeowner"} Water Quality Report`,
-      `${report.city}, ${report.state} ${report.zip}`,
+      `${city}, ${state} ${zip}`,
     );
 
     await ctx.runMutation(api.reports.updateReportUrls, {
