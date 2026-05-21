@@ -3,7 +3,7 @@
  * Captures the React-rendered report pages exactly as they appear,
  * eliminating any mismatch between the preview and the PDF output.
  */
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
 const PAGE_WIDTH_PX = 816;
