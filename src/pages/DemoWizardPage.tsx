@@ -1,7 +1,6 @@
 import { useQuery } from "convex/react";
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   ChevronLeft,
   Clock,
@@ -294,8 +293,7 @@ export function DemoWizardPage() {
           report={report}
           demoTime={demoTimer}
           onClose={() => setShowEndModal(false)}
-          onFinished={(outcome) => {
-            
+          onFinished={() => {
             exitDemo();
           }}
         />
