@@ -9,13 +9,12 @@ export const deleteAccount = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Delete auth accounts
+    // Delete auth accounts and their verification codes
     const authAccounts = await ctx.db
       .query("authAccounts")
       .filter(q => q.eq(q.field("userId"), userId))
       .collect();
     for (const account of authAccounts) {
-      // Delete verification codes linked to this account
       const codes = await ctx.db
         .query("authVerificationCodes")
         .filter(q => q.eq(q.field("accountId"), account._id))
@@ -40,6 +39,15 @@ export const deleteAccount = mutation({
         await ctx.db.delete(token._id);
       }
       await ctx.db.delete(session._id);
+    }
+
+    // Delete company memberships (but keep the company for other members)
+    const memberships = await ctx.db
+      .query("companyMembers")
+      .withIndex("by_user", (q: any) => q.eq("userId", userId))
+      .collect();
+    for (const membership of memberships) {
+      await ctx.db.delete(membership._id);
     }
 
     // Delete the user document

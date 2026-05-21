@@ -3,10 +3,8 @@ import {
   AlertTriangle,
   ArrowRight,
   ChevronLeft,
-  Clock,
   Droplets,
   Lock,
-  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -178,18 +176,16 @@ export function DemoWizardPage() {
           onClick={() => setShowEndModal(true)}
           className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 active:bg-white/10"
         >
-          <X className="size-3.5" />
-          End
+          <ChevronLeft className="size-3.5" />
+          Exit Demo
         </button>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5">
-            <Clock className="size-3.5 text-white/50" />
-            <span className="text-xs font-mono font-medium text-white/70">
-              {formatTime(demoTimer)}
-            </span>
-          </div>
-          <span className="text-xs font-semibold text-white/50">
-            {currentStep + 1}/{STEPS.length}
+        <p className="text-xs font-bold tracking-wider text-white/40">
+          STEP {currentStep + 1} OF {STEPS.length} — {STEPS[currentStep].label.toUpperCase()}
+        </p>
+        <div className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5">
+          <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-mono font-medium text-white/70">
+            {formatTime(demoTimer)}
           </span>
         </div>
       </div>

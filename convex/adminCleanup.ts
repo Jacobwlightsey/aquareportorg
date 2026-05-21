@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 // Temporary admin mutation to clean up stale auth records for a given email
@@ -62,4 +62,37 @@ export const cleanupStaleAuth = mutation({
     
     return cleaned;
   },
+});
+
+export const debugUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    const members = await ctx.db.query("companyMembers").collect();
+    const companies = await ctx.db.query("companies").collect();
+    return { 
+      users: users.map((u: any) => ({ id: u._id, email: u.email, name: u.name })),
+      members: members.map((m: any) => ({ userId: m.userId, companyId: m.companyId, role: m.role })),
+      companies: companies.map((c: any) => ({ id: c._id, name: c.name, stripePlan: c.stripePlan, stripeStatus: c.stripeStatus }))
+    };
+  }
+});
+
+export const fixMembership = mutation({
+  args: { 
+    oldUserId: v.string(),
+    newUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find all memberships with old userId
+    const allMembers = await ctx.db.query("companyMembers").collect();
+    let fixed = 0;
+    for (const m of allMembers) {
+      if (String(m.userId) === args.oldUserId) {
+        await ctx.db.patch(m._id, { userId: args.newUserId as any });
+        fixed++;
+      }
+    }
+    return { fixed };
+  }
 });
