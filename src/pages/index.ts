@@ -1,4 +1,6 @@
 export { AnalyticsPage } from "./AnalyticsPage";
+export { BlogPage } from "./BlogPage";
+export { BlogArticlePage } from "./BlogArticlePage";
 export { CreateCustomerPage } from "./CreateCustomerPage";
 export { CustomerDetailPage } from "./CustomerDetailPage";
 export { CustomerReportPage } from "./CustomerReportPage";

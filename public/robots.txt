@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /customers
+Disallow: /settings
+Disallow: /reports/
+Disallow: /company
+Disallow: /subscription
+Disallow: /team
+Disallow: /analytics
+Disallow: /leads
+Disallow: /platform
+Disallow: /verify
+
+Sitemap: https://aquareport.org/sitemap.xml

@@ -28,6 +28,9 @@ export function Header() {
             <a href="#pricing" className={isLanding ? "hidden text-sm text-slate-400 transition-colors hover:text-white md:block" : "text-sm text-muted-foreground hover:text-foreground transition-colors hidden md:block"}>
               Pricing
             </a>
+            <Link to="/blog" className={isLanding ? "hidden text-sm text-slate-400 transition-colors hover:text-white md:block" : "text-sm text-muted-foreground hover:text-foreground transition-colors hidden md:block"}>
+              Blog
+            </Link>
             <Button size="sm" className={isLanding ? "bg-cyan-300 text-slate-950 hover:bg-cyan-200" : "bg-blue-600 hover:bg-blue-700 text-white"} asChild>
               <Link to="/signup">Get Started</Link>
             </Button>

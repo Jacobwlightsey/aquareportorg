@@ -1,6 +1,8 @@
 import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
+import { organizationSchema, softwareAppSchema, websiteSchema } from "@/lib/schema";
 import {
   AlertTriangle,
   ArrowRight,
@@ -417,6 +419,12 @@ function LandingNav() {
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-[#020711] text-white">
+      <SEO
+        title="AquaReport — Water Quality Report Software for Dealers"
+        description="Professional water quality reporting software for water treatment dealers. Create branded reports with AquaScore™, present with the Demo Wizard, and deliver via myaquareport.com."
+        canonical="https://aquareport.org"
+        schema={[organizationSchema, softwareAppSchema, websiteSchema]}
+      />
       <LandingNav />
 
       <section className="relative mx-auto hidden aspect-[1536/932] w-full max-w-[1920px] overflow-hidden bg-[#020711] md:block">

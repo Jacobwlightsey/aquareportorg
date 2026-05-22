@@ -8,6 +8,8 @@ import { Toaster } from "./components/ui/sonner";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import {
   AnalyticsPage,
+  BlogPage,
+  BlogArticlePage,
   CompanySettingsPage,
   CreateCustomerPage,
   CustomerDetailPage,
@@ -43,6 +45,10 @@ function App() {
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />
           <Route path="/r/:shareToken/print" element={<PrintReportPage />} />
           <Route path="/r/:shareToken/v2" element={<ReportV2PublicPage />} />
+
+          {/* Blog — own layout, public */}
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogArticlePage />} />
 
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingPage />} />
