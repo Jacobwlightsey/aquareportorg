@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
 import { SignIn } from "@/components/SignIn";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/SEO";
 
 export function LoginPage() {
   return (
     <div className="flex-1 flex items-center justify-center p-4 relative">
+      <SEO
+        title="Sign In — AquaReport Dealer Portal"
+        description="Sign in to your AquaReport dealer account. Access your water quality reports, customer data, and sales tools."
+        canonical="https://aquareport.org/login"
+      />
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 size-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 size-96 rounded-full bg-primary/5 blur-3xl" />

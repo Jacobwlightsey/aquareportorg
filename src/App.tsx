@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import PillarPage from "./pages/PillarPage";
 import { AppLayoutV2 } from "./components/AppLayoutV2";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -49,6 +50,12 @@ function App() {
           {/* Blog — own layout, public */}
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogArticlePage />} />
+
+          {/* Pillar pages — top-level SEO authority pages */}
+          <Route path="/water-treatment-dealer-software" element={<PillarPage />} />
+          <Route path="/water-quality-report-software" element={<PillarPage />} />
+          <Route path="/digital-water-test-reports" element={<PillarPage />} />
+          <Route path="/water-testing-software-for-dealers" element={<PillarPage />} />
 
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingPage />} />

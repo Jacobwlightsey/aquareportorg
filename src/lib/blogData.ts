@@ -9,9 +9,29 @@ export interface BlogPost {
   dateModified: string;
   readTime: number;
   category: string;
+  headerImage?: string;
   faqs: { question: string; answer: string }[];
   content: string; // Markdown content
 }
+
+// Map each blog post to its parent pillar page for internal linking
+export const blogToPillarMap: Record<string, { slug: string; title: string; anchor: string }> = {
+  "water-quality-report-software-guide": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "water quality report software" },
+  "create-professional-water-test-reports": { slug: "digital-water-test-reports", title: "Digital Water Test Reports", anchor: "digital water test reports" },
+  "best-water-testing-software-small-dealers": { slug: "water-testing-software-for-dealers", title: "Water Testing Software for Dealers", anchor: "water testing software for dealers" },
+  "white-label-water-quality-reports": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "water quality reporting platform" },
+  "grow-water-treatment-business": { slug: "water-treatment-dealer-software", title: "Water Treatment Dealer Software", anchor: "water treatment dealer software" },
+  "water-treatment-dealer-software": { slug: "water-treatment-dealer-software", title: "Water Treatment Dealer Software", anchor: "dealer software platform" },
+  "sell-more-water-softeners-reports": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "professional water quality reports" },
+  "digital-vs-paper-water-test-reports": { slug: "digital-water-test-reports", title: "Digital Water Test Reports", anchor: "digital water test reports" },
+  "water-dealer-lead-generation": { slug: "water-treatment-dealer-software", title: "Water Treatment Dealer Software", anchor: "water treatment dealer software" },
+  "present-water-test-results-customers": { slug: "digital-water-test-reports", title: "Digital Water Test Reports", anchor: "digital water test reports" },
+  "water-treatment-crm-software": { slug: "water-treatment-dealer-software", title: "Water Treatment Dealer Software", anchor: "water treatment dealer software" },
+  "automated-water-test-reports": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "water quality report software" },
+  "water-quality-scoring-system": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "water quality report software" },
+  "water-treatment-business-marketing": { slug: "water-treatment-dealer-software", title: "Water Treatment Dealer Software", anchor: "water treatment dealer software" },
+  "roi-professional-water-quality-reports": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "professional water quality reports" },
+};
 
 export const blogPosts: BlogPost[] = [
   // ── 1 ──────────────────────────────────────────────────────────────
@@ -25,6 +45,7 @@ export const blogPosts: BlogPost[] = [
     dateModified: "2026-05-22",
     readTime: 12,
     category: "Software Guide",
+    headerImage: "/blog/images/water-quality-report-software-guide.webp",
     faqs: [
       {
         question: "What is water quality report software?",
@@ -157,6 +178,7 @@ The fastest path to professional water quality reports:
     dateModified: "2026-05-22",
     readTime: 10,
     category: "Sales",
+    headerImage: "/blog/images/create-professional-water-test-reports.webp",
     faqs: [
       {
         question: "What should a professional water test report include?",
@@ -295,6 +317,7 @@ If you hand over paper results and never follow up, you'll lose most of your lea
     dateModified: "2026-05-22",
     readTime: 11,
     category: "Software Guide",
+    headerImage: "/blog/images/best-water-testing-software-small-dealers.webp",
     faqs: [
       {
         question: "What is the best water testing software for small dealers?",
@@ -405,6 +428,7 @@ When you grow from 1 to 5 team members, upgrade to the Growth plan and everyone'
     dateModified: "2026-05-22",
     readTime: 8,
     category: "Features",
+    headerImage: "/blog/images/white-label-water-quality-reports.webp",
     faqs: [
       {
         question: "What are white label water quality reports?",
@@ -511,6 +535,7 @@ For 99% of dealers, white labeling existing software is dramatically more cost-e
     dateModified: "2026-05-22",
     readTime: 14,
     category: "Business Growth",
+    headerImage: "/blog/images/grow-water-treatment-business.webp",
     faqs: [
       {
         question: "How can digital reports help grow my water treatment business?",
@@ -637,6 +662,7 @@ Track these numbers monthly:
     dateModified: "2026-05-22",
     readTime: 13,
     category: "Software Guide",
+    headerImage: "/blog/images/water-treatment-dealer-software.webp",
     faqs: [
       {
         question: "What software do water treatment dealers need?",
@@ -763,6 +789,7 @@ Added up, the cost of not using software far exceeds any subscription fee.
     dateModified: "2026-05-22",
     readTime: 10,
     category: "Sales",
+    headerImage: "/blog/images/sell-more-water-softeners-reports.webp",
     faqs: [
       {
         question: "How do water quality reports help sell water softeners?",
@@ -880,6 +907,7 @@ Send the digital report: "I'm sending you the full report to myaquareport.com �
     dateModified: "2026-05-22",
     readTime: 9,
     category: "Industry",
+    headerImage: "/blog/images/digital-vs-paper-water-test-reports.webp",
     faqs: [
       {
         question: "Are digital water test reports better than paper?",
@@ -981,6 +1009,7 @@ Most dealers who make the switch say they wish they'd done it sooner. The time s
     dateModified: "2026-05-22",
     readTime: 11,
     category: "Business Growth",
+    headerImage: "/blog/images/water-dealer-lead-generation.webp",
     faqs: [
       {
         question: "How do water dealers generate leads?",
@@ -1094,6 +1123,7 @@ AquaReport's built-in lead management helps you track every prospect:
     dateModified: "2026-05-22",
     readTime: 12,
     category: "Sales",
+    headerImage: "/blog/images/present-water-test-results-customers.webp",
     faqs: [
       {
         question:
@@ -1211,6 +1241,7 @@ The moment their score goes from Bronze to Gold is the emotional peak of the pre
     dateModified: "2026-05-22",
     readTime: 10,
     category: "Software Guide",
+    headerImage: "/blog/images/water-treatment-crm-software.webp",
     faqs: [
       {
         question: "Do water treatment dealers need a CRM?",
@@ -1311,6 +1342,7 @@ In these cases, consider pairing AquaReport with a general CRM like HubSpot, Job
     dateModified: "2026-05-22",
     readTime: 8,
     category: "Features",
+    headerImage: "/blog/images/automated-water-test-reports.webp",
     faqs: [
       {
         question: "How does automated water test reporting work?",
@@ -1426,6 +1458,7 @@ To get the most out of automated reporting:
     dateModified: "2026-05-22",
     readTime: 11,
     category: "Features",
+    headerImage: "/blog/images/water-quality-scoring-system.webp",
     faqs: [
       {
         question: "What is a water quality score?",
@@ -1530,6 +1563,7 @@ The score doesn't replace the detailed breakdown — it introduces it. Lead with
     dateModified: "2026-05-22",
     readTime: 15,
     category: "Business Growth",
+    headerImage: "/blog/images/water-treatment-business-marketing.webp",
     faqs: [
       {
         question:
@@ -1684,6 +1718,7 @@ Track these metrics monthly:
     dateModified: "2026-05-22",
     readTime: 9,
     category: "Business Growth",
+    headerImage: "/blog/images/roi-professional-water-quality-reports.webp",
     faqs: [
       {
         question: "Is water quality report software worth the cost?",

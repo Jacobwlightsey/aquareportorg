@@ -1,6 +1,6 @@
 import { Link, useParams, Navigate } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, Droplets } from "lucide-react";
-import { getBlogPost, getRelatedPosts } from "@/lib/blogData";
+import { getBlogPost, getRelatedPosts, blogToPillarMap } from "@/lib/blogData";
 import { SEO } from "@/components/SEO";
 import {
   articleSchema,
@@ -238,8 +238,7 @@ export function BlogArticlePage() {
         <header className="border-b border-slate-800/60">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link to="/" className="flex items-center gap-2">
-              <Droplets className="h-6 w-6 text-cyan-400" />
-              <span className="text-lg font-bold text-white">AquaReport</span>
+              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
             </Link>
             <nav className="flex items-center gap-6">
               <Link
@@ -286,6 +285,17 @@ export function BlogArticlePage() {
             <span className="text-slate-400">{post.category}</span>
           </div>
 
+          {/* Header Image */}
+          {post.headerImage && (
+            <div className="mb-8 overflow-hidden rounded-xl">
+              <img
+                src={post.headerImage}
+                alt={post.title}
+                className="h-auto w-full"
+              />
+            </div>
+          )}
+
           {/* Title + Meta */}
           <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
             {post.title}
@@ -310,6 +320,23 @@ export function BlogArticlePage() {
           <div className="mt-8 border-t border-slate-800/60 pt-8">
             {renderMarkdown(post.content)}
           </div>
+
+          {/* Pillar Page Link Callout */}
+          {blogToPillarMap[post.slug] && (
+            <div className="mt-10 rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-6">
+              <p className="text-slate-300 leading-relaxed">
+                📖 <strong className="text-white">Want to go deeper?</strong>{" "}
+                Read our complete guide on{" "}
+                <Link
+                  to={`/${blogToPillarMap[post.slug].slug}`}
+                  className="font-semibold text-cyan-400 underline decoration-cyan-400/30 underline-offset-2 transition hover:text-cyan-300 hover:decoration-cyan-300/50"
+                >
+                  {blogToPillarMap[post.slug].anchor}
+                </Link>{" "}
+                — everything dealers need to know in one place.
+              </p>
+            </div>
+          )}
 
           {/* FAQ Section */}
           {post.faqs.length > 0 && (
@@ -380,8 +407,7 @@ export function BlogArticlePage() {
           <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-4">
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <Droplets className="h-5 w-5 text-cyan-400" />
-                <span className="font-bold text-white">AquaReport</span>
+                <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" />
               </div>
               <p className="text-sm leading-relaxed text-slate-400">
                 Professional water quality reporting software for water

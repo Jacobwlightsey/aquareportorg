@@ -223,10 +223,7 @@ export function AppSidebarV2() {
           onClick={() => setOpenMobile(false)}
           className="flex items-center gap-2.5 px-2 py-1 font-semibold text-lg"
         >
-          <div className="size-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-400 flex items-center justify-center">
-            <span className="text-sm font-bold text-white">AQ</span>
-          </div>
-          <span>{APP_NAME}</span>
+          <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
         </Link>
       </SidebarHeader>
       <SidebarNav />

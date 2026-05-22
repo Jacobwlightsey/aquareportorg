@@ -2,7 +2,7 @@ import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useStat
 import { useMutation } from "convex/react";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
-import { organizationSchema, softwareAppSchema, websiteSchema } from "@/lib/schema";
+import { organizationSchema, softwareAppSchema, websiteSchema, faqSchema } from "@/lib/schema";
 import {
   AlertTriangle,
   ArrowRight,
@@ -385,12 +385,7 @@ function LandingNav() {
     <header className="sticky top-0 z-50 border-b border-cyan-300/10 bg-[#020711]/92 shadow-[0_18px_60px_rgba(0,0,0,.42)] backdrop-blur-xl">
       <div className="container flex h-20 items-center justify-between gap-5">
         <a href="/" className="flex min-w-0 items-center gap-3" aria-label="AquaReport home">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/25 bg-cyan-300/10 text-cyan-200 shadow-[0_0_28px_rgba(34,211,238,.16)]">
-            <Droplets className="size-5" />
-          </span>
-          <span className="text-xl font-black tracking-tight text-white sm:text-2xl">
-            Aqua<span className="text-cyan-300">Report</span>
-          </span>
+          <img src="/aquareport-logo.png" alt="AquaReport" className="h-10 w-auto shrink-0" />
         </a>
         <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-300 md:flex">
           <a href="#demo" className="transition hover:text-cyan-200">
@@ -402,6 +397,9 @@ function LandingNav() {
           <a href="#coverage" className="transition hover:text-cyan-200">
             Coverage
           </a>
+          <Link to="/blog" className="transition hover:text-cyan-200">
+            Blog
+          </Link>
         </nav>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Button asChild variant="ghost" className="h-11 px-3 text-sm font-semibold text-white hover:bg-white/10 hover:text-cyan-100 sm:px-5">
@@ -416,6 +414,17 @@ function LandingNav() {
   );
 }
 
+const homepageFaqs = [
+  { question: "Where does the water quality data come from?", answer: "AquaReport uses a structured water data backend that tracks utility-level contaminant readings, legal limits, and health-protective guidelines across the United States." },
+  { question: "Can reports use my company branding?", answer: "Yes. Paid plans support branded reports, and Pro expands into white-label controls, custom disclaimers, custom domains, and API-ready enterprise features." },
+  { question: "Does this replace a water test?", answer: "No. AquaReport helps sales teams open a smarter conversation with local water data. A current in-home test can still be used to confirm conditions at the tap." },
+  { question: "Can I connect this to my CRM?", answer: "The platform has native integration paths for CRM, marketing, SMS, Zapier, and API workflows so teams can sync leads and report activity." },
+  { question: "How does AquaReport help dealers close more sales?", answer: "AquaReport generates professional, branded water quality reports with AquaScore™ ratings that visually show customers what's in their water. The Demo Wizard walks reps through a guided presentation, making every in-home appointment more compelling and data-driven." },
+  { question: "What is AquaScore™?", answer: "AquaScore™ is AquaReport's proprietary water quality scoring system that rates tap water on a 0–100 scale based on detected contaminants and EPA/health guidelines. It gives homeowners an instant, easy-to-understand grade for their water quality." },
+  { question: "How much does AquaReport cost?", answer: "AquaReport offers a free tier with one report, a Starter plan at $29/month with branded reports and expanded features, and a Pro plan at $79/month with white-label controls, API access, and advanced analytics. No long-term contracts required." },
+  { question: "How do customers view their water quality report?", answer: "Customers receive a unique link to myaquareport.com where they can view their branded, interactive water quality report on any device — no login or app download required." },
+];
+
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-[#020711] text-white">
@@ -423,7 +432,7 @@ export function LandingPage() {
         title="AquaReport — Water Quality Report Software for Dealers"
         description="Professional water quality reporting software for water treatment dealers. Create branded reports with AquaScore™, present with the Demo Wizard, and deliver via myaquareport.com."
         canonical="https://aquareport.org"
-        schema={[organizationSchema, softwareAppSchema, websiteSchema]}
+        schema={[organizationSchema, softwareAppSchema, websiteSchema, faqSchema(homepageFaqs)]}
       />
       <LandingNav />
 
@@ -707,6 +716,37 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Resources — Pillar Page Links */}
+      <section className="relative overflow-hidden border-t border-white/10 bg-white/[0.03] py-20 md:py-28">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_60%,rgba(34,211,238,.08),transparent_30%)]" />
+        <div className="container relative">
+          <div className="text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Resources</p>
+            <h2 className="text-4xl font-black tracking-tight text-white">Everything You Need to Know</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">Deep-dive guides on how dealer software, digital reports, and water testing tools help you close more sales.</p>
+          </div>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { to: "/water-treatment-dealer-software", title: "Dealer Software", desc: "The all-in-one platform for managing your water treatment business." },
+              { to: "/water-quality-report-software", title: "Report Software", desc: "Turn raw test data into professional reports in under 2 minutes." },
+              { to: "/digital-water-test-reports", title: "Digital Reports", desc: "Replace paper forms with shareable, branded digital reports." },
+              { to: "/water-testing-software-for-dealers", title: "Testing Software", desc: "Mobile-first testing tools built for how dealers actually work." },
+            ].map((card) => (
+              <Link key={card.to} to={card.to} className="group rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-cyan-300/30 hover:bg-white/[0.06]">
+                <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition">{card.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">{card.desc}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-cyan-400">Learn more <ArrowRight className="h-3.5 w-3.5" /></span>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link to="/blog" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition">
+              Read all articles on our blog →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="relative overflow-hidden border-t border-white/10 bg-white/[0.03] py-20 md:py-28">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_28%,rgba(34,211,238,.1),transparent_30%)]" />
         <div className="container relative grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
@@ -716,10 +756,9 @@ export function LandingPage() {
             <p className="mt-5 text-lg leading-8 text-slate-400">The page keeps the practical buyer questions, but matches the product’s new premium visual direction.</p>
           </div>
           <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/70 px-6 shadow-2xl shadow-cyan-950/20 backdrop-blur">
-            <FAQItem question="Where does the water quality data come from?" answer="AquaReport uses a structured water data backend that tracks utility-level contaminant readings, legal limits, and health-protective guidelines across the United States." />
-            <FAQItem question="Can reports use my company branding?" answer="Yes. Paid plans support branded reports, and Pro expands into white-label controls, custom disclaimers, custom domains, and API-ready enterprise features." />
-            <FAQItem question="Does this replace a water test?" answer="No. AquaReport helps sales teams open a smarter conversation with local water data. A current in-home test can still be used to confirm conditions at the tap." />
-            <FAQItem question="Can I connect this to my CRM?" answer="The platform has native integration paths for CRM, marketing, SMS, Zapier, and API workflows so teams can sync leads and report activity." />
+            {homepageFaqs.map((faq, idx) => (
+              <FAQItem key={idx} question={faq.question} answer={faq.answer} />
+            ))}
           </div>
         </div>
       </section>

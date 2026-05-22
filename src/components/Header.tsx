@@ -1,4 +1,3 @@
-import { Droplets } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { APP_NAME } from "@/lib/constants";
 import { Button } from "./ui/button";
@@ -15,10 +14,7 @@ export function Header() {
             to="/"
             className="flex items-center gap-2.5 font-semibold text-lg hover:opacity-80 transition-opacity"
           >
-            <div className={isLanding ? "flex size-8 items-center justify-center rounded-lg bg-cyan-300 text-slate-950" : "size-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center"}>
-              <Droplets className={isLanding ? "size-4" : "size-4 text-white"} />
-            </div>
-            <span className="hidden sm:inline">{APP_NAME}</span>
+            <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
           </Link>
 
           <nav className="flex items-center gap-4">

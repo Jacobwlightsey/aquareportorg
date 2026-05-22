@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
 import { SignUp } from "@/components/SignUp";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/SEO";
 
 export function SignupPage() {
   return (
     <div className="flex-1 flex items-center justify-center p-4 relative">
+      <SEO
+        title="Sign Up Free — AquaReport Water Quality Report Software"
+        description="Create your free AquaReport dealer account. Generate professional, branded water quality reports with AquaScore™ and close more water treatment sales."
+        canonical="https://aquareport.org/signup"
+      />
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 right-1/4 size-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 left-1/4 size-96 rounded-full bg-primary/5 blur-3xl" />

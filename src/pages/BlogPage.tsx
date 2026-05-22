@@ -22,8 +22,7 @@ export function BlogPage() {
         <header className="border-b border-slate-800/60">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link to="/" className="flex items-center gap-2">
-              <Droplets className="h-6 w-6 text-cyan-400" />
-              <span className="text-lg font-bold text-white">AquaReport</span>
+              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
             </Link>
             <nav className="flex items-center gap-6">
               <Link
@@ -78,8 +77,19 @@ export function BlogPage() {
               <Link
                 key={post.slug}
                 to={`/blog/${post.slug}`}
-                className="group flex flex-col rounded-xl border border-slate-800/60 bg-slate-900/40 p-6 transition-all hover:border-cyan-500/30 hover:bg-slate-900/70"
+                className="group flex flex-col overflow-hidden rounded-xl border border-slate-800/60 bg-slate-900/40 transition-all hover:border-cyan-500/30 hover:bg-slate-900/70"
               >
+                {post.headerImage && (
+                  <div className="aspect-[3/2] overflow-hidden">
+                    <img
+                      src={post.headerImage}
+                      alt={post.title}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col p-6">
                 <div className="mb-3 flex items-center gap-2">
                   <span className="rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
                     {post.category}
@@ -97,6 +107,7 @@ export function BlogPage() {
                 <div className="flex items-center gap-1 text-sm font-medium text-cyan-400 transition-colors group-hover:text-cyan-300">
                   Read article <ArrowRight className="h-4 w-4" />
                 </div>
+                </div>
               </Link>
             ))}
           </div>
@@ -107,8 +118,7 @@ export function BlogPage() {
           <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-4">
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <Droplets className="h-5 w-5 text-cyan-400" />
-                <span className="font-bold text-white">AquaReport</span>
+                <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" />
               </div>
               <p className="text-sm leading-relaxed text-slate-400">
                 Professional water quality reporting software for water

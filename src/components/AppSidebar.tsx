@@ -243,10 +243,7 @@ function SidebarHeaderContent() {
         onClick={() => setOpenMobile(false)}
         className="flex items-center gap-2.5 px-2 py-1 font-semibold text-lg"
       >
-        <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center">
-          <Droplets className="size-4 text-white" />
-        </div>
-        <span>{APP_NAME}</span>
+        <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
       </Link>
     </SidebarHeader>
   );

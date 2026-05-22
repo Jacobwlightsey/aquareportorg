@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AppSidebarV2 } from "./AppSidebarV2";
 import { MobileNav } from "./MobileNav";
+import { SEO } from "./SEO";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "./ui/sidebar";
 
 /** Regex to detect full-screen demo routes that skip the layout chrome */
@@ -16,6 +17,7 @@ export function AppLayoutV2() {
 
   return (
     <SidebarProvider>
+      <SEO title="Dashboard — AquaReport" noindex />
       <AppSidebarV2 />
       <SidebarInset>
         <header className="flex h-12 items-center px-4 md:hidden">
