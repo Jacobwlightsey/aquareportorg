@@ -1,26 +1,21 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import {
+  Activity,
   Building2,
-  ChartNoAxesCombined,
-  CircuitBoard,
   CreditCard,
-  Droplets,
-  FileText,
-  FlaskConical,
-  LayoutDashboard,
   LogOut,
   Moon,
-  ShieldCheck,
-  Search,
   Settings,
+  Shield,
+  ShieldCheck,
   Sun,
-  Trello,
   Users,
+  UserPlus,
+  BarChart3,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
-import { APP_NAME } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
@@ -45,24 +40,17 @@ import {
 } from "./ui/sidebar";
 
 const mainNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/pipeline", label: "Customer Pipeline", icon: Trello },
-  { href: "/generate", label: "Create Report", icon: Search },
-  { href: "/reports", label: "Customer Reports", icon: FileText },
-];
-
-const toolsNav = [
-  { href: "/verify", label: "Verify Results", icon: FlaskConical },
-  { href: "/leads", label: "Leads", icon: Users },
-  { href: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
-  { href: "/platform", label: "Platform", icon: CircuitBoard },
+  { href: "/customers", label: "Customers", icon: Users },
+  { href: "/leads", label: "Leads", icon: UserPlus },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/demo-analytics", label: "Demo Stats", icon: Activity },
 ];
 
 const settingsNav = [
-  { href: "/team", label: "Team", icon: ShieldCheck },
-  { href: "/subscription", label: "Subscription", icon: CreditCard },
+  { href: "/team", label: "Team", icon: Shield },
   { href: "/company", label: "Company", icon: Building2 },
-  { href: "/settings", label: "Account", icon: Settings },
+  { href: "/subscription", label: "Subscription", icon: CreditCard },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 function NavLink({
@@ -79,7 +67,6 @@ function NavLink({
   badge?: number;
 }) {
   const { setOpenMobile } = useSidebar();
-
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
@@ -97,14 +84,17 @@ function NavLink({
   );
 }
 
-function SidebarNav() {
+function SidebarNavContent() {
   const location = useLocation();
   const newLeadCount = useQuery(api.leads.getNewLeadCount);
+  const isAdmin = useQuery(api.admin.isPlatformAdmin);
 
   return (
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel>Dealer Workspace</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-cyan-400/80">
+          MAIN
+        </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {mainNav.map((item) => (
@@ -113,31 +103,21 @@ function SidebarNav() {
                 href={item.href}
                 label={item.label}
                 icon={item.icon}
-                isActive={location.pathname === item.href}
-              />
-            ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-      <SidebarGroup>
-        <SidebarGroupLabel>Tools</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {toolsNav.map((item) => (
-              <NavLink
-                key={item.href}
-                href={item.href}
-                label={item.label}
-                icon={item.icon}
-                isActive={location.pathname === item.href}
+                isActive={
+                  location.pathname === item.href ||
+                  (item.href === "/customers" && location.pathname.startsWith("/customers"))
+                }
                 badge={item.href === "/leads" ? newLeadCount ?? 0 : undefined}
               />
             ))}
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
       <SidebarGroup>
-        <SidebarGroupLabel>Settings</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-muted-foreground/60">
+          SETTINGS
+        </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {settingsNav.map((item) => (
@@ -152,12 +132,39 @@ function SidebarNav() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
+      {isAdmin && (
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-rose-400/80">
+            PLATFORM
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <NavLink
+                href="/admin"
+                label="Admin Dashboard"
+                icon={ShieldCheck}
+                isActive={location.pathname === "/admin"}
+              />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
     </SidebarContent>
   );
 }
 
-function SidebarUserMenu() {
+function getInitials(name?: string) {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : parts[0][0].toUpperCase();
+}
+
+function SidebarUserFooter() {
   const user = useQuery(api.auth.currentUser);
+  const company = useQuery(api.companies.getMyCompany);
   const { signOut } = useAuthActions();
   const { theme, toggleTheme, switchable } = useTheme();
   const { setOpenMobile } = useSidebar();
@@ -170,25 +177,19 @@ function SidebarUserMenu() {
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton size="lg">
                 <Avatar className="size-8">
-                  <AvatarFallback className="bg-blue-600 text-white text-sm font-medium">
-                    {user?.name?.charAt(0).toUpperCase() || "U"}
+                  <AvatarFallback className="bg-emerald-600 text-white text-xs font-bold">
+                    {getInitials(user?.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start text-left">
-                  <span className="text-sm font-medium truncate">
-                    {user?.name || "User"}
-                  </span>
+                  <span className="text-sm font-medium truncate">{user?.name || "User"}</span>
                   <span className="text-xs text-muted-foreground truncate">
-                    {user?.email}
+                    {company?.name || "AquaReport"}
                   </span>
                 </div>
               </SidebarMenuButton>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="top"
-              align="start"
-              className="w-[--radix-dropdown-menu-trigger-width]"
-            >
+            <DropdownMenuContent side="top" align="start" className="w-[--radix-dropdown-menu-trigger-width]">
               <DropdownMenuItem asChild>
                 <Link to="/settings" onClick={() => setOpenMobile(false)}>
                   <Settings className="size-4" />
@@ -197,7 +198,7 @@ function SidebarUserMenu() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/subscription" onClick={() => setOpenMobile(false)}>
-                  <CreditCard className="size-4" />
+                  <Building2 className="size-4" />
                   Subscription
                 </Link>
               </DropdownMenuItem>
@@ -209,11 +210,7 @@ function SidebarUserMenu() {
               </DropdownMenuItem>
               {switchable && (
                 <DropdownMenuItem onClick={toggleTheme}>
-                  {theme === "light" ? (
-                    <Moon className="size-4" />
-                  ) : (
-                    <Sun className="size-4" />
-                  )}
+                  {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
                   {theme === "light" ? "Dark mode" : "Light mode"}
                 </DropdownMenuItem>
               )}
@@ -233,28 +230,25 @@ function SidebarUserMenu() {
   );
 }
 
-function SidebarHeaderContent() {
+export function AppSidebar() {
   const { setOpenMobile } = useSidebar();
 
   return (
-    <SidebarHeader className="border-b border-sidebar-border">
-      <Link
-        to="/dashboard"
-        onClick={() => setOpenMobile(false)}
-        className="flex items-center gap-2.5 px-2 py-1 font-semibold text-lg"
-      >
-        <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
-      </Link>
-    </SidebarHeader>
-  );
-}
-
-export function AppSidebar() {
-  return (
     <Sidebar>
-      <SidebarHeaderContent />
-      <SidebarNav />
-      <SidebarUserMenu />
+      <SidebarHeader className="border-b border-sidebar-border">
+        <Link
+          to="/customers"
+          onClick={() => setOpenMobile(false)}
+          className="flex items-center gap-2.5 px-2 py-1 font-semibold text-lg"
+        >
+          <div className="size-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-400 flex items-center justify-center">
+            <span className="text-sm font-bold text-white">AQ</span>
+          </div>
+          <span>AquaReport</span>
+        </Link>
+      </SidebarHeader>
+      <SidebarNavContent />
+      <SidebarUserFooter />
     </Sidebar>
   );
 }

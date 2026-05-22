@@ -192,19 +192,57 @@ export const importLeads = mutation({
     const { userId, membership } = await requireRole(ctx, "manager");
     const rows = args.leads.slice(0, 500);
     let imported = 0;
+    let skippedDuplicate = 0;
+    let skippedInvalid = 0;
+
+    // Pre-load existing emails for duplicate detection
+    const existingLeads = await ctx.db
+      .query("leads")
+      .withIndex("by_company", (q: any) => q.eq("companyId", membership.companyId))
+      .collect();
+    const existingEmails = new Set(
+      existingLeads
+        .map((l: any) => l.email?.toLowerCase())
+        .filter(Boolean)
+    );
 
     for (const lead of rows) {
-      const name = lead.name.trim();
-      if (!name) continue;
+      const name = lead.name?.trim();
+      if (!name) { skippedInvalid++; continue; }
+
+      // Normalize email — strip whitespace, lowercase
+      const email = lead.email?.trim().toLowerCase().replace(/\s+/g, "") || undefined;
+
+      // Basic email validation
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        skippedInvalid++;
+        continue;
+      }
+
+      // Skip duplicate emails within this company
+      if (email && existingEmails.has(email)) {
+        skippedDuplicate++;
+        continue;
+      }
+
+      // Normalize phone — strip non-digit chars except leading +
+      let phone = lead.phone?.trim() || undefined;
+      if (phone) {
+        phone = phone.replace(/[^\d+]/g, "");
+        if (phone.length < 7) phone = undefined;
+      }
+
       await ctx.db.insert("leads", {
         companyId: membership.companyId,
         name,
-        email: lead.email?.trim().toLowerCase() || undefined,
-        phone: lead.phone?.trim() || undefined,
+        email,
+        phone,
         message: lead.message?.trim() || undefined,
         status: "new",
         source: lead.source || "crm_csv_import",
       });
+
+      if (email) existingEmails.add(email);
       imported += 1;
     }
 
@@ -213,10 +251,10 @@ export const importLeads = mutation({
       actorId: userId,
       action: "leads.imported",
       entityType: "lead",
-      metadata: { imported, attempted: rows.length, source: "crm_csv_import" },
+      metadata: { imported, attempted: rows.length, skippedDuplicate, skippedInvalid, source: "crm_csv_import" },
     });
 
-    return { imported, attempted: rows.length };
+    return { imported, attempted: rows.length, skippedDuplicate, skippedInvalid };
   },
 });
 

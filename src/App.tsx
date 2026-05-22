@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import PillarPage from "./pages/PillarPage";
+import { AdminPage } from "./pages/AdminPage";
+import { DemoAnalyticsPage } from "./pages/DemoAnalyticsPage";
 import { AppLayoutV2 } from "./components/AppLayoutV2";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -85,6 +87,8 @@ function App() {
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/platform" element={<PlatformPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/demo-analytics" element={<DemoAnalyticsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="/team" element={<TeamPage />} />
               <Route path="/subscription" element={<SubscriptionPage />} />
               <Route path="/company" element={<CompanySettingsPage />} />

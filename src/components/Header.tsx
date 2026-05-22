@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import { APP_NAME } from "@/lib/constants";
 import { Button } from "./ui/button";
 
 export function Header() {

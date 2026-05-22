@@ -18,7 +18,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
@@ -125,7 +125,7 @@ export function ViewReportPage() {
   const baseAquaScore = report.waterScore === undefined ? undefined : report.waterScore - savedFieldAdjustment;
   const editedWaterScore = computeAquaScore(baseAquaScore, detectedContaminants, readings);
   const fieldReadingAdjustment = computeFieldReadingAdjustment(readings);
-  const { effectivePlan: trialEffectivePlan, isFree: trialIsFree, hasUsedTrial } = useFreeTrial();
+  const { effectivePlan: trialEffectivePlan, isFree: trialIsFree, hasUsedTrial: _hasUsedTrial } = useFreeTrial();
   const planRank: Record<string, number> = { free: 0, starter: 1, growth: 2, pro: 3, enterprise: 4 };
   // Use effective plan from free trial system (free users pre-trial get starter access)
   const currentPlan = trialIsFree ? trialEffectivePlan : (subscription?.status === "active" ? subscription.plan : "free");
@@ -389,7 +389,7 @@ export function ViewReportPage() {
             </span>
             <span>•</span>
             <span>
-              {report.populationServed.toLocaleString()} people served
+              {(report.populationServed ?? 0).toLocaleString()} people served
             </span>
             <span>•</span>
             <span className="capitalize">{report.waterSource}</span>

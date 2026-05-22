@@ -434,7 +434,7 @@ export function GenerateReportPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Users className="size-3" />
-                            {u.population_served.toLocaleString()} served
+                            {(u.population_served ?? 0).toLocaleString()} served
                           </span>
                           <span className="text-xs font-mono text-muted-foreground/60">
                             {u.pwsid}

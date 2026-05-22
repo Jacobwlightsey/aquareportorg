@@ -1,11 +1,13 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { action, mutation, query } from "./_generated/server";
+import { action, internalAction, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import {
   activePlan,
   audit,
   checkTierAccess,
   getMembership,
+  isInFreeTrial,
   requireRole,
   requireTierAccess,
   tierAccessMessage,
@@ -169,6 +171,7 @@ export const getDealerContext = query({
       .collect();
     const serviceZips = Array.from(new Set(reports.map((report) => report.zip).filter(Boolean))).slice(0, 100);
     const plan = activePlan(company);
+    const freeTrial = await isInFreeTrial(ctx, company);
 
     return {
       userId: String(result.userId),
@@ -178,11 +181,12 @@ export const getDealerContext = query({
       userEmail: user?.email,
       role: result.membership.role,
       plan,
+      isFreeTrial: freeTrial,
       serviceZips,
       access: {
-        inHomeTests: checkTierAccess(company, "verify_in_home_results"),
-        filtration: checkTierAccess(company, "verify_filtration_installs"),
-        leadPipeline: checkTierAccess(company, "lead_pipeline"),
+        inHomeTests: checkTierAccess(company, "verify_in_home_results", freeTrial),
+        filtration: checkTierAccess(company, "verify_filtration_installs", freeTrial),
+        leadPipeline: checkTierAccess(company, "lead_pipeline", freeTrial),
       },
       messages: {
         growth: tierAccessMessage("verify_in_home_results"),
@@ -381,6 +385,33 @@ export const saveReportInHomeTest = action({
       metadata: JSON.stringify({ reportId: String(args.reportId), referralUrl: referral.referralUrl }),
     });
 
+    // Sync score to consumer_scores in Supabase (Item 8)
+    if (report.customerEmail) {
+      try {
+        const scorePayload = {
+          consumer_email: report.customerEmail.toLowerCase(),
+          zip: report.customerZip || report.zip,
+          aqua_score: args.waterScore ?? 0,
+          tier: (args.waterScore ?? 0) >= 80 ? "safe" : (args.waterScore ?? 0) >= 50 ? "moderate" : "at_risk",
+          status: "verified",
+          verified_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        // Upsert by consumer_email
+        await supabaseTable("consumer_scores?consumer_email=eq." + encodeURIComponent(report.customerEmail.toLowerCase()), {
+          method: "DELETE",
+        }).catch(() => {});
+        await supabaseTable("consumer_scores", {
+          method: "POST",
+          prefer: "return=representation",
+          body: scorePayload,
+        });
+        console.log(`Score synced to consumer_scores for ${report.customerEmail}`);
+      } catch (err) {
+        console.warn("Consumer score sync failed (non-fatal):", err);
+      }
+    }
+
     return { referralUrl: referral.referralUrl, verificationId: inserted?.[0]?.id, referralId: referral.id };
   },
 });
@@ -563,5 +594,292 @@ export const recordSharedEvent = mutation({
       entityId: args.entityId,
       metadata: args.metadata ? JSON.parse(args.metadata) : undefined,
     });
+  },
+});
+
+// ============ Demo analytics & config functions for deployed frontend ============
+
+export const getDemoAnalytics = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const member = await ctx.db
+      .query("companyMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!member) return null;
+
+    const sessions = await ctx.db
+      .query("demoSessions")
+      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+      .collect();
+    const reports = await ctx.db
+      .query("reports")
+      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+      .collect();
+    const leads = await ctx.db
+      .query("leads")
+      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+      .collect();
+
+    const totalDemos = sessions.length;
+    const sold = sessions.filter((s) => s.outcome === "sold").length;
+    const followUp = sessions.filter((s) => s.outcome === "follow_up").length;
+    const notInterested = sessions.filter((s) => s.outcome === "not_interested").length;
+    const noShow = sessions.filter((s) => s.outcome === "no_show").length;
+
+    return {
+      totalDemos,
+      totalReports: reports.length,
+      totalLeads: leads.length,
+      sold,
+      followUp,
+      notInterested,
+      noShow,
+      conversionRate: totalDemos > 0 ? Math.round((sold / totalDemos) * 100) : 0,
+      avgDuration: totalDemos > 0
+        ? Math.round(sessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0) / totalDemos)
+        : 0,
+    };
+  },
+});
+
+export const getEnhancedDemoAnalytics = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const member = await ctx.db
+      .query("companyMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!member) return null;
+
+    const sessions = await ctx.db
+      .query("demoSessions")
+      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+      .collect();
+    const leads = await ctx.db
+      .query("leads")
+      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+      .collect();
+
+    // Best demo days
+    const dayMap: Record<string, { count: number; sold: number }> = {};
+    for (const s of sessions) {
+      const day = new Date(s._creationTime).toLocaleDateString("en-US", { weekday: "long" });
+      if (!dayMap[day]) dayMap[day] = { count: 0, sold: 0 };
+      dayMap[day].count++;
+      if (s.outcome === "sold") dayMap[day].sold++;
+    }
+    const bestDemoDays = Object.entries(dayMap)
+      .map(([day, data]) => ({ day, ...data, closeRate: data.count > 0 ? Math.round((data.sold / data.count) * 100) : 0 }))
+      .sort((a, b) => b.closeRate - a.closeRate);
+
+    // Lead sources
+    const sourceMap: Record<string, number> = {};
+    for (const l of leads) {
+      const src = l.source || "direct";
+      sourceMap[src] = (sourceMap[src] || 0) + 1;
+    }
+    const leadSources = Object.entries(sourceMap).map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count);
+
+    // Rep leaderboard
+    const repMap: Record<string, { name: string; demos: number; sold: number }> = {};
+    for (const s of sessions) {
+      const key = s.userId ? String(s.userId) : "unknown";
+      if (!repMap[key]) repMap[key] = { name: key, demos: 0, sold: 0 };
+      repMap[key].demos++;
+      if (s.outcome === "sold") repMap[key].sold++;
+    }
+
+    // Resolve rep names
+    const repLeaderboard = [];
+    for (const [id, data] of Object.entries(repMap)) {
+      let name = data.name !== id ? data.name : "Unknown Rep";
+      if (id !== "unknown") {
+        try {
+          const user = await ctx.db.get(id as any) as any;
+          if (user?.name) name = user.name;
+          else if (user?.email) name = user.email;
+        } catch { /* skip - invalid ID */ }
+      }
+      repLeaderboard.push({
+        name,
+        demoCount: data.demos,
+        sold: data.sold,
+        closeRate: data.demos > 0 ? Math.round((data.sold / data.demos) * 100) : 0,
+      });
+    }
+    repLeaderboard.sort((a, b) => b.sold - a.sold);
+
+    // Customer profiles
+    const customers = sessions.map((s) => ({
+      _id: s._id,
+      customerName: s.customerName ?? "Unknown",
+      waterScore: s.waterScore ?? null,
+      outcome: s.outcome,
+      durationSeconds: s.durationSeconds ?? 0,
+      notes: s.notes ?? "",
+      createdAt: s._creationTime,
+    })).sort((a, b) => b.createdAt - a.createdAt);
+
+    return {
+      bestDemoDays,
+      leadSources,
+      repLeaderboard,
+      customers,
+    };
+  },
+});
+
+export const saveDemoSession = mutation({
+  args: {
+    reportId: v.optional(v.id("reports")),
+    outcome: v.string(),
+    notes: v.optional(v.string()),
+    durationSeconds: v.optional(v.number()),
+    customerName: v.optional(v.string()),
+    waterScore: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const member = await ctx.db
+      .query("companyMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!member) throw new Error("Not a company member");
+
+    // If we have a reportId, pull customer info from the report
+    let customerName = args.customerName;
+    let waterScore = args.waterScore;
+    if (args.reportId) {
+      const report = await ctx.db.get(args.reportId);
+      if (report) {
+        if (!customerName) customerName = report.customerName;
+        if (waterScore === undefined) waterScore = report.waterScore;
+      }
+    }
+
+    const sessionId = await ctx.db.insert("demoSessions", {
+      companyId: member.companyId,
+      reportId: args.reportId,
+      userId,
+      outcome: args.outcome,
+      notes: args.notes,
+      durationSeconds: args.durationSeconds,
+      customerName,
+      waterScore,
+    });
+
+    return sessionId;
+  },
+});
+
+export const updateDemoConfig = mutation({
+  args: {
+    config: v.any(),
+  },
+  handler: async (ctx, { config }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const member = await ctx.db
+      .query("companyMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!member || (member.role !== "owner" && member.role !== "admin"))
+      throw new Error("Not authorized");
+
+    await ctx.db.patch(member.companyId, { demoConfig: config });
+    return { success: true };
+  },
+});
+
+export const updateDemoStepConfig = mutation({
+  args: {
+    order: v.optional(v.array(v.string())),
+    disabled: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const member = await ctx.db
+      .query("companyMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!member || (member.role !== "owner" && member.role !== "admin"))
+      throw new Error("Not authorized");
+
+    await ctx.db.patch(member.companyId, {
+      demoStepConfig: {
+        order: args.order,
+        disabled: args.disabled,
+      },
+    });
+    return { success: true };
+  },
+});
+
+// ============ Auto-referral creation (called from saveReport via scheduler) ============
+
+export const autoCreateReferralForReport = internalAction({
+  args: {
+    reportId: v.string(),
+    companyId: v.string(),
+    companyName: v.string(),
+    dealerId: v.string(),
+    customerName: v.optional(v.string()),
+    customerAddress: v.optional(v.string()),
+    customerZip: v.string(),
+    customerEmail: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),
+    utilityName: v.string(),
+    city: v.string(),
+    state: v.string(),
+    zip: v.string(),
+    waterScore: v.optional(v.number()),
+  },
+  handler: async (_ctx, args) => {
+    if (!args.customerEmail && !args.customerAddress) {
+      // Can't create a referral without at least an email or address
+      return null;
+    }
+
+    try {
+      const referral = await ensureReferral({
+        dealerId: args.dealerId,
+        companyId: args.companyId,
+        companyName: args.companyName,
+        customerName: args.customerName || "Homeowner",
+        customerAddress: args.customerAddress || `${args.city}, ${args.state} ${args.zip}`,
+        customerZip: args.customerZip || args.zip,
+        customerEmail: args.customerEmail,
+        customerPhone: args.customerPhone,
+        reportData: {
+          report: {
+            id: args.reportId,
+            utilityName: args.utilityName,
+            city: args.city,
+            state: args.state,
+            zip: args.zip,
+            waterScore: args.waterScore,
+            scoreMode: "aqua_score_v1",
+          },
+        },
+      });
+
+      console.log(`Auto-referral created for report ${args.reportId}: ${referral.referralUrl} (isNew: ${referral.isNew})`);
+      return { referralUrl: referral.referralUrl, isNew: referral.isNew };
+    } catch (error) {
+      console.warn("Auto-referral creation failed (non-fatal):", error);
+      return null;
+    }
   },
 });

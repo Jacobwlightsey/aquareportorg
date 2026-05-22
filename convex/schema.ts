@@ -34,6 +34,8 @@ const schema = defineSchema({
     stripeStatus: v.optional(v.string()), // "active" | "past_due" | "canceled"
     stripePeriodEnd: v.optional(v.number()),
     reportLimitOverride: v.optional(v.number()),
+    demoConfig: v.optional(v.any()),
+    demoStepConfig: v.optional(v.any()),
   })
     .index("by_createdBy", ["createdBy"])
     .index("by_customDomain", ["customDomain"])
@@ -253,6 +255,19 @@ const schema = defineSchema({
   })
     .index("by_company", ["companyId"])
     .index("by_domain", ["domain"]),
+  demoSessions: defineTable({
+    companyId: v.id("companies"),
+    reportId: v.optional(v.id("reports")),
+    userId: v.optional(v.id("users")),
+    outcome: v.string(), // "sold" | "follow_up" | "not_interested" | "no_show"
+    notes: v.optional(v.string()),
+    durationSeconds: v.optional(v.number()),
+    customerName: v.optional(v.string()),
+    waterScore: v.optional(v.number()),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_report", ["reportId"]),
+
 });
 
 export default schema;

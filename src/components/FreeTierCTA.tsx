@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
  * Full-width upgrade banner shown to free-tier users after they've used their trial report.
  * Designed to be placed at the top of the dashboard, customers list, etc.
  */
-export function FreeTierBanner({ totalReports = 1 }: { totalReports?: number }) {
+export function FreeTierBanner({ totalReports: _totalReports = 1 }: { totalReports?: number }) {
   return (
     <Card className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 dark:border-amber-800">
       <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -102,7 +102,7 @@ export function FreeTrialExhausted() {
       <div className="mt-8 grid gap-3 sm:grid-cols-3 max-w-lg w-full">
         {[
           { plan: "Starter", price: "$99/mo", reports: "20 reports/mo" },
-          { plan: "Growth", price: "$199/mo", reports: "50 reports/mo" },
+          { plan: "Growth", price: "$249/mo", reports: "50 reports/mo" },
           { plan: "Pro", price: "$499/mo", reports: "150+ reports/mo" },
         ].map((p) => (
           <div key={p.plan} className="rounded-lg border p-3 text-center">

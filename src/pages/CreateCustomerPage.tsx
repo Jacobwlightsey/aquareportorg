@@ -103,7 +103,7 @@ function StepIndicator({ step }: { step: number }) {
 
 export function CreateCustomerPage() {
   const navigate = useNavigate();
-  const { canCreateReport, isFree, hasUsedTrial, loading: trialLoading } = useFreeTrial();
+  const { canCreateReport: _canCreateReport, isFree, hasUsedTrial, loading: trialLoading } = useFreeTrial();
   const [step, setStep] = useState(1);
   const [lead, setLead] = useState<LeadInfo>({
     name: "",

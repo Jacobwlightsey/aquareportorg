@@ -256,7 +256,7 @@ export function CustomerDetailPage() {
     reportId ? { reportId: reportId as any } : "skip"
   );
   const rawCompany = useQuery(api.companies.getMyCompany);
-  const { isFree, hasUsedTrial, effectivePlan, totalReports } = useFreeTrial();
+  const { isFree, hasUsedTrial, effectivePlan: _effectivePlan, totalReports } = useFreeTrial();
   // For free-trial users who haven't exhausted their trial, override the plan
   // so PlanGate helpers see "starter" level access
   const company = useMemo(() => {

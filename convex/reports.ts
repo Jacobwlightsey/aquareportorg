@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { audit, enforceReportLimit, getMembership, reportUsageStatus, requireRole, trackUsage } from "./security";
 
 function generateShareToken(): string {
@@ -139,8 +140,9 @@ export const saveReport = mutation({
       customerZip: optionalString(args.customerZip),
       customerPhone: optionalString(args.customerPhone),
       customerEmail: optionalString(args.customerEmail),
-      waterScore: args.waterScore === null || args.waterScore === undefined ? undefined : finiteNumber(args.waterScore),
-      scoreMode: args.scoreMode,
+      waterScore: calculateAquaScoreFromContaminants(parseReportContaminants(args.contaminants))
+        ?? (args.waterScore === null || args.waterScore === undefined ? undefined : finiteNumber(args.waterScore)),
+      scoreMode: "aqua_score_v1",
       chlorine: args.chlorine,
       hardness: args.hardness,
       tds: args.tds,
@@ -161,6 +163,25 @@ export const saveReport = mutation({
       entityType: "report",
       entityId: String(reportId),
       metadata: { zip: args.zip, utilityName: args.utilityName },
+    });
+
+    // Auto-create consumer referral (non-blocking, runs as background action)
+    await ctx.scheduler.runAfter(0, internal.dealerShared.autoCreateReferralForReport, {
+      reportId: String(reportId),
+      companyId: String(membership.companyId),
+      companyName: (company as any)?.name || "",
+      dealerId: String(userId),
+      customerName: optionalString(args.customerName),
+      customerAddress: optionalString(args.customerAddress),
+      customerZip: optionalString(args.customerZip) || args.zip,
+      customerEmail: optionalString(args.customerEmail),
+      customerPhone: optionalString(args.customerPhone),
+      utilityName: args.utilityName,
+      city: args.city,
+      state: args.state,
+      zip: args.zip,
+      waterScore: calculateAquaScoreFromContaminants(parseReportContaminants(args.contaminants))
+        ?? (args.waterScore === null || args.waterScore === undefined ? undefined : finiteNumber(args.waterScore)),
     });
 
     return { reportId, shareToken };

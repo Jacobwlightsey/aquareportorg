@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Droplets } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { blogPosts } from "@/lib/blogData";
 import { SEO } from "@/components/SEO";
 import { breadcrumbSchema } from "@/lib/schema";

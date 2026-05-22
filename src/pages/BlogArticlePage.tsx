@@ -1,5 +1,5 @@
 import { Link, useParams, Navigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock, Droplets } from "lucide-react";
+import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import { getBlogPost, getRelatedPosts, blogToPillarMap } from "@/lib/blogData";
 import { SEO } from "@/components/SEO";
 import {

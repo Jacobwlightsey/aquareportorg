@@ -1,6 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { action, mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { audit, requireRole } from "./security";
 
@@ -153,7 +153,8 @@ export const applyPromoCode = mutation({
 
 // ============ MUTATIONS (called by webhook or admin) ============
 
-export const updateSubscription = mutation({
+// Internal only — not callable from the client
+export const updateSubscription = internalMutation({
   args: {
     companyId: v.id("companies"),
     stripeCustomerId: v.optional(v.string()),

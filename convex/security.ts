@@ -149,10 +149,11 @@ export function activePlan(company: any) {
   return company?.stripeStatus === "active" ? company?.stripePlan || "free" : "free";
 }
 
-export function checkTierAccess(company: any, feature: string) {
+export function checkTierAccess(company: any, feature: string, isFreeTrial?: boolean) {
   const plan = activePlan(company);
+  const effectivePlan = (plan === "free" && isFreeTrial) ? "growth" : plan;
   const required = FEATURE_MIN_PLAN[feature] || "free";
-  return (PLAN_RANK[plan] ?? 0) >= (PLAN_RANK[required] ?? 0);
+  return (PLAN_RANK[effectivePlan] ?? 0) >= (PLAN_RANK[required] ?? 0);
 }
 
 export function tierAccessMessage(feature: string) {
@@ -168,10 +169,25 @@ export function tierAccessMessage(feature: string) {
 export async function requireTierAccess(ctx: any, companyId: any, feature: string) {
   const company = await ctx.db.get(companyId);
   if (!company) throw new Error("Company not found");
-  if (!checkTierAccess(company, feature)) {
+  const freeTrial = await isInFreeTrial(ctx, company);
+  if (!checkTierAccess(company, feature, freeTrial)) {
     throw new Error(tierAccessMessage(feature));
   }
   return company;
+}
+
+/**
+ * Returns true when the company is on a free plan and has NOT yet
+ * used their one free report.
+ */
+export async function isInFreeTrial(ctx: any, company: any) {
+  const plan = activePlan(company);
+  if (plan !== "free") return false;
+  const allReports = await ctx.db
+    .query("reports")
+    .withIndex("by_company", (q: any) => q.eq("companyId", company._id))
+    .collect();
+  return allReports.length < 1;
 }
 
 export async function reportUsageStatus(ctx: any, company: any) {
@@ -185,6 +201,23 @@ export async function reportUsageStatus(ctx: any, company: any) {
 }
 
 export async function enforceReportLimit(ctx: any, company: any) {
+  const plan = activePlan(company);
+
+  // Free trial: 1 report lifetime limit
+  if (plan === "free") {
+    const allReports = await ctx.db
+      .query("reports")
+      .withIndex("by_company", (q: any) => q.eq("companyId", company._id))
+      .collect();
+    if (allReports.length >= 1) {
+      throw new Error(
+        "Your free trial report has been used. Upgrade your plan to generate more reports."
+      );
+    }
+    return;
+  }
+
+  // Paid plans: enforce monthly limit
   const usage = await reportUsageStatus(ctx, company);
   if (Number.isFinite(usage.limit) && usage.used >= usage.limit) {
     throw new Error(

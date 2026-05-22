@@ -2,9 +2,11 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import {
   Building2,
   Check,
+  ChevronDown,
   CreditCard,
   Droplets,
   ExternalLink,
+  GripVertical,
   Loader2,
   Mail,
   MapPin,
@@ -12,14 +14,20 @@ import {
   Phone,
   Globe,
   Plus,
+  Settings,
   Trash2,
   Users,
   UserCircle,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  Save,
+  X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { SUBSCRIPTION_PLANS } from "@/lib/constants";
+import { SUBSCRIPTION_PLANS_FLAT as SUBSCRIPTION_PLANS } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -85,6 +93,10 @@ export function CompanySettingsPage() {
       <CompanyProfileCard company={company} onUpdate={updateCompany} />
 
       <BrandingCard company={company} onUpdate={updateCompany} />
+
+      {(company.role === "admin" || company.role === "owner") && <DemoStepConfigCard />}
+
+      {(company.role === "admin" || company.role === "owner") && <DemoConfigCard />}
 
       <TeamCardFixed
         members={members ?? []}
@@ -946,6 +958,510 @@ function TeamCard({
 }
 
 void TeamCard;
+
+
+/* ─── Demo Step Config ──────────────────────────────────────────── */
+
+const DEMO_STEPS = [
+  { key: "welcome", label: "Welcome", color: "#3b82f6", required: true },
+  { key: "score", label: "AquaScore Reveal", color: "#10b981", required: false },
+  { key: "contaminants", label: "What\'s In Your Water", color: "#f59e0b", required: false },
+  { key: "impact", label: "Impact On Your Life", color: "#f43f5e", required: false },
+  { key: "test", label: "Live Water Test", color: "#06b6d4", required: false },
+  { key: "transform", label: "Score Transform", color: "#8b5cf6", required: false },
+  { key: "system", label: "System Info", color: "#6366f1", required: false },
+  { key: "pricing", label: "Pricing", color: "#10b981", required: false },
+  { key: "comparison", label: "Cost Comparison", color: "#ec4899", required: false },
+  { key: "boost", label: "Score Boost", color: "#f59e0b", required: false },
+  { key: "customerClose", label: "Customer Close", color: "#22c55e", required: false },
+  { key: "dealerClose", label: "Dealer Close", color: "#6b7280", required: true },
+];
+
+const STEP_KEY_ALIASES: Record<string, string> = { solution: "transform", close: "dealerClose" };
+
+function DemoStepConfigCard() {
+  const company = useQuery(api.companies.getMyCompany);
+  const updateStepConfig = useMutation(api.dealerShared.updateDemoStepConfig);
+  const [steps, setSteps] = useState<Array<typeof DEMO_STEPS[0] & { enabled: boolean }>>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!company) return;
+    const cfg = company.demoStepConfig as any;
+    const normalize = (k: string) => STEP_KEY_ALIASES[k] ?? k;
+    const disabled = new Set((cfg?.disabled ?? []).map(normalize));
+    const stepMap = new Map(DEMO_STEPS.map((s) => [s.key, s]));
+
+    let ordered: Array<typeof DEMO_STEPS[0] & { enabled: boolean }>;
+    if (cfg?.order) {
+      const seen = new Set<string>();
+      ordered = cfg.order.map(normalize).filter((k: string) => stepMap.has(k) && !seen.has(k)).map((k: string) => {
+        seen.add(k);
+        const s = stepMap.get(k)!;
+        return { ...s, enabled: !disabled.has(k) || s.required };
+      });
+      for (const s of DEMO_STEPS) {
+        if (!seen.has(s.key)) ordered.push({ ...s, enabled: !disabled.has(s.key) || s.required });
+      }
+    } else {
+      ordered = DEMO_STEPS.map((s) => ({ ...s, enabled: !disabled.has(s.key) || s.required }));
+    }
+    setSteps(ordered);
+  }, [company]);
+
+  const persist = useCallback(async (s: typeof steps) => {
+    setSaving(true);
+    try {
+      await updateStepConfig({ order: s.map((x) => x.key), disabled: s.filter((x) => !x.enabled).map((x) => x.key) });
+      toast.success("Demo step order saved");
+    } catch { toast.error("Failed to save"); }
+    finally { setSaving(false); }
+  }, [updateStepConfig]);
+
+  const toggle = useCallback((idx: number) => {
+    setSteps((prev) => {
+      const next = [...prev];
+      if (!next[idx].required) next[idx] = { ...next[idx], enabled: !next[idx].enabled };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const reset = useCallback(() => {
+    const fresh = DEMO_STEPS.map((s) => ({ ...s, enabled: true }));
+    setSteps(fresh);
+    persist(fresh);
+  }, [persist]);
+
+  if (!company) return null;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base">Demo Wizard Steps</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">Drag to reorder · Toggle to show/hide steps</p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={reset} className="flex items-center gap-1.5 text-xs">
+          <RotateCcw className="size-3" /> Reset
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-1">
+        {steps.map((step, idx) => (
+          <div
+            key={step.key}
+            draggable
+            onDragStart={() => setDragIdx(idx)}
+            onDragOver={(e) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) { setSteps((prev) => { const n = [...prev]; const [item] = n.splice(dragIdx, 1); n.splice(idx, 0, item); return n; }); setDragIdx(idx); } }}
+            onDragEnd={() => { if (dragIdx !== null) persist(steps); setDragIdx(null); }}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all cursor-grab active:cursor-grabbing ${dragIdx === idx ? "bg-muted/50 scale-[1.02] shadow-lg" : "hover:bg-muted/30"} ${step.enabled ? "" : "opacity-40"}`}
+          >
+            <GripVertical className="size-4 text-muted-foreground/30 shrink-0" />
+            <div className="size-2.5 rounded-full shrink-0" style={{ background: step.color }} />
+            <span className="flex-1 text-sm font-medium">
+              {step.label}
+              {step.required && <span className="ml-2 text-[10px] text-muted-foreground/50 uppercase tracking-wider">Required</span>}
+            </span>
+            <span className="text-[10px] text-muted-foreground/30 font-mono mr-2">{idx + 1}</span>
+            <button
+              onClick={() => toggle(idx)}
+              disabled={step.required}
+              className={`rounded p-1 transition-colors cursor-pointer ${step.required ? "text-muted-foreground/20 cursor-not-allowed" : step.enabled ? "text-muted-foreground/50 hover:text-foreground" : "text-muted-foreground/20 hover:text-foreground"}`}
+              title={step.required ? "Required step" : step.enabled ? "Hide step" : "Show step"}
+            >
+              {step.enabled ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+            </button>
+          </div>
+        ))}
+        {saving && <p className="text-[10px] text-muted-foreground text-center pt-1">Saving…</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ─── Collapsible Section helper ─────────────────────────────────── */
+
+function ConfigSection({ title, description, children, defaultOpen }: { title: string; description: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen ?? false);
+  return (
+    <div className="border rounded-xl overflow-hidden">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/30 transition-colors cursor-pointer">
+        <div>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="px-4 pb-4 space-y-3 border-t">{children}</div>}
+    </div>
+  );
+}
+
+/* ─── Editable list item helpers ──────────────────────────────────── */
+
+function EditableListItem({ value, placeholder, onChange, onRemove }: { value: string; placeholder: string; onChange: (v: string) => void; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Input value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="flex-1 text-sm" />
+      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+    </div>
+  );
+}
+
+function TitledListItem({ item, onChange, onRemove }: { item: { title: string; description: string }; onChange: (v: { title: string; description: string }) => void; onRemove: () => void }) {
+  return (
+    <div className="rounded-xl border p-3 bg-background space-y-1">
+      <div className="flex items-center gap-2">
+        <Input value={item.title} placeholder="Title" onChange={(e) => onChange({ ...item, title: e.target.value })} className="flex-1 text-sm font-semibold" />
+        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+      </div>
+      <Textarea value={item.description} placeholder="Description" onChange={(e) => onChange({ ...item, description: e.target.value })} rows={2} className="text-xs resize-none" />
+    </div>
+  );
+}
+
+function DiscountItem({ d, onChange, onRemove }: { d: { id: string; label: string; amount: number; icon: string }; onChange: (v: any) => void; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Input value={d.icon} className="w-12 text-center" onChange={(e) => onChange({ ...d, icon: e.target.value })} />
+      <Input value={d.label} placeholder="Discount label" onChange={(e) => onChange({ ...d, label: e.target.value })} className="flex-1" />
+      <Input type="number" value={d.amount || ""} placeholder="$" onChange={(e) => onChange({ ...d, amount: Number(e.target.value) })} className="w-24" />
+      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+    </div>
+  );
+}
+
+function CostItem({ item, onChange, onRemove }: { item: { label: string; monthlyCost: number; enabled: boolean }; onChange: (v: any) => void; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Input value={item.label} placeholder="Cost label" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1" />
+      <Input type="number" value={item.monthlyCost || ""} placeholder="$/mo" onChange={(e) => onChange({ ...item, monthlyCost: Number(e.target.value) })} className="w-24" />
+      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+    </div>
+  );
+}
+
+/* ─── Demo Config Card ────────────────────────────────────────────── */
+
+const DEFAULT_CLOSE_OPTIONS = ["Sold — Install Scheduled", "Follow Up Needed", "Not Interested", "No Show"];
+
+const COLOR_PRESETS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4", "#0ea5e9", "#84cc16"];
+
+function DemoConfigCard() {
+  const company = useQuery(api.companies.getMyCompany);
+  const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const [cfg, setCfg] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (company && !initialized) {
+      const v = (company as any).demoConfig || {};
+      setCfg({
+        welcomeHeadline: v.welcomeHeadline || "",
+        welcomeSubtext: v.welcomeSubtext || "",
+        accentColor: v.accentColor || "#3b82f6",
+        highlightCategories: v.highlightCategories || [],
+        projectedScore: v.projectedScore ?? 95,
+        solutionHeadline: v.solutionHeadline || "",
+        solutionProducts: v.solutionProducts || [],
+        systemIncludes: v.systemIncludes?.length ? v.systemIncludes : [
+          { title: "Carbon Filtration", description: "Reduces chlorine, chemicals, bad taste & odor" },
+          { title: "Water Softening", description: "Reduces hardness, scale & protects plumbing" },
+          { title: "Sediment Filtration", description: "Reduces dirt, rust, sand & fine particles" },
+          { title: "Digital Control Valve", description: "High efficiency metered control valve" },
+          { title: "Brine Tank with Safety Float", description: "Ensures reliable & efficient operation" },
+          { title: "Bypass Valve", description: "Built-in bypass for easy maintenance" },
+          { title: "Professional Installation", description: "Installed by certified water quality experts" },
+        ],
+        warrantyTitle: v.warrantyTitle || "20 Year Unlimited Warranty",
+        warrantyBullets: v.warrantyBullets?.length ? v.warrantyBullets : [
+          "20 Year Warranty on Tanks", "20 Year Warranty on Control Valve",
+          "10 Year Warranty on Components", "5 Year Warranty on Labor",
+          "100% Parts & Labor Coverage", "No Prorating — Ever", "Lifetime Customer Support",
+        ],
+        howItWorksSteps: v.howItWorksSteps?.length ? v.howItWorksSteps : [
+          { title: "Water Analysis", description: "We test your water and review your local utility data to identify concerns." },
+          { title: "Custom Design", description: "Your system is configured specifically for the contaminants in your water." },
+          { title: "Professional Installation", description: "Certified technicians install your system — free of charge." },
+          { title: "Enjoy Better Water", description: "Cleaner, softer water from every tap in your home, starting day one." },
+        ],
+        systemCallouts: v.systemCallouts?.length ? v.systemCallouts : ["Free Professional Installation", "Free Annual Water Review", "Lifetime Support"],
+        programPrice: v.programPrice,
+        revealPrice: v.revealPrice,
+        discountOptions: v.discountOptions?.length ? v.discountOptions : [
+          { id: "today", label: "Same-Day Decision", amount: 500, icon: "⚡" },
+          { id: "referral", label: "Referral Credit", amount: 300, icon: "👥" },
+          { id: "military", label: "Military / First Responder", amount: 250, icon: "🎖️" },
+          { id: "senior", label: "Senior Discount", amount: 200, icon: "🤝" },
+        ],
+        costItems: v.costItems?.length ? v.costItems : [
+          { label: "Bottled Water", monthlyCost: 120, enabled: true },
+          { label: "Water Delivery", monthlyCost: 60, enabled: true },
+          { label: "Pitcher Filters", monthlyCost: 25, enabled: true },
+          { label: "Appliance Repairs", monthlyCost: 40, enabled: true },
+          { label: "Skin/Hair Products", monthlyCost: 35, enabled: true },
+          { label: "Plumbing Maintenance", monthlyCost: 30, enabled: true },
+        ],
+        systemCostMonthly: v.systemCostMonthly,
+        roSystemName: v.roSystemName || "Reverse Osmosis System",
+        roSystemDescription: v.roSystemDescription || "A premium under-sink reverse osmosis system that removes 99.9% of all remaining contaminants, giving you the purest water possible — included free with your whole-home system.",
+        roSystemImage: v.roSystemImage || "",
+        boostedScore: v.boostedScore ?? 99,
+        closeHeadline: v.closeHeadline || "",
+        customerCloseSubtext: v.customerCloseSubtext || "",
+        closeOptions: v.closeOptions?.length ? v.closeOptions : DEFAULT_CLOSE_OPTIONS,
+      });
+      setInitialized(true);
+    }
+  }, [company, initialized]);
+
+  const update = useCallback((patch: Record<string, any>) => {
+    setCfg((prev) => ({ ...prev, ...patch }));
+    setSaved(false);
+  }, []);
+
+  if (!company) return null;
+
+  const accent = cfg.accentColor || "#3b82f6";
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Build config object, sending undefined for empty values
+      const config: Record<string, any> = {};
+      for (const [k, v] of Object.entries(cfg)) {
+        if (Array.isArray(v)) { if (v.length > 0) config[k] = v; }
+        else if (v !== "" && v !== undefined && v !== null) config[k] = v;
+      }
+      await updateDemoConfig({ config });
+      setSaved(true);
+      toast.success("Demo settings saved!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally { setSaving(false); }
+  };
+
+  const contaminantCategories = ["Heavy Metals", "Disinfection Byproducts", "Pesticides", "Radioactive", "Microorganisms", "Industrial Chemicals", "Pharmaceuticals"];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Settings className="size-5 text-blue-500" /> Demo Wizard Customization
+        </CardTitle>
+        <CardDescription>Configure every part of your demo presentation. Changes show up in every new demo you present.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Brand Color */}
+        <ConfigSection title="Brand Color" description="Colors buttons, highlights, and accents throughout the demo">
+          <div className="flex flex-wrap gap-2 pt-2">
+            {COLOR_PRESETS.map((c) => (
+              <button key={c} onClick={() => update({ accentColor: c })} className={`size-8 rounded-xl transition-all cursor-pointer ${accent === c ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : "hover:scale-105"}`} style={{ backgroundColor: c }} />
+            ))}
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <input type="color" value={accent} onChange={(e) => update({ accentColor: e.target.value })} className="w-8 h-8 rounded-lg border cursor-pointer" />
+            <span className="text-xs text-muted-foreground">Or pick any custom color</span>
+          </div>
+        </ConfigSection>
+
+        {/* Welcome Screen */}
+        <ConfigSection title="Welcome Screen" description="First thing customers see when the demo starts" defaultOpen>
+          <div className="space-y-2 pt-2">
+            <Label className="text-xs">Headline</Label>
+            <Input value={cfg.welcomeHeadline || ""} placeholder="Your Water Quality Report" onChange={(e) => update({ welcomeHeadline: e.target.value })} />
+            <Label className="text-xs">Subtext</Label>
+            <Textarea value={cfg.welcomeSubtext || ""} placeholder="Let\'s look at what\'s in your water..." onChange={(e) => update({ welcomeSubtext: e.target.value })} rows={2} />
+          </div>
+        </ConfigSection>
+
+        {/* Featured Contaminants */}
+        <ConfigSection title="Featured Contaminants" description="Pick which contaminants to emphasize — leave empty to auto-detect">
+          <div className="flex flex-wrap gap-2 pt-2">
+            {contaminantCategories.map((cat) => (
+              <button key={cat} onClick={() => {
+                const list = cfg.highlightCategories || [];
+                update({ highlightCategories: list.includes(cat) ? list.filter((c: string) => c !== cat) : [...list, cat] });
+              }}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${(cfg.highlightCategories || []).includes(cat) ? "bg-blue-500 text-white border-blue-500" : "border-muted-foreground/20 hover:bg-muted/50"}`}>{cat}</button>
+            ))}
+          </div>
+        </ConfigSection>
+
+        {/* Score Transform */}
+        <ConfigSection title="Score Transform" description="Projected score after filtration — the \'before → after\' reveal">
+          <div className="pt-2">
+            <Label className="text-xs">Projected Score After Filtration</Label>
+            <div className="flex items-center gap-3 mt-1">
+              <input type="range" min={60} max={100} value={cfg.projectedScore ?? 95} onChange={(e) => update({ projectedScore: Number(e.target.value) })} className="flex-1 accent-blue-500 cursor-pointer" />
+              <div className="size-10 rounded-full flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: accent }}>{cfg.projectedScore ?? 95}</div>
+            </div>
+          </div>
+        </ConfigSection>
+
+        {/* System Info */}
+        <ConfigSection title="System Info" description="System includes, warranty, how it works, callouts">
+          <div className="space-y-4 pt-2">
+            <div className="rounded-xl bg-muted/30 p-3 border border-dashed">
+              <p className="text-xs text-muted-foreground">💡 System Name & Image are set in <strong>Company Settings → General</strong> (Solution Product section above).</p>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">System Includes</Label>
+              <div className="space-y-2 mt-2">
+                {(cfg.systemIncludes || []).map((item: any, idx: number) => (
+                  <TitledListItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.systemIncludes || [])]; n[idx] = v; update({ systemIncludes: n }); }} onRemove={() => { const n = [...(cfg.systemIncludes || [])]; n.splice(idx, 1); update({ systemIncludes: n }); }} />
+                ))}
+                <button onClick={() => update({ systemIncludes: [...(cfg.systemIncludes || []), { title: "", description: "" }] })} className="mt-1 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Item</button>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Warranty</Label>
+              <Input value={cfg.warrantyTitle || ""} placeholder="20 Year Unlimited Warranty" onChange={(e) => update({ warrantyTitle: e.target.value })} className="mt-1" />
+              <div className="space-y-2 mt-2">
+                {(cfg.warrantyBullets || []).map((b: string, idx: number) => (
+                  <EditableListItem key={idx} value={b} placeholder="e.g. 20 Year Warranty on Tanks" onChange={(v) => { const n = [...(cfg.warrantyBullets || [])]; n[idx] = v; update({ warrantyBullets: n }); }} onRemove={() => { const n = [...(cfg.warrantyBullets || [])]; n.splice(idx, 1); update({ warrantyBullets: n }); }} />
+                ))}
+                <button onClick={() => update({ warrantyBullets: [...(cfg.warrantyBullets || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Warranty Point</button>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">How It Works Steps</Label>
+              <div className="space-y-2 mt-2">
+                {(cfg.howItWorksSteps || []).map((step: any, idx: number) => (
+                  <TitledListItem key={idx} item={step} onChange={(v) => { const n = [...(cfg.howItWorksSteps || [])]; n[idx] = v; update({ howItWorksSteps: n }); }} onRemove={() => { const n = [...(cfg.howItWorksSteps || [])]; n.splice(idx, 1); update({ howItWorksSteps: n }); }} />
+                ))}
+                <button onClick={() => update({ howItWorksSteps: [...(cfg.howItWorksSteps || []), { title: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Step</button>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Bottom Callouts</Label>
+              <p className="text-xs text-muted-foreground mb-2">Up to 3 short callouts</p>
+              <div className="space-y-2">
+                {(cfg.systemCallouts || []).map((c: string, idx: number) => (
+                  <EditableListItem key={idx} value={c} placeholder="e.g. Free Professional Installation" onChange={(v) => { const n = [...(cfg.systemCallouts || [])]; n[idx] = v; update({ systemCallouts: n }); }} onRemove={() => { const n = [...(cfg.systemCallouts || [])]; n.splice(idx, 1); update({ systemCallouts: n }); }} />
+                ))}
+                {(cfg.systemCallouts || []).length < 3 && (
+                  <button onClick={() => update({ systemCallouts: [...(cfg.systemCallouts || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Callout</button>
+                )}
+              </div>
+            </div>
+          </div>
+        </ConfigSection>
+
+        {/* Pricing */}
+        <ConfigSection title="Pricing" description="Program price, reveal price, stackable discounts">
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Program Price (crossed out)</Label>
+                <Input type="number" value={cfg.programPrice || ""} placeholder="e.g. 12995" onChange={(e) => update({ programPrice: Number(e.target.value) || undefined })} />
+              </div>
+              <div>
+                <Label className="text-xs">Reveal Price (actual)</Label>
+                <Input type="number" value={cfg.revealPrice || ""} placeholder="e.g. 9995" onChange={(e) => update({ revealPrice: Number(e.target.value) || undefined })} />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Stackable Discounts</Label>
+              <p className="text-xs text-muted-foreground mb-2">Sales rep can toggle these on during the demo</p>
+              <div className="space-y-2">
+                {(cfg.discountOptions || []).map((d: any, idx: number) => (
+                  <DiscountItem key={idx} d={d} onChange={(v) => { const n = [...(cfg.discountOptions || [])]; n[idx] = v; update({ discountOptions: n }); }} onRemove={() => { const n = [...(cfg.discountOptions || [])]; n.splice(idx, 1); update({ discountOptions: n }); }} />
+                ))}
+                <button onClick={() => update({ discountOptions: [...(cfg.discountOptions || []), { id: `discount_${Date.now()}`, label: "", amount: 0, icon: "🏷️" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Discount</button>
+              </div>
+            </div>
+          </div>
+        </ConfigSection>
+
+        {/* Cost Comparison */}
+        <ConfigSection title="Cost Comparison" description="Monthly expenses customers pay without filtration vs. your system">
+          <div className="space-y-3 pt-2">
+            <p className="text-xs text-muted-foreground">Set the average monthly expenses a homeowner spends without filtration.</p>
+            <div className="space-y-2">
+              {(cfg.costItems || []).map((item: any, idx: number) => (
+                <CostItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.costItems || [])]; n[idx] = v; update({ costItems: n }); }} onRemove={() => { const n = [...(cfg.costItems || [])]; n.splice(idx, 1); update({ costItems: n }); }} />
+              ))}
+              <button onClick={() => update({ costItems: [...(cfg.costItems || []), { label: "", monthlyCost: 0, enabled: true }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Cost Item</button>
+            </div>
+            <div>
+              <Label className="text-xs">Your System Monthly Cost</Label>
+              <Input type="number" value={cfg.systemCostMonthly || ""} placeholder="e.g. 49" onChange={(e) => update({ systemCostMonthly: Number(e.target.value) || undefined })} />
+              <p className="text-[10px] text-muted-foreground mt-1">What customers pay instead. Can also be entered live during the pricing step.</p>
+            </div>
+          </div>
+        </ConfigSection>
+
+        {/* RO System / Score Boost */}
+        <ConfigSection title="Score Boost (RO System)" description="The free RO system popup that boosts the score to near-perfect">
+          <div className="space-y-3 pt-2">
+            <div>
+              <Label className="text-xs">RO System Name</Label>
+              <Input value={cfg.roSystemName || ""} placeholder="Reverse Osmosis System" onChange={(e) => update({ roSystemName: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Description</Label>
+              <Textarea value={cfg.roSystemDescription || ""} placeholder="A premium under-sink reverse osmosis system..." onChange={(e) => update({ roSystemDescription: e.target.value })} rows={3} />
+            </div>
+            <div>
+              <Label className="text-xs">RO System Image URL</Label>
+              <Input value={cfg.roSystemImage || ""} placeholder="https://..." onChange={(e) => update({ roSystemImage: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Boosted Score</Label>
+              <Input type="number" value={cfg.boostedScore ?? 99} placeholder="99" onChange={(e) => update({ boostedScore: Number(e.target.value) })} className="w-24" />
+              <p className="text-[10px] text-muted-foreground mt-1">The score to show after the RO system is added. Default: 99</p>
+            </div>
+          </div>
+        </ConfigSection>
+
+        {/* Customer Close */}
+        <ConfigSection title="Customer Close" description="The friendly ending screen the customer sees">
+          <div className="space-y-2 pt-2">
+            <Label className="text-xs">Headline</Label>
+            <Input value={cfg.closeHeadline || ""} placeholder="Thank You, {firstName}!" onChange={(e) => update({ closeHeadline: e.target.value })} />
+            <Label className="text-xs">Subtext</Label>
+            <Textarea value={cfg.customerCloseSubtext || ""} placeholder="We\'re excited to help you achieve cleaner, safer water..." onChange={(e) => update({ customerCloseSubtext: e.target.value })} rows={2} />
+          </div>
+        </ConfigSection>
+
+        {/* Dealer Close Options */}
+        <ConfigSection title="Dealer Close (Outcome Options)" description="Outcome buttons the sales rep sees after the demo">
+          <div className="space-y-2 pt-2">
+            {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).map((opt: string, idx: number) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="size-6 rounded-lg flex items-center justify-center text-[10px] font-bold bg-muted">{idx + 1}</span>
+                <Input value={opt} onChange={(e) => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n[idx] = e.target.value; update({ closeOptions: n }); }} className="flex-1" />
+                {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).length > 2 && (
+                  <button onClick={() => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n.splice(idx, 1); update({ closeOptions: n }); }} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+                )}
+              </div>
+            ))}
+            <button onClick={() => update({ closeOptions: [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Option</button>
+          </div>
+        </ConfigSection>
+
+        {/* Save Button */}
+        <div className="pt-3 flex items-center gap-3">
+          <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: accent, boxShadow: `0 4px 14px ${accent}40` }} className="text-white font-bold">
+            {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : saved ? <Check className="size-4 mr-2" /> : <Save className="size-4 mr-2" />}
+            {saving ? "Saving..." : saved ? "Saved!" : "Save All Changes"}
+          </Button>
+          {saved && <span className="text-xs text-emerald-500 font-medium">✓ Changes will appear in your next demo</span>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function StripeCard() {
   const navigate = useNavigate();

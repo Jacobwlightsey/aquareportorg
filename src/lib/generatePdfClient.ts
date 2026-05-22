@@ -102,7 +102,7 @@ export async function generatePdfFromDom(container: HTMLElement): Promise<Blob> 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
 
       // Scale: the image width fills the page, height is proportional
-      const destH = Math.min(LETTER_H_PT, LETTER_H_PT * overflowRatio <= LETTER_H_PT
+      void Math.min(LETTER_H_PT, LETTER_H_PT * overflowRatio <= LETTER_H_PT
         ? (naturalHeight / PAGE_HEIGHT_PX) * LETTER_H_PT
         : LETTER_H_PT);
       // Simpler: fit the full canvas into the page width, scale height proportionally

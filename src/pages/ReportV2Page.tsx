@@ -285,7 +285,7 @@ function OverviewPage({
         Water Quality Score
       </h2>
       <p className="mt-2 text-sm text-slate-600">
-        Your water is supplied by {utilityName}, serving approximately ~{populationServed.toLocaleString()} residents in the {city}, {state} area.
+        Your water is supplied by {utilityName}, serving approximately ~{(populationServed ?? 0).toLocaleString()} residents in the {city}, {state} area.
       </p>
 
       {/* Score cards */}
@@ -337,7 +337,7 @@ function OverviewPage({
         <h3 className="text-sm font-bold text-slate-900">Your Water Utility</h3>
         <div className="mt-3 grid grid-cols-[120px_1fr] gap-y-2 text-[12px]">
           <span className="text-slate-500">Provider</span><span className="font-semibold text-slate-800">{utilityName}</span>
-          <span className="text-slate-500">Population Served</span><span className="font-semibold text-slate-800">~{populationServed.toLocaleString()}</span>
+          <span className="text-slate-500">Population Served</span><span className="font-semibold text-slate-800">~{(populationServed ?? 0).toLocaleString()}</span>
           <span className="text-slate-500">Water Source</span><span className="font-semibold text-slate-800">{waterSource}</span>
           <span className="text-slate-500">Location</span><span className="font-semibold text-slate-800">{city}, {state} {zip}</span>
         </div>

@@ -178,7 +178,7 @@ export function ReportV2PublicPage() {
         <Page className="p-10">
           <PH section="Water Quality Overview" utility={report.utilityName} />
           <h2 className="text-3xl font-bold text-slate-900" style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}>Water Quality Score</h2>
-          <p className="mt-2 text-sm text-slate-600">Your water is supplied by {report.utilityName}, serving approximately ~{report.populationServed.toLocaleString()} residents in the {report.city}, {report.state} area.</p>
+          <p className="mt-2 text-sm text-slate-600">Your water is supplied by {report.utilityName}, serving approximately ~{(report.populationServed ?? 0).toLocaleString()} residents in the {report.city}, {report.state} area.</p>
           <div className="mt-5 grid grid-cols-3 gap-4">
             {/* AquaScore — numeric */}
             <div className="rounded-lg border p-5 text-center" style={{ borderColor: `${overall.color}30`, backgroundColor: overall.bg }}>

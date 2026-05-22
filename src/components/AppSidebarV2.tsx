@@ -1,6 +1,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import {
+  Activity,
   Building2,
   ChartNoAxesCombined,
   CreditCard,
@@ -42,6 +43,7 @@ const mainNav = [
   { href: "/customers", label: "Customers", icon: UsersIcon },
   { href: "/leads", label: "Leads", icon: Users2 },
   { href: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
+  { href: "/demo-analytics", label: "Demo Stats", icon: Activity },
 ];
 
 const settingsNav = [
@@ -86,6 +88,7 @@ function NavLink({
 function SidebarNav() {
   const location = useLocation();
   const newLeadCount = useQuery(api.leads.getNewLeadCount);
+  const isAdmin = useQuery(api.admin.isPlatformAdmin);
 
   return (
     <SidebarContent>
@@ -125,6 +128,21 @@ function SidebarNav() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+      {isAdmin && (
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-rose-400/80">PLATFORM</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <NavLink
+                href="/admin"
+                label="Admin Dashboard"
+                icon={ShieldCheck}
+                isActive={location.pathname === "/admin"}
+              />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
     </SidebarContent>
   );
 }
