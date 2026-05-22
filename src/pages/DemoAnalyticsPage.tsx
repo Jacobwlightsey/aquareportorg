@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanGateScreen } from "@/components/PlanGateScreen";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { api } from "../../convex/_generated/api";
 
 /* ---------- helpers ---------- */
@@ -172,15 +173,16 @@ export function DemoAnalyticsPage() {
   const [outcomeFilter, setOutcomeFilter] = useState("all");
   const [expandedProfile, setExpandedProfile] = useState<number | null>(null);
 
-  // Plan gating
-  const plan = company
+  // Plan gating — use effectivePlan so free trial users get Growth access
+  const { effectivePlan } = useFreeTrial();
+  const gatePlan = effectivePlan || (company
     ? (company.stripeStatus === "active" && company.stripePlan) || "free"
-    : undefined;
+    : undefined);
 
-  if (plan !== undefined && (plan === "starter" || plan === "free")) {
+  if (gatePlan !== undefined && (gatePlan === "starter" || gatePlan === "free")) {
     return (
       <PlanGateScreen
-        currentPlan={plan}
+        currentPlan={gatePlan}
         requiredPlan="growth"
         featureName="Demo Analytics & Stats"
         description="Get comprehensive demo analytics, lead funnels, customer profiles, and rep performance insights. Available on Growth plan and above."

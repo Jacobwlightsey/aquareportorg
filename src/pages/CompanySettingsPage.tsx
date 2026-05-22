@@ -54,7 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "../../convex/_generated/api";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 type TeamRole = "owner" | "admin" | "manager" | "sales_rep" | "viewer";
 
@@ -652,6 +652,16 @@ function TeamCardFixed({
           <p className="mt-1 text-xs text-muted-foreground">
             {teamLimit ? `${teamUsed}/${teamLimit} seats used on this plan` : `${teamUsed} seats used · unlimited plan`}
           </p>
+          {typeof teamLimit === "number" && (
+            <div className="mt-2 w-48">
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${atLimit ? "bg-amber-500" : "bg-blue-500"}`}
+                  style={{ width: `${Math.min(100, Math.round((teamUsed / teamLimit) * 100))}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
         {isAdmin && (
           <Button variant="outline" size="sm" disabled={atLimit} onClick={() => setAddOpen(true)}>
@@ -663,8 +673,11 @@ function TeamCardFixed({
       <CardContent>
         <div className="space-y-3">
           {atLimit && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-              Team limit reached for this plan. Upgrade to invite more users.
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200 flex items-center justify-between">
+              <span>Team limit reached for this plan.</span>
+              <Link to="/subscription" className="font-semibold text-amber-900 dark:text-amber-100 hover:underline ml-2 whitespace-nowrap">
+                Upgrade Plan →
+              </Link>
             </div>
           )}
           {members.map((member) => (

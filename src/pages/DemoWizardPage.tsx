@@ -9,7 +9,8 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { parseContaminants } from "@/lib/pipeline";
-import { hasDemoWizard, upgradeMessage } from "@/lib/planGate";
+import { hasPlanOverride, upgradeMessage } from "@/lib/planGate";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { computeAquaScore, type FieldWaterReadings } from "@/lib/waterScore";
 import { api } from "../../convex/_generated/api";
 import { DemoCustomerStep } from "@/components/demo/DemoCustomerStep";
@@ -67,6 +68,7 @@ export function DemoWizardPage() {
     reportId ? { reportId: reportId as any } : "skip"
   );
   const company = useQuery(api.companies.getMyCompany);
+  const { effectivePlan } = useFreeTrial();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [showEndModal, setShowEndModal] = useState(false);
@@ -140,8 +142,8 @@ export function DemoWizardPage() {
     );
   }
 
-  // Plan gate — Demo Wizard requires Growth plan or above
-  if (!hasDemoWizard(company)) {
+  // Plan gate — Demo Wizard requires Growth plan or above (free trial gets Growth access)
+  if (!hasPlanOverride(effectivePlan as any, "growth")) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
         <Lock className="mb-4 size-12 text-white/20" />

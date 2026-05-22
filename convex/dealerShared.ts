@@ -492,6 +492,30 @@ export const createFiltrationVerification = action({
       });
     }
 
+    // Sync status to consumer_scores in Supabase (filtration installed)
+    if (email) {
+      try {
+        await supabaseTable("consumer_scores?consumer_email=eq." + encodeURIComponent(email), {
+          method: "DELETE",
+        }).catch(() => {});
+        await supabaseTable("consumer_scores", {
+          method: "POST",
+          prefer: "return=representation",
+          body: {
+            consumer_email: email,
+            zip: args.customerZip,
+            aqua_score: 0,
+            tier: "system_installed",
+            status: "filtration_verified",
+            verified_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        console.warn("Consumer score sync (filtration) failed (non-fatal):", err);
+      }
+    }
+
     return { referralUrl: referral.referralUrl, recordId: inserted?.[0]?.id, referralId: referral.id };
   },
 });

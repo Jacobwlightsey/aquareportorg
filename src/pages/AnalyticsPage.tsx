@@ -19,13 +19,28 @@ import {
   parseContaminants,
   stageRank,
 } from "@/lib/pipeline";
+import { PlanGateScreen } from "@/components/PlanGateScreen";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { api } from "../../convex/_generated/api";
 
 export function AnalyticsPage() {
   const reports = useQuery(api.reports.getMyReports);
   const stats = useQuery(api.reports.getStats);
   const insights = useQuery(api.reports.getTerritoryInsights);
+  const { effectivePlan } = useFreeTrial();
   const allReports = reports ?? [];
+
+  // Plan gate — Analytics requires Growth or above
+  if (effectivePlan && (effectivePlan === "starter" || effectivePlan === "free")) {
+    return (
+      <PlanGateScreen
+        currentPlan={effectivePlan}
+        requiredPlan="growth"
+        featureName="Analytics"
+        description="Get detailed analytics on your reports, pipeline stages, territory insights, and team performance. Available on Growth plan and above."
+      />
+    );
+  }
 
   const stageCounts = PIPELINE_STAGES.reduce<Record<string, number>>((acc, stage) => {
     acc[stage.key] = 0;

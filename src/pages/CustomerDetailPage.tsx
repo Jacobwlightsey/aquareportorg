@@ -44,7 +44,7 @@ import {
   readingPayload,
   type FieldWaterReadings,
 } from "@/lib/waterScore";
-import { hasDemoWizard, hasConsumerLinks, hasVerification, hasFiltration, hasFlipbook, upgradeMessage } from "@/lib/planGate";
+import { hasPlanOverride, hasConsumerLinks, hasVerification, hasFiltration, hasFlipbook, upgradeMessage } from "@/lib/planGate";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { FreeTierBanner } from "@/components/FreeTierCTA";
 import { PlanGate } from "@/components/PlanGate";
@@ -256,7 +256,7 @@ export function CustomerDetailPage() {
     reportId ? { reportId: reportId as any } : "skip"
   );
   const rawCompany = useQuery(api.companies.getMyCompany);
-  const { isFree, hasUsedTrial, effectivePlan: _effectivePlan, totalReports } = useFreeTrial();
+  const { isFree, hasUsedTrial, effectivePlan, totalReports } = useFreeTrial();
   // For free-trial users who haven't exhausted their trial, override the plan
   // so PlanGate helpers see "starter" level access
   const company = useMemo(() => {
@@ -440,7 +440,7 @@ export function CustomerDetailPage() {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
-        <PlanGate locked={!hasDemoWizard(company)} message={upgradeMessage("demo_wizard")} requiredPlan="Growth">
+        <PlanGate locked={!hasPlanOverride(effectivePlan as any, "growth")} message={upgradeMessage("demo_wizard")} requiredPlan="Growth">
           <Button asChild className="bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg shadow-red-500/20">
             <Link to={`/customers/${reportId}/demo`}>
               <Play className="size-4" />

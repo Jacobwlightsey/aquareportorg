@@ -34,7 +34,7 @@ export function useFreeTrial() {
   // Effective plan: free users who haven't used their trial get starter-level preview
   let effectivePlan = usage.plan;
   if (isFree && !hasUsedTrial) {
-    effectivePlan = "starter"; // Preview starter features during trial
+    effectivePlan = "growth"; // Free trial gets Growth-level access (matches backend)
   }
 
   return {
