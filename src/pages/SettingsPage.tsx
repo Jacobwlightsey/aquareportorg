@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronRight, Loader2, Moon, Palette, Sun, User } from "lucide-react";
+import { ChevronRight, Loader2, User } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,13 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useTheme } from "@/contexts/ThemeContext";
+
 import { api } from "../../convex/_generated/api";
 
 export function SettingsPage() {
   const user = useQuery(api.auth.currentUser);
-  const { theme, toggleTheme, switchable } = useTheme();
+
   const { signIn, signOut } = useAuthActions();
   const deleteAccount = useMutation(api.users.deleteAccount);
   const navigate = useNavigate();
@@ -121,46 +120,7 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Palette className="size-4 text-muted-foreground" />
-            Appearance
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1">
-          {switchable ? (
-            <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-              <div className="flex items-center gap-4">
-                <div className="size-10 rounded-full bg-secondary flex items-center justify-center">
-                  {theme === "light" ? (
-                    <Moon className="size-5 text-foreground" />
-                  ) : (
-                    <Sun className="size-5 text-foreground" />
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="dark-mode" className="font-medium">
-                    Dark mode
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Toggle description goes here
-                  </p>
-                </div>
-              </div>
-              <Switch
-                id="dark-mode"
-                checked={theme === "dark"}
-                onCheckedChange={toggleTheme}
-              />
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground px-4 py-2">
-              Theme follows your system preference
-            </p>
-          )}
-        </CardContent>
-      </Card>
+
 
       <Card>
         <CardHeader className="pb-4">

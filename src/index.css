@@ -48,96 +48,71 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ─── Always dark ─────────────────────────────────────────────────── */
 :root {
   --sidebar-width: 16rem;
   --sidebar-width-icon: 3rem;
 
-  --primary: var(--color-slate-900);
-  --primary-foreground: var(--color-white);
-  --sidebar-primary: var(--color-slate-900);
-  --sidebar-primary-foreground: var(--color-slate-50);
+  --primary: #ffffff;
+  --primary-foreground: #0a0e14;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #0a0e14;
 
-  --success: var(--color-emerald-600);
-  --success-foreground: var(--color-white);
-  --warning: var(--color-amber-500);
-  --warning-foreground: var(--color-amber-950);
-  --info: var(--color-cyan-500);
-  --info-foreground: var(--color-white);
+  --success: #34d399;
+  --success-foreground: #022c22;
+  --warning: #fbbf24;
+  --warning-foreground: #451a03;
+  --info: #22d3ee;
+  --info-foreground: #083344;
 
-  --chart-1: var(--color-teal-500);
-  --chart-2: var(--color-orange-500);
-  --chart-3: var(--color-cyan-500);
-  --chart-4: var(--color-rose-500);
-  --chart-5: var(--color-lime-500);
+  --chart-1: #2dd4bf;
+  --chart-2: #fb923c;
+  --chart-3: #22d3ee;
+  --chart-4: #fb7185;
+  --chart-5: #a3e635;
 
   --radius: 0.625rem;
-  --background: #fafafa;
-  --foreground: #090b0f;
-  --card: #ffffff;
-  --card-foreground: #090b0f;
-  --popover: #ffffff;
-  --popover-foreground: #090b0f;
-  --secondary: #f0f2f5;
-  --secondary-foreground: #2b2e33;
-  --muted: #f0f2f5;
-  --muted-foreground: #50565e;
-  --accent: #f0f2f5;
-  --accent-foreground: #090b0f;
-  --destructive: #d40924;
+
+  /* Rich dark background with blue undertone */
+  --background: #060a10;
+  --foreground: #e8ecf2;
+
+  /* Cards: slightly lighter with subtle blue tint */
+  --card: #0c1018;
+  --card-foreground: #e8ecf2;
+
+  --popover: #0c1018;
+  --popover-foreground: #e8ecf2;
+
+  --secondary: #131a24;
+  --secondary-foreground: #c8d0dc;
+
+  --muted: #131a24;
+  --muted-foreground: #6b7a8d;
+
+  --accent: #0f1722;
+  --accent-foreground: #e8ecf2;
+
+  --destructive: #ef4444;
   --destructive-foreground: #fafafa;
-  --border: #e3e5e8;
-  --input: #e3e5e8;
-  --ring: #282e38;
-  --sidebar: #f8f8f8;
-  --sidebar-foreground: #090b0f;
-  --sidebar-accent: #f0f2f5;
-  --sidebar-accent-foreground: #090b0f;
-  --sidebar-border: #e3e5e8;
-  --sidebar-ring: #282e38;
+
+  /* Borders: subtle blue-tinted glow */
+  --border: rgba(56, 139, 253, 0.12);
+  --input: rgba(56, 139, 253, 0.15);
+  --ring: #38bdf8;
+
+  /* Sidebar: deep dark */
+  --sidebar: #070b12;
+  --sidebar-foreground: #e8ecf2;
+  --sidebar-accent: #0f1722;
+  --sidebar-accent-foreground: #e8ecf2;
+  --sidebar-border: rgba(56, 139, 253, 0.1);
+  --sidebar-ring: #38bdf8;
 }
 
-.dark {
-  --primary: var(--color-white);
-  --primary-foreground: var(--color-slate-900);
-  --sidebar-primary: var(--color-white);
-  --sidebar-primary-foreground: var(--color-slate-900);
-
-  --success: var(--color-emerald-400);
-  --success-foreground: var(--color-emerald-950);
-  --warning: var(--color-amber-400);
-  --warning-foreground: var(--color-amber-950);
-  --info: var(--color-cyan-400);
-  --info-foreground: var(--color-cyan-950);
-
-  --chart-1: var(--color-teal-400);
-  --chart-2: var(--color-orange-400);
-  --chart-3: var(--color-cyan-400);
-  --chart-4: var(--color-rose-400);
-  --chart-5: var(--color-lime-400);
-
-  --background: #040609;
-  --foreground: #eceff2;
-  --card: #0b0d12;
-  --card-foreground: #eceff2;
-  --popover: #0b0d12;
-  --popover-foreground: #eceff2;
-  --secondary: #181b1f;
-  --secondary-foreground: #dcdee1;
-  --muted: #181b1f;
-  --muted-foreground: #7d8086;
-  --accent: #181b1f;
-  --accent-foreground: #eceff2;
-  --destructive: #de3b3d;
-  --destructive-foreground: #fafafa;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: #dadee5;
-  --sidebar: #07090d;
-  --sidebar-foreground: #eceff2;
-  --sidebar-accent: #181b1f;
-  --sidebar-accent-foreground: #eceff2;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #dadee5;
+/* Force dark class on html */
+:root {
+  color-scheme: dark;
 }
 
 @layer base {
@@ -147,6 +122,7 @@
   body {
     @apply bg-background text-foreground;
   }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -188,4 +164,81 @@
       max-width: 1280px;
     }
   }
+}
+
+/* ─── Global polish ───────────────────────────────────────────────── */
+
+/* Subtle background gradient on body */
+body {
+  background: linear-gradient(175deg, #060a10 0%, #070d16 40%, #060a10 100%);
+  min-height: 100vh;
+}
+
+/* Card glass effect */
+[data-slot="card"],
+.card-glass {
+  background: linear-gradient(145deg, rgba(12, 16, 24, 0.9), rgba(8, 12, 20, 0.95));
+  border: 1px solid rgba(56, 139, 253, 0.08);
+  backdrop-filter: blur(12px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+[data-slot="card"]:hover {
+  border-color: rgba(56, 139, 253, 0.18);
+}
+
+/* Sidebar active item glow */
+[data-sidebar="menu-button"][data-active="true"] {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(56, 139, 253, 0.08)) !important;
+  border-left: 2px solid #22d3ee;
+  color: #22d3ee;
+}
+
+/* Input focus ring */
+input:focus, textarea:focus, select:focus,
+[data-slot="select-trigger"]:focus {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
+}
+
+/* Button primary glow */
+[data-slot="button"]:not([data-variant]):not([variant]) {
+  background: linear-gradient(135deg, #0891b2, #0284c7);
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+}
+[data-slot="button"]:not([data-variant]):not([variant]):hover {
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 139, 253, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 139, 253, 0.3);
+}
+
+/* Badge outline polish */
+[data-slot="badge"][data-variant="outline"] {
+  border-color: rgba(56, 139, 253, 0.15);
+}
+
+/* Dialog backdrop */
+[data-slot="dialog-overlay"] {
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Tab active indicator */
+[data-slot="tabs-trigger"][data-state="active"] {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(56, 139, 253, 0.1));
+  color: #22d3ee;
+  border-color: rgba(6, 182, 212, 0.3);
 }
