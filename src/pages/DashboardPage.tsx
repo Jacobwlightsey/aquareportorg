@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import {
   ArrowRight,
   Calendar,
+  Clock,
   DollarSign,
   FileText,
   FolderKanban,
@@ -18,6 +19,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { api } from "../../convex/_generated/api";
 
+function timeAgo(ts: number) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const pipelineStats = useQuery(api.deals.getPipelineStats);
@@ -25,6 +37,7 @@ export function DashboardPage() {
   const leads = useQuery(api.leads.getLeads);
   const appointments = useQuery(api.appointments.getAppointments, {});
   const company = useQuery(api.companies.getMyCompany);
+  const recentActivity = useQuery(api.reports.getRecentActivity, { limit: 8 });
 
   const newLeads = leads?.filter((l) => l.status === "new")?.length ?? 0;
   const totalReports = reports?.length ?? 0;
@@ -247,6 +260,47 @@ export function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <Clock className="size-4 text-violet-400" />
+            Recent Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!recentActivity || recentActivity.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">No recent activity</p>
+          ) : (
+            <div className="space-y-1">
+              {recentActivity.map((a: any) => (
+                <div
+                  key={a.id}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="size-7 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 flex items-center justify-center shrink-0">
+                    <span className="text-[10px] font-bold text-violet-400">
+                      {a.actorName?.charAt(0)?.toUpperCase() || "?"}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs truncate">
+                      <span className="font-semibold">{a.actorName}</span>{" "}
+                      <span className="text-muted-foreground">
+                        {a.action?.replace(/_/g, " ")} a {a.entityType?.replace(/_/g, " ")}
+                      </span>
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground/50 shrink-0 tabular-nums">
+                    {timeAgo(a.createdAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

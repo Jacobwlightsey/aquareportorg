@@ -1,8 +1,10 @@
 import { useMutation, useQuery } from "convex/react";
 import {
   Calendar,
+  CheckCircle2,
   DollarSign,
   Edit3,
+  FileText,
   FolderKanban,
   Mail,
   MoreHorizontal,
@@ -11,10 +13,13 @@ import {
   Save,
   Search,
   Thermometer,
+  Trophy,
   User,
   X,
+  XCircle,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -143,12 +148,14 @@ function DealDetailSheet({
   onOpenChange,
   onMove,
   onSave,
+  onNavigate,
 }: {
   deal: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMove: (dealId: any, stage: string) => void;
   onSave: (dealId: any, data: Record<string, any>) => Promise<void>;
+  onNavigate?: (path: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -308,6 +315,85 @@ function DealDetailSheet({
                 </div>
               )}
 
+              {/* Quick Actions */}
+              {deal.stage !== "closed_won" && deal.stage !== "closed_lost" && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Quick Actions</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      onClick={() => {
+                        onOpenChange(false);
+                        onNavigate?.(`/appointments`);
+                      }}
+                      className="flex items-center gap-2 p-2.5 rounded-lg border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors text-left"
+                    >
+                      <Calendar className="size-3.5 text-cyan-400 shrink-0" />
+                      <span className="text-[11px] font-medium text-cyan-400">Schedule Appt</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        onOpenChange(false);
+                        onNavigate?.(`/proposals`);
+                      }}
+                      className="flex items-center gap-2 p-2.5 rounded-lg border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-colors text-left"
+                    >
+                      <FileText className="size-3.5 text-amber-400 shrink-0" />
+                      <span className="text-[11px] font-medium text-amber-400">Create Proposal</span>
+                    </button>
+                    <button
+                      onClick={() => { onMove(deal._id, "closed_won"); onOpenChange(false); }}
+                      className="flex items-center gap-2 p-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors text-left"
+                    >
+                      <Trophy className="size-3.5 text-emerald-400 shrink-0" />
+                      <span className="text-[11px] font-medium text-emerald-400">Mark Won</span>
+                    </button>
+                    <button
+                      onClick={() => { onMove(deal._id, "closed_lost"); onOpenChange(false); }}
+                      className="flex items-center gap-2 p-2.5 rounded-lg border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors text-left"
+                    >
+                      <XCircle className="size-3.5 text-red-400 shrink-0" />
+                      <span className="text-[11px] font-medium text-red-400">Mark Lost</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Won banner */}
+              {deal.stage === "closed_won" && (
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <CheckCircle2 className="size-5 text-emerald-400" />
+                    <span className="text-sm font-bold text-emerald-400">Deal Won!</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {deal.dealValue ? `$${deal.dealValue.toLocaleString()} revenue` : "Congratulations!"}
+                    {deal.closedAt && ` · ${new Date(deal.closedAt).toLocaleDateString()}`}
+                  </p>
+                  <button
+                    onClick={() => {
+                      onOpenChange(false);
+                      onNavigate?.(`/commissions`);
+                    }}
+                    className="mt-2 text-[11px] text-cyan-400 hover:underline"
+                  >
+                    → Add commission for this deal
+                  </button>
+                </div>
+              )}
+
+              {/* Lost banner */}
+              {deal.stage === "closed_lost" && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-center">
+                  <span className="text-sm font-bold text-red-400">Deal Lost</span>
+                  {deal.lostReason && (
+                    <p className="text-[11px] text-muted-foreground mt-1">Reason: {deal.lostReason}</p>
+                  )}
+                  {deal.closedAt && (
+                    <p className="text-[10px] text-muted-foreground/50 mt-0.5">{new Date(deal.closedAt).toLocaleDateString()}</p>
+                  )}
+                </div>
+              )}
+
               {/* Move stage */}
               <div className="space-y-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Move to Stage</p>
@@ -355,6 +441,7 @@ function DealDetailSheet({
 
 /* ─── Main Page ─── */
 export function PipelinePage() {
+  const navigate = useNavigate();
   const deals = useQuery(api.deals.getDeals) ?? [];
   const stats = useQuery(api.deals.getPipelineStats);
   const createDeal = useMutation(api.deals.createDeal);
@@ -545,6 +632,7 @@ export function PipelinePage() {
         onOpenChange={(open) => { if (!open) setSelectedDeal(null); }}
         onMove={handleMove}
         onSave={handleSave}
+        onNavigate={navigate}
       />
 
       {/* Create Deal Dialog */}
