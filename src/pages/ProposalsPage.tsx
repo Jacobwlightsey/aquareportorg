@@ -1,12 +1,9 @@
 import { useMutation, useQuery } from "convex/react";
 import {
   CheckCircle,
-  Clock,
   Copy,
   Eye,
   FileText,
-  Link2,
-  MoreHorizontal,
   Plus,
   Send,
 } from "lucide-react";
@@ -14,7 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,15 +20,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { StatCard } from "@/components/StatCard";
 import { api } from "../../convex/_generated/api";
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
@@ -40,7 +34,6 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
   viewed: { label: "Viewed", color: "text-amber-400 border-amber-500/30", icon: Eye },
   accepted: { label: "Accepted", color: "text-emerald-400 border-emerald-500/30", icon: CheckCircle },
   declined: { label: "Declined", color: "text-red-400 border-red-500/30", icon: FileText },
-  expired: { label: "Expired", color: "text-muted-foreground border-white/10", icon: Clock },
 };
 
 export function ProposalsPage() {
@@ -59,9 +52,11 @@ export function ProposalsPage() {
 
   const stats = {
     total: proposals.length,
-    sent: proposals.filter((p) => ["sent", "viewed"].includes(p.status)).length,
+    pending: proposals.filter((p) => ["sent", "viewed"].includes(p.status)).length,
     accepted: proposals.filter((p) => p.status === "accepted").length,
-    totalValue: proposals.filter((p) => p.status === "accepted").reduce((s, p) => s + p.totalPrice, 0),
+    revenue: proposals
+      .filter((p) => p.status === "accepted")
+      .reduce((s, p) => s + p.totalPrice, 0),
   };
 
   const handleCreate = async () => {
@@ -69,10 +64,13 @@ export function ProposalsPage() {
     try {
       const equipment = form.equipment
         ? JSON.stringify(
-            form.equipment.split("\n").filter(Boolean).map((line) => {
-              const [name, price] = line.split("|").map((s) => s.trim());
-              return { name: name || line, description: "", price: parseFloat(price) || 0 };
-            })
+            form.equipment
+              .split("\n")
+              .filter(Boolean)
+              .map((line) => {
+                const [name, price] = line.split("|").map((s) => s.trim());
+                return { name: name || line, description: "", price: parseFloat(price) || 0 };
+              })
           )
         : JSON.stringify([]);
       await createProposal({
@@ -102,101 +100,92 @@ export function ProposalsPage() {
 
   const copyLink = (token: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/proposal/${token}`);
-    toast.success("Proposal link copied!");
+    toast.success("Link copied!");
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-black">Proposals</h1>
-          <p className="text-sm text-muted-foreground">Create and track customer proposals.</p>
-        </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="size-4 mr-1" /> New Proposal
-        </Button>
-      </div>
+    <div className="space-y-5 max-w-4xl mx-auto">
+      <PageHeader
+        title="Proposals"
+        subtitle="Create and track customer proposals."
+        icon={FileText}
+        iconColor="text-violet-400"
+        actions={
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="size-4 mr-1" /> New Proposal
+          </Button>
+        }
+      />
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Total", value: stats.total, color: "text-white" },
-          { label: "Pending", value: stats.sent, color: "text-amber-400" },
-          { label: "Accepted", value: stats.accepted, color: "text-emerald-400" },
-          { label: "Revenue", value: `$${stats.totalValue.toLocaleString()}`, color: "text-cyan-400" },
-        ].map((s) => (
-          <Card key={s.label}>
-            <CardContent className="p-4 text-center">
-              <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard label="Total" value={stats.total} color="text-white" icon={FileText} />
+        <StatCard label="Pending" value={stats.pending} color="text-amber-400" icon={Eye} />
+        <StatCard label="Accepted" value={stats.accepted} color="text-emerald-400" icon={CheckCircle} />
+        <StatCard label="Revenue" value={`$${stats.revenue.toLocaleString()}`} color="text-cyan-400" />
       </div>
 
       {/* Proposals List */}
-      <div className="space-y-3">
-        {proposals.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FileText className="size-12 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="font-semibold">No proposals yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Create your first proposal to start closing deals.
-              </p>
-              <Button className="mt-4" onClick={() => setShowCreate(true)}>
-                <Plus className="size-4 mr-1" /> Create Proposal
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          proposals.map((proposal) => {
-            const statusInfo = STATUS_MAP[proposal.status] || STATUS_MAP.draft;
-            const StatusIcon = statusInfo.icon;
+      {proposals.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="No proposals yet"
+          description="Create your first proposal to start closing deals."
+          actionLabel="Create Proposal"
+          onAction={() => setShowCreate(true)}
+        />
+      ) : (
+        <div className="space-y-2">
+          {proposals.map((proposal) => {
+            const si = STATUS_MAP[proposal.status] || STATUS_MAP.draft;
+            const StatusIcon = si.icon;
             return (
               <Card key={proposal._id} className="hover:border-white/20 transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold">{proposal.customerName}</p>
-                        <Badge variant="outline" className={`text-[10px] ${statusInfo.color}`}>
+                        <p className="font-semibold text-sm">{proposal.customerName}</p>
+                        <Badge variant="outline" className={`text-[10px] ${si.color}`}>
                           <StatusIcon className="size-3 mr-1" />
-                          {statusInfo.label}
+                          {si.label}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
                         <span className="font-bold text-emerald-400">
                           ${proposal.totalPrice.toLocaleString()}
                         </span>
                         {proposal.monthlyPayment && (
                           <span>${proposal.monthlyPayment}/mo</span>
                         )}
-                        {proposal.customerEmail && <span>{proposal.customerEmail}</span>}
-                        <span>{new Date(proposal._creationTime).toLocaleDateString()}</span>
+                        {proposal.customerEmail && (
+                          <span className="hidden sm:inline">{proposal.customerEmail}</span>
+                        )}
+                        <span>
+                          {new Date(proposal._creationTime).toLocaleDateString()}
+                        </span>
                       </div>
                       {proposal.viewedAt && (
-                        <p className="text-[10px] text-amber-400/70 mt-1">
+                        <p className="text-[10px] text-amber-400/60 mt-0.5">
                           Viewed {new Date(proposal.viewedAt).toLocaleString()}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {proposal.shareToken && (
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-xs"
+                          className="text-[11px] h-7 px-2"
                           onClick={() => copyLink(proposal.shareToken!)}
                         >
-                          <Copy className="size-3 mr-1" /> Copy Link
+                          <Copy className="size-3 mr-1" /> Link
                         </Button>
                       )}
                       {proposal.status === "draft" && (
                         <Button
                           size="sm"
-                          className="text-xs"
+                          className="text-[11px] h-7 px-2"
                           onClick={() => handleSend(proposal._id)}
                         >
                           <Send className="size-3 mr-1" /> Send
@@ -207,19 +196,19 @@ export function ProposalsPage() {
                 </CardContent>
               </Card>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Create Proposal</DialogTitle>
             <DialogDescription>Build a proposal for your customer.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Customer Name *</Label>
                 <Input
@@ -238,15 +227,15 @@ export function ProposalsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Equipment (one per line, use | to separate name and price)</Label>
+              <Label>Equipment (one per line, use | for price)</Label>
               <Textarea
                 value={form.equipment}
                 onChange={(e) => setForm({ ...form, equipment: e.target.value })}
-                placeholder="Whole Home Filtration System | 3500&#10;Water Softener | 1200&#10;Installation | 500"
-                rows={4}
+                placeholder={"Whole Home Filtration | 3500\nWater Softener | 1200\nInstallation | 500"}
+                rows={3}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Total Price ($) *</Label>
                 <Input
@@ -257,7 +246,7 @@ export function ProposalsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Monthly Payment ($)</Label>
+                <Label>Monthly ($)</Label>
                 <Input
                   type="number"
                   value={form.monthlyPayment}
@@ -277,9 +266,11 @@ export function ProposalsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreate} disabled={!form.customerName.trim()}>
-              Create Proposal
+              Create
             </Button>
           </DialogFooter>
         </DialogContent>

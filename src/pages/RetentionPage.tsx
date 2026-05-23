@@ -2,19 +2,17 @@ import { useMutation, useQuery } from "convex/react";
 import {
   AlertTriangle,
   Calendar,
-  CheckCircle,
-  Filter,
   Gift,
   Plus,
   RefreshCw,
   Shield,
   Wrench,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -25,13 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { StatCard } from "@/components/StatCard";
 import { api } from "../../convex/_generated/api";
 
 export function RetentionPage() {
@@ -42,7 +38,6 @@ export function RetentionPage() {
   const logVisit = useMutation(api.retention.logServiceVisit);
   const completeReminder = useMutation(api.retention.completeReminder);
   const snoozeReminder = useMutation(api.retention.snoozeReminder);
-  const createReminder = useMutation(api.retention.createReminder);
   const redeemReward = useMutation(api.retention.redeemReward);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -82,99 +77,63 @@ export function RetentionPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-black">Retention</h1>
-          <p className="text-sm text-muted-foreground">Service agreements, reminders, and referral rewards.</p>
-        </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="size-4 mr-1" /> New Agreement
-        </Button>
+    <div className="space-y-5 max-w-4xl mx-auto">
+      <PageHeader
+        title="Retention"
+        subtitle="Service agreements, reminders, and referral rewards."
+        icon={RefreshCw}
+        iconColor="text-emerald-400"
+        actions={
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="size-4 mr-1" /> New Agreement
+          </Button>
+        }
+      />
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard label="Active" value={activeAgreements.length} color="text-emerald-400" icon={Shield} />
+        <StatCard label="Overdue" value={overdue.length} color="text-red-400" icon={AlertTriangle} />
+        <StatCard label="Upcoming" value={upcoming.length} color="text-amber-400" icon={Calendar} />
+        <StatCard label="Rewards" value={pendingRewards.length} color="text-violet-400" icon={Gift} />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-500/10">
-              <Shield className="size-5 text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Active Agreements</p>
-              <p className="text-xl font-black">{activeAgreements.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-red-500/10">
-              <AlertTriangle className="size-5 text-red-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Overdue</p>
-              <p className="text-xl font-black">{overdue.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-500/10">
-              <Calendar className="size-5 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Upcoming</p>
-              <p className="text-xl font-black">{upcoming.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-violet-500/10">
-              <Gift className="size-5 text-violet-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Pending Rewards</p>
-              <p className="text-xl font-black">{pendingRewards.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="agreements">
-        <TabsList>
-          <TabsTrigger value="agreements">Service Agreements</TabsTrigger>
-          <TabsTrigger value="reminders">
+      <Tabs defaultValue="agreements" className="space-y-4">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="agreements" className="text-xs sm:text-sm">
+            Agreements
+          </TabsTrigger>
+          <TabsTrigger value="reminders" className="text-xs sm:text-sm">
             Reminders
             {overdue.length > 0 && (
-              <span className="ml-1.5 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              <span className="ml-1 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                 {overdue.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="rewards">Referral Rewards</TabsTrigger>
+          <TabsTrigger value="rewards" className="text-xs sm:text-sm">
+            Rewards
+          </TabsTrigger>
         </TabsList>
 
         {/* Agreements Tab */}
-        <TabsContent value="agreements" className="space-y-3 mt-4">
+        <TabsContent value="agreements" className="space-y-2">
           {agreements.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Shield className="size-12 mx-auto text-muted-foreground/30 mb-3" />
-                <p className="font-semibold">No service agreements yet</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Create agreements to track installations and schedule service visits.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Shield}
+              title="No service agreements yet"
+              description="Create agreements to track installations and schedule service visits."
+              actionLabel="New Agreement"
+              onAction={() => setShowCreate(true)}
+            />
           ) : (
             agreements.map((a) => (
               <Card key={a._id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold">{a.customerName}</p>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm">{a.customerName}</p>
                         <Badge
                           variant="outline"
                           className={`text-[10px] ${
@@ -186,13 +145,23 @@ export function RetentionPage() {
                           {a.status}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">{a.equipmentInstalled}</p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        <span>Installed: {new Date(a.installDate).toLocaleDateString()}</span>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {a.equipmentInstalled}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground flex-wrap">
+                        <span>
+                          Installed:{" "}
+                          {new Date(a.installDate).toLocaleDateString()}
+                        </span>
                         {a.monthlyFee > 0 && <span>${a.monthlyFee}/mo</span>}
                         {a.nextServiceDate && (
-                          <span className={a.nextServiceDate < Date.now() ? "text-red-400" : ""}>
-                            Next service: {new Date(a.nextServiceDate).toLocaleDateString()}
+                          <span
+                            className={
+                              a.nextServiceDate < Date.now() ? "text-red-400" : ""
+                            }
+                          >
+                            Next service:{" "}
+                            {new Date(a.nextServiceDate).toLocaleDateString()}
                           </span>
                         )}
                       </div>
@@ -200,9 +169,12 @@ export function RetentionPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs shrink-0"
+                      className="text-[11px] h-7 px-2 shrink-0 w-fit"
                       onClick={async () => {
-                        await logVisit({ agreementId: a._id, serviceType: "filter_change" });
+                        await logVisit({
+                          agreementId: a._id,
+                          serviceType: "filter_change",
+                        });
                         toast.success("Service visit logged");
                       }}
                     >
@@ -216,26 +188,32 @@ export function RetentionPage() {
         </TabsContent>
 
         {/* Reminders Tab */}
-        <TabsContent value="reminders" className="space-y-3 mt-4">
+        <TabsContent value="reminders" className="space-y-4">
           {overdue.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-red-400">Overdue</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-red-400">
+                Overdue
+              </h3>
               {overdue.map((r) => (
                 <Card key={r._id} className="border-red-500/20">
-                  <CardContent className="p-3 flex items-center justify-between gap-4">
-                    <div>
+                  <CardContent className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
                       <p className="font-semibold text-sm">{r.customerName}</p>
-                      <p className="text-xs text-red-400">
-                        {r.reminderType.replace("_", " ")} — Due {new Date(r.dueDate).toLocaleDateString()}
+                      <p className="text-[11px] text-red-400">
+                        {r.reminderType.replace("_", " ")} — Due{" "}
+                        {new Date(r.dueDate).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-1.5 shrink-0">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-xs"
+                        className="text-[11px] h-7 px-2"
                         onClick={async () => {
-                          await snoozeReminder({ reminderId: r._id, newDueDate: Date.now() + 7 * 86400000 });
+                          await snoozeReminder({
+                            reminderId: r._id,
+                            newDueDate: Date.now() + 7 * 86400000,
+                          });
                           toast.success("Snoozed 7 days");
                         }}
                       >
@@ -243,7 +221,7 @@ export function RetentionPage() {
                       </Button>
                       <Button
                         size="sm"
-                        className="text-xs"
+                        className="text-[11px] h-7 px-2"
                         onClick={async () => {
                           await completeReminder({ reminderId: r._id });
                           toast.success("Completed");
@@ -259,20 +237,23 @@ export function RetentionPage() {
           )}
           {upcoming.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-amber-400">Upcoming</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                Upcoming
+              </h3>
               {upcoming.map((r) => (
                 <Card key={r._id}>
-                  <CardContent className="p-3 flex items-center justify-between gap-4">
-                    <div>
+                  <CardContent className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
                       <p className="font-semibold text-sm">{r.customerName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {r.reminderType.replace("_", " ")} — Due {new Date(r.dueDate).toLocaleDateString()}
+                      <p className="text-[11px] text-muted-foreground">
+                        {r.reminderType.replace("_", " ")} — Due{" "}
+                        {new Date(r.dueDate).toLocaleDateString()}
                       </p>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs"
+                      className="text-[11px] h-7 px-2 w-fit shrink-0"
                       onClick={async () => {
                         await completeReminder({ reminderId: r._id });
                         toast.success("Completed");
@@ -286,35 +267,33 @@ export function RetentionPage() {
             </div>
           )}
           {overdue.length === 0 && upcoming.length === 0 && (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <RefreshCw className="size-10 mx-auto text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No reminders.</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={RefreshCw}
+              title="No reminders"
+              description="Reminders will show up when service agreements are due."
+            />
           )}
         </TabsContent>
 
         {/* Rewards Tab */}
-        <TabsContent value="rewards" className="space-y-3 mt-4">
+        <TabsContent value="rewards" className="space-y-2">
           {rewards.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <Gift className="size-10 mx-auto text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No referral rewards yet.</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Gift}
+              title="No referral rewards yet"
+              description="Rewards are created when customers refer others."
+            />
           ) : (
             rewards.map((r) => (
               <Card key={r._id}>
-                <CardContent className="p-3 flex items-center justify-between gap-4">
-                  <div>
+                <CardContent className="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
                     <p className="font-semibold text-sm">{r.referrerName}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       {r.rewardType} — ${r.rewardAmount} · Code: {r.referralCode}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <Badge
                       variant="outline"
                       className={`text-[10px] ${
@@ -329,7 +308,7 @@ export function RetentionPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-xs"
+                        className="text-[11px] h-7 px-2"
                         onClick={async () => {
                           await redeemReward({ rewardId: r._id });
                           toast.success("Reward redeemed");
@@ -348,10 +327,12 @@ export function RetentionPage() {
 
       {/* Create Agreement Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>New Service Agreement</DialogTitle>
-            <DialogDescription>Track an installation and set up service reminders.</DialogDescription>
+            <DialogDescription>
+              Track an installation and set up service reminders.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -362,7 +343,7 @@ export function RetentionPage() {
                 placeholder="John Smith"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input
@@ -386,7 +367,7 @@ export function RetentionPage() {
                 placeholder="Whole Home Filtration + Softener"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Install Date *</Label>
                 <Input
@@ -415,12 +396,14 @@ export function RetentionPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={handleCreateAgreement}
               disabled={!form.customerName.trim() || !form.installDate}
             >
-              Create Agreement
+              Create
             </Button>
           </DialogFooter>
         </DialogContent>
