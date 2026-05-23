@@ -3,6 +3,8 @@ import { useState } from "react";
 import { playToggleSound } from "@/lib/demoSounds";
 
 interface Props {
+  company?: any;
+  monthlyPayment?: number;
   onNext: () => void;
   onBack: () => void;
 }
@@ -12,9 +14,13 @@ interface ExpenseItem {
   monthly: number;
   icon: string;
   color: string;
+  enabled?: boolean;
 }
 
-const DEFAULT_EXPENSES: ExpenseItem[] = [
+const DEFAULT_ICONS = ["🧴", "🚰", "🫗", "🔧", "🧴", "🔩", "💧", "🏠"];
+const DEFAULT_COLORS = ["#3b82f6", "#06b6d4", "#8b5cf6", "#f59e0b", "#ec4899", "#ef4444", "#10b981", "#6366f1"];
+
+const FALLBACK_EXPENSES: ExpenseItem[] = [
   { name: "Bottled Water", monthly: 120, icon: "🧴", color: "#3b82f6" },
   { name: "Water Delivery", monthly: 60, icon: "🚰", color: "#06b6d4" },
   { name: "Pitcher Filters", monthly: 25, icon: "🫗", color: "#8b5cf6" },
@@ -23,21 +29,37 @@ const DEFAULT_EXPENSES: ExpenseItem[] = [
   { name: "Plumbing Maintenance", monthly: 30, icon: "🔩", color: "#ef4444" },
 ];
 
-const FILTRATION_MONTHLY = 39; // typical monthly cost
+export function DemoCostComparison({ company, monthlyPayment, onNext: _onNext, onBack: _onBack }: Props) {
+  const cfg = company?.demoConfig;
 
-export function DemoCostComparison({ onNext: _onNext, onBack: _onBack }: Props) {
+  // Pull cost items from company settings, falling back to hardcoded defaults
+  const configCostItems: ExpenseItem[] = cfg?.costItems?.length
+    ? cfg.costItems
+        .filter((c: any) => c.label && c.monthlyCost > 0)
+        .map((c: any, i: number) => ({
+          name: c.label,
+          monthly: c.monthlyCost ?? 0,
+          icon: DEFAULT_ICONS[i % DEFAULT_ICONS.length],
+          color: DEFAULT_COLORS[i % DEFAULT_COLORS.length],
+          enabled: c.enabled !== false,
+        }))
+    : FALLBACK_EXPENSES;
+
+  // Filtration monthly: from pricing step → company settings → fallback
+  const filtrationMonthly = monthlyPayment ?? cfg?.systemCostMonthly ?? 39;
+
   const [expenses, setExpenses] = useState(
-    DEFAULT_EXPENSES.map((e) => ({ ...e, enabled: true }))
+    configCostItems.map((e) => ({ ...e, enabled: e.enabled !== false }))
   );
 
   const totalMonthly = expenses
     .filter((e) => e.enabled)
     .reduce((sum, e) => sum + e.monthly, 0);
   const totalYearly = totalMonthly * 12;
-  const savingsMonthly = Math.max(0, totalMonthly - FILTRATION_MONTHLY);
+  const savingsMonthly = Math.max(0, totalMonthly - filtrationMonthly);
   const savingsYearly = savingsMonthly * 12;
 
-  const maxBar = Math.max(totalMonthly, FILTRATION_MONTHLY, 1);
+  const maxBar = Math.max(totalMonthly, filtrationMonthly, 1);
 
   const updateExpense = (idx: number, monthly: number) => {
     const next = [...expenses];
@@ -87,16 +109,16 @@ export function DemoCostComparison({ onNext: _onNext, onBack: _onBack }: Props) 
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-white/60">Whole-Home Filtration</span>
-            <span className="text-lg font-black text-emerald-400">${FILTRATION_MONTHLY}</span>
+            <span className="text-lg font-black text-emerald-400">${filtrationMonthly}</span>
           </div>
           <div className="h-8 w-full rounded-lg bg-white/[0.06] overflow-hidden">
             <div
               className="h-full rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 flex items-center px-3"
               style={{
-                width: `${Math.max(5, (FILTRATION_MONTHLY / maxBar) * 100)}%`,
+                width: `${Math.max(5, (filtrationMonthly / maxBar) * 100)}%`,
               }}
             >
-              <span className="text-[10px] font-bold">${FILTRATION_MONTHLY}/mo</span>
+              <span className="text-[10px] font-bold">${filtrationMonthly}/mo</span>
             </div>
           </div>
         </div>
@@ -176,7 +198,7 @@ export function DemoCostComparison({ onNext: _onNext, onBack: _onBack }: Props) 
             Filtration Yearly
           </p>
           <p className="text-2xl font-black text-emerald-400 mt-1">
-            ${(FILTRATION_MONTHLY * 12).toLocaleString()}
+            ${(filtrationMonthly * 12).toLocaleString()}
           </p>
         </div>
       </div>

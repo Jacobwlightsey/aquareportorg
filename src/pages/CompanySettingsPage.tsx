@@ -22,6 +22,7 @@ import {
   EyeOff,
   RotateCcw,
   Save,
+  Upload,
   X,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
@@ -395,8 +396,8 @@ function BrandingCard({
       toast.error("Please upload an image file");
       return;
     }
-    if (file.size > 900_000) {
-      toast.error("Please use an image under 900KB");
+    if (file.size > 15_000_000) {
+      toast.error("Please use an image under 15MB");
       return;
     }
     const reader = new FileReader();
@@ -1369,15 +1370,10 @@ function DemoConfigCard() {
         {/* Pricing */}
         <ConfigSection title="💰 Pricing" description="Program price, reveal price, stackable discounts">
           <div className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Program Price (crossed out)</Label>
-                <Input type="number" value={cfg.programPrice || ""} placeholder="e.g. 12995" onChange={(e) => update({ programPrice: Number(e.target.value) || undefined })} />
-              </div>
-              <div>
-                <Label className="text-xs">Reveal Price (actual)</Label>
-                <Input type="number" value={cfg.revealPrice || ""} placeholder="e.g. 9995" onChange={(e) => update({ revealPrice: Number(e.target.value) || undefined })} />
-              </div>
+            <div>
+              <Label className="text-xs">Reveal Price (actual)</Label>
+              <Input type="number" value={cfg.revealPrice || ""} placeholder="e.g. 9995" onChange={(e) => update({ revealPrice: Number(e.target.value) || undefined })} />
+              <p className="text-[10px] text-muted-foreground mt-1">Program price (crossed-out MSRP) is set during the pricing step of the demo.</p>
             </div>
 
             <div>
@@ -1423,8 +1419,24 @@ function DemoConfigCard() {
               <Textarea value={cfg.roSystemDescription || ""} placeholder="A premium under-sink reverse osmosis system..." onChange={(e) => update({ roSystemDescription: e.target.value })} rows={3} />
             </div>
             <div>
-              <Label className="text-xs">RO System Image URL</Label>
-              <Input value={cfg.roSystemImage || ""} placeholder="https://..." onChange={(e) => update({ roSystemImage: e.target.value })} />
+              <Label className="text-xs">RO System Image</Label>
+              {cfg.roSystemImage && (
+                <div className="mb-2 relative inline-block">
+                  <img src={cfg.roSystemImage} alt="RO System" className="max-h-24 rounded-lg border border-border object-contain" />
+                  <button onClick={() => update({ roSystemImage: "" })} className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform cursor-pointer">
+                    <X className="size-3" />
+                  </button>
+                </div>
+              )}
+              <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center">
+                <Upload className="size-4" />
+                {cfg.roSystemImage ? "Replace Image" : "Upload Image"}
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) readImageFile(file, (dataUrl) => update({ roSystemImage: dataUrl }));
+                  e.target.value = "";
+                }} />
+              </label>
             </div>
             <div>
               <Label className="text-xs">Boosted Score</Label>

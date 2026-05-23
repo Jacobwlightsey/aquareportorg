@@ -253,7 +253,7 @@ export function DemoWizardPage() {
           />
         )}
         {stepKey === "comparison" && (
-          <DemoCostComparison onNext={goNext} onBack={goBack} />
+          <DemoCostComparison company={company} monthlyPayment={pricingState?.monthlyPayment} onNext={goNext} onBack={goBack} />
         )}
         {stepKey === "boost" && (
           <DemoScoreBoost

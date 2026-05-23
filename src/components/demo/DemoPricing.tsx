@@ -1,5 +1,7 @@
-import { Calculator, Check, Gift, Sparkles, Tag } from "lucide-react";
+import { Calculator, Check, Gift, Pencil, Sparkles, Tag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { playRevealSound, playTapSound, playToggleSound } from "@/lib/demoSounds";
 
 export interface PricingState {
@@ -52,12 +54,16 @@ function AnimatedPrice({ value, className }: { value: number; className?: string
 
 export function DemoPricing({ company, onNext, onPricingChange, initialState }: Props) {
   const cfg = company?.demoConfig;
-  const programPrice = cfg?.programPrice ?? 0;
+  const savedProgramPrice = cfg?.programPrice ?? 0;
   const revealPrice = cfg?.revealPrice ?? 0;
   const systemCostMonthly = cfg?.systemCostMonthly ?? 0;
   const discountOptions = cfg?.discountOptions?.length ? cfg.discountOptions : DEFAULT_DISCOUNTS;
   const color = company?.primaryColor || "#2563eb";
+  const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
 
+  const [programPrice, setProgramPrice] = useState(initialState?.programPrice ?? savedProgramPrice);
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceInput, setPriceInput] = useState(programPrice.toString());
   const [revealed, setRevealed] = useState(!!initialState);
   const [selected, setSelected] = useState<Set<string>>(new Set(initialState?.discountsApplied ?? []));
   const [monthly, setMonthly] = useState(initialState?.monthlyPayment?.toString() ?? systemCostMonthly.toString());
@@ -96,12 +102,47 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
         <p className="text-sm text-white/50 mt-1">Protection for your entire home</p>
       </div>
 
-      {/* Program price (crossed out) */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+      {/* Program price (crossed out) — editable inline */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center relative group">
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Program Price</p>
-        <p className="text-4xl font-black text-white/80 line-through decoration-red-400/60 decoration-2">
-          ${programPrice.toLocaleString()}
-        </p>
+        {editingPrice ? (
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-4xl font-black text-white/80">$</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              autoFocus
+              value={priceInput}
+              onChange={(e) => setPriceInput(e.target.value)}
+              onBlur={() => {
+                const val = parseInt(priceInput) || 0;
+                setProgramPrice(val);
+                setEditingPrice(false);
+                // Persist to demoConfig so it's saved for future demos
+                updateDemoConfig({ config: { ...cfg, programPrice: val } }).catch(() => {});
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              }}
+              className="w-40 h-14 rounded-xl bg-white/[0.06] border border-white/20 text-center text-4xl font-black text-white outline-none focus:border-white/40 transition-colors"
+            />
+          </div>
+        ) : (
+          <p
+            className="text-4xl font-black text-white/80 line-through decoration-red-400/60 decoration-2 cursor-pointer"
+            onClick={() => { setPriceInput(programPrice.toString()); setEditingPrice(true); playTapSound(); }}
+          >
+            ${programPrice.toLocaleString()}
+          </p>
+        )}
+        {!editingPrice && (
+          <button
+            onClick={() => { setPriceInput(programPrice.toString()); setEditingPrice(true); playTapSound(); }}
+            className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/[0.06] border border-white/10 text-white/30 hover:text-white/60 hover:bg-white/[0.1] transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+          >
+            <Pencil className="size-3" />
+          </button>
+        )}
       </div>
 
       {/* Reveal price card */}
