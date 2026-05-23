@@ -16,19 +16,19 @@ import {
   Mail,
   Map,
   Megaphone,
-
+  Moon,
   PenTool,
   RefreshCw,
   Settings,
   ShieldCheck,
   Star,
-
+  Sun,
   Target,
   Users as UsersIcon,
   Users2,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-
+import { useTheme } from "@/contexts/ThemeContext";
 import { APP_NAME } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -297,7 +297,7 @@ function SidebarUserMenu() {
   const user = useQuery(api.auth.currentUser);
   const company = useQuery(api.companies.getMyCompany);
   const { signOut } = useAuthActions();
-
+  const { theme, toggleTheme, switchable } = useTheme();
   const { setOpenMobile } = useSidebar();
 
   return (
@@ -345,7 +345,12 @@ function SidebarUserMenu() {
                   Company Settings
                 </Link>
               </DropdownMenuItem>
-
+              {switchable && (
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+                  {theme === "light" ? "Dark mode" : "Light mode"}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => signOut()}

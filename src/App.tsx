@@ -53,7 +53,7 @@ import { TrainingPage } from "./pages/TrainingPage";
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="system" switchable>
         <Toaster />
         <Routes>
           {/* Public customer report — no layout chrome */}
