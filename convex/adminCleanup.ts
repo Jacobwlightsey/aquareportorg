@@ -1,8 +1,10 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
-// Temporary admin mutation to clean up stale auth records for a given email
-export const cleanupStaleAuth = mutation({
+// ─── All functions are internalMutation/internalQuery ───
+// Only callable from the Convex dashboard or deploy scripts, never from client code.
+
+export const cleanupStaleAuth = internalMutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -64,7 +66,7 @@ export const cleanupStaleAuth = mutation({
   },
 });
 
-export const debugUsers = query({
+export const debugUsers = internalQuery({
   args: {},
   handler: async (ctx) => {
     const users = await ctx.db.query("users").collect();
@@ -78,7 +80,7 @@ export const debugUsers = query({
   }
 });
 
-export const fixMembership = mutation({
+export const fixMembership = internalMutation({
   args: { 
     oldUserId: v.string(),
     newUserId: v.string(),

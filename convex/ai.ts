@@ -3,8 +3,8 @@ import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { requireEnv } from "./security";
 
-const ROUTINE_MODEL = "gpt-5.4-mini";
-const PREMIUM_MODEL = "gpt-5.5";
+const ROUTINE_MODEL = "gpt-4.1-mini";
+const PREMIUM_MODEL = "gpt-4.1";
 const PROMPT_VERSION = "aquareport-ai-v1";
 
 function hashInput(input: string) {

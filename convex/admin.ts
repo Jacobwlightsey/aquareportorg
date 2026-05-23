@@ -1,6 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -73,26 +73,17 @@ export const isAdmin = query({
   },
 });
 
-// ─── Setup admin placeholder (deploy-key only in practice) ──────────────────
-export const setupAdminPlaceholder = mutation({
+// ─── Setup admin placeholder (internal only — use from dashboard/deploy scripts) ──
+export const setupAdminPlaceholder = internalMutation({
   args: {
     email: v.string(),
     companyName: v.string(),
   },
   handler: async (ctx, args) => {
-    // Guard: only platform admins (or deploy-key callers) can run this
-    try {
-      await requirePlatformAdmin(ctx);
-    } catch {
-      // Allow unauthenticated calls from deploy key (no user context)
-      const userId = await getAuthUserId(ctx);
-      if (userId) throw new Error("Platform admin access required");
-    }
-
     const companies = await ctx.db.query("companies").collect();
     const company = companies.find((c) => c.name === args.companyName);
     if (!company) {
-      return { error: "Company not found", companies: companies.map((c) => c.name) };
+      return { error: "Company not found" };
     }
 
     const existing = await ctx.db
@@ -154,7 +145,7 @@ export const getPlatformStats = query({
     }
 
     // MRR
-    const planPrices: Record<string, number> = { starter: 29, growth: 79, pro: 199, enterprise: 499 };
+    const planPrices: Record<string, number> = { starter: 99, growth: 249, pro: 499, enterprise: 499 };
     let mrr = 0;
     for (const c of companies) {
       if (c.stripeStatus === "active" && c.stripePlan) {

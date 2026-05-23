@@ -385,7 +385,7 @@ export const saveReportInHomeTest = action({
       metadata: JSON.stringify({ reportId: String(args.reportId), referralUrl: referral.referralUrl }),
     });
 
-    // Sync score to consumer_scores in Supabase (Item 8)
+    // Sync score to consumer_scores in Supabase (upsert by consumer_email)
     if (report.customerEmail) {
       try {
         const scorePayload = {
@@ -397,13 +397,9 @@ export const saveReportInHomeTest = action({
           verified_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        // Upsert by consumer_email
-        await supabaseTable("consumer_scores?consumer_email=eq." + encodeURIComponent(report.customerEmail.toLowerCase()), {
-          method: "DELETE",
-        }).catch(() => {});
         await supabaseTable("consumer_scores", {
           method: "POST",
-          prefer: "return=representation",
+          prefer: "resolution=merge-duplicates,return=representation",
           body: scorePayload,
         });
         console.log(`Score synced to consumer_scores for ${report.customerEmail}`);
@@ -492,19 +488,17 @@ export const createFiltrationVerification = action({
       });
     }
 
-    // Sync status to consumer_scores in Supabase (filtration installed)
+    // Sync status to consumer_scores in Supabase (upsert — filtration installed)
     if (email) {
       try {
-        await supabaseTable("consumer_scores?consumer_email=eq." + encodeURIComponent(email), {
-          method: "DELETE",
-        }).catch(() => {});
+        const systemScore = SYSTEM_SCORE[args.systemName] || 94;
         await supabaseTable("consumer_scores", {
           method: "POST",
-          prefer: "return=representation",
+          prefer: "resolution=merge-duplicates,return=representation",
           body: {
             consumer_email: email,
             zip: args.customerZip,
-            aqua_score: 0,
+            aqua_score: systemScore,
             tier: "system_installed",
             status: "filtration_verified",
             verified_at: new Date().toISOString(),

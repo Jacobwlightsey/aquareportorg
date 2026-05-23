@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { auth } from "./auth";
 
 declare const process: { env: Record<string, string | undefined> };
@@ -377,7 +377,7 @@ http.route({
         });
         const sub = await subResp.json();
 
-        await ctx.runMutation(api.stripe.handleWebhookUpdate, {
+        await ctx.runMutation(internal.stripe.handleWebhookUpdate, {
           stripeCustomerId: customerId,
           stripeSubscriptionId: subscriptionId,
           stripePlan: plan,
@@ -410,7 +410,7 @@ http.route({
         });
       }
 
-      await ctx.runMutation(api.stripe.handleWebhookUpdate, {
+      await ctx.runMutation(internal.stripe.handleWebhookUpdate, {
         stripeCustomerId: data.customer,
         stripeSubscriptionId: data.id,
         stripeStatus: data.status,

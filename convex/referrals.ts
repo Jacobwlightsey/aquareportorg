@@ -7,7 +7,7 @@ import { api } from "./_generated/api";
 
 declare const process: { env: Record<string, string | undefined> };
 
-const UNLOCKED_PLANS = new Set(["growth", "pro", "enterprise"]);
+const UNLOCKED_PLANS = new Set(["starter", "growth", "pro", "enterprise"]);
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -32,25 +32,35 @@ function isDetectedContaminant(contaminant: any) {
   return contaminant?.detected !== false && contaminant?.detection_status !== "not_detected";
 }
 
+/**
+ * Ratio-based AquaScore — matches reports.ts + waterScore.ts algorithm.
+ * Uses detected_level / legal_limit (or health_guideline) ratios with
+ * graduated penalties instead of the old flat boolean-flag approach.
+ */
 function computeReferralAquaScore(contaminants: any[]) {
   const detectedContaminants = contaminants.filter(isDetectedContaminant);
-  const hasContaminantSignal = detectedContaminants.some((contaminant) => contaminant?.over_legal || contaminant?.over_health);
-  if (!hasContaminantSignal) return 100;
+  let score = 100;
 
-  const legalPenalty = Math.min(30, detectedContaminants.filter((contaminant) => contaminant?.over_legal).length * 18);
-  const healthPenalty = Math.min(
-    59,
-    detectedContaminants.reduce((total, contaminant) => {
-      if (!contaminant?.over_health || contaminant?.over_legal) return total;
-      const multiple = contaminant?.times_above_ewg ?? 1;
-      if (multiple >= 100) return total + 9;
-      if (multiple >= 25) return total + 7;
-      if (multiple >= 10) return total + 5;
-      return total + 3;
-    }, 0),
-  );
-  const detectionPenalty = Math.min(10, detectedContaminants.length * 0.5);
-  return Math.max(0, Math.min(100, Math.round(100 - legalPenalty - healthPenalty - detectionPenalty)));
+  for (const c of detectedContaminants) {
+    const val = c?.detected_level ?? c?.value ?? 0;
+    const legal = c?.legal_limit;
+    const health = c?.health_guideline;
+
+    if (legal && legal > 0 && val > 0) {
+      const ratio = val / legal;
+      if (ratio > 1.5) score -= 12;
+      else if (ratio > 1.0) score -= 8;
+      else if (ratio > 0.75) score -= 3;
+      else if (ratio > 0.5) score -= 1;
+    } else if (health && health > 0 && val > 0) {
+      const ratio = val / health;
+      if (ratio > 3.0) score -= 6;
+      else if (ratio > 1.5) score -= 4;
+      else if (ratio > 1.0) score -= 2;
+    }
+  }
+
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 async function insertReferral(row: Record<string, unknown>) {

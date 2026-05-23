@@ -41,11 +41,30 @@ export const deleteAccount = mutation({
       await ctx.db.delete(session._id);
     }
 
-    // Delete company memberships (but keep the company for other members)
+    // Check company ownership — block deletion if sole owner with other members
     const memberships = await ctx.db
       .query("companyMembers")
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
       .collect();
+    for (const membership of memberships) {
+      if (membership.role === "owner") {
+        const companyMembers = await ctx.db
+          .query("companyMembers")
+          .withIndex("by_company", (q: any) => q.eq("companyId", membership.companyId))
+          .collect();
+        const otherMembers = companyMembers.filter((m) => String(m.userId) !== String(userId));
+        if (otherMembers.length > 0) {
+          const otherOwners = otherMembers.filter((m) => m.role === "owner");
+          if (otherOwners.length === 0) {
+            throw new Error(
+              "You are the only owner of your company. Transfer ownership to another team member before deleting your account."
+            );
+          }
+        }
+      }
+    }
+
+    // Delete company memberships (keep the company for other members)
     for (const membership of memberships) {
       await ctx.db.delete(membership._id);
     }

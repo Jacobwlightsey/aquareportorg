@@ -169,8 +169,8 @@ export const updateSubscription = internalMutation({
   },
 });
 
-// Called from webhook — find company by Stripe customer ID or user email and update
-export const handleWebhookUpdate = mutation({
+// Called from webhook — internal only, NOT callable from the client
+export const handleWebhookUpdate = internalMutation({
   args: {
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.optional(v.string()),

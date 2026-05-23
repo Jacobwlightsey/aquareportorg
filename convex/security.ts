@@ -137,8 +137,8 @@ const PLAN_RANK: Record<string, number> = {
 };
 
 const FEATURE_MIN_PLAN: Record<string, string> = {
-  flipbook_reports: "growth",
-  issue_consumer_reports: "growth",
+  flipbook_reports: "starter",
+  issue_consumer_reports: "starter",
   verify_in_home_results: "growth",
   verify_filtration_installs: "growth",
   interactive_dashboard: "growth",
@@ -161,7 +161,7 @@ export function tierAccessMessage(feature: string) {
     return "Upgrade to Pro ($499/mo) to access the lead pipeline.";
   }
   if (feature === "verify_in_home_results" || feature === "verify_filtration_installs" || feature === "issue_consumer_reports") {
-    return "Upgrade to Growth ($199/mo) to verify test results and issue consumer reports.";
+    return "Upgrade to Growth ($249/mo) to verify test results and issue consumer reports.";
   }
   return "Upgrade your plan to access this feature.";
 }
