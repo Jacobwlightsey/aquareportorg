@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { api } from "../../convex/_generated/api";
 
 export function TerritoryMapPage() {
-  const reports = useQuery(api.reports.list) ?? [];
+  const reports = useQuery(api.reports.getMyReports) ?? [];
   const leads = useQuery(api.leads.getLeads) ?? [];
   const [search, setSearch] = useState("");
 

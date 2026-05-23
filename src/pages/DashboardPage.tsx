@@ -55,10 +55,9 @@ function StatCard({
 export function DashboardPage() {
   const navigate = useNavigate();
   const pipelineStats = useQuery(api.deals.getPipelineStats);
-  const reports = useQuery(api.reports.list);
+  const reports = useQuery(api.reports.getMyReports);
   const leads = useQuery(api.leads.getLeads);
   const appointments = useQuery(api.appointments.getAppointments, {});
-  const demoSessions = useQuery(api.dealerShared.getDemoSessions);
   const company = useQuery(api.companies.getMyCompany);
 
   const newLeads = leads?.filter((l) => l.status === "new")?.length ?? 0;
