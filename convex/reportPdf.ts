@@ -119,6 +119,56 @@ function finiteNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/**
+ * Field-reading adjustment — must mirror frontend waterScore.ts logic.
+ */
+function computePdfFieldReadingAdjustment(report: any): number {
+  const chlorine = typeof report?.chlorine === "number" ? report.chlorine : undefined;
+  const hardness = typeof report?.hardness === "number" ? report.hardness : undefined;
+  const tds = typeof report?.tds === "number" ? report.tds : undefined;
+  const ph = typeof report?.ph === "number" ? report.ph : undefined;
+
+  let adjustment = 0;
+  let factors = 0;
+
+  if (chlorine !== undefined) {
+    factors++;
+    if (chlorine < 0.2) adjustment += 3;
+    else if (chlorine <= 1) adjustment += 1;
+    else if (chlorine <= 2) adjustment -= 1;
+    else if (chlorine <= 4) adjustment -= 3;
+    else adjustment -= 5;
+  }
+  if (hardness !== undefined) {
+    factors++;
+    if (hardness <= 1) adjustment += 3;
+    else if (hardness <= 3.5) adjustment += 1;
+    else if (hardness <= 7) adjustment -= 1;
+    else if (hardness <= 10.5) adjustment -= 2;
+    else if (hardness <= 15) adjustment -= 4;
+    else adjustment -= 6;
+  }
+  if (tds !== undefined) {
+    factors++;
+    if (tds <= 50) adjustment += 3;
+    else if (tds <= 150) adjustment += 2;
+    else if (tds <= 300) adjustment += 0;
+    else if (tds <= 500) adjustment -= 1;
+    else if (tds <= 1000) adjustment -= 3;
+    else adjustment -= 6;
+  }
+  if (ph !== undefined) {
+    factors++;
+    if (ph >= 6.8 && ph <= 7.4) adjustment += 3;
+    else if (ph >= 6.5 && ph < 6.8) adjustment += 0;
+    else if (ph < 6.5) adjustment -= 3;
+    else if (ph > 7.4 && ph <= 8.5) adjustment += 0;
+    else adjustment -= 3;
+  }
+
+  return factors > 0 ? Math.round((adjustment / factors) * 3) : 0;
+}
+
 export const generateReportPdf = action({
   args: { reportId: v.id("reports") },
   handler: async (ctx, args) => {
@@ -144,6 +194,11 @@ export const generateReportPdf = action({
     const state = report.customerState || report.state || "";
     const zip = report.customerZip || report.zip || "";
 
+    // Compute score: contaminant-based + field reading adjustment (matches frontend)
+    const baseScore = computePdfAquaScore(contaminants);
+    const fieldAdj = computePdfFieldReadingAdjustment(report);
+    const finalScore = Math.max(0, Math.min(100, Math.round(baseScore + fieldAdj)));
+
     const html = buildReportHtml({
       customerName: report.customerName || "Homeowner",
       customerAddress: report.customerAddress,
@@ -152,7 +207,7 @@ export const generateReportPdf = action({
       companyName: report.companyName || "AquaReport",
       companyPhone: report.companyPhone,
       accentColor: report.companyColor || "#2563eb",
-      score: computePdfAquaScore(contaminants),
+      score: finalScore,
       utilityName: report.utilityName,
       waterSource: report.waterSource || "Unknown",
       populationServed: finiteNumber(report.populationServed),
@@ -193,6 +248,7 @@ export const generateReportPdf = action({
       flipbookUrl: flipbook.url,
       flipbookThumbnail: flipbook.thumbnail,
       flipbookId: flipbook.id,
+      waterScore: finalScore,
     });
 
     return {

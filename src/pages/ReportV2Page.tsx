@@ -15,7 +15,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -158,6 +158,27 @@ function PageFooter({ page, label = "Personalized Water Report" }: { page?: numb
 /* ================================================================
    PAGE WRAPPER — each page is a printable sheet
    ================================================================ */
+
+/** Responsive wrapper that scales the 816px report pages to fit mobile viewports */
+function useReportScale() {
+  const [scale, setScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    function update() {
+      if (!containerRef.current) return;
+      const containerWidth = containerRef.current.parentElement?.clientWidth ?? window.innerWidth;
+      const padding = 24; // 12px each side
+      const available = containerWidth - padding;
+      setScale(available < 816 ? available / 816 : 1);
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  return { scale, containerRef };
+}
 
 function Page({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -1310,8 +1331,10 @@ export function ReportV2Page() {
   const companyName = (company as any)?.name || "Your Water Solutions Company";
   const companyPhone = (company as any)?.phone || undefined;
 
+  const { scale, containerRef } = useReportScale();
+
   return (
-    <div className="min-h-screen bg-slate-200 py-6 print:bg-white print:py-0">
+    <div className="min-h-screen bg-slate-200 py-6 print:bg-white print:py-0 overflow-x-hidden" ref={containerRef}>
       {/* Toolbar — hidden in print */}
       <div className="print:hidden fixed top-4 right-4 z-50 flex items-center gap-2">
         {editing ? (
@@ -1362,8 +1385,15 @@ export function ReportV2Page() {
         )}
       </div>
 
-      {/* Report pages */}
-      <div id="report-pages-container" className="space-y-6 print:space-y-0">
+      {/* Report pages — scaled to fit mobile */}
+      <div
+        id="report-pages-container"
+        className="space-y-6 print:space-y-0 print:!transform-none"
+        style={scale < 1 ? {
+          transform: `scale(${scale})`,
+          transformOrigin: "top center",
+        } : undefined}
+      >
         <CoverPage
           customerName={customerName}
           customerAddress={customerAddress}

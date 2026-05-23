@@ -74,12 +74,62 @@ function calculateAquaScoreFromContaminants(contaminants: any[]): number | undef
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
+function computeFieldReadingAdjustment(report: any): number {
+  const chlorine = typeof report?.chlorine === "number" ? report.chlorine : undefined;
+  const hardness = typeof report?.hardness === "number" ? report.hardness : undefined;
+  const tds = typeof report?.tds === "number" ? report.tds : undefined;
+  const ph = typeof report?.ph === "number" ? report.ph : undefined;
+
+  let adjustment = 0;
+  let factors = 0;
+
+  if (chlorine !== undefined) {
+    factors++;
+    if (chlorine < 0.2) adjustment += 3;
+    else if (chlorine <= 1) adjustment += 1;
+    else if (chlorine <= 2) adjustment -= 1;
+    else if (chlorine <= 4) adjustment -= 3;
+    else adjustment -= 5;
+  }
+  if (hardness !== undefined) {
+    factors++;
+    if (hardness <= 1) adjustment += 3;
+    else if (hardness <= 3.5) adjustment += 1;
+    else if (hardness <= 7) adjustment -= 1;
+    else if (hardness <= 10.5) adjustment -= 2;
+    else if (hardness <= 15) adjustment -= 4;
+    else adjustment -= 6;
+  }
+  if (tds !== undefined) {
+    factors++;
+    if (tds <= 50) adjustment += 3;
+    else if (tds <= 150) adjustment += 2;
+    else if (tds <= 300) adjustment += 0;
+    else if (tds <= 500) adjustment -= 1;
+    else if (tds <= 1000) adjustment -= 3;
+    else adjustment -= 6;
+  }
+  if (ph !== undefined) {
+    factors++;
+    if (ph >= 6.8 && ph <= 7.4) adjustment += 3;
+    else if (ph >= 6.5 && ph < 6.8) adjustment += 0;
+    else if (ph < 6.5) adjustment -= 3;
+    else if (ph > 7.4 && ph <= 8.5) adjustment += 0;
+    else adjustment -= 3;
+  }
+
+  return factors > 0 ? Math.round((adjustment / factors) * 3) : 0;
+}
+
 function withNormalizedAquaScore<T extends { waterScore?: number; scoreMode?: string; contaminants?: string }>(report: T) {
   const contaminantScore = calculateAquaScoreFromContaminants(parseReportContaminants(report.contaminants));
+  const fieldAdj = computeFieldReadingAdjustment(report);
+  const baseScore = contaminantScore ?? normalizeAquaScore(report.waterScore, report.scoreMode);
+  const finalScore = baseScore !== undefined ? Math.max(0, Math.min(100, Math.round(baseScore + fieldAdj))) : undefined;
   return {
     ...report,
     rawWaterScore: report.waterScore,
-    waterScore: contaminantScore ?? normalizeAquaScore(report.waterScore, report.scoreMode),
+    waterScore: finalScore,
     scoreMode: "aqua_score_v1",
   };
 }
@@ -317,6 +367,9 @@ export const getPublicReport = query({
 
     const company = await ctx.db.get(report.companyId);
     const contaminantScore = calculateAquaScoreFromContaminants(parseReportContaminants(report.contaminants));
+    const fieldAdj = computeFieldReadingAdjustment(report);
+    const baseScore = contaminantScore ?? normalizeAquaScore(report.waterScore, report.scoreMode);
+    const finalScore = baseScore !== undefined ? Math.max(0, Math.min(100, Math.round(baseScore + fieldAdj))) : undefined;
 
     return {
       utilityName: report.utilityName,
@@ -336,7 +389,7 @@ export const getPublicReport = query({
       customerState: report.customerState,
       customerZip: report.customerZip,
       rawWaterScore: report.waterScore,
-      waterScore: contaminantScore ?? normalizeAquaScore(report.waterScore, report.scoreMode),
+      waterScore: finalScore,
       scoreMode: "aqua_score_v1",
       chlorine: report.chlorine,
       hardness: report.hardness,
@@ -375,6 +428,7 @@ export const updateReportUrls = mutation({
     flipbookUrl: v.optional(v.string()),
     flipbookThumbnail: v.optional(v.string()),
     flipbookId: v.optional(v.string()),
+    waterScore: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { membership } = await requireRole(ctx, "sales_rep");
@@ -383,13 +437,18 @@ export const updateReportUrls = mutation({
       throw new Error("Report not found");
     }
 
-    await ctx.db.patch(args.reportId, {
+    const patch: any = {
       pdfStorageId: args.pdfStorageId,
       pdfUrl: args.pdfUrl,
       flipbookUrl: args.flipbookUrl,
       flipbookThumbnail: args.flipbookThumbnail,
       flipbookId: args.flipbookId,
-    });
+    };
+    if (args.waterScore !== undefined) {
+      patch.waterScore = args.waterScore;
+      patch.scoreMode = "aqua_score_v1";
+    }
+    await ctx.db.patch(args.reportId, patch);
   },
 });
 

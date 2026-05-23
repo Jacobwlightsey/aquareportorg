@@ -136,16 +136,15 @@ function NavLink({
         <Link to={href} onClick={() => setOpenMobile(false)} className={locked ? "opacity-50" : ""}>
           <Icon />
           <span>{label}</span>
-          {locked && requiredPlan && (
-            <span className="ml-auto flex items-center gap-1">
-              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-400 leading-none">
-                {requiredPlan}
-              </span>
-              <Lock className="size-3 text-muted-foreground" />
+          {locked && (
+            <span className="ml-auto flex items-center gap-1 shrink-0">
+              {requiredPlan && (
+                <span className="hidden sm:inline rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-400 leading-none whitespace-nowrap">
+                  {requiredPlan}
+                </span>
+              )}
+              <Lock className="size-3 text-muted-foreground shrink-0" />
             </span>
-          )}
-          {locked && !requiredPlan && (
-            <Lock className="ml-auto size-3 text-muted-foreground" />
           )}
           {!locked && badge !== undefined && badge > 0 && (
             <span className="ml-auto min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
@@ -164,14 +163,22 @@ function SidebarNav() {
   const isAdmin = useQuery(api.admin.isPlatformAdmin);
   const company = useQuery(api.companies.getMyCompany);
   const role = company?.role;
-  const { isFree, effectivePlan } = useFreeTrial();
-  const userPlanRank = PLAN_RANK[effectivePlan] ?? 0;
+  const { isFree, plan } = useFreeTrial();
 
-  /** True when the nav item should show a lock icon based on plan level */
+  /** Pages free-trial users can access (matches TrialGate allowlist) */
+  const FREE_PAGES = new Set(["/dashboard", "/customers", "/subscription", "/settings", "/company", "/team"]);
+
+  /** True when the nav item should show a lock icon */
   const isLocked = (href: string): boolean => {
+    if (isFree) {
+      // Free users: locked = not in the free allowlist
+      return !FREE_PAGES.has(href);
+    }
+    // Paid users: locked = page requires a higher plan
     const pageKey = href.replace(/^\//, "").split("/")[0] || "dashboard";
     const requiredPlan = PAGE_MIN_PLAN[pageKey] ?? "free";
     const requiredRank = PLAN_RANK[requiredPlan] ?? 0;
+    const userPlanRank = PLAN_RANK[plan] ?? 0;
     return userPlanRank < requiredRank;
   };
 
