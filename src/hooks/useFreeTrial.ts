@@ -30,17 +30,22 @@ export function useFreeTrial() {
   const isFree = usage.isFree;
   const hasUsedTrial = usage.hasUsedFreeTrial;
   const canCreateReport = (usage.remaining ?? 1) > 0;
+  // Trial experience: created their 1 free report but should still have full
+  // Growth-level access to demo, verify, flipbook etc. for that report.
+  const isInTrialExperience = usage.isInTrialExperience ?? false;
 
-  // Effective plan: free users who haven't used their trial get starter-level preview
+  // Effective plan: free users who are pre-trial OR in their trial experience
+  // get Growth-level preview so they can fully use their 1 free report
   let effectivePlan = usage.plan;
-  if (isFree && !hasUsedTrial) {
-    effectivePlan = "growth"; // Free trial gets Growth-level access (matches backend)
+  if (isFree && (!hasUsedTrial || isInTrialExperience)) {
+    effectivePlan = "growth";
   }
 
   return {
     loading: false,
     isFree,
     hasUsedTrial,
+    isInTrialExperience,
     canCreateReport,
     trialRemaining: usage.freeTrialRemaining,
     totalReports: usage.totalReportsEver,

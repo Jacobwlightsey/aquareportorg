@@ -172,73 +172,73 @@ function buildScoreImprovementPage(params: ReportTemplateParams): string {
 
   const rows = improvements.slice(0, 8).map((item, i) =>
     `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
-      <td style="padding:8px 12px;font-weight:500;color:#1e293b">${esc(item.name)}</td>
-      <td style="padding:8px 12px;text-align:right;color:#dc2626;font-weight:600">${esc(item.current)} ${esc(item.unit)}</td>
-      <td style="padding:8px 12px;text-align:right;color:#16a34a;font-weight:600">${esc(item.projected)} ${esc(item.unit)}</td>
-      <td style="padding:8px 12px;text-align:right;color:#64748b">${item.guideline ? `${esc(item.guideline)} ${esc(item.unit)}` : '—'}</td>
-      <td style="padding:8px 12px;text-align:center">${item.nowSafe
-        ? '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600">✓ Safe</span>'
-        : '<span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600">↓ Reduced</span>'
+      <td style="padding:5px 8px;font-weight:500;color:#1e293b">${esc(item.name)}</td>
+      <td style="padding:5px 8px;text-align:right;color:#dc2626;font-weight:600">${esc(item.current)} ${esc(item.unit)}</td>
+      <td style="padding:5px 8px;text-align:right;color:#16a34a;font-weight:600">${esc(item.projected)} ${esc(item.unit)}</td>
+      <td style="padding:5px 8px;text-align:right;color:#64748b">${item.guideline ? `${esc(item.guideline)} ${esc(item.unit)}` : '—'}</td>
+      <td style="padding:5px 8px;text-align:center">${item.nowSafe
+        ? '<span style="background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:12px;font-size:9px;font-weight:600">✓ Safe</span>'
+        : '<span style="background:#fef3c7;color:#b45309;padding:2px 6px;border-radius:12px;font-size:9px;font-weight:600">↓ Reduced</span>'
       }</td>
     </tr>`
   ).join("\n");
 
-  return `<div class="page" style="padding:40px">
+  return `<div class="page" style="padding:32px 40px">
   <div class="page-header">
     <span class="section-label">Score Improvement Projection</span>
     <span class="utility-label">${esc(params.utilityName)}</span>
   </div>
 
-  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">How Filtration Improves Your Score</h2>
-  <p style="margin-top:8px;font-size:12px;color:#475569">
-    Installing a whole-home advanced filtration system can dramatically improve your water quality. Here's what your AquaScore could look like after professional filtration.
+  <h2 style="font-size:24px;font-weight:700;color:#0f172a" class="serif">How Filtration Improves Your Score</h2>
+  <p style="margin-top:4px;font-size:11px;color:#475569">
+    Installing a whole-home advanced filtration system can dramatically improve your water quality.
   </p>
 
   <!-- Before / After cards -->
-  <div style="margin-top:24px;display:flex;align-items:center;gap:16px">
-    <div style="flex:1;border:2px solid #e2e8f0;border-radius:12px;padding:24px;text-align:center;background:#fff">
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#64748b;text-transform:uppercase">Current Score</div>
-      <div style="margin-top:8px;font-size:56px;font-weight:700;color:${currentGrade.color}" class="serif">${currentScore}</div>
-      <div style="margin-top:4px;font-size:13px;font-weight:600;color:${currentGrade.color}">${currentGrade.tier}</div>
+  <div style="margin-top:14px;display:flex;align-items:center;gap:12px">
+    <div style="flex:1;border:2px solid #e2e8f0;border-radius:10px;padding:14px 16px;text-align:center;background:#fff">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.15em;color:#64748b;text-transform:uppercase">Current Score</div>
+      <div style="margin-top:4px;font-size:44px;font-weight:700;color:${currentGrade.color}" class="serif">${currentScore}</div>
+      <div style="margin-top:2px;font-size:12px;font-weight:600;color:${currentGrade.color}">${currentGrade.tier}</div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
-      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#10b981);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px">→</div>
-      <span style="font-size:11px;font-weight:700;color:#16a34a">+${scoreDelta} pts</span>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#10b981);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px">→</div>
+      <span style="font-size:10px;font-weight:700;color:#16a34a">+${scoreDelta} pts</span>
     </div>
-    <div style="flex:1;border:2px solid ${projectedGrade.color}40;border-radius:12px;padding:24px;text-align:center;background:#fff">
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#64748b;text-transform:uppercase">After Filtration</div>
-      <div style="margin-top:8px;font-size:56px;font-weight:700;color:${projectedGrade.color}" class="serif">${projectedScore}</div>
-      <div style="margin-top:4px;font-size:13px;font-weight:600;color:${projectedGrade.color}">${projectedGrade.tier}</div>
+    <div style="flex:1;border:2px solid ${projectedGrade.color}40;border-radius:10px;padding:14px 16px;text-align:center;background:#fff">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.15em;color:#64748b;text-transform:uppercase">After Filtration</div>
+      <div style="margin-top:4px;font-size:44px;font-weight:700;color:${projectedGrade.color}" class="serif">${projectedScore}</div>
+      <div style="margin-top:2px;font-size:12px;font-weight:600;color:${projectedGrade.color}">${projectedGrade.tier}</div>
     </div>
   </div>
 
   <!-- Stats -->
-  <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;text-align:center">
-      <div style="font-size:24px;font-weight:700;color:#15803d">+${scoreDelta}</div>
-      <div style="margin-top:4px;font-size:10px;font-weight:500;color:#16a34a">Point Improvement</div>
+  <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:#15803d">+${scoreDelta}</div>
+      <div style="margin-top:2px;font-size:9px;font-weight:500;color:#16a34a">Point Improvement</div>
     </div>
-    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;text-align:center">
-      <div style="font-size:24px;font-weight:700;color:#1d4ed8">${resolved}</div>
-      <div style="margin-top:4px;font-size:10px;font-weight:500;color:#2563eb">Contaminants Resolved</div>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:#1d4ed8">${resolved}</div>
+      <div style="margin-top:2px;font-size:9px;font-weight:500;color:#2563eb">Contaminants Resolved</div>
     </div>
-    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;text-align:center">
-      <div style="font-size:24px;font-weight:700;color:#b45309">${improvements.length}</div>
-      <div style="margin-top:4px;font-size:10px;font-weight:500;color:#d97706">Contaminants Improved</div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:#b45309">${improvements.length}</div>
+      <div style="margin-top:2px;font-size:9px;font-weight:500;color:#d97706">Contaminants Improved</div>
     </div>
   </div>
 
   <!-- Table -->
-  <div style="margin-top:20px">
-    <div style="font-size:13px;font-weight:700;color:#0f172a">📈 Projected Contaminant Reductions</div>
-    <table style="width:100%;margin-top:8px;border-collapse:collapse;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+  <div style="margin-top:12px">
+    <div style="font-size:12px;font-weight:700;color:#0f172a">📈 Projected Contaminant Reductions</div>
+    <table style="width:100%;margin-top:6px;border-collapse:collapse;font-size:10px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
       <thead>
         <tr style="background:#f1f5f9">
-          <th style="padding:8px 12px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Contaminant</th>
-          <th style="padding:8px 12px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Current</th>
-          <th style="padding:8px 12px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">After Filtration</th>
-          <th style="padding:8px 12px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Guideline</th>
-          <th style="padding:8px 12px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Status</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Contaminant</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Current</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">After Filtration</th>
+          <th style="padding:5px 8px;text-align:right;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Guideline</th>
+          <th style="padding:5px 8px;text-align:center;font-weight:600;color:#475569;border-bottom:1px solid #e2e8f0">Status</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -246,15 +246,14 @@ function buildScoreImprovementPage(params: ReportTemplateParams): string {
   </div>
 
   <!-- CTA -->
-  <div style="margin-top:20px;background:linear-gradient(135deg,#0f2444,#1a3a6c);border-radius:12px;padding:24px;color:#fff;text-align:center">
-    <div style="font-size:28px">⚡</div>
-    <div style="margin-top:8px;font-size:20px;font-weight:700">Take Action Today</div>
-    <p style="margin-top:8px;font-size:12px;color:#bfdbfe;max-width:400px;margin-left:auto;margin-right:auto">
+  <div style="margin-top:12px;background:linear-gradient(135deg,#0f2444,#1a3a6c);border-radius:10px;padding:16px;color:#fff;text-align:center">
+    <div style="font-size:18px;font-weight:700">⚡ Take Action Today</div>
+    <p style="margin-top:6px;font-size:11px;color:#bfdbfe;max-width:400px;margin-left:auto;margin-right:auto">
       A whole-home filtration system from ${esc(params.companyName)} could raise your AquaScore
       from <strong style="color:#fff">${currentScore}</strong> to <strong style="color:#6ee7b7">${projectedScore}</strong> —
       resolving ${resolved} contaminant${resolved !== 1 ? 's' : ''} and protecting your family's health.
     </p>
-    <p style="margin-top:12px;font-size:11px;color:rgba(191,219,254,0.8);font-style:italic">
+    <p style="margin-top:6px;font-size:10px;color:rgba(191,219,254,0.8);font-style:italic">
       Contact your water specialist for a free in-home consultation.
     </p>
   </div>

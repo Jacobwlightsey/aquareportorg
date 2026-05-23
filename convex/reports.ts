@@ -239,6 +239,10 @@ export const getReportUsageStatus = query({
     const isFree = effectivePlan === "free";
     const hasUsedFreeTrial = isFree && totalReportsEver >= 1;
     const freeTrialRemaining = isFree ? Math.max(0, 1 - totalReportsEver) : null;
+    // Trial experience: they've created their 1 free report and should still have
+    // full Growth-level access to demo, verify, flipbook etc. for that report.
+    // Lock out only when they try to create a 2nd report.
+    const isInTrialExperience = isFree && totalReportsEver === 1;
 
     return {
       plan: effectivePlan,
@@ -250,6 +254,7 @@ export const getReportUsageStatus = query({
       isFree,
       hasUsedFreeTrial,
       freeTrialRemaining,
+      isInTrialExperience,
     };
   },
 });

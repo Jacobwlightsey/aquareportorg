@@ -256,16 +256,16 @@ export function CustomerDetailPage() {
     reportId ? { reportId: reportId as any } : "skip"
   );
   const rawCompany = useQuery(api.companies.getMyCompany);
-  const { isFree, hasUsedTrial, effectivePlan, totalReports } = useFreeTrial();
-  // For free-trial users who haven't exhausted their trial, override the plan
-  // so PlanGate helpers see "starter" level access
+  const { isFree, hasUsedTrial, isInTrialExperience, effectivePlan, totalReports } = useFreeTrial();
+  // For free-trial users: pre-trial OR in their trial experience (1 report created),
+  // override the plan to growth so PlanGate helpers unlock demo, verify, flipbook, etc.
   const company = useMemo(() => {
     if (!rawCompany) return rawCompany;
-    if (isFree && !hasUsedTrial) {
+    if (isFree && (!hasUsedTrial || isInTrialExperience)) {
       return { ...rawCompany, stripePlan: "growth", stripeStatus: "active" };
     }
     return rawCompany;
-  }, [rawCompany, isFree, hasUsedTrial]);
+  }, [rawCompany, isFree, hasUsedTrial, isInTrialExperience]);
   const createReferral = useAction(api.referrals.createConsumerReferral);
   const [referralUrl, setReferralUrl] = useState<string>("");
   const [, setSendingReferral] = useState(false);
