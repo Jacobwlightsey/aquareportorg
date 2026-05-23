@@ -305,7 +305,8 @@ export function CustomerDetailPage() {
       setReferralUrl(result.referralUrl);
       toast.success("Consumer link created!");
     } catch (err: any) {
-      toast.error(err.message || "Failed to create consumer link");
+      const msg = err?.data ?? err?.message ?? "Failed to create consumer link";
+      toast.error(typeof msg === "string" ? msg : "Failed to create consumer link");
     }
     setSendingReferral(false);
   }, [reportId, createReferral]);

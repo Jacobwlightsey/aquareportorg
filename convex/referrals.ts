@@ -1,7 +1,7 @@
 "use node";
 
 import { randomBytes } from "node:crypto";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 
@@ -97,16 +97,24 @@ export const createConsumerReferral = action({
     referralUrl: string;
   }> => {
     const user: any = await ctx.runQuery(api.auth.currentUser);
-    if (!user) throw new Error("Sign in before creating a consumer referral link.");
+    if (!user) throw new ConvexError("Sign in before creating a consumer referral link.");
 
     const subscription: any = await ctx.runQuery(api.stripe.getSubscription);
     const activePlan = subscription?.status === "active" ? subscription.plan : "free";
-    if (!UNLOCKED_PLANS.has(activePlan)) {
-      throw new Error("Consumer referral links are available on Growth, Pro, and Enterprise plans.");
+
+    // Allow free trial users (their 1 free report) to create referrals
+    let isTrialAllowed = false;
+    if (activePlan === "free") {
+      const usage: any = await ctx.runQuery(api.reports.getReportUsageStatus, {});
+      isTrialAllowed = usage?.isInTrialExperience === true;
+    }
+
+    if (!UNLOCKED_PLANS.has(activePlan) && !isTrialAllowed) {
+      throw new ConvexError("Consumer referral links are available on Starter plans and above. Upgrade to unlock this feature.");
     }
 
     const report: any = await ctx.runQuery(api.reports.getReport, { reportId: args.reportId });
-    if (!report) throw new Error("Report not found or unavailable.");
+    if (!report) throw new ConvexError("Report not found or unavailable.");
 
     const consumerUrl = (process.env.MYAQUAREPORT_URL || "https://myaquareport.com").replace(/\/$/, "");
     const referralCode = makeReferralCode();
@@ -180,7 +188,12 @@ export const createConsumerReferral = action({
       },
     };
 
-    const inserted = await insertReferral(row);
+    let inserted;
+    try {
+      inserted = await insertReferral(row);
+    } catch (err: any) {
+      throw new ConvexError(err?.message || "Could not create consumer referral. Please try again.");
+    }
 
     return {
       id: inserted?.id,

@@ -212,7 +212,8 @@ export function ViewReportPage() {
       await navigator.clipboard?.writeText(result.referralUrl);
       toast.success("Consumer referral link copied.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not create referral link");
+      const msg = (error as any)?.data ?? (error instanceof Error ? error.message : "Could not create referral link");
+      toast.error(typeof msg === "string" ? msg : "Could not create referral link");
     } finally {
       setReferralLoading(false);
     }

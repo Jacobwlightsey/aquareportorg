@@ -36,7 +36,8 @@ export function DemoNextSteps({ report, reportId, onEndDemo }: Props) {
       setReferralUrl(result.referralUrl);
       toast.success("Consumer link created!");
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      const msg = err?.data ?? err?.message ?? "Failed";
+      toast.error(typeof msg === "string" ? msg : "Failed");
     }
     setCreating(false);
   };
