@@ -84,9 +84,9 @@ export function CompanySettingsPage() {
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Company Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">⚙️ Company Settings</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Manage your company profile and team
+          Manage your company profile, team, branding, and demo experience
         </p>
       </div>
 
@@ -249,11 +249,10 @@ function CompanyProfileCard({
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Building2 className="size-4 text-muted-foreground" />
-            Company Profile
+            🏢 Company Profile
           </CardTitle>
           <CardDescription>
-            This information appears on your reports
+            Your business info — this appears on every report you generate
           </CardDescription>
         </div>
         {!editing && (
@@ -322,12 +321,12 @@ function CompanyProfileCard({
             </div>
           </div>
         ) : (
-          <div className="grid gap-4">
-            <InfoRow icon={Building2} label="Company" value={company.name as string} />
-            <InfoRow icon={Mail} label="Email" value={(company.email as string) || "—"} />
-            <InfoRow icon={Phone} label="Phone" value={(company.phone as string) || "—"} />
-            <InfoRow icon={Globe} label="Website" value={(company.website as string) || "—"} />
-            <InfoRow icon={MapPin} label="Address" value={(company.address as string) || "—"} />
+          <div className="grid gap-3">
+            <InfoRow icon={Building2} label="Company" value={company.name as string} emoji="🏢" />
+            <InfoRow icon={Mail} label="Email" value={(company.email as string) || "—"} emoji="📧" />
+            <InfoRow icon={Phone} label="Phone" value={(company.phone as string) || "—"} emoji="📱" />
+            <InfoRow icon={Globe} label="Website" value={(company.website as string) || "—"} emoji="🌐" />
+            <InfoRow icon={MapPin} label="Address" value={(company.address as string) || "—"} emoji="📍" />
           </div>
         )}
       </CardContent>
@@ -336,18 +335,20 @@ function CompanyProfileCard({
 }
 
 function InfoRow({
-  icon: Icon,
+  icon: _Icon,
   label,
   value,
+  emoji,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
+  emoji?: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <Icon className="size-4 text-muted-foreground shrink-0" />
-      <span className="text-sm text-muted-foreground w-20 shrink-0">
+    <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted/40 transition-colors">
+      <span className="text-base shrink-0">{emoji || "•"}</span>
+      <span className="text-sm text-muted-foreground w-20 shrink-0 font-medium">
         {label}
       </span>
       <span className="text-sm font-medium">{value}</span>
@@ -441,11 +442,10 @@ function BrandingCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Palette className="size-4 text-muted-foreground" />
-          Branding
+          🎨 Branding
         </CardTitle>
         <CardDescription>
-          Customize the look of your reports
+          Customize colors, logos, and the look of your reports
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -645,12 +645,11 @@ function TeamCardFixed({
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="size-4 text-muted-foreground" />
-            Team ({members.length})
+            👥 Team ({members.length})
           </CardTitle>
           <CardDescription>Manage members and pending invites</CardDescription>
           <p className="mt-1 text-xs text-muted-foreground">
-            {teamLimit ? `${teamUsed}/${teamLimit} seats used on this plan` : `${teamUsed} seats used · unlimited plan`}
+            {teamLimit ? `📊 ${teamUsed}/${teamLimit} seats used on this plan` : `${teamUsed} seats used · unlimited plan`}
           </p>
           {typeof teamLimit === "number" && (
             <div className="mt-2 w-48">
@@ -845,8 +844,7 @@ function TeamCard({
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="size-4 text-muted-foreground" />
-            Team ({members.length})
+            👥 Team ({members.length})
           </CardTitle>
           <CardDescription>Manage your sales team members</CardDescription>
         </div>
@@ -1053,7 +1051,7 @@ function DemoStepConfigCard() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="flex items-center gap-2 text-base">Demo Wizard Steps</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">🧙‍♂️ Demo Wizard Steps</CardTitle>
           <p className="text-xs text-muted-foreground mt-1">Drag to reorder · Toggle to show/hide steps</p>
         </div>
         <Button variant="ghost" size="sm" onClick={reset} className="flex items-center gap-1.5 text-xs">
@@ -1098,15 +1096,15 @@ function DemoStepConfigCard() {
 function ConfigSection({ title, description, children, defaultOpen }: { title: string; description: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   return (
-    <div className="border rounded-xl overflow-hidden">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/30 transition-colors cursor-pointer">
+    <div className={`border rounded-xl overflow-hidden transition-shadow ${open ? "shadow-sm ring-1 ring-blue-500/10" : ""}`}>
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/30 transition-colors cursor-pointer">
         <div>
           <p className="text-sm font-semibold">{title}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         </div>
-        <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-4 pb-4 space-y-3 border-t">{children}</div>}
+      {open && <div className="px-4 pb-4 space-y-3 border-t bg-muted/5">{children}</div>}
     </div>
   );
 }
@@ -1263,13 +1261,13 @@ function DemoConfigCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Settings className="size-5 text-blue-500" /> Demo Wizard Customization
+          🎯 Demo Wizard Customization
         </CardTitle>
         <CardDescription>Configure every part of your demo presentation. Changes show up in every new demo you present.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Brand Color */}
-        <ConfigSection title="Brand Color" description="Colors buttons, highlights, and accents throughout the demo">
+        <ConfigSection title="🎨 Brand Color" description="Colors buttons, highlights, and accents throughout the demo">
           <div className="flex flex-wrap gap-2 pt-2">
             {COLOR_PRESETS.map((c) => (
               <button key={c} onClick={() => update({ accentColor: c })} className={`size-8 rounded-xl transition-all cursor-pointer ${accent === c ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : "hover:scale-105"}`} style={{ backgroundColor: c }} />
@@ -1282,7 +1280,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* Welcome Screen */}
-        <ConfigSection title="Welcome Screen" description="First thing customers see when the demo starts" defaultOpen>
+        <ConfigSection title="👋 Welcome Screen" description="First thing customers see when the demo starts" defaultOpen>
           <div className="space-y-2 pt-2">
             <Label className="text-xs">Headline</Label>
             <Input value={cfg.welcomeHeadline || ""} placeholder="Your Water Quality Report" onChange={(e) => update({ welcomeHeadline: e.target.value })} />
@@ -1292,7 +1290,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* Featured Contaminants */}
-        <ConfigSection title="Featured Contaminants" description="Pick which contaminants to emphasize — leave empty to auto-detect">
+        <ConfigSection title="🧪 Featured Contaminants" description="Pick which contaminants to emphasize — leave empty to auto-detect">
           <div className="flex flex-wrap gap-2 pt-2">
             {contaminantCategories.map((cat) => (
               <button key={cat} onClick={() => {
@@ -1305,7 +1303,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* Score Transform */}
-        <ConfigSection title="Score Transform" description="Projected score after filtration — the \'before → after\' reveal">
+        <ConfigSection title="✨ Score Transform" description="Projected score after filtration — the \'before → after\' reveal">
           <div className="pt-2">
             <Label className="text-xs">Projected Score After Filtration</Label>
             <div className="flex items-center gap-3 mt-1">
@@ -1316,7 +1314,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* System Info */}
-        <ConfigSection title="System Info" description="System includes, warranty, how it works, callouts">
+        <ConfigSection title="🔧 System Info" description="System includes, warranty, how it works, callouts">
           <div className="space-y-4 pt-2">
             <div className="rounded-xl bg-muted/30 p-3 border border-dashed">
               <p className="text-xs text-muted-foreground">💡 System Name & Image are set in <strong>Company Settings → General</strong> (Solution Product section above).</p>
@@ -1369,7 +1367,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* Pricing */}
-        <ConfigSection title="Pricing" description="Program price, reveal price, stackable discounts">
+        <ConfigSection title="💰 Pricing" description="Program price, reveal price, stackable discounts">
           <div className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -1396,7 +1394,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* Cost Comparison */}
-        <ConfigSection title="Cost Comparison" description="Monthly expenses customers pay without filtration vs. your system">
+        <ConfigSection title="📊 Cost Comparison" description="Monthly expenses customers pay without filtration vs. your system">
           <div className="space-y-3 pt-2">
             <p className="text-xs text-muted-foreground">Set the average monthly expenses a homeowner spends without filtration.</p>
             <div className="space-y-2">
@@ -1414,7 +1412,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* RO System / Score Boost */}
-        <ConfigSection title="Score Boost (RO System)" description="The free RO system popup that boosts the score to near-perfect">
+        <ConfigSection title="🚀 Score Boost (RO System)" description="The free RO system popup that boosts the score to near-perfect">
           <div className="space-y-3 pt-2">
             <div>
               <Label className="text-xs">RO System Name</Label>
@@ -1437,7 +1435,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* Customer Close */}
-        <ConfigSection title="Customer Close" description="The friendly ending screen the customer sees">
+        <ConfigSection title="🤝 Customer Close" description="The friendly ending screen the customer sees">
           <div className="space-y-2 pt-2">
             <Label className="text-xs">Headline</Label>
             <Input value={cfg.closeHeadline || ""} placeholder="Thank You, {firstName}!" onChange={(e) => update({ closeHeadline: e.target.value })} />
@@ -1447,7 +1445,7 @@ function DemoConfigCard() {
         </ConfigSection>
 
         {/* Dealer Close Options */}
-        <ConfigSection title="Dealer Close (Outcome Options)" description="Outcome buttons the sales rep sees after the demo">
+        <ConfigSection title="🎯 Dealer Close (Outcome Options)" description="Outcome buttons the sales rep sees after the demo">
           <div className="space-y-2 pt-2">
             {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).map((opt: string, idx: number) => (
               <div key={idx} className="flex items-center gap-2">
@@ -1514,8 +1512,7 @@ function StripeCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CreditCard className="size-4 text-muted-foreground" />
-          Billing & Subscription
+          💳 Billing & Subscription
         </CardTitle>
         <CardDescription>
           Manage your subscription and payment settings
