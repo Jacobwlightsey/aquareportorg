@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
-import { MoreHorizontal, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { Crown, MoreHorizontal, ShieldCheck, Sparkles, UserPlus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
@@ -35,6 +37,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
+import { PLAN_TEAM_LIMIT, planLabel, planPrice, type Plan } from "@/lib/planGate";
 import { api } from "../../convex/_generated/api";
 
 const ROLES = ["owner", "admin", "manager", "sales_rep", "viewer"] as const;
@@ -51,6 +55,79 @@ function roleVariant(role: string) {
   return "secondary" as const;
 }
 
+function TeamLimitCard({ activeCount, plan }: { activeCount: number; plan: Plan }) {
+  const limit = PLAN_TEAM_LIMIT[plan] ?? 1;
+  const isUnlimited = !Number.isFinite(limit);
+  const percentage = isUnlimited ? 0 : Math.min(100, (activeCount / limit) * 100);
+  const atLimit = !isUnlimited && activeCount >= limit;
+  const nearLimit = !isUnlimited && activeCount >= limit - 1 && !atLimit;
+
+  // Determine next plan for upgrade CTA
+  const planOrder: Plan[] = ["free", "starter", "growth", "pro", "enterprise"];
+  const currentIdx = planOrder.indexOf(plan);
+  const nextPlan = currentIdx < planOrder.length - 1 ? planOrder[currentIdx + 1] : null;
+  const nextLimit = nextPlan ? PLAN_TEAM_LIMIT[nextPlan] : null;
+
+  return (
+    <Card className={atLimit ? "border-amber-500/50 bg-amber-500/5" : ""}>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="size-5 text-blue-500" />
+            <span className="font-semibold text-sm">Team Members</span>
+          </div>
+          <Badge variant={atLimit ? "warning" : "secondary"} className="text-xs">
+            {isUnlimited
+              ? `${activeCount} members`
+              : `${activeCount} / ${limit}`}
+          </Badge>
+        </div>
+
+        {!isUnlimited && (
+          <Progress
+            value={percentage}
+            className={`h-2 ${atLimit ? "[&>div]:bg-amber-500" : nearLimit ? "[&>div]:bg-yellow-500" : "[&>div]:bg-blue-500"}`}
+          />
+        )}
+
+        {isUnlimited && (
+          <p className="text-xs text-muted-foreground">Unlimited team members on your Enterprise plan.</p>
+        )}
+
+        {atLimit && nextPlan && (
+          <div className="flex items-center justify-between rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+            <div className="flex items-center gap-2">
+              <Crown className="size-4 text-amber-400" />
+              <span className="text-xs text-amber-200">
+                Team limit reached. Upgrade to {planLabel(nextPlan)} for {Number.isFinite(nextLimit!) ? `${nextLimit} members` : "unlimited members"}.
+              </span>
+            </div>
+            <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs gap-1 border-amber-500/30 text-amber-300 hover:bg-amber-500/20" asChild>
+              <Link to="/subscription">
+                <Sparkles className="size-3" />
+                Upgrade
+              </Link>
+            </Button>
+          </div>
+        )}
+
+        {nearLimit && !atLimit && nextPlan && (
+          <p className="text-xs text-yellow-400/80">
+            Almost at your team limit — {limit - activeCount} seat{limit - activeCount === 1 ? "" : "s"} remaining.
+            {nextPlan && ` Upgrade to ${planLabel(nextPlan)} (${planPrice(nextPlan)}) for ${Number.isFinite(nextLimit!) ? `up to ${nextLimit}` : "unlimited"} members.`}
+          </p>
+        )}
+
+        {!atLimit && !nearLimit && !isUnlimited && (
+          <p className="text-xs text-muted-foreground">
+            {limit - activeCount} seat{limit - activeCount === 1 ? "" : "s"} available on your {planLabel(plan)} plan.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function TeamPage() {
   const company = useQuery(api.companies.getMyCompany);
   const members = useQuery(api.companies.getTeamMembers);
@@ -62,16 +139,22 @@ export function TeamPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<TeamRole>("sales_rep");
   const [saving, setSaving] = useState(false);
+  const { effectivePlan } = useFreeTrial();
 
   const summary = useMemo(() => {
     const active = (members ?? []).filter((member: any) => member.kind !== "invite");
     return {
+      total: active.length,
       admins: active.filter((member: any) => member.role === "owner" || member.role === "admin").length,
       managers: active.filter((member: any) => member.role === "manager").length,
       reps: active.filter((member: any) => member.role === "sales_rep").length,
       viewers: active.filter((member: any) => member.role === "viewer").length,
     };
   }, [members]);
+
+  const plan = (effectivePlan || "free") as Plan;
+  const limit = PLAN_TEAM_LIMIT[plan] ?? 1;
+  const atLimit = Number.isFinite(limit) && summary.total >= limit;
 
   const canManage = company?.role === "owner" || company?.role === "admin" || company?.role === "manager";
 
@@ -114,9 +197,9 @@ export function TeamPage() {
         {canManage && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button disabled={atLimit}>
                 <UserPlus className="size-4" />
-                Invite Team Member
+                {atLimit ? "Team Limit Reached" : "Invite Team Member"}
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -149,11 +232,14 @@ export function TeamPage() {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      {/* Team limit + role summary */}
+      <div className="grid gap-4 md:grid-cols-5">
+        <div className="md:col-span-2">
+          <TeamLimitCard activeCount={summary.total} plan={plan} />
+        </div>
         <RoleCard label="Admins" value={summary.admins} />
         <RoleCard label="Managers" value={summary.managers} />
         <RoleCard label="Reps" value={summary.reps} />
-        <RoleCard label="Viewers" value={summary.viewers} />
       </div>
 
       <Card>

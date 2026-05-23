@@ -4,16 +4,18 @@
  * Plans (lowest → highest): free < starter < growth < pro < enterprise
  *
  * Tier access:
- *   Free      — 1 trial report
- *   Starter   — Flipbook PDFs, myaquareport.com consumer links, branded reports, lead capture
- *   Growth    — ↑ + Demo Wizard, AI summaries, AI talking points, in-home verification, filtration verification, territory basics
- *   Pro       — ↑ + AI sales assistant, CRM integrations, white-label, lead pipeline, territory intelligence
+ *   Free      — 1 trial report (Growth-level preview during trial experience)
+ *   Starter   — Pipeline, Leads, Appointments, Proposals, Commissions, Reviews,
+ *               Flipbook PDFs, consumer links, branded reports
+ *   Growth    — ↑ + Demo Wizard, Demo Analytics, Analytics, Retention, Follow-Ups,
+ *               Marketing, Training, AI summaries, verification, filtration, territory basics
+ *   Pro       — ↑ + Territory Map, AI sales assistant, CRM, white-label
  *   Enterprise— ↑ + unlimited, custom domains, priority support
  */
 
 export type Plan = "free" | "starter" | "growth" | "pro" | "enterprise";
 
-const PLAN_RANK: Record<string, number> = {
+export const PLAN_RANK: Record<string, number> = {
   free: 0,
   starter: 1,
   growth: 2,
@@ -34,12 +36,70 @@ export function hasPlan(company: any, minPlan: Plan): boolean {
 }
 
 /**
- * Check plan access using an overridden effective plan.
- * Used by the free-trial system: free users who haven't used their trial
- * get "starter"-level access so they can preview features during their first report.
+ * Check plan access using an overridden effective plan string.
+ * Used by the free-trial system: free users in their trial experience
+ * get "growth"-level access so they can preview features during their first report.
  */
 export function hasPlanOverride(effectivePlan: Plan, minPlan: Plan): boolean {
   return (PLAN_RANK[effectivePlan] ?? 0) >= (PLAN_RANK[minPlan] ?? 999);
+}
+
+/*──────────────────────────────────────────────────────────────
+ * Page-level gating — minimum plan required per page
+ * Used by PageGate (page-level) and sidebar (lock icons)
+ * ─────────────────────────────────────────────────────────────*/
+
+export const PAGE_MIN_PLAN: Record<string, Plan> = {
+  // Always accessible (free + all paid)
+  dashboard: "free",
+  customers: "free",
+  "customer-detail": "free",
+  "create-customer": "free",
+  reports: "free",
+  "view-report": "free",
+  "report-v2": "free",
+  subscription: "free",
+  settings: "free",
+  company: "free",
+  team: "free",
+
+  // Free trial gets Growth-level preview for the report experience
+  "demo-wizard": "growth",
+
+  // ── Starter ($99/mo) ──
+  pipeline: "starter",
+  leads: "starter",
+  appointments: "starter",
+  proposals: "starter",
+  commissions: "starter",
+  reviews: "starter",
+
+  // ── Growth ($249/mo) ──
+  analytics: "growth",
+  "demo-analytics": "growth",
+  retention: "growth",
+  "follow-ups": "growth",
+  marketing: "growth",
+  training: "growth",
+
+  // ── Pro ($499/mo) ──
+  "territory-map": "pro",
+};
+
+/** Map page path (e.g. "/pipeline") to page key (e.g. "pipeline") */
+export function pathToPageKey(path: string): string {
+  return path.replace(/^\//, "").split("/")[0] || "dashboard";
+}
+
+/** Check if a plan has access to a specific page */
+export function canAccessPage(plan: Plan, page: string): boolean {
+  const required = PAGE_MIN_PLAN[page] ?? "free";
+  return (PLAN_RANK[plan] ?? 0) >= (PLAN_RANK[required] ?? 999);
+}
+
+/** Get the minimum plan required for a page */
+export function pageRequiredPlan(page: string): Plan {
+  return PAGE_MIN_PLAN[page] ?? "free";
 }
 
 /*──────────────────────────────────────────────────────────────
@@ -73,6 +133,22 @@ export const hasLeadPipeline = (company: any) => hasPlan(company, "pro");
 export const hasCRM = (company: any) => hasPlan(company, "pro");
 /** White-labeled reports & territory intelligence */
 export const hasWhiteLabel = (company: any) => hasPlan(company, "pro");
+
+/*──────────────────────────────────────────────────────────────
+ * Team member limits by plan
+ * ─────────────────────────────────────────────────────────────*/
+
+export const PLAN_TEAM_LIMIT: Record<string, number> = {
+  free: 1,
+  starter: 2,
+  growth: 5,
+  pro: 15,
+  enterprise: Infinity,
+};
+
+export function teamLimit(plan: Plan): number {
+  return PLAN_TEAM_LIMIT[plan] ?? 1;
+}
 
 /*──────────────────────────────────────────────────────────────
  * Upgrade CTA helpers
@@ -111,4 +187,22 @@ export function requiredPlanLabel(feature: string): string {
     white_label: "Pro",
   };
   return map[feature] || "Growth";
+}
+
+/** Human-readable plan name */
+export function planLabel(plan: Plan): string {
+  if (plan === "free") return "Free";
+  return plan.charAt(0).toUpperCase() + plan.slice(1);
+}
+
+/** Price string for a plan */
+export function planPrice(plan: Plan): string {
+  const prices: Record<string, string> = {
+    free: "Free",
+    starter: "$99/mo",
+    growth: "$249/mo",
+    pro: "$499/mo",
+    enterprise: "Contact us",
+  };
+  return prices[plan] || "";
 }

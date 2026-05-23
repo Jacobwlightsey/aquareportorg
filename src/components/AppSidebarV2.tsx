@@ -30,9 +30,11 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
+import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
 
 import { APP_NAME } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
+import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -116,6 +118,7 @@ function NavLink({
   isActive,
   badge,
   locked,
+  requiredPlan,
 }: {
   href: string;
   label: string;
@@ -123,6 +126,7 @@ function NavLink({
   isActive: boolean;
   badge?: number;
   locked?: boolean;
+  requiredPlan?: string;
 }) {
   const { setOpenMobile } = useSidebar();
 
@@ -132,7 +136,15 @@ function NavLink({
         <Link to={href} onClick={() => setOpenMobile(false)} className={locked ? "opacity-50" : ""}>
           <Icon />
           <span>{label}</span>
-          {locked && (
+          {locked && requiredPlan && (
+            <span className="ml-auto flex items-center gap-1">
+              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-400 leading-none">
+                {requiredPlan}
+              </span>
+              <Lock className="size-3 text-muted-foreground" />
+            </span>
+          )}
+          {locked && !requiredPlan && (
             <Lock className="ml-auto size-3 text-muted-foreground" />
           )}
           {!locked && badge !== undefined && badge > 0 && (
@@ -152,10 +164,24 @@ function SidebarNav() {
   const isAdmin = useQuery(api.admin.isPlatformAdmin);
   const company = useQuery(api.companies.getMyCompany);
   const role = company?.role;
-  const { isFree } = useFreeTrial();
+  const { isFree, effectivePlan } = useFreeTrial();
+  const userPlanRank = PLAN_RANK[effectivePlan] ?? 0;
 
-  /** True when the nav item should show a lock icon */
-  const isLocked = (href: string) => isFree && !FREE_TRIAL_PAGES.has(href);
+  /** True when the nav item should show a lock icon based on plan level */
+  const isLocked = (href: string): boolean => {
+    const pageKey = href.replace(/^\//, "").split("/")[0] || "dashboard";
+    const requiredPlan = PAGE_MIN_PLAN[pageKey] ?? "free";
+    const requiredRank = PLAN_RANK[requiredPlan] ?? 0;
+    return userPlanRank < requiredRank;
+  };
+
+  /** Get the required plan label for a locked page */
+  const getRequiredPlan = (href: string): string | undefined => {
+    const pageKey = href.replace(/^\//, "").split("/")[0] || "dashboard";
+    const requiredPlan = PAGE_MIN_PLAN[pageKey] ?? "free";
+    if (requiredPlan === "free") return undefined;
+    return planLabel(requiredPlan as Plan);
+  };
 
   const isActivePath = (href: string) => {
     if (href === "/customers") return location.pathname === href || location.pathname.startsWith("/customers/");
@@ -183,6 +209,7 @@ function SidebarNav() {
                   isActive={isActivePath(item.href)}
                   badge={(item as any).badgeKey === "leads" ? newLeadCount ?? 0 : undefined}
                   locked={isLocked(item.href)}
+                  requiredPlan={getRequiredPlan(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -206,6 +233,7 @@ function SidebarNav() {
                   icon={item.icon}
                   isActive={isActivePath(item.href)}
                   locked={isLocked(item.href)}
+                  requiredPlan={getRequiredPlan(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -229,6 +257,7 @@ function SidebarNav() {
                   icon={item.icon}
                   isActive={isActivePath(item.href)}
                   locked={isLocked(item.href)}
+                  requiredPlan={getRequiredPlan(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -252,6 +281,7 @@ function SidebarNav() {
                   icon={item.icon}
                   isActive={isActivePath(item.href)}
                   locked={isLocked(item.href)}
+                  requiredPlan={getRequiredPlan(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -275,6 +305,7 @@ function SidebarNav() {
                   icon={item.icon}
                   isActive={location.pathname === item.href}
                   locked={isLocked(item.href)}
+                  requiredPlan={getRequiredPlan(item.href)}
                 />
               ))}
             </SidebarMenu>
