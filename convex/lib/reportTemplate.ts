@@ -259,7 +259,7 @@ function buildScoreImprovementPage(params: ReportTemplateParams): string {
     </p>
   </div>
 
-  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 5</span></div></div>
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 6</span></div></div>
 </div>`;
 }
 
@@ -612,7 +612,19 @@ export function buildReportHtml(params: ReportTemplateParams): string {
     </table>
   </div>
 
-  <h2 style="margin-top:32px;font-size:24px;font-weight:700;color:#0f172a" class="serif">Other Contaminants Detected</h2>
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 2</span></div></div>
+</div>
+
+<!-- ═════════════════════════════════════════════════
+     PAGE 3B — OTHER CONTAMINANTS
+     ═════════════════════════════════════════════════ -->
+<div class="page" style="padding:40px">
+  <div class="page-header">
+    <span class="section-label">Other Contaminants</span>
+    <span class="utility-label">${esc(params.utilityName)}</span>
+  </div>
+
+  <h2 style="font-size:28px;font-weight:700;color:#0f172a" class="serif">Other Contaminants Detected</h2>
   <p style="margin-top:8px;font-size:12px;color:#475569">
     These ${belowGuidelines} contaminants were detected but at levels within health-based guidelines.
   </p>
@@ -626,7 +638,7 @@ export function buildReportHtml(params: ReportTemplateParams): string {
     </table>
   </div>
 
-  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 2</span></div></div>
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 3</span></div></div>
 </div>
 
 <!-- ═════════════════════════════════════════════════
@@ -650,7 +662,7 @@ export function buildReportHtml(params: ReportTemplateParams): string {
     <p>Federal EPA standards were set years — sometimes decades — ago. Independent health organizations set stricter guidelines based on <strong>current scientific research</strong>. Contaminants like chromium-6, trihalomethanes, and nitrates are colorless, odorless, and tasteless — they cannot be detected without testing.</p>
   </div>
 
-  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 3</span></div></div>
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 4</span></div></div>
 </div>
 
 <!-- ═════════════════════════════════════════════════
@@ -726,7 +738,7 @@ export function buildReportHtml(params: ReportTemplateParams): string {
     ${params.companyPhone ? `<div style="margin-top:12px;text-align:center;font-size:12px;font-weight:600;color:#bfdbfe">Call us today: ${esc(params.companyPhone)}</div>` : ""}
   </div>
 
-  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 4</span></div></div>
+  <div class="page-footer"><div class="page-footer-inner"><span>Personalized Water Report</span><span>Page 5</span></div></div>
 </div>
 
 <!-- ═════════════════════════════════════════════════

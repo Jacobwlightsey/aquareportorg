@@ -245,35 +245,42 @@ export function ReportV2PublicPage() {
               </tbody>
             </table>
           </div>
-          {belowHealth.length > 0 && (
-            <>
-              <h2 className="mt-8 text-2xl font-bold text-slate-900" style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}>Other Contaminants Detected</h2>
-              <div className="mt-4 rounded-lg border border-slate-200 overflow-hidden">
-                <table className="w-full text-[11px]">
-                  <thead><tr className="bg-[#1a2332] text-white text-left">
-                    <th className="px-3 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Contaminant</th>
-                    <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Detected</th>
-                    <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Legal Limit</th>
-                    <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Status</th>
-                    <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Category</th>
-                  </tr></thead>
-                  <tbody>
-                    {belowHealth.map((c, i) => (
-                      <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                        <td className="px-3 py-2.5 font-semibold text-slate-900">{cName(c)}</td>
-                        <td className="px-2 py-2.5">{c.detected_level} {c.unit}</td>
-                        <td className="px-2 py-2.5 text-slate-500">{c.legal_limit ?? "N/A"} {c.legal_limit != null ? c.unit : ""}</td>
-                        <td className="px-2 py-2.5"><span className="inline-block rounded px-2 py-0.5 text-[9px] font-bold text-white bg-emerald-600 uppercase">Meets</span></td>
-                        <td className="px-2 py-2.5 text-slate-500">{guessCategory(cName(c))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
           <PF page={2} />
         </Page>
+
+        {/* OTHER CONTAMINANTS */}
+        {belowHealth.length > 0 && (
+          <Page className="p-10">
+            <PH section="Other Contaminants" utility={report.utilityName} />
+            <h2 className="text-3xl font-bold text-slate-900" style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}>Other Contaminants Detected</h2>
+            <p className="mt-2 text-[12px] text-slate-600">
+              These {belowHealth.length} contaminants were detected but at levels within health-based guidelines.
+            </p>
+            <div className="mt-4 rounded-lg border border-slate-200 overflow-hidden">
+              <table className="w-full text-[11px]">
+                <thead><tr className="bg-[#1a2332] text-white text-left">
+                  <th className="px-3 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Contaminant</th>
+                  <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Detected</th>
+                  <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Legal Limit</th>
+                  <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Status</th>
+                  <th className="px-2 py-2.5 font-semibold tracking-wide uppercase text-[10px]">Category</th>
+                </tr></thead>
+                <tbody>
+                  {belowHealth.map((c, i) => (
+                    <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                      <td className="px-3 py-2.5 font-semibold text-slate-900">{cName(c)}</td>
+                      <td className="px-2 py-2.5">{c.detected_level} {c.unit}</td>
+                      <td className="px-2 py-2.5 text-slate-500">{c.legal_limit ?? "N/A"} {c.legal_limit != null ? c.unit : ""}</td>
+                      <td className="px-2 py-2.5"><span className="inline-block rounded px-2 py-0.5 text-[9px] font-bold text-white bg-emerald-600 uppercase">Meets</span></td>
+                      <td className="px-2 py-2.5 text-slate-500">{guessCategory(cName(c))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <PF page={3} />
+          </Page>
+        )}
 
         {/* SOLUTIONS */}
         <Page className="p-10">

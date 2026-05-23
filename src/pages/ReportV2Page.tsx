@@ -383,11 +383,10 @@ function OverviewPage({
 function ContaminantsTablePage({
   utilityName,
   overHealth,
-  belowHealth,
 }: {
   utilityName: string;
   overHealth: Contaminant[];
-  belowHealth: Contaminant[];
+  belowHealth?: Contaminant[];
 }) {
   return (
     <Page className="p-10">
@@ -435,8 +434,27 @@ function ContaminantsTablePage({
         </table>
       </div>
 
-      {/* Other contaminants */}
-      <h2 className="mt-8 text-2xl font-bold text-slate-900" style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}>
+      <PageFooter page={2} />
+    </Page>
+  );
+}
+
+/* ================================================================
+   OTHER CONTAMINANTS (Page 3B)
+   ================================================================ */
+
+function OtherContaminantsPage({
+  utilityName,
+  belowHealth,
+}: {
+  utilityName: string;
+  belowHealth: Contaminant[];
+}) {
+  return (
+    <Page className="p-10">
+      <PageHeader section="Other Contaminants" utility={utilityName} />
+
+      <h2 className="text-3xl font-bold text-slate-900" style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}>
         Other Contaminants Detected
       </h2>
       <p className="mt-2 text-[12px] text-slate-600">
@@ -470,7 +488,7 @@ function ContaminantsTablePage({
         </table>
       </div>
 
-      <PageFooter page={2} />
+      <PageFooter page={3} />
     </Page>
   );
 }
@@ -536,7 +554,7 @@ function ContaminantDetailsPage({
         </p>
       </div>
 
-      <PageFooter page={3} />
+      <PageFooter page={4} />
     </Page>
   );
 }
@@ -696,7 +714,7 @@ function HealthAndSolutionsPage({
         )}
       </div>
 
-      <PageFooter page={4} />
+      <PageFooter page={5} />
     </Page>
   );
 }
@@ -893,7 +911,7 @@ function ScoreImprovementPage({
         </p>
       </div>
 
-      <PageFooter page={5} />
+      <PageFooter page={6} />
     </Page>
   );
 }
@@ -1372,6 +1390,11 @@ export function ReportV2Page() {
         <ContaminantsTablePage
           utilityName={report.utilityName}
           overHealth={overHealth}
+          belowHealth={belowHealth}
+        />
+
+        <OtherContaminantsPage
+          utilityName={report.utilityName}
           belowHealth={belowHealth}
         />
 
