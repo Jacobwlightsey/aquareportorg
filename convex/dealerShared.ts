@@ -633,67 +633,33 @@ export const getDemoAnalytics = query({
       .query("demoSessions")
       .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
       .collect();
+    const reports = await ctx.db
+      .query("reports")
+      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+      .collect();
+    const leads = await ctx.db
+      .query("leads")
+      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+      .collect();
 
-    const total = sessions.length;
+    const totalDemos = sessions.length;
     const sold = sessions.filter((s) => s.outcome === "sold").length;
-    const follow_up = sessions.filter((s) => s.outcome === "follow_up").length;
-    const not_interested = sessions.filter((s) => s.outcome === "not_interested").length;
-    const no_show = sessions.filter((s) => s.outcome === "no_show").length;
-
-    // Weekly breakdown (last 12 weeks)
-    const weekMap: Record<string, { total: number; sold: number }> = {};
-    for (const s of sessions) {
-      const d = new Date(s._creationTime);
-      const startOfWeek = new Date(d);
-      startOfWeek.setDate(d.getDate() - d.getDay());
-      const week = startOfWeek.toISOString().slice(0, 10);
-      if (!weekMap[week]) weekMap[week] = { total: 0, sold: 0 };
-      weekMap[week].total++;
-      if (s.outcome === "sold") weekMap[week].sold++;
-    }
-    const byWeek = Object.entries(weekMap)
-      .map(([week, data]) => ({ week, ...data }))
-      .sort((a, b) => a.week.localeCompare(b.week));
-
-    // Rep stats
-    const repMap: Record<string, { userId: string; name: string; total: number; sold: number; duration: number }> = {};
-    for (const s of sessions) {
-      const key = s.userId ? String(s.userId) : "unknown";
-      if (!repMap[key]) repMap[key] = { userId: key, name: "Unknown Rep", total: 0, sold: 0, duration: 0 };
-      repMap[key].total++;
-      repMap[key].duration += s.durationSeconds ?? 0;
-      if (s.outcome === "sold") repMap[key].sold++;
-    }
-    const repStats = [];
-    for (const [id, data] of Object.entries(repMap)) {
-      let name = "Unknown Rep";
-      if (id !== "unknown") {
-        try {
-          const user = await ctx.db.get(id as any) as any;
-          if (user?.name) name = user.name;
-          else if (user?.email) name = user.email;
-        } catch { /* skip */ }
-      }
-      repStats.push({
-        userId: id,
-        name,
-        total: data.total,
-        sold: data.sold,
-        closeRate: data.total > 0 ? Math.round((data.sold / data.total) * 100) : 0,
-        avgDuration: data.total > 0 ? Math.round(data.duration / data.total) : 0,
-      });
-    }
-    repStats.sort((a, b) => b.sold - a.sold);
+    const followUp = sessions.filter((s) => s.outcome === "follow_up").length;
+    const notInterested = sessions.filter((s) => s.outcome === "not_interested").length;
+    const noShow = sessions.filter((s) => s.outcome === "no_show").length;
 
     return {
-      total,
-      outcomes: { sold, follow_up, not_interested, no_show },
-      closeRate: total > 0 ? Math.round((sold / total) * 100) : 0,
-      avgDuration: total > 0
-        ? Math.round(sessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0) / total)
+      totalDemos,
+      totalReports: reports.length,
+      totalLeads: leads.length,
+      sold,
+      followUp,
+      notInterested,
+      noShow,
+      conversionRate: totalDemos > 0 ? Math.round((sold / totalDemos) * 100) : 0,
+      avgDuration: totalDemos > 0
+        ? Math.round(sessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0) / totalDemos)
         : 0,
-      byWeek,
-      repStats,
     };
   },
 });
@@ -714,148 +680,76 @@ export const getEnhancedDemoAnalytics = query({
       .query("demoSessions")
       .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
       .collect();
-    const reports = await ctx.db
-      .query("reports")
-      .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
-      .collect();
     const leads = await ctx.db
       .query("leads")
       .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
       .collect();
 
-    // Funnel
-    const funnel = {
-      reports: reports.length,
-      demos: sessions.length,
-      leads: leads.length,
-      followUps: sessions.filter((s) => s.outcome === "follow_up").length,
-      sold: sessions.filter((s) => s.outcome === "sold").length,
-    };
-
-    // Engagement by day of week
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const dayCountMap: Record<string, number> = {};
-    for (const name of dayNames) dayCountMap[name] = 0;
+    // Best demo days
+    const dayMap: Record<string, { count: number; sold: number }> = {};
     for (const s of sessions) {
-      const day = dayNames[new Date(s._creationTime).getDay()];
-      dayCountMap[day]++;
+      const day = new Date(s._creationTime).toLocaleDateString("en-US", { weekday: "long" });
+      if (!dayMap[day]) dayMap[day] = { count: 0, sold: 0 };
+      dayMap[day].count++;
+      if (s.outcome === "sold") dayMap[day].sold++;
     }
-    const byDay = dayNames.map((name) => ({ name, count: dayCountMap[name] }));
+    const bestDemoDays = Object.entries(dayMap)
+      .map(([day, data]) => ({ day, ...data, closeRate: data.count > 0 ? Math.round((data.sold / data.count) * 100) : 0 }))
+      .sort((a, b) => b.closeRate - a.closeRate);
 
-    // Average score by outcome
-    const scoreByOutcome: Record<string, { total: number; count: number }> = {};
-    for (const s of sessions) {
-      const outcome = s.outcome || "unknown";
-      if (!scoreByOutcome[outcome]) scoreByOutcome[outcome] = { total: 0, count: 0 };
-      if (typeof s.waterScore === "number") {
-        scoreByOutcome[outcome].total += s.waterScore;
-        scoreByOutcome[outcome].count++;
-      }
-    }
-    const avgScoreByOutcome: Record<string, number> = {};
-    for (const [outcome, data] of Object.entries(scoreByOutcome)) {
-      if (data.count > 0) avgScoreByOutcome[outcome] = Math.round(data.total / data.count);
-    }
-
-    // Status breakdown (lead statuses)
-    const statusBreakdown: Record<string, number> = {};
+    // Lead sources
+    const sourceMap: Record<string, number> = {};
     for (const l of leads) {
-      const status = (l as any).status || "new";
-      statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+      const src = l.source || "direct";
+      sourceMap[src] = (sourceMap[src] || 0) + 1;
     }
+    const leadSources = Object.entries(sourceMap).map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count);
 
-    // Recent leads
-    const recentLeads = leads
-      .sort((a, b) => b._creationTime - a._creationTime)
-      .slice(0, 10)
-      .map((l) => ({
-        _id: l._id,
-        name: (l as any).name || (l as any).customerName || "Unknown",
-        source: (l as any).source || "direct",
-        status: (l as any).status || "new",
-        createdAt: l._creationTime,
-      }));
-
-    // Source breakdown
-    const sourceBreakdown: Record<string, number> = {};
-    for (const l of leads) {
-      const src = (l as any).source || "direct";
-      sourceBreakdown[src] = (sourceBreakdown[src] || 0) + 1;
-    }
-
-    // Customer profiles (grouped by customer name)
-    const profileMap: Record<string, {
-      customerName: string;
-      waterScore: number | null;
-      city: string;
-      state: string;
-      email: string | null;
-      phone: string | null;
-      repName: string;
-      repId: string;
-      lastOutcome: string;
-      lastDemoDate: number;
-      totalDemos: number;
-      demoHistory: { outcome: string; durationSeconds: number; date: number }[];
-    }> = {};
-
+    // Rep leaderboard
+    const repMap: Record<string, { name: string; demos: number; sold: number }> = {};
     for (const s of sessions) {
-      const key = s.customerName?.toLowerCase() || String(s._id);
-      if (!profileMap[key]) {
-        profileMap[key] = {
-          customerName: s.customerName ?? "Unknown",
-          waterScore: s.waterScore ?? null,
-          city: (s as any).city || "",
-          state: (s as any).state || "",
-          email: (s as any).customerEmail || null,
-          phone: (s as any).customerPhone || null,
-          repName: "Unknown",
-          repId: s.userId ? String(s.userId) : "unknown",
-          lastOutcome: s.outcome || "unknown",
-          lastDemoDate: s._creationTime,
-          totalDemos: 0,
-          demoHistory: [],
-        };
+      const key = s.userId ? String(s.userId) : "unknown";
+      if (!repMap[key]) repMap[key] = { name: key, demos: 0, sold: 0 };
+      repMap[key].demos++;
+      if (s.outcome === "sold") repMap[key].sold++;
+    }
+
+    // Resolve rep names
+    const repLeaderboard = [];
+    for (const [id, data] of Object.entries(repMap)) {
+      let name = data.name !== id ? data.name : "Unknown Rep";
+      if (id !== "unknown") {
+        try {
+          const user = await ctx.db.get(id as any) as any;
+          if (user?.name) name = user.name;
+          else if (user?.email) name = user.email;
+        } catch { /* skip - invalid ID */ }
       }
-      const p = profileMap[key];
-      p.totalDemos++;
-      if (s._creationTime > p.lastDemoDate) {
-        p.lastDemoDate = s._creationTime;
-        p.lastOutcome = s.outcome || "unknown";
-        if (typeof s.waterScore === "number") p.waterScore = s.waterScore;
-      }
-      p.demoHistory.push({
-        outcome: s.outcome || "unknown",
-        durationSeconds: s.durationSeconds ?? 0,
-        date: s._creationTime,
+      repLeaderboard.push({
+        name,
+        demoCount: data.demos,
+        sold: data.sold,
+        closeRate: data.demos > 0 ? Math.round((data.sold / data.demos) * 100) : 0,
       });
     }
+    repLeaderboard.sort((a, b) => b.sold - a.sold);
 
-    // Resolve rep names for profiles
-    const repNameCache: Record<string, string> = {};
-    for (const p of Object.values(profileMap)) {
-      if (p.repId !== "unknown" && !repNameCache[p.repId]) {
-        try {
-          const user = await ctx.db.get(p.repId as any) as any;
-          repNameCache[p.repId] = user?.name || user?.email || "Unknown";
-        } catch {
-          repNameCache[p.repId] = "Unknown";
-        }
-      }
-      p.repName = repNameCache[p.repId] || "Unknown";
-    }
-
-    const customerProfiles = Object.values(profileMap)
-      .sort((a, b) => b.lastDemoDate - a.lastDemoDate);
+    // Customer profiles
+    const customers = sessions.map((s) => ({
+      _id: s._id,
+      customerName: s.customerName ?? "Unknown",
+      waterScore: s.waterScore ?? null,
+      outcome: s.outcome,
+      durationSeconds: s.durationSeconds ?? 0,
+      notes: s.notes ?? "",
+      createdAt: s._creationTime,
+    })).sort((a, b) => b.createdAt - a.createdAt);
 
     return {
-      funnel,
-      engagement: { byDay },
-      avgScoreByOutcome,
-      statusBreakdown,
-      recentLeads,
-      sourceBreakdown,
-      customerProfiles,
+      bestDemoDays,
+      leadSources,
+      repLeaderboard,
+      customers,
     };
   },
 });
