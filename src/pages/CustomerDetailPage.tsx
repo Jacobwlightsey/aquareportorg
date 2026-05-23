@@ -269,7 +269,8 @@ export function CustomerDetailPage() {
   const createReferral = useAction(api.referrals.createConsumerReferral);
   const [referralUrl, setReferralUrl] = useState<string>("");
   const [, setSendingReferral] = useState(false);
-  const [generatingPdf] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const generateReportPdf = useAction(api.reportPdf.generateReportPdf);
   const [activeTab, setActiveTab] = useState("overview");
 
   const contaminants = useMemo(
@@ -309,11 +310,27 @@ export function CustomerDetailPage() {
     setSendingReferral(false);
   }, [reportId, createReferral]);
 
-  const handleGeneratePdf = useCallback(() => {
-    if (!reportId) return;
-    // Navigate to report preview page which handles PDF generation client-side
-    navigate(`/reports/${reportId}?action=pdf`);
-  }, [reportId, navigate]);
+  const handleGeneratePdf = useCallback(async () => {
+    if (!reportId || generatingPdf) return;
+    setGeneratingPdf(true);
+    try {
+      toast.info("Generating PDF & Flipbook…");
+      const result = await generateReportPdf({ reportId: reportId as any });
+      if (result && "ok" in result && result.ok) {
+        toast.success("PDF & Flipbook created!");
+        // Navigate to flipbook view
+        navigate(`/reports/${reportId}/flipbook`);
+      } else if (result && "reason" in result && result.reason === "PDF_PROVIDER_NOT_CONFIGURED") {
+        toast.error("PDF provider not configured. Add PDFSHIFT_API_KEY in Convex environment variables.");
+      } else {
+        toast.error("PDF generation failed");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "PDF generation failed");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }, [reportId, generatingPdf, generateReportPdf, navigate]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {

@@ -1,0 +1,220 @@
+import { Calculator, Check, Gift, Sparkles, Tag } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { playRevealSound, playTapSound, playToggleSound } from "@/lib/demoSounds";
+
+export interface PricingState {
+  programPrice: number;
+  revealedPrice: number;
+  currentPrice: number;
+  discountsApplied: string[];
+  monthlyPayment: number;
+}
+
+interface Props {
+  company: any;
+  onNext: () => void;
+  onPricingChange: (state: PricingState) => void;
+  initialState?: PricingState | null;
+}
+
+const DEFAULT_DISCOUNTS = [
+  { id: "today", label: "Same-Day Decision", amount: 500, icon: "⚡" },
+  { id: "referral", label: "Referral Credit", amount: 300, icon: "👥" },
+  { id: "military", label: "Military / First Responder", amount: 250, icon: "🎖️" },
+  { id: "senior", label: "Senior Discount", amount: 200, icon: "🤝" },
+];
+
+/* Animated dollar value */
+function AnimatedPrice({ value, className }: { value: number; className?: string }) {
+  const [display, setDisplay] = useState(value);
+  const currentRef = useRef(value);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    const from = currentRef.current;
+    if (from === value) return;
+    let start = 0;
+    const dur = 800;
+    const tick = (ts: number) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(from + (value - from) * ease));
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
+      else currentRef.current = value;
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value]);
+
+  return <span className={className}>${display.toLocaleString()}</span>;
+}
+
+export function DemoPricing({ company, onNext, onPricingChange, initialState }: Props) {
+  const cfg = company?.demoConfig;
+  const programPrice = cfg?.programPrice ?? 0;
+  const revealPrice = cfg?.revealPrice ?? 0;
+  const systemCostMonthly = cfg?.systemCostMonthly ?? 0;
+  const discountOptions = cfg?.discountOptions?.length ? cfg.discountOptions : DEFAULT_DISCOUNTS;
+  const color = company?.primaryColor || "#2563eb";
+
+  const [revealed, setRevealed] = useState(!!initialState);
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialState?.discountsApplied ?? []));
+  const [monthly, setMonthly] = useState(initialState?.monthlyPayment?.toString() ?? systemCostMonthly.toString());
+
+  const totalDiscount = discountOptions.filter((d: any) => selected.has(d.id)).reduce((sum: number, d: any) => sum + d.amount, 0);
+  const currentPrice = revealPrice - totalDiscount;
+
+  useEffect(() => {
+    onPricingChange({
+      programPrice,
+      revealedPrice: revealPrice,
+      currentPrice,
+      discountsApplied: Array.from(selected),
+      monthlyPayment: parseFloat(monthly) || systemCostMonthly,
+    });
+  }, [currentPrice, selected, monthly]);
+
+  const handleReveal = () => { setRevealed(true); playRevealSound(); };
+  const toggleDiscount = (id: string) => {
+    playToggleSound();
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="mx-auto max-w-lg space-y-5 pt-2">
+      {/* Header */}
+      <div className="text-center">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30 rounded-full px-3 py-1">
+          INVESTMENT
+        </span>
+        <h2 className="text-2xl font-black mt-3">Your Investment</h2>
+        <p className="text-sm text-white/50 mt-1">Protection for your entire home</p>
+      </div>
+
+      {/* Program price (crossed out) */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Program Price</p>
+        <p className="text-4xl font-black text-white/80 line-through decoration-red-400/60 decoration-2">
+          ${programPrice.toLocaleString()}
+        </p>
+      </div>
+
+      {/* Reveal price card */}
+      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden relative">
+        {!revealed && (
+          <div
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center backdrop-blur-xl bg-black/40 cursor-pointer active:scale-[0.98] transition-transform"
+            onClick={handleReveal}
+          >
+            <div
+              className="rounded-2xl px-8 py-4 flex items-center gap-3 text-white font-bold text-lg"
+              style={{ background: `linear-gradient(135deg, ${color}, #10b981)`, boxShadow: `0 4px 24px ${color}40` }}
+            >
+              <Gift className="size-5" />
+              Reveal Your Price
+            </div>
+            <p className="text-xs text-white/40 mt-3">Tap to see your exclusive offer</p>
+          </div>
+        )}
+        <div className={`p-6 text-center ${revealed ? "" : "filter blur-lg"} transition-all duration-700`}>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70 mb-2">Your Exclusive Price</p>
+          <AnimatedPrice value={currentPrice} className="text-5xl font-black text-emerald-400" />
+          {totalDiscount > 0 && (
+            <p className="text-sm text-emerald-400/70 mt-2 font-semibold">
+              You save ${(programPrice - currentPrice).toLocaleString()}!
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Savings badge */}
+      {revealed && (
+        <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 animate-in fade-in duration-500">
+          <Sparkles className="size-4 text-emerald-400" />
+          <span className="text-sm font-bold text-emerald-400">
+            Save ${(programPrice - currentPrice).toLocaleString()} off program price
+          </span>
+        </div>
+      )}
+
+      {/* Discount toggles */}
+      {revealed && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <div className="p-4 border-b border-white/5 flex items-center gap-2">
+            <Tag className="size-4 text-pink-400" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Additional Savings</p>
+          </div>
+          <div className="p-3 space-y-2">
+            {discountOptions.map((d: any) => {
+              const active = selected.has(d.id);
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => toggleDiscount(d.id)}
+                  className={`w-full flex items-center gap-3 rounded-xl p-3.5 border transition-all cursor-pointer active:scale-[0.98] ${
+                    active ? "border-emerald-500/30 bg-emerald-500/10" : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <span className="text-lg">{d.icon}</span>
+                  <div className="flex-1 text-left">
+                    <p className={`text-sm font-semibold ${active ? "text-emerald-400" : "text-white/70"}`}>{d.label}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold ${active ? "text-emerald-400" : "text-white/40"}`}>
+                      -${d.amount}
+                    </span>
+                    <div
+                      className={`size-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        active ? "border-emerald-400 bg-emerald-400" : "border-white/20"
+                      }`}
+                    >
+                      {active && <Check className="size-3 text-white" />}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Monthly payment */}
+      {revealed && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Calculator className="size-4 text-blue-400" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Monthly Payment</p>
+          </div>
+          <p className="text-xs text-white/40 mb-3">Enter the customer's average monthly cost for the system</p>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-white/30">$</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={monthly}
+              onChange={(e) => { setMonthly(e.target.value); playTapSound(); }}
+              className="w-full h-14 rounded-xl bg-white/[0.06] border border-white/10 pl-9 pr-16 text-2xl font-black text-white outline-none focus:border-white/30 transition-colors"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-white/30">/month</span>
+          </div>
+        </div>
+      )}
+
+      {/* Continue */}
+      {revealed && (
+        <button
+          onClick={onNext}
+          className="w-full rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer"
+          style={{ background: `linear-gradient(135deg, ${color}, #06b6d4)`, boxShadow: `0 4px 24px ${color}30` }}
+        >
+          Continue →
+        </button>
+      )}
+    </div>
+  );
+}

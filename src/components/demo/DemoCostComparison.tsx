@@ -1,5 +1,6 @@
 import { DollarSign } from "lucide-react";
 import { useState } from "react";
+import { playToggleSound } from "@/lib/demoSounds";
 
 interface Props {
   onNext: () => void;
@@ -45,6 +46,7 @@ export function DemoCostComparison({ onNext: _onNext, onBack: _onBack }: Props) 
   };
 
   const toggleExpense = (idx: number) => {
+    playToggleSound();
     const next = [...expenses];
     next[idx] = { ...next[idx], enabled: !next[idx].enabled };
     setExpenses(next);

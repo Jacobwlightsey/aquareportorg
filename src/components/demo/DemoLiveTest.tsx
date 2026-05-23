@@ -1,13 +1,15 @@
 import { useAction } from "convex/react";
-import { Check, Droplets, FlaskConical, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Droplets, Loader2, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { playTapSound, playRevealSound } from "@/lib/demoSounds";
 import {
   computeAquaScore,
   readingPayload,
   type FieldWaterReadings,
 } from "@/lib/waterScore";
 import { api } from "../../../convex/_generated/api";
+import { ScoreGauge } from "./ScoreGauge";
 
 interface Props {
   report: any;
@@ -18,6 +20,41 @@ interface Props {
   onBack: () => void;
 }
 
+function getSeverity(key: string, value: string): { label: string; color: string } | null {
+  const v = parseFloat(value);
+  if (isNaN(v)) return null;
+  switch (key) {
+    case "chlorine":
+      if (v < 0.2) return { label: "Good", color: "#10b981" };
+      if (v <= 1) return { label: "Elevated", color: "#f59e0b" };
+      if (v <= 2) return { label: "High", color: "#f97316" };
+      if (v <= 4) return { label: "Severe", color: "#ef4444" };
+      return { label: "Extreme", color: "#dc2626" };
+    case "ph":
+      if (v >= 6.8 && v <= 7.4) return { label: "Normal", color: "#10b981" };
+      if (v >= 6.5 && v < 6.8) return { label: "Acidic", color: "#f59e0b" };
+      if (v < 6.5) return { label: "Very Acidic", color: "#ef4444" };
+      if (v > 7.4 && v <= 8.5) return { label: "Slightly Alk", color: "#f59e0b" };
+      return { label: "High Alk", color: "#ef4444" };
+    case "hardness":
+      if (v <= 1) return { label: "Soft", color: "#10b981" };
+      if (v <= 3.5) return { label: "Slightly Hard", color: "#22c55e" };
+      if (v <= 7) return { label: "Moderate", color: "#f59e0b" };
+      if (v <= 10.5) return { label: "Hard", color: "#f97316" };
+      if (v <= 15) return { label: "Very Hard", color: "#ef4444" };
+      return { label: "Severe", color: "#dc2626" };
+    case "tds":
+      if (v <= 50) return { label: "Excellent", color: "#10b981" };
+      if (v <= 150) return { label: "Good", color: "#22c55e" };
+      if (v <= 300) return { label: "Elevated", color: "#f59e0b" };
+      if (v <= 500) return { label: "Acceptable", color: "#f97316" };
+      if (v <= 1000) return { label: "High", color: "#ef4444" };
+      return { label: "Severe", color: "#dc2626" };
+    default:
+      return null;
+  }
+}
+
 function ReadingInput({
   label,
   unit,
@@ -26,6 +63,7 @@ function ReadingInput({
   onChange,
   icon,
   color,
+  fieldKey,
 }: {
   label: string;
   unit: string;
@@ -34,23 +72,40 @@ function ReadingInput({
   onChange: (v: string) => void;
   icon: string;
   color: string;
+  fieldKey: string;
 }) {
+  const severity = getSeverity(fieldKey, value);
   return (
     <div
       className="rounded-xl p-4"
       style={{
         background: `${color}08`,
-        border: `1px solid ${color}25`,
+        border: `1px solid ${severity ? severity.color + "40" : color + "25"}`,
+        transition: "border-color 0.3s ease",
       }}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">{icon}</span>
-        <span
-          className="text-[10px] font-bold uppercase tracking-wider"
-          style={{ color: `${color}aa` }}
-        >
-          {label}
-        </span>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{icon}</span>
+          <span
+            className="text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: `${color}aa` }}
+          >
+            {label}
+          </span>
+        </div>
+        {severity && (
+          <span
+            className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-in fade-in slide-in-from-right-2 duration-300"
+            style={{
+              color: severity.color,
+              background: `${severity.color}15`,
+              border: `1px solid ${severity.color}30`,
+            }}
+          >
+            {severity.label}
+          </span>
+        )}
       </div>
       <div className="relative">
         <input
@@ -68,6 +123,13 @@ function ReadingInput({
     </div>
   );
 }
+
+const LABELS: Record<string, { label: string; unit: string; icon: string }> = {
+  chlorine: { label: "Chlorine", unit: "ppm", icon: "🧪" },
+  hardness: { label: "Hardness", unit: "gpg", icon: "💎" },
+  tds: { label: "TDS", unit: "ppm", icon: "💧" },
+  ph: { label: "pH Level", unit: "", icon: "⚗️" },
+};
 
 export function DemoLiveTest({
   report,
@@ -92,7 +154,6 @@ export function DemoLiveTest({
     setLocal(next);
     setSaved(false);
 
-    // Update parent's live readings for real-time score calculation
     const parsed: FieldWaterReadings = {};
     if (next.chlorine) parsed.chlorine = parseFloat(next.chlorine);
     if (next.hardness) parsed.hardness = parseFloat(next.hardness);
@@ -103,8 +164,8 @@ export function DemoLiveTest({
 
   const hasReadings = Object.values(local).some((v) => v !== "");
 
-  // Compute live score
-  const currentScore = computeAquaScore(report.waterScore, contaminants, {
+  // Compute live score — updates in real-time as readings change
+  const baseScore = computeAquaScore(report.waterScore, contaminants, {
     chlorine: report.chlorine,
     hardness: report.hardness,
     tds: report.tds,
@@ -118,7 +179,7 @@ export function DemoLiveTest({
     ph: local.ph ? parseFloat(local.ph) : report.ph,
   });
 
-  const delta = liveScore - currentScore;
+  const delta = liveScore - baseScore;
 
   const handleSaveAndSync = async () => {
     setSaving(true);
@@ -130,6 +191,7 @@ export function DemoLiveTest({
         waterScore: liveScore,
       });
       setSaved(true);
+      playRevealSound();
       toast.success("Test results saved & synced!");
     } catch (err: any) {
       toast.error(err.message || "Failed to save");
@@ -137,45 +199,59 @@ export function DemoLiveTest({
     setSaving(false);
   };
 
+  // Build reading comparison rows (same style as DemoScoreTransform)
+  const readingRows = (["chlorine", "hardness", "tds", "ph"] as const)
+    .filter((key) => local[key] !== "")
+    .map((key) => {
+      const info = LABELS[key];
+      const reportVal = report[key];
+      const liveVal = parseFloat(local[key]);
+      const severity = getSeverity(key, local[key]);
+      return { key, ...info, reportVal, liveVal, severity };
+    });
+
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto max-w-lg space-y-5 pt-2">
       {/* Header */}
       <div className="text-center">
-        <div className="inline-flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 mb-3">
-          <FlaskConical className="size-7 text-cyan-400" />
-        </div>
-        <h2 className="text-2xl font-black">Live Water Test</h2>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 border border-cyan-500/30 rounded-full px-3 py-1">
+          LIVE TESTING
+        </span>
+        <h2 className="text-2xl font-black mt-3">Live Water Test</h2>
         <p className="text-sm text-white/50 mt-1">
-          Enter readings from your test kit — score updates in real time
+          Enter readings — watch your score update in real time
         </p>
       </div>
 
-      {/* Live Score Display */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-              Live AquaScore
-            </p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-4xl font-black">{liveScore}</span>
-              {hasReadings && delta !== 0 && (
-                <span
-                  className={`text-sm font-bold ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}
-                >
-                  {delta > 0 ? "+" : ""}
-                  {delta}
-                </span>
-              )}
-            </div>
+      {/* Live AquaScore Gauge */}
+      <div className="flex flex-col items-center py-2">
+        <ScoreGauge
+          score={liveScore}
+          size={180}
+          animate={true}
+          animationDuration={800}
+        />
+        {hasReadings && delta !== 0 && (
+          <div
+            className={`mt-3 flex items-center gap-2 rounded-full px-4 py-2 animate-in fade-in slide-in-from-bottom-2 duration-500 ${
+              delta < 0
+                ? "bg-red-500/10 border border-red-500/20"
+                : "bg-emerald-500/10 border border-emerald-500/20"
+            }`}
+          >
+            {delta < 0 ? (
+              <TrendingDown className="size-4 text-red-400" />
+            ) : (
+              <TrendingUp className="size-4 text-emerald-400" />
+            )}
+            <span
+              className={`text-sm font-bold ${delta < 0 ? "text-red-400" : "text-emerald-400"}`}
+            >
+              {delta > 0 ? "+" : ""}
+              {delta} from report score ({baseScore})
+            </span>
           </div>
-          <div className="text-right">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-              Report Score
-            </p>
-            <p className="text-lg font-bold text-white/50 mt-1">{currentScore}</p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Reading Inputs */}
@@ -188,15 +264,17 @@ export function DemoLiveTest({
           onChange={(v) => handleFieldChange("chlorine", v)}
           icon="🧪"
           color="#06b6d4"
+          fieldKey="chlorine"
         />
         <ReadingInput
           label="Hardness"
-          unit="ppm"
+          unit="gpg"
           value={local.hardness}
-          placeholder="120"
+          placeholder="7"
           onChange={(v) => handleFieldChange("hardness", v)}
           icon="💎"
           color="#8b5cf6"
+          fieldKey="hardness"
         />
         <ReadingInput
           label="TDS"
@@ -206,6 +284,7 @@ export function DemoLiveTest({
           onChange={(v) => handleFieldChange("tds", v)}
           icon="💧"
           color="#3b82f6"
+          fieldKey="tds"
         />
         <ReadingInput
           label="pH Level"
@@ -215,8 +294,49 @@ export function DemoLiveTest({
           onChange={(v) => handleFieldChange("ph", v)}
           icon="⚗️"
           color="#10b981"
+          fieldKey="ph"
         />
       </div>
+
+      {/* Reading Comparison — appears as readings are entered (same style as DemoScoreTransform) */}
+      {readingRows.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Reading Comparison</p>
+          {readingRows.map((r) => (
+            <div key={r.key} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{r.icon}</span>
+                <span className="text-sm text-white/70">{r.label}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                {r.reportVal != null && (
+                  <>
+                    <span className="text-red-400/70 line-through">
+                      {r.reportVal} {r.unit}
+                    </span>
+                    <ArrowRight className="size-3 text-white/30" />
+                  </>
+                )}
+                <span className="font-bold" style={{ color: r.severity?.color || "#fff" }}>
+                  {r.liveVal} {r.unit}
+                </span>
+                {r.severity && (
+                  <span
+                    className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full"
+                    style={{
+                      color: r.severity.color,
+                      background: `${r.severity.color}15`,
+                      border: `1px solid ${r.severity.color}30`,
+                    }}
+                  >
+                    {r.severity.label}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Save & Sync */}
       {hasReadings && (
@@ -250,31 +370,6 @@ export function DemoLiveTest({
           )}
         </button>
       )}
-
-      {/* What this tests */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">
-          What These Readings Tell Us
-        </p>
-        <div className="space-y-3 text-sm text-white/60">
-          <div>
-            <p className="font-semibold text-white/80">🧪 Chlorine</p>
-            <p>Disinfection byproduct — safe at 0.2-2 ppm, concerning above 4 ppm</p>
-          </div>
-          <div>
-            <p className="font-semibold text-white/80">💎 Hardness</p>
-            <p>Mineral content — soft below 60, hard above 180 ppm. Affects appliances & skin</p>
-          </div>
-          <div>
-            <p className="font-semibold text-white/80">💧 Total Dissolved Solids</p>
-            <p>Overall mineral/contaminant load — ideal below 300, concerning above 500 ppm</p>
-          </div>
-          <div>
-            <p className="font-semibold text-white/80">⚗️ pH Level</p>
-            <p>Acidity/alkalinity — ideal 6.5-8.5. Outside this range can corrode pipes</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

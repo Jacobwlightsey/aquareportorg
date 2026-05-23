@@ -12,25 +12,38 @@ import { parseContaminants } from "@/lib/pipeline";
 import { hasPlanOverride, upgradeMessage } from "@/lib/planGate";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { computeAquaScore, type FieldWaterReadings } from "@/lib/waterScore";
+import { playTapSound } from "@/lib/demoSounds";
 import { api } from "../../convex/_generated/api";
-import { DemoCustomerStep } from "@/components/demo/DemoCustomerStep";
-import { DemoContaminantWalkthrough } from "@/components/demo/DemoContaminantWalkthrough";
+
+// Step components
+import { DemoWelcome } from "@/components/demo/DemoWelcome";
 import { DemoScoreReveal } from "@/components/demo/DemoScoreReveal";
-import { DemoSolution } from "@/components/demo/DemoSolution";
+import { DemoContaminantWalkthrough } from "@/components/demo/DemoContaminantWalkthrough";
+import { DemoImpact } from "@/components/demo/DemoImpact";
 import { DemoLiveTest } from "@/components/demo/DemoLiveTest";
+import { DemoScoreTransform } from "@/components/demo/DemoScoreTransform";
+import { DemoSystemInfo } from "@/components/demo/DemoSystemInfo";
+import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
 import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
-import { DemoNextSteps } from "@/components/demo/DemoNextSteps";
+import { DemoScoreBoost } from "@/components/demo/DemoScoreBoost";
+import { DemoCustomerClose } from "@/components/demo/DemoCustomerClose";
+import { DemoDealerClose } from "@/components/demo/DemoDealerClose";
 import { DemoAssistant } from "@/components/demo/DemoAssistant";
 import { EndDemoModal } from "@/components/demo/EndDemoModal";
 
 const STEPS = [
-  { key: "customer", label: "Customer", color: "#3b82f6" },
-  { key: "contaminants", label: "Your Water", color: "#f59e0b" },
-  { key: "score", label: "AquaScore", color: "#10b981" },
-  { key: "solution", label: "Solution", color: "#8b5cf6" },
-  { key: "test", label: "Live Test", color: "#06b6d4" },
-  { key: "comparison", label: "Compare", color: "#ec4899" },
-  { key: "next", label: "Next Steps", color: "#22c55e" },
+  { key: "welcome",       label: "Welcome",       color: "#3b82f6" },
+  { key: "score",          label: "AquaScore",     color: "#10b981" },
+  { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },
+  { key: "impact",         label: "Impact",        color: "#f43f5e" },
+  { key: "test",           label: "Live Test",     color: "#06b6d4" },
+  { key: "transform",      label: "Transform",     color: "#8b5cf6" },
+  { key: "system",         label: "System",        color: "#6366f1" },
+  { key: "pricing",        label: "Pricing",       color: "#10b981" },
+  { key: "comparison",     label: "Compare",       color: "#ec4899" },
+  { key: "boost",          label: "Boost",         color: "#f59e0b" },
+  { key: "customerClose",  label: "Close",         color: "#22c55e" },
+  { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },
 ] as const;
 
 function formatTime(seconds: number) {
@@ -41,7 +54,7 @@ function formatTime(seconds: number) {
 
 function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-0.5">
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
@@ -63,10 +76,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 export function DemoWizardPage() {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
-  const report = useQuery(
-    api.reports.getReport,
-    reportId ? { reportId: reportId as any } : "skip"
-  );
+  const report = useQuery(api.reports.getReport, reportId ? { reportId: reportId as any } : "skip");
   const company = useQuery(api.companies.getMyCompany);
   const { effectivePlan } = useFreeTrial();
 
@@ -76,24 +86,20 @@ export function DemoWizardPage() {
   const [demoTimer, setDemoTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Live test readings (mutable during demo)
+  // State shared across steps
   const [liveReadings, setLiveReadings] = useState<FieldWaterReadings>({});
-  
+  const [pricingState, setPricingState] = useState<PricingState | null>(null);
+  const [boostApplied, setBoostApplied] = useState(false);
+  const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
 
-  // Start timer on mount
+  // Timer
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setDemoTimer((t) => t + 1);
-    }, 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    timerRef.current = setInterval(() => setDemoTimer((t) => t + 1), 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
-  const contaminants = useMemo(
-    () => parseContaminants(report?.contaminants),
-    [report?.contaminants]
-  );
+  // Contaminants & score
+  const contaminants = useMemo(() => parseContaminants(report?.contaminants), [report?.contaminants]);
 
   const score = useMemo(() => {
     if (!report) return undefined;
@@ -106,19 +112,21 @@ export function DemoWizardPage() {
     return computeAquaScore(report.waterScore, contaminants, readings);
   }, [report, contaminants, liveReadings]);
 
-  const goNext = useCallback(() => {
-    setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
-  }, []);
+  // Projected score: always 94 with whole-home filtration, 99 with RO
+  const projectedScore = 94;
+  const boostedScore = 99;
+  const finalScore = boostApplied ? boostedScore : projectedScore;
 
-  const goBack = useCallback(() => {
-    setCurrentStep((s) => Math.max(s - 1, 0));
-  }, []);
+  const companyColor = company?.primaryColor || report?.companyColor || "#2563eb";
 
+  const goNext = useCallback(() => { playTapSound(); setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1)); }, []);
+  const goBack = useCallback(() => { playTapSound(); setCurrentStep((s) => Math.max(s - 1, 0)); }, []);
   const exitDemo = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     navigate(`/customers/${reportId}`);
   }, [navigate, reportId]);
 
+  // Loading
   if (report === undefined) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827]">
@@ -132,36 +140,25 @@ export function DemoWizardPage() {
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
         <AlertTriangle className="mb-4 size-12 text-amber-500/50" />
         <p className="font-semibold">Customer not found</p>
-        <button
-          onClick={() => navigate("/customers")}
-          className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium"
-        >
+        <button onClick={() => navigate("/customers")} className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium">
           Back
         </button>
       </div>
     );
   }
 
-  // Plan gate — Demo Wizard requires Growth plan or above (free trial gets Growth access)
+  // Plan gate
   if (!hasPlanOverride(effectivePlan as any, "growth")) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
         <Lock className="mb-4 size-12 text-white/20" />
         <p className="font-semibold text-lg">Demo Wizard</p>
-        <p className="mt-2 text-sm text-white/50 max-w-xs text-center">
-          {upgradeMessage("demo_wizard")}
-        </p>
+        <p className="mt-2 text-sm text-white/50 max-w-xs text-center">{upgradeMessage("demo_wizard")}</p>
         <div className="mt-6 flex gap-3">
-          <button
-            onClick={() => navigate(`/customers/${reportId}`)}
-            className="rounded-xl bg-white/10 px-5 py-2.5 text-sm font-medium hover:bg-white/15 transition-colors"
-          >
+          <button onClick={() => navigate(`/customers/${reportId}`)} className="rounded-xl bg-white/10 px-5 py-2.5 text-sm font-medium hover:bg-white/15 transition-colors">
             ← Back
           </button>
-          <button
-            onClick={() => navigate("/subscription")}
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium hover:bg-blue-500 transition-colors"
-          >
+          <button onClick={() => navigate("/subscription")} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium hover:bg-blue-500 transition-colors">
             View Plans
           </button>
         </div>
@@ -169,50 +166,46 @@ export function DemoWizardPage() {
     );
   }
 
+  const stepKey = STEPS[currentStep].key;
+
+  // Customer-facing steps hide the top bar timer etc
+  const isCustomerFacing = isCustomerHandOff && stepKey === "customerClose";
 
   return (
     <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white">
       {/* Top Bar */}
-      <div className="flex shrink-0 items-center justify-between px-4 pt-3 pb-2 safe-area-top">
-        <button
-          onClick={() => setShowEndModal(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 active:bg-white/10"
-        >
-          <ChevronLeft className="size-3.5" />
-          Exit Demo
-        </button>
-        <p className="text-xs font-bold tracking-wider text-white/40">
-          STEP {currentStep + 1} OF {STEPS.length} — {STEPS[currentStep].label.toUpperCase()}
-        </p>
-        <div className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5">
-          <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-mono font-medium text-white/70">
-            {formatTime(demoTimer)}
-          </span>
+      {!isCustomerFacing && (
+        <div className="flex shrink-0 items-center justify-between px-4 pt-3 pb-2 safe-area-top">
+          <button
+            onClick={() => setShowEndModal(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 active:bg-white/10"
+          >
+            <ChevronLeft className="size-3.5" />
+            Exit
+          </button>
+          <p className="text-xs font-bold tracking-wider text-white/40">
+            {currentStep + 1}/{STEPS.length} — {STEPS[currentStep].label.toUpperCase()}
+          </p>
+          <div className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5">
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-mono font-medium text-white/70">{formatTime(demoTimer)}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Progress Bar */}
-      <div className="shrink-0 px-4 pb-3">
-        <ProgressBar step={currentStep} total={STEPS.length} />
-        <p className="mt-1.5 text-center text-xs font-semibold text-white/40">
-          {STEPS[currentStep].label}
-        </p>
-      </div>
+      {!isCustomerFacing && (
+        <div className="shrink-0 px-4 pb-3">
+          <ProgressBar step={currentStep} total={STEPS.length} />
+        </div>
+      )}
 
       {/* Step Content */}
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-28">
-        {currentStep === 0 && (
-          <DemoCustomerStep report={report} onNext={goNext} />
+        {stepKey === "welcome" && (
+          <DemoWelcome report={report} companyColor={companyColor} onNext={goNext} />
         )}
-        {currentStep === 1 && (
-          <DemoContaminantWalkthrough
-            contaminants={contaminants}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {currentStep === 2 && (
+        {stepKey === "score" && (
           <DemoScoreReveal
             score={score}
             contaminants={contaminants}
@@ -221,16 +214,13 @@ export function DemoWizardPage() {
             onBack={goBack}
           />
         )}
-        {currentStep === 3 && (
-          <DemoSolution
-            score={score}
-            company={company}
-            report={report}
-            onNext={goNext}
-            onBack={goBack}
-          />
+        {stepKey === "contaminants" && (
+          <DemoContaminantWalkthrough contaminants={contaminants} onNext={goNext} onBack={goBack} />
         )}
-        {currentStep === 4 && (
+        {stepKey === "impact" && (
+          <DemoImpact onNext={goNext} onBack={goBack} />
+        )}
+        {stepKey === "test" && (
           <DemoLiveTest
             report={report}
             contaminants={contaminants}
@@ -240,20 +230,65 @@ export function DemoWizardPage() {
             onBack={goBack}
           />
         )}
-        {currentStep === 5 && (
+        {stepKey === "transform" && (
+          <DemoScoreTransform
+            score={score ?? 0}
+            report={report}
+            company={company}
+            contaminants={contaminants}
+            liveReadings={liveReadings}
+            projectedScore={projectedScore ?? score ?? 0}
+            onNext={goNext}
+          />
+        )}
+        {stepKey === "system" && (
+          <DemoSystemInfo company={company} report={report} onNext={goNext} />
+        )}
+        {stepKey === "pricing" && (
+          <DemoPricing
+            company={company}
+            onNext={goNext}
+            onPricingChange={setPricingState}
+            initialState={pricingState}
+          />
+        )}
+        {stepKey === "comparison" && (
           <DemoCostComparison onNext={goNext} onBack={goBack} />
         )}
-        {currentStep === 6 && (
-          <DemoNextSteps
+        {stepKey === "boost" && (
+          <DemoScoreBoost
+            projectedScore={projectedScore ?? score ?? 0}
+            boostedScore={boostedScore}
+            company={company}
             report={report}
-            reportId={reportId!}
-            onEndDemo={() => setShowEndModal(true)}
+            onBoostApplied={setBoostApplied}
+            onNext={goNext}
+          />
+        )}
+        {stepKey === "customerClose" && (
+          <DemoCustomerClose
+            report={report}
+            company={company}
+            finalScore={finalScore}
+            companyColor={companyColor}
+            onEndDemo={() => {
+              setIsCustomerHandOff(false);
+              goNext(); // → dealerClose
+            }}
+          />
+        )}
+        {stepKey === "dealerClose" && (
+          <DemoDealerClose
+            report={report}
+            score={finalScore}
+            companyColor={companyColor}
+            onEndDemo={exitDemo}
           />
         )}
       </div>
 
-      {/* Bottom Nav (except last step) */}
-      {currentStep < STEPS.length - 1 && (
+      {/* Bottom nav for middle steps */}
+      {!isCustomerFacing && currentStep > 0 && currentStep < STEPS.length - 2 && (
         <div className="fixed inset-x-0 bottom-0 flex items-center justify-between gap-3 px-4 pb-4 pt-3 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent safe-area-bottom">
           <button
             onClick={goBack}
@@ -270,8 +305,7 @@ export function DemoWizardPage() {
               background: `linear-gradient(135deg, ${STEPS[currentStep].color}, ${STEPS[Math.min(currentStep + 1, STEPS.length - 1)].color})`,
             }}
           >
-            Next
-            <ArrowRight className="size-4" />
+            Next <ArrowRight className="size-4" />
           </button>
         </div>
       )}
@@ -291,9 +325,7 @@ export function DemoWizardPage() {
           report={report}
           demoTime={demoTimer}
           onClose={() => setShowEndModal(false)}
-          onFinished={() => {
-            exitDemo();
-          }}
+          onFinished={exitDemo}
         />
       )}
     </div>

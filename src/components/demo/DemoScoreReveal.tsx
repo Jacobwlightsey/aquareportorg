@@ -1,5 +1,7 @@
 import { AlertTriangle, Award, Shield, Sparkles, TrendingDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { playRevealSound } from "@/lib/demoSounds";
+import { ScoreGauge } from "./ScoreGauge";
 
 interface Props {
   score?: number;
@@ -53,35 +55,16 @@ function tierInfo(score: number) {
 
 export function DemoScoreReveal({ score, contaminants, report, onNext: _onNext, onBack: _onBack }: Props) {
   const [revealed, setRevealed] = useState(false);
-  const [animatedScore, setAnimatedScore] = useState(0);
   const s = score ?? 0;
   const info = tierInfo(s);
 
-  // Animate score counter after reveal
-  useEffect(() => {
-    if (!revealed) return;
-    let frame: number;
-    const duration = 1200;
-    const start = performance.now();
-    const animate = (now: number) => {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setAnimatedScore(Math.round(eased * s));
-      if (progress < 1) frame = requestAnimationFrame(animate);
-    };
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, [revealed, s]);
-
-  const circumference = 2 * Math.PI * 70;
-  const offset = revealed
-    ? circumference - (animatedScore / 100) * circumference
-    : circumference;
-
   const overLegal = contaminants.filter((c: any) => c.over_legal).length;
   const overHealth = contaminants.filter((c: any) => c.over_health && !c.over_legal).length;
+
+  const handleReveal = () => {
+    setRevealed(true);
+    playRevealSound();
+  };
 
   return (
     <div className="mx-auto max-w-lg space-y-6 pt-4">
@@ -98,29 +81,15 @@ export function DemoScoreReveal({ score, contaminants, report, onNext: _onNext, 
           </div>
 
           {/* Blurred preview */}
-          <div className="relative">
-            <div className="flex justify-center blur-xl opacity-50">
-              <svg width="200" height="200">
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="70"
-                  fill="none"
-                  strokeWidth="12"
-                  className="stroke-white/10"
-                />
-              </svg>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-5xl font-black blur-lg opacity-40">
-                {s}
-              </span>
+          <div className="relative flex justify-center">
+            <div className="blur-xl opacity-40">
+              <ScoreGauge score={s} size={200} animate={false} />
             </div>
           </div>
 
           <button
-            onClick={() => setRevealed(true)}
-            className="mx-auto flex items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold active:scale-[0.97] transition-transform"
+            onClick={handleReveal}
+            className="mx-auto flex items-center gap-2 rounded-2xl px-8 py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer"
             style={{
               background: `linear-gradient(135deg, ${info.color}, ${info.color}cc)`,
               boxShadow: `0 4px 24px ${info.color}40`,
@@ -132,41 +101,9 @@ export function DemoScoreReveal({ score, contaminants, report, onNext: _onNext, 
         </div>
       ) : (
         <>
-          {/* Score Gauge */}
-          <div className="text-center">
-            <div className="relative inline-flex">
-              <svg width="200" height="200" className="-rotate-90">
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="70"
-                  fill="none"
-                  strokeWidth="12"
-                  stroke="rgba(255,255,255,0.08)"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="70"
-                  fill="none"
-                  strokeWidth="12"
-                  stroke={info.color}
-                  strokeDasharray={circumference}
-                  strokeDashoffset={offset}
-                  strokeLinecap="round"
-                  style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.33,1,0.68,1)" }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-black">{animatedScore}</span>
-                <span
-                  className="text-sm font-bold mt-0.5"
-                  style={{ color: info.color }}
-                >
-                  {info.emoji} {info.tier}
-                </span>
-              </div>
-            </div>
+          {/* Animated Score Gauge */}
+          <div className="flex flex-col items-center pt-2">
+            <ScoreGauge score={s} size={220} animate={true} animationDuration={2000} />
           </div>
 
           {/* Tier Explanation */}
@@ -181,7 +118,7 @@ export function DemoScoreReveal({ score, contaminants, report, onNext: _onNext, 
               <info.icon className="size-6" style={{ color: info.color }} />
               <div>
                 <p className="font-bold" style={{ color: info.color }}>
-                  {info.tier} Tier
+                  {info.emoji} {info.tier} Tier
                 </p>
                 <p className="text-xs text-white/50">AquaScore {s}/100</p>
               </div>
