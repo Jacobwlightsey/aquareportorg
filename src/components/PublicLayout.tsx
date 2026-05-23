@@ -6,7 +6,7 @@ export function PublicLayout() {
   const isLanding = location.pathname === "/";
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {!isLanding && <Header />}
       <main className="flex-1 flex flex-col">
         <Outlet />

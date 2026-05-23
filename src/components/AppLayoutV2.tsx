@@ -20,11 +20,11 @@ export function AppLayoutV2() {
     <SidebarProvider>
       <SEO title="Dashboard — AquaReport" noindex />
       <AppSidebarV2 />
-      <SidebarInset>
+      <SidebarInset className="overflow-x-hidden">
         <header className="flex h-12 items-center px-4 md:hidden">
           <SidebarTrigger />
         </header>
-        <main className="flex-1 p-4 pb-24 md:pb-6 lg:p-6">
+        <main className="flex-1 p-4 pb-24 md:pb-6 lg:p-6 overflow-x-hidden">
           <Outlet />
         </main>
       </SidebarInset>

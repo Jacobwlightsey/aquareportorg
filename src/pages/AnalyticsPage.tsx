@@ -142,33 +142,35 @@ function TerritoryTable({ insights }: { insights: any[] }) {
         {insights.length === 0 ? (
           <Empty message="Generate reports to build territory insights." />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ZIP</TableHead>
-                <TableHead>Risk Score</TableHead>
-                <TableHead>Reports</TableHead>
-                <TableHead>Leads</TableHead>
-                <TableHead>Conversion</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {insights.slice(0, 12).map((item) => (
-                <TableRow key={item.zip}>
-                  <TableCell className="font-medium">{item.zip}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={item.riskScore} className="w-20" variant={item.riskScore >= 70 ? "destructive" : item.riskScore >= 40 ? "warning" : "success"} />
-                      <span>{item.riskScore}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{item.totalReports}</TableCell>
-                  <TableCell>{item.totalLeads}</TableCell>
-                  <TableCell>{item.conversionRate}%</TableCell>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ZIP</TableHead>
+                  <TableHead>Risk Score</TableHead>
+                  <TableHead>Reports</TableHead>
+                  <TableHead>Leads</TableHead>
+                  <TableHead>Conversion</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {insights.slice(0, 12).map((item) => (
+                  <TableRow key={item.zip}>
+                    <TableCell className="font-medium">{item.zip}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Progress value={item.riskScore} className="w-20" variant={item.riskScore >= 70 ? "destructive" : item.riskScore >= 40 ? "warning" : "success"} />
+                        <span>{item.riskScore}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{item.totalReports}</TableCell>
+                    <TableCell>{item.totalLeads}</TableCell>
+                    <TableCell>{item.conversionRate}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

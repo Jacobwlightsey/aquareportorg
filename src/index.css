@@ -169,6 +169,9 @@
 /* ─── Global polish ───────────────────────────────────────────────── */
 
 /* Subtle background gradient on body */
+html, body {
+  overflow-x: hidden;
+}
 body {
   background: linear-gradient(175deg, #060a10 0%, #070d16 40%, #060a10 100%);
   min-height: 100vh;
