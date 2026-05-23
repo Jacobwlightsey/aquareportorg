@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { useMutation } from "convex/react";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
@@ -426,21 +427,138 @@ const homepageFaqs = [
 ];
 
 
+/* ── Glow Pricing Card ─────────────────────────────────────────── */
+
+const PLAN_GLOW: Record<string, { gradient: string; delay: number }> = {
+  starter: {
+    gradient: "linear-gradient(137deg, #334155 0%, #64748b 45%, #475569 100%)",
+    delay: 0.1,
+  },
+  growth: {
+    gradient: "linear-gradient(137deg, #06b6d4 0%, #67e8f9 40%, #22d3ee 100%)",
+    delay: 0.2,
+  },
+  pro: {
+    gradient: "linear-gradient(137deg, #3b82f6 0%, #a5f3fc 45%, #8b5cf6 100%)",
+    delay: 0.3,
+  },
+};
+
+function GlowPricingCard({
+  plan,
+  billingCycle,
+}: {
+  plan: (typeof SUBSCRIPTION_PLANS)[number];
+  billingCycle: "monthly" | "annual";
+}) {
+  const glow = PLAN_GLOW[plan.id] ?? PLAN_GLOW.starter;
+  const displayPrice = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
+  const savingsPercent = Math.round(
+    ((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100,
+  );
+  const effectiveMonthly = Math.round(plan.annualPrice / 12);
+  const cardBg = "#0d1420";
+
+  return (
+    <motion.div
+      className="relative flex flex-col items-center w-full group mx-auto"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.8, ease: "easeOut", delay: glow.delay }}
+    >
+      {/* Glow blob */}
+      <div
+        className="absolute inset-0 opacity-50 rounded-[32px] pointer-events-none transition-opacity duration-500 group-hover:opacity-70"
+        style={{ background: glow.gradient, filter: "blur(50px)" }}
+      />
+
+      {/* Popular badge */}
+      {plan.popular && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 rounded-full bg-cyan-300 px-4 py-1 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-300/30">
+          Most popular
+        </div>
+      )}
+
+      {/* Card shell with gradient border */}
+      <div
+        className="relative z-10 w-full rounded-[32px] overflow-hidden"
+        style={{
+          border: "2px solid transparent",
+          background: `linear-gradient(${cardBg}, ${cardBg}) padding-box, ${glow.gradient} border-box`,
+        }}
+      >
+        {/* Top glow line */}
+        <div
+          className="absolute inset-x-0 top-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${plan.popular ? "rgba(34,211,238,.5)" : "rgba(255,255,255,.12)"}, transparent)` }}
+        />
+
+        <div className="w-full p-7 flex flex-col">
+          <h3 className="text-xl font-bold text-white tracking-tight">{plan.name}</h3>
+          <div className="mt-5 mb-1">
+            <span className="text-5xl font-black text-white">${displayPrice.toLocaleString()}</span>
+            <span className="text-slate-500 ml-1">/{billingCycle === "monthly" ? "mo" : "yr"}</span>
+          </div>
+          {billingCycle === "annual" && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-slate-500 line-through">${(plan.monthlyPrice * 12).toLocaleString()}/yr</span>
+              <span className="inline-flex items-center rounded-full bg-emerald-400/15 border border-emerald-400/25 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+                Save {savingsPercent}%
+              </span>
+              <span className="text-xs text-slate-500">Just ${effectiveMonthly}/mo</span>
+            </div>
+          )}
+          {billingCycle === "monthly" && <div className="mb-4" />}
+
+          <ul className="space-y-3 flex-1">
+            {plan.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-sm text-slate-300">
+                <Check className="mt-0.5 size-4 shrink-0 text-emerald-300" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+
+          <Button
+            className={
+              plan.popular
+                ? "mt-8 w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200 shadow-lg shadow-cyan-400/20"
+                : "mt-8 w-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+            }
+            variant={plan.popular ? "default" : "outline"}
+            size="lg"
+            asChild
+          >
+            <Link to="/signup">Get 1 Free Report</Link>
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function PricingSection() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
 
   return (
     <section id="pricing" className="relative overflow-hidden py-20 md:py-28">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,.16),transparent_38%),radial-gradient(circle_at_18%_76%,rgba(34,211,238,.1),transparent_30%),linear-gradient(180deg,#020711,#061124_52%,#020711)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,.12),transparent_42%),radial-gradient(circle_at_18%_76%,rgba(34,211,238,.08),transparent_30%),linear-gradient(180deg,#020711,#061124_52%,#020711)]" />
       <div className="container relative">
-        <div className="mx-auto mb-8 max-w-3xl text-center">
+        <motion.div
+          className="mx-auto mb-8 max-w-3xl text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        >
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Pricing</p>
           <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl">Start with one free report. Scale when your team is ready.</h2>
           <p className="mt-5 text-lg leading-8 text-slate-400">Every account gets 1 premium report free — no credit card needed. Choose a plan when you're ready to scale.</p>
-        </div>
+        </motion.div>
 
         {/* Monthly/Annual Toggle */}
-        <div className="flex items-center justify-center mb-10">
+        <div className="flex items-center justify-center mb-12">
           <div className="inline-flex items-center rounded-full bg-white/5 border border-white/10 p-1 backdrop-blur-sm">
             <button
               type="button"
@@ -460,79 +578,45 @@ function PricingSection() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3 max-w-5xl mx-auto">
-          {SUBSCRIPTION_PLANS.map((plan) => {
-            const displayPrice = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-            const savingsPercent = Math.round((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12) * 100);
-            const effectiveMonthly = Math.round(plan.annualPrice / 12);
-
-            return (
-              <div
-                key={plan.id}
-                className={
-                  plan.popular
-                    ? "relative rounded-[1.5rem] border border-cyan-300/50 bg-[linear-gradient(145deg,rgba(34,211,238,.16),rgba(7,16,32,.92))] p-6 pt-8 shadow-2xl shadow-cyan-950/30"
-                    : "relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(15,23,42,.74),rgba(3,10,22,.94))] p-6 shadow-2xl shadow-black/20"
-                }
-              >
-                <div className="absolute right-5 top-5 h-20 w-20 rounded-full bg-cyan-300/10 blur-3xl" />
-                {plan.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 rounded-full bg-cyan-300 px-4 py-1 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-300/30">
-                    Most popular
-                  </div>
-                )}
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
-                <h3 className="relative text-xl font-bold text-white">{plan.name}</h3>
-                <div className="my-5">
-                  <span className="text-5xl font-black text-white">${displayPrice.toLocaleString()}</span>
-                  <span className="text-slate-500">/{billingCycle === "monthly" ? "mo" : "yr"}</span>
-                </div>
-                {billingCycle === "annual" && (
-                  <div className="mb-5 flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-slate-500 line-through">${(plan.monthlyPrice * 12).toLocaleString()}/yr</span>
-                    <span className="inline-flex items-center rounded-full bg-emerald-400/15 border border-emerald-400/25 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
-                      Save {savingsPercent}%
-                    </span>
-                    <span className="text-xs text-slate-500">Just ${effectiveMonthly}/mo</span>
-                  </div>
-                )}
-                <ul className="space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm text-slate-300">
-                      <Check className="mt-0.5 size-4 shrink-0 text-emerald-300" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className={
-                    plan.popular
-                      ? "mt-8 w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200"
-                      : "mt-8 w-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-                  }
-                  variant={plan.popular ? "default" : "outline"}
-                  size="lg"
-                  asChild
-                >
-                  <Link to="/signup">Get 1 Free Report</Link>
-                </Button>
-              </div>
-            );
-          })}
+        <div className="grid gap-8 lg:grid-cols-3 max-w-5xl mx-auto px-4 lg:px-0">
+          {SUBSCRIPTION_PLANS.map((plan) => (
+            <GlowPricingCard key={plan.id} plan={plan} billingCycle={billingCycle} />
+          ))}
         </div>
 
         {/* Enterprise row */}
-        <div className="max-w-5xl mx-auto mt-6 rounded-[1.5rem] border border-white/10 border-dashed bg-[linear-gradient(145deg,rgba(15,23,42,.74),rgba(3,10,22,.94))] px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-white">Enterprise</h3>
-            <p className="text-sm text-slate-400">Unlimited reports, custom domains, onboarding, and dedicated support.</p>
+        <motion.div
+          className="max-w-5xl mx-auto mt-8 relative group"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.4 }}
+        >
+          <div
+            className="absolute inset-0 opacity-30 rounded-[32px] pointer-events-none transition-opacity duration-500 group-hover:opacity-45"
+            style={{
+              background: "linear-gradient(137deg, #22d3ee 0%, #a5f3fc 45%, #06b6d4 100%)",
+              filter: "blur(40px)",
+            }}
+          />
+          <div
+            className="relative z-10 rounded-[32px] px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4"
+            style={{
+              border: "2px solid transparent",
+              background: "linear-gradient(#0d1420, #0d1420) padding-box, linear-gradient(137deg, rgba(34,211,238,.35), rgba(6,182,212,.15)) border-box",
+            }}
+          >
+            <div>
+              <h3 className="text-lg font-bold text-white">Enterprise</h3>
+              <p className="text-sm text-slate-400">Unlimited reports, custom domains, onboarding, and dedicated support.</p>
+            </div>
+            <EnterpriseContactDialog source="homepage_pricing">
+              <Button className="border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20 hover:text-white shrink-0" variant="outline" size="lg">
+                Contact Us
+              </Button>
+            </EnterpriseContactDialog>
           </div>
-          <EnterpriseContactDialog source="homepage_pricing">
-            <Button className="border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20 hover:text-white shrink-0" variant="outline" size="lg">
-              Contact Us
-            </Button>
-          </EnterpriseContactDialog>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
