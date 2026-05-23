@@ -262,7 +262,7 @@ export function CustomerDetailPage() {
   const company = useMemo(() => {
     if (!rawCompany) return rawCompany;
     if (isFree && !hasUsedTrial) {
-      return { ...rawCompany, stripePlan: "starter", stripeStatus: "active" };
+      return { ...rawCompany, stripePlan: "growth", stripeStatus: "active" };
     }
     return rawCompany;
   }, [rawCompany, isFree, hasUsedTrial]);

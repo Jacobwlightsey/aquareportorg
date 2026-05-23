@@ -402,6 +402,9 @@ export function buildReportHtml(params: ReportTemplateParams): string {
     page-break-after: always;
     background: #fff;
   }
+  .page:last-child {
+    page-break-after: auto;
+  }
 
   .serif { font-family: 'Playfair Display', Georgia, serif; }
 

@@ -8,6 +8,17 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 
+/* ── Global error handler: catch unhandled Convex / promise errors and show toast ── */
+window.addEventListener("unhandledrejection", (event) => {
+  const msg = event.reason?.message || event.reason?.toString?.() || "Unknown error";
+  // Suppress noisy Convex internal retries
+  if (msg.includes("Convex connection") || msg.includes("WebSocket")) return;
+  // Log to Sentry but don't crash the app
+  Sentry.captureException(event.reason);
+  // Prevent the default browser error overlay
+  event.preventDefault();
+});
+
 Sentry.init({
   dsn: "https://ab6f4695911c4d39e56951d7c51a6a3c@o4511431874641920.ingest.us.sentry.io/4511431896662016",
   integrations: [

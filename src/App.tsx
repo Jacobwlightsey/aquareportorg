@@ -9,6 +9,7 @@ import { PublicLayout } from "./components/PublicLayout";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Toaster } from "./components/ui/sonner";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { TrialGate } from "./components/TrialGate";
 import {
   AnalyticsPage,
   BlogPage,
@@ -85,48 +86,48 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayoutV2 />}>
-              {/* Pipeline / Core */}
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/pipeline" element={<PipelinePage />} />
-              <Route path="/pipeline/:dealId" element={<PipelinePage />} />
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/customers/new" element={<CreateCustomerPage />} />
-              <Route path="/customers/:reportId" element={<CustomerDetailPage />} />
-              <Route path="/customers/:reportId/demo" element={<DemoWizardPage />} />
-              <Route path="/leads" element={<LeadsPage />} />
-              <Route path="/appointments" element={<AppointmentsPage />} />
+              {/* Pipeline / Core — dashboard, customers, reports are free-trial accessible */}
+              <Route path="/dashboard" element={<TrialGate page="dashboard"><DashboardPage /></TrialGate>} />
+              <Route path="/pipeline" element={<TrialGate page="pipeline"><PipelinePage /></TrialGate>} />
+              <Route path="/pipeline/:dealId" element={<TrialGate page="pipeline"><PipelinePage /></TrialGate>} />
+              <Route path="/customers" element={<TrialGate page="customers"><CustomersPage /></TrialGate>} />
+              <Route path="/customers/new" element={<TrialGate page="create-customer"><CreateCustomerPage /></TrialGate>} />
+              <Route path="/customers/:reportId" element={<TrialGate page="customer-detail"><CustomerDetailPage /></TrialGate>} />
+              <Route path="/customers/:reportId/demo" element={<TrialGate page="demo-wizard"><DemoWizardPage /></TrialGate>} />
+              <Route path="/leads" element={<TrialGate page="leads"><LeadsPage /></TrialGate>} />
+              <Route path="/appointments" element={<TrialGate page="appointments"><AppointmentsPage /></TrialGate>} />
 
               {/* Sales */}
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/demo-analytics" element={<DemoAnalyticsPage />} />
-              <Route path="/proposals" element={<ProposalsPage />} />
-              <Route path="/commissions" element={<CommissionsPage />} />
+              <Route path="/analytics" element={<TrialGate page="analytics"><AnalyticsPage /></TrialGate>} />
+              <Route path="/demo-analytics" element={<TrialGate page="demo-analytics"><DemoAnalyticsPage /></TrialGate>} />
+              <Route path="/proposals" element={<TrialGate page="proposals"><ProposalsPage /></TrialGate>} />
+              <Route path="/commissions" element={<TrialGate page="commissions"><CommissionsPage /></TrialGate>} />
 
               {/* Retention */}
-              <Route path="/retention" element={<RetentionPage />} />
-              <Route path="/follow-ups" element={<FollowUpsPage />} />
-              <Route path="/reviews" element={<ReviewsPage />} />
+              <Route path="/retention" element={<TrialGate page="retention"><RetentionPage /></TrialGate>} />
+              <Route path="/follow-ups" element={<TrialGate page="follow-ups"><FollowUpsPage /></TrialGate>} />
+              <Route path="/reviews" element={<TrialGate page="reviews"><ReviewsPage /></TrialGate>} />
 
               {/* Intelligence */}
-              <Route path="/territory-map" element={<TerritoryMapPage />} />
-              <Route path="/marketing" element={<MarketingPage />} />
-              <Route path="/training" element={<TrainingPage />} />
+              <Route path="/territory-map" element={<TrialGate page="territory-map"><TerritoryMapPage /></TrialGate>} />
+              <Route path="/marketing" element={<TrialGate page="marketing"><MarketingPage /></TrialGate>} />
+              <Route path="/training" element={<TrialGate page="training"><TrainingPage /></TrialGate>} />
 
-              {/* Reports */}
+              {/* Reports — accessible on free trial */}
               <Route path="/generate" element={<Navigate to="/customers/new" replace />} />
-              <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/reports/:reportId" element={<ViewReportPage />} />
+              <Route path="/reports" element={<TrialGate page="reports"><ReportsPage /></TrialGate>} />
+              <Route path="/reports/:reportId" element={<TrialGate page="view-report"><ViewReportPage /></TrialGate>} />
               <Route path="/reports/:reportId/flipbook" element={<FlipbookPage />} />
-              <Route path="/reports/:reportId/v2" element={<ReportV2Page />} />
+              <Route path="/reports/:reportId/v2" element={<TrialGate page="report-v2"><ReportV2Page /></TrialGate>} />
 
-              {/* Settings & admin */}
+              {/* Settings & admin — accessible on free trial */}
               <Route path="/verify" element={<DealerVerificationPage />} />
               <Route path="/platform" element={<PlatformPage />} />
               <Route path="/admin" element={<AdminPage />} />
-              <Route path="/team" element={<TeamPage />} />
-              <Route path="/subscription" element={<SubscriptionPage />} />
-              <Route path="/company" element={<CompanySettingsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/team" element={<TrialGate page="team"><TeamPage /></TrialGate>} />
+              <Route path="/subscription" element={<TrialGate page="subscription"><SubscriptionPage /></TrialGate>} />
+              <Route path="/company" element={<TrialGate page="company"><CompanySettingsPage /></TrialGate>} />
+              <Route path="/settings" element={<TrialGate page="settings"><SettingsPage /></TrialGate>} />
             </Route>
           </Route>
 

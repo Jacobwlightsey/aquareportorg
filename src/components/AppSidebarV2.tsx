@@ -12,6 +12,7 @@ import {
   FileText,
   FolderKanban,
   Home,
+  Lock,
   LogOut,
   Mail,
   Map,
@@ -28,6 +29,7 @@ import {
   Users2,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
 
 import { APP_NAME } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
@@ -54,6 +56,9 @@ import {
 } from "./ui/sidebar";
 
 // ─── Role-based navigation configuration ─────────────────────────
+
+/** Pages accessible on free trial (not gated) */
+const FREE_TRIAL_PAGES = new Set(["/dashboard", "/customers", "/subscription", "/settings", "/company", "/team"]);
 
 const pipelineNav = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -110,22 +115,27 @@ function NavLink({
   icon: Icon,
   isActive,
   badge,
+  locked,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
   badge?: number;
+  locked?: boolean;
 }) {
   const { setOpenMobile } = useSidebar();
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
-        <Link to={href} onClick={() => setOpenMobile(false)}>
+        <Link to={href} onClick={() => setOpenMobile(false)} className={locked ? "opacity-50" : ""}>
           <Icon />
           <span>{label}</span>
-          {badge !== undefined && badge > 0 && (
+          {locked && (
+            <Lock className="ml-auto size-3 text-muted-foreground" />
+          )}
+          {!locked && badge !== undefined && badge > 0 && (
             <span className="ml-auto min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
               {badge > 99 ? "99+" : badge}
             </span>
@@ -142,6 +152,10 @@ function SidebarNav() {
   const isAdmin = useQuery(api.admin.isPlatformAdmin);
   const company = useQuery(api.companies.getMyCompany);
   const role = company?.role;
+  const { isFree } = useFreeTrial();
+
+  /** True when the nav item should show a lock icon */
+  const isLocked = (href: string) => isFree && !FREE_TRIAL_PAGES.has(href);
 
   const isActivePath = (href: string) => {
     if (href === "/customers") return location.pathname === href || location.pathname.startsWith("/customers/");
@@ -168,6 +182,7 @@ function SidebarNav() {
                   icon={item.icon}
                   isActive={isActivePath(item.href)}
                   badge={(item as any).badgeKey === "leads" ? newLeadCount ?? 0 : undefined}
+                  locked={isLocked(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -190,6 +205,7 @@ function SidebarNav() {
                   label={item.label}
                   icon={item.icon}
                   isActive={isActivePath(item.href)}
+                  locked={isLocked(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -212,6 +228,7 @@ function SidebarNav() {
                   label={item.label}
                   icon={item.icon}
                   isActive={isActivePath(item.href)}
+                  locked={isLocked(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -234,6 +251,7 @@ function SidebarNav() {
                   label={item.label}
                   icon={item.icon}
                   isActive={isActivePath(item.href)}
+                  locked={isLocked(item.href)}
                 />
               ))}
             </SidebarMenu>
@@ -256,6 +274,7 @@ function SidebarNav() {
                   label={item.label}
                   icon={item.icon}
                   isActive={location.pathname === item.href}
+                  locked={isLocked(item.href)}
                 />
               ))}
             </SidebarMenu>
