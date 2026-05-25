@@ -181,19 +181,44 @@ export function DemoScoreReveal({
     <div className="mx-auto w-full max-w-5xl px-8 pt-8" onClick={skipToReveal}>
       {/* Pre-start */}
       {phase === null && (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-10">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
           <div className="space-y-3">
             <Sparkles className="mx-auto size-8 animate-pulse" style={{ color: colors.warning }} />
             <h2 className="text-[32px] font-bold tracking-tight" style={{ color: colors.textPrimary }}>
               Your AquaScore
             </h2>
-            <p className="text-[15px]" style={{ color: colors.textMuted }}>
+            <p className="text-[15px] max-w-md mx-auto" style={{ color: colors.textMuted }}>
               Based on {contaminants.length} detected contaminants from {report.utilityName}
             </p>
           </div>
+
+          {/* AquaScore Explainer — answers "what's an AquaScore?" before the reveal */}
+          <div className="max-w-md mx-auto rounded-2xl p-5 text-left space-y-3" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.primary}b0` }}>
+              WHAT IS AN AQUASCORE?
+            </p>
+            <p className="text-[14px] leading-relaxed" style={{ color: colors.textSecondary }}>
+              Your AquaScore is a <strong style={{ color: colors.textPrimary }}>0–100 rating</strong> of your home's water quality. It's calculated by comparing contaminants found in your local water supply against EPA legal limits and EWG health guidelines.
+            </p>
+            <div className="grid grid-cols-4 gap-2 pt-1">
+              {[
+                { range: "80–100", label: "Gold", color: colors.success },
+                { range: "60–79", label: "Silver", color: colors.primary },
+                { range: "40–59", label: "Bronze", color: colors.warning },
+                { range: "0–39", label: "At Risk", color: colors.critical },
+              ].map((t) => (
+                <div key={t.label} className="flex flex-col items-center gap-1 py-2 rounded-xl" style={{ background: `${t.color}08`, border: `1px solid ${t.color}18` }}>
+                  <div className="size-2 rounded-full" style={{ background: t.color }} />
+                  <span className="text-[11px] font-bold" style={{ color: t.color }}>{t.label}</span>
+                  <span className="text-[10px] tabular-nums" style={{ color: colors.textFaint }}>{t.range}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="relative flex justify-center">
             <div className="blur-xl opacity-40">
-              <ScoreGauge score={s} size={200} animate={false} />
+              <ScoreGauge score={s} size={180} animate={false} />
             </div>
           </div>
           <button

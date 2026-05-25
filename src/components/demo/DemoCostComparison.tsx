@@ -123,7 +123,7 @@ export function DemoCostComparison({ company, onNext, onBack, onExpensesChange }
       {/* Cost breakdown — editable inputs */}
       <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
-          COST BREAKDOWN — TAP TO EDIT
+          COST BREAKDOWN
         </p>
         {costs.map((cost) => {
           const value = values[cost.id] || 0;

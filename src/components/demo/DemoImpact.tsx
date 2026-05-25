@@ -17,6 +17,7 @@ interface Props {
   customerConcerns?: { selected: CustomerConcernKey[] } | null;
   liveReadings?: Record<string, any>;
   report?: any;
+  concerns?: { householdSize?: number; bathrooms?: number; hasKids?: boolean; hasPets?: boolean; currentSolution?: string } | null;
 }
 
 /* ── Severity badge styles ── */
@@ -147,7 +148,7 @@ function bestStartingTab(selected?: CustomerConcernKey[]): number {
   return idx >= 0 ? idx : 0;
 }
 
-export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns, liveReadings, report }: Props) {
+export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns, liveReadings, report, concerns }: Props) {
   const startTab = useMemo(() => bestStartingTab(customerConcerns?.selected), [customerConcerns]);
   const [activeIdx, setActiveIdx] = useState(startTab);
   const tab = CATEGORY_TABS[activeIdx];
@@ -200,6 +201,70 @@ export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns
               {info.subtitle}
             </p>
           </div>
+
+          {/* Personalized household callout — uses intake data */}
+          {concerns && (
+            <div className="rounded-2xl p-4 mb-5 space-y-2" style={{ background: `${colors.primary}06`, border: `1px solid ${colors.primary}15` }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.primary}90` }}>
+                🏠 YOUR HOME
+              </p>
+              <p className="text-[14px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                {tab.key === "family_health" && (
+                  <>
+                    With {concerns.householdSize ?? "your"} {(concerns.householdSize ?? 0) === 1 ? "person" : "people"} in your home
+                    {concerns.hasKids ? ", including children" : ""}
+                    {concerns.hasPets ? " and pets" : ""}
+                    , every faucet is a point of exposure. {concerns.hasKids
+                      ? "Children absorb contaminants at a much higher rate than adults — their developing bodies are especially vulnerable."
+                      : "Daily exposure through drinking, cooking, and bathing compounds over time."}
+                    {concerns.hasPets ? " Pets are also affected — they drink unfiltered tap water exclusively." : ""}
+                  </>
+                )}
+                {tab.key === "skin_and_hair" && (
+                  <>
+                    {concerns.bathrooms ? `With ${concerns.bathrooms} bathroom${concerns.bathrooms > 1 ? "s" : ""} in your home, ` : ""}
+                    every shower and bath exposes skin and hair to these chemicals.
+                    {concerns.hasKids ? " Children's sensitive skin is especially vulnerable to chlorine and hard water irritation." : ""}
+                    {(concerns.householdSize ?? 0) > 2 ? ` That's ${concerns.householdSize} people showering daily — multiplying the exposure.` : ""}
+                  </>
+                )}
+                {tab.key === "appliances_plumbing" && (
+                  <>
+                    {concerns.bathrooms ? `Your ${concerns.bathrooms} bathroom${concerns.bathrooms > 1 ? "s" : ""} and kitchen plumbing are all affected. ` : ""}
+                    Hard water scale builds up in every pipe, fixture, and appliance that uses water.
+                    {concerns.currentSolution === "nothing" ? " Without any current filtration, scale has been accumulating unchecked." : ""}
+                  </>
+                )}
+                {tab.key === "taste_or_smell" && (
+                  <>
+                    A household of {concerns.householdSize ?? "your size"} uses water for drinking, cooking, coffee, ice — {concerns.hasKids ? "and your kids' bottles and sippy cups. " : ""}every use is affected by taste and odor issues.
+                    {concerns.currentSolution === "bottled" ? " That's likely why you've turned to bottled water." : ""}
+                  </>
+                )}
+                {tab.key === "bottled_water_costs" && (
+                  <>
+                    For a household of {concerns.householdSize ?? "your size"}
+                    {concerns.hasKids ? " with children" : ""}
+                    , bottled water costs add up fast — typically ${Math.max(40, (concerns.householdSize ?? 2) * 20)}-${Math.max(80, (concerns.householdSize ?? 2) * 35)}/month.
+                    {concerns.currentSolution === "bottled" ? " You're already paying this." : ""}
+                  </>
+                )}
+                {tab.key === "stains_buildup" && (
+                  <>
+                    {concerns.bathrooms ? `Across ${concerns.bathrooms} bathroom${concerns.bathrooms > 1 ? "s" : ""}, ` : "In "}your kitchen, and laundry — hard water is leaving deposits on every surface, fixture, and appliance it touches.
+                  </>
+                )}
+                {tab.key === "peace_of_mind" && (
+                  <>
+                    {concerns.householdSize ? `${concerns.householdSize} people` : "Your household"} depend{(concerns.householdSize ?? 0) === 1 ? "s" : ""} on this water every day.
+                    {concerns.hasKids ? " Your children drink, bathe, and play in it." : ""}
+                    {concerns.hasPets ? " Your pets drink it exclusively." : ""}
+                    {" Knowing it's clean gives you one less thing to worry about."}
+                  </>
+                )}
+              </p>
+            </div>
+          )}
 
           {/* Personalized impact info cards */}
           <div className="grid grid-cols-3 gap-3 mb-6">

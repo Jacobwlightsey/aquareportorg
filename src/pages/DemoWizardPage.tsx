@@ -676,24 +676,24 @@ function DemoWizardInner() {
       {/* ─── Top Bar ─── */}
       {!isCustomerFacing && (
         <div
-          className={`relative z-10 flex shrink-0 items-center justify-between px-4 safe-area-top ${isPresentationMode ? "pt-4 pb-2" : "pt-3 pb-2"}`}
+          className={`relative z-10 flex shrink-0 items-center justify-between px-4 landscape:px-3 safe-area-top ${isPresentationMode ? "pt-4 pb-2" : "pt-3 landscape:pt-1.5 pb-2 landscape:pb-1"}`}
         >
           {/* Left: Exit */}
           <button
             onClick={() => setShowEndModal(true)}
-            className={`flex items-center gap-1.5 rounded-lg bg-white/5 text-white/70 active:bg-white/10 ${isPresentationMode ? "px-4 py-2 text-sm" : "px-3 py-1.5 text-xs"} font-medium`}
+            className={`flex items-center gap-1.5 rounded-lg bg-white/5 text-white/70 active:bg-white/10 ${isPresentationMode ? "px-4 py-2 text-sm" : "px-3 landscape:px-2 py-1.5 landscape:py-1 text-xs landscape:text-[10px]"} font-medium`}
           >
             <ChevronLeft className={isPresentationMode ? "size-4" : "size-3.5"} />
             Exit
           </button>
 
           {/* Center: controls cluster */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 landscape:gap-1">
             <MuteToggle />
             <FullscreenToggle compact />
             <ViewModeToggle />
             {showStepLabel && (
-              <p className="text-xs font-bold tracking-wider text-white/40">
+              <p className="text-[10px] landscape:text-[8px] font-bold tracking-wider text-white/40 truncate max-w-[120px] landscape:max-w-[80px]">
                 {currentStep + 1}/{activeSteps.length} —{" "}
                 {currentStepDef?.label.toUpperCase()}
               </p>
@@ -843,7 +843,7 @@ function DemoWizardInner() {
             />
           )}
           {stepKey === "impact" && (
-            <DemoImpact contaminants={contaminants} onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} liveReadings={liveReadings} report={report} />
+            <DemoImpact contaminants={contaminants} onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} liveReadings={liveReadings} report={report} concerns={concerns} />
           )}
           {stepKey === "rooms" && (
             <DemoRoomImpact
@@ -920,6 +920,7 @@ function DemoWizardInner() {
               onPricingChange={setPricingState}
               initialState={pricingState}
               monthlyExpenses={monthlyExpenses}
+              concerns={concerns}
             />
           )}
           {stepKey === "investmentBreakdown" && (
