@@ -1,4 +1,4 @@
-import { Calculator, Check, Gift, Pencil, Sparkles, Tag } from "lucide-react";
+import { Calculator, Check, ChevronDown, ChevronUp, CreditCard, Gift, Pencil, Sparkles, Tag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -246,6 +246,9 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
         </div>
       )}
 
+      {/* ──── Sprint 2D: Financing Breakdown ──── */}
+      {revealed && <FinancingSection company={company} currentPrice={currentPrice} />}
+
       {/* Continue */}
       {revealed && (
         <button
@@ -255,6 +258,116 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
         >
           Continue →
         </button>
+      )}
+    </div>
+  );
+}
+
+/* ──── Sprint 2D: Financing Breakdown (embedded) ──── */
+const DEFAULT_TERMS = [60, 84, 120];
+const DEFAULT_APR = 4.99;
+
+function calcMonthly(principal: number, apr: number, months: number): number {
+  if (apr === 0) return principal / months;
+  const r = apr / 100 / 12;
+  return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+}
+
+function FinancingSection({ company, currentPrice }: { company: any; currentPrice: number }) {
+  const cfg = (company as any)?.demoConfig?.financing;
+  const enabled = cfg?.enabled !== false; // default to true if not explicitly disabled
+  const terms = cfg?.terms?.length ? cfg.terms : DEFAULT_TERMS;
+  const aprRange = cfg?.aprRange ?? "0% – 9.99%";
+  const defaultApr = cfg?.defaultApr ?? DEFAULT_APR;
+  const provider = cfg?.provider ?? "";
+
+  const [expanded, setExpanded] = useState(false);
+  const [selectedTerm, setSelectedTerm] = useState<number>(terms[0]);
+  const [customApr, setCustomApr] = useState(defaultApr.toString());
+
+  if (!enabled) return null;
+
+  const apr = parseFloat(customApr) || defaultApr;
+  const payment = calcMonthly(currentPrice, apr, selectedTerm);
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500 delay-300">
+      <button
+        onClick={() => {
+          playTapSound();
+          setExpanded((e) => !e);
+        }}
+        className="w-full flex items-center justify-between p-4 cursor-pointer"
+      >
+        <div className="flex items-center gap-2">
+          <CreditCard className="size-4 text-violet-400" />
+          <p className="text-sm font-bold text-white/70">Financing Options</p>
+        </div>
+        {expanded ? (
+          <ChevronUp className="size-4 text-white/40" />
+        ) : (
+          <ChevronDown className="size-4 text-white/40" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-3">
+          {/* APR range banner */}
+          <div className="flex items-center justify-between text-xs text-white/40">
+            <span>APR Range: <span className="text-white/60 font-medium">{aprRange}</span></span>
+            {provider && <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full">via {provider}</span>}
+          </div>
+
+          {/* Term cards */}
+          <div className="flex gap-2">
+            {terms.map((t: number) => {
+              const mo = calcMonthly(currentPrice, apr, t);
+              const active = selectedTerm === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => {
+                    playTapSound();
+                    setSelectedTerm(t);
+                  }}
+                  className={`flex-1 rounded-xl border p-3 text-center transition-all cursor-pointer ${
+                    active
+                      ? "border-violet-400/40 bg-violet-400/10"
+                      : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <p className={`text-lg font-black ${active ? "text-violet-400" : "text-white/60"}`}>
+                    ${Math.round(mo)}
+                  </p>
+                  <p className="text-[10px] text-white/40">/month</p>
+                  <p className="text-[9px] text-white/30 mt-1">{t} months</p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Selected term detail */}
+          <div className="rounded-xl bg-white/[0.04] border border-white/5 p-3 text-center">
+            <p className="text-2xl font-black text-violet-400">${payment.toFixed(2)}<span className="text-sm text-white/40 font-normal">/mo</span></p>
+            <p className="text-xs text-white/40 mt-1">
+              {selectedTerm} months at {apr}% APR · Total: ${(payment * selectedTerm).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </p>
+          </div>
+
+          {/* Custom APR input */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-white/40 shrink-0">Adjust APR:</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              value={customApr}
+              onChange={(e) => setCustomApr(e.target.value)}
+              className="w-20 rounded-lg bg-white/[0.06] border border-white/10 px-2 py-1.5 text-sm text-center text-white outline-none focus:border-white/30"
+            />
+            <span className="text-xs text-white/30">%</span>
+          </div>
+        </div>
       )}
     </div>
   );

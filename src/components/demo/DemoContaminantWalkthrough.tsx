@@ -2,6 +2,7 @@ import { AlertTriangle, ChevronDown, ChevronUp, FlaskConical, Skull, Shield, X }
 import { useState } from "react";
 import { contaminantName } from "@/lib/supabase";
 import { playTapSound } from "@/lib/demoSounds";
+import { useCountUp } from "@/hooks/useCountUp";
 
 interface Props {
   contaminants: any[];
@@ -159,8 +160,13 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
     return bHealth - aHealth;
   });
 
-  const legalCount = sorted.filter((c) => c.over_legal).length;
-  const healthCount = sorted.filter((c) => c.over_health && !c.over_legal).length;
+  const legalCountRaw = sorted.filter((c) => c.over_legal).length;
+  const healthCountRaw = sorted.filter((c) => c.over_health && !c.over_legal).length;
+
+  // Sprint 1C — count-up animation
+  const legalCount = useCountUp(legalCountRaw, 800, 200);
+  const healthCount = useCountUp(healthCountRaw, 800, 400);
+  const totalCount = useCountUp(sorted.length, 800, 0);
 
   const toggleCategory = (cat: string) => {
     playTapSound();
@@ -189,7 +195,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
           WATER ANALYSIS
         </span>
         <h2 className="text-2xl font-black mt-3">
-          {sorted.length} Contaminants Detected
+          {totalCount} Contaminants Detected
         </h2>
         <p className="text-sm text-white/50 mt-1">
           Tap any contaminant for details

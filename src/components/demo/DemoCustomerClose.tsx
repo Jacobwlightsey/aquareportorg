@@ -2,6 +2,7 @@ import { Droplets, Shield, Sparkles, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { playCelebrationSound } from "@/lib/demoSounds";
 import { ScoreGauge } from "./ScoreGauge";
+import { DemoQRCode } from "./DemoQRCode";
 
 interface Props {
   report: any;
@@ -68,6 +69,15 @@ export function DemoCustomerClose({ report, company, finalScore, companyColor, o
           </div>
         ))}
       </div>
+
+      {/* Sprint 2E: QR code for report */}
+      {report.shareToken && (
+        <DemoQRCode
+          url={`https://myaquareport.com/r/${report.shareToken}`}
+          label="Scan to View Your Report"
+          companyColor={companyColor}
+        />
+      )}
 
       {/* Company footer */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">

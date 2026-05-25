@@ -6,6 +6,12 @@ function ctx(): AudioContext {
   return _ctx;
 }
 
+/** Global mute flag — set by the SoundMuteContext provider */
+let _muted = false;
+export function setGlobalMute(muted: boolean) {
+  _muted = muted;
+}
+
 function osc(
   freq: number,
   type: OscillatorType,
@@ -15,6 +21,7 @@ function osc(
   endGain = 0.001,
   rampEnd?: number,
 ) {
+  if (_muted) return;
   const c = ctx();
   const o = c.createOscillator();
   const g = c.createGain();
@@ -30,6 +37,7 @@ function osc(
 
 /** Played on score reveal / transform */
 export function playRevealSound() {
+  if (_muted) return;
   try {
     const c = ctx();
     const t = c.currentTime;
@@ -51,8 +59,27 @@ export function playRevealSound() {
   } catch { /* silent */ }
 }
 
+/** Sprint 1B — soft pulse for score reveal phases 0-2 */
+export function playProcessingSound() {
+  if (_muted) return;
+  try {
+    const c = ctx();
+    const t = c.currentTime;
+    const s = c.createOscillator();
+    const g = c.createGain();
+    s.connect(g); g.connect(c.destination);
+    s.type = "sine";
+    s.frequency.setValueAtTime(440, t);
+    s.frequency.exponentialRampToValueAtTime(660, t + 0.15);
+    g.gain.setValueAtTime(0.06, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    s.start(t); s.stop(t + 0.2);
+  } catch { /* silent */ }
+}
+
 /** Short tap/discount toggle */
 export function playToggleSound() {
+  if (_muted) return;
   try {
     [880, 784, 660, 523, 440].forEach((f, i) => {
       osc(f, "sine", 0.1, i * 0.06, i * 0.06 + 0.12);
@@ -62,9 +89,8 @@ export function playToggleSound() {
 
 /** Celebration / close */
 export function playCelebrationSound() {
+  if (_muted) return;
   try {
-    const c = ctx();
-    const t = c.currentTime;
     osc(523.25, "sine", 0.15, 0, 0.3);
     osc(659.25, "sine", 0.15, 0.15, 0.5);
     osc(783.99, "sine", 0.12, 0.3, 0.7);
@@ -73,6 +99,7 @@ export function playCelebrationSound() {
 
 /** Boost applied */
 export function playBoostSound() {
+  if (_muted) return;
   try {
     const c = ctx();
     const t = c.currentTime;
@@ -94,6 +121,7 @@ export function playBoostSound() {
 
 /** Thunk / button tap */
 export function playTapSound() {
+  if (_muted) return;
   try {
     const c = ctx();
     const t = c.currentTime;
@@ -106,5 +134,16 @@ export function playTapSound() {
     g.gain.setValueAtTime(0.1, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
     s.start(t); s.stop(t + 0.08);
+  } catch { /* silent */ }
+}
+
+/** Haptic feedback — short vibration for key moments */
+export function haptic(pattern: "light" | "medium" | "heavy" = "light") {
+  if (_muted) return;
+  try {
+    if (navigator.vibrate) {
+      const ms = pattern === "heavy" ? 50 : pattern === "medium" ? 25 : 10;
+      navigator.vibrate(ms);
+    }
   } catch { /* silent */ }
 }

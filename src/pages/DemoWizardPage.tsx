@@ -9,6 +9,8 @@ import {
   MonitorOff,
   User,
   Home,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -16,7 +18,7 @@ import { parseContaminants } from "@/lib/pipeline";
 import { hasPlanOverride, upgradeMessage } from "@/lib/planGate";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { computeAquaScore, type FieldWaterReadings } from "@/lib/waterScore";
-import { playTapSound } from "@/lib/demoSounds";
+import { playTapSound, setGlobalMute } from "@/lib/demoSounds";
 import { api } from "../../convex/_generated/api";
 
 // Sprint 0 hooks
@@ -40,6 +42,13 @@ import {
   type ViewModeType,
 } from "@/hooks/useViewMode";
 
+// Sprint 1: mute hook
+import {
+  SoundMuteContext,
+  useSoundMuteProvider,
+  useSoundMute,
+} from "@/hooks/useSoundMute";
+
 // Step components
 import { DemoWelcome } from "@/components/demo/DemoWelcome";
 import { DemoScoreReveal } from "@/components/demo/DemoScoreReveal";
@@ -56,59 +65,39 @@ import { DemoDealerClose } from "@/components/demo/DemoDealerClose";
 import { DemoAssistant } from "@/components/demo/DemoAssistant";
 import { EndDemoModal } from "@/components/demo/EndDemoModal";
 
-/* ──────────────── All possible steps ──────────────── */
-const ALL_STEPS = [
-  { key: "welcome",       label: "Welcome",       color: "#3b82f6" },
+// Sprint 1 components
+import { DemoStepWrapper } from "@/components/demo/DemoStepWrapper";
+import { DemoProgressBar, type StepDef } from "@/components/demo/DemoProgressBar";
+
+// Sprint 2 components
+import { DemoConcernIntake, type ConcernData } from "@/components/demo/DemoConcernIntake";
+import { DemoRoomImpact } from "@/components/demo/DemoRoomImpact";
+import { DemoTrustProof } from "@/components/demo/DemoTrustProof";
+
+/* ──────────────── All possible steps (15-step order) ──────────────── */
+const ALL_STEPS: StepDef[] = [
+  { key: "intake",         label: "Intake",        color: "#8b5cf6" },   // Sprint 2A
+  { key: "welcome",        label: "Welcome",       color: "#3b82f6" },
   { key: "score",          label: "AquaScore",     color: "#10b981" },
   { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },
   { key: "impact",         label: "Impact",        color: "#f43f5e" },
+  { key: "rooms",          label: "Rooms",         color: "#f43f5e" },   // Sprint 2B
   { key: "test",           label: "Live Test",     color: "#06b6d4" },
   { key: "transform",      label: "Transform",     color: "#8b5cf6" },
+  { key: "boost",          label: "Boost",         color: "#f59e0b" },
   { key: "system",         label: "System",        color: "#6366f1" },
+  { key: "trust",          label: "Trust",         color: "#22c55e" },   // Sprint 2C
   { key: "pricing",        label: "Pricing",       color: "#10b981" },
   { key: "comparison",     label: "Compare",       color: "#ec4899" },
-  { key: "boost",          label: "Boost",         color: "#f59e0b" },
   { key: "customerClose",  label: "Close",         color: "#22c55e" },
   { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },
-] as const;
-
-type StepDef = (typeof ALL_STEPS)[number];
+];
 
 /* ──────────────── Helpers ──────────────── */
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-/* ──────────────── Progress bar — mode-aware ──────────────── */
-function ProgressBar({
-  step,
-  steps,
-  isPresentationMode,
-}: {
-  step: number;
-  steps: StepDef[];
-  isPresentationMode: boolean;
-}) {
-  return (
-    <div className="flex gap-0.5">
-      {steps.map((s, i) => (
-        <div
-          key={s.key}
-          className={`flex-1 rounded-full transition-all duration-500 ${isPresentationMode ? "h-1.5" : "h-1"}`}
-          style={{
-            background:
-              i < step
-                ? s.color
-                : i === step
-                  ? `${s.color}80`
-                  : "rgba(255,255,255,0.1)",
-          }}
-        />
-      ))}
-    </div>
-  );
 }
 
 /* ──────────────── Demo Mode Selector (shown on Welcome) ──────────────── */
@@ -200,6 +189,31 @@ function PresentationToggle() {
   );
 }
 
+/* ──────────────── Mute Toggle Button (Sprint 1 addition) ──────────────── */
+function MuteToggle() {
+  const { isMuted, toggleMute } = useSoundMute();
+
+  return (
+    <button
+      onClick={() => {
+        toggleMute();
+      }}
+      className={`flex items-center justify-center rounded-lg p-1.5 transition-all ${
+        isMuted
+          ? "bg-red-400/10 text-red-300 border border-red-400/30"
+          : "bg-white/5 text-white/70 active:bg-white/10"
+      }`}
+      title={isMuted ? "Unmute sounds" : "Mute sounds"}
+    >
+      {isMuted ? (
+        <VolumeX className="size-3.5" />
+      ) : (
+        <Volume2 className="size-3.5" />
+      )}
+    </button>
+  );
+}
+
 /* ──────────────── Swipe Detection Hook ──────────────── */
 function useSwipeNavigation(goNext: () => void, goBack: () => void) {
   const touchStart = useRef<{ x: number; y: number; target: EventTarget | null } | null>(null);
@@ -217,7 +231,6 @@ function useSwipeNavigation(goNext: () => void, goBack: () => void) {
       if (!touchStart.current) return;
 
       // Flag #3: skip swipe if the touch started inside a .swipe-disabled container
-      // (e.g., before/after image sliders, horizontally scrollable areas)
       const target = touchStart.current.target as HTMLElement | null;
       if (target?.closest?.(".swipe-disabled")) {
         touchStart.current = null;
@@ -227,7 +240,7 @@ function useSwipeNavigation(goNext: () => void, goBack: () => void) {
       const dx = e.changedTouches[0].clientX - touchStart.current.x;
       const dy = e.changedTouches[0].clientY - touchStart.current.y;
       touchStart.current = null;
-      if (Math.abs(dx) < 50 || Math.abs(dy) > 30) return; // too short or too vertical
+      if (Math.abs(dx) < 50 || Math.abs(dy) > 30) return;
       if (dx < 0) goNext();
       else goBack();
     },
@@ -244,15 +257,23 @@ export function DemoWizardPage() {
   const presentationCtx = usePresentationModeProvider();
   const demoModeCtx = useDemoModeProvider();
   const viewModeCtx = useViewModeProvider();
+  const soundMuteCtx = useSoundMuteProvider();
+
+  // Sync mute state to the global sound module
+  useEffect(() => {
+    setGlobalMute(soundMuteCtx.isMuted);
+  }, [soundMuteCtx.isMuted]);
 
   return (
-    <PresentationModeContext.Provider value={presentationCtx}>
-      <DemoModeContext.Provider value={demoModeCtx}>
-        <ViewModeContext.Provider value={viewModeCtx}>
-          <DemoWizardInner />
-        </ViewModeContext.Provider>
-      </DemoModeContext.Provider>
-    </PresentationModeContext.Provider>
+    <SoundMuteContext.Provider value={soundMuteCtx}>
+      <PresentationModeContext.Provider value={presentationCtx}>
+        <DemoModeContext.Provider value={demoModeCtx}>
+          <ViewModeContext.Provider value={viewModeCtx}>
+            <DemoWizardInner />
+          </ViewModeContext.Provider>
+        </DemoModeContext.Provider>
+      </PresentationModeContext.Provider>
+    </SoundMuteContext.Provider>
   );
 }
 
@@ -286,17 +307,19 @@ function DemoWizardInner() {
   const [pricingState, setPricingState] = useState<PricingState | null>(null);
   const [boostApplied, setBoostApplied] = useState(false);
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
+  const [concerns, setConcerns] = useState<ConcernData | null>(null);
+
+  // skipScoreAnimation from company config (Sprint 1 flag #2)
+  const skipScoreAnimation = !!(company as any)?.demoConfig?.skipScoreAnimation;
 
   /* ─── Active steps based on demo mode ─── */
   const activeSteps: StepDef[] = useMemo(() => {
-    // Check for company-level mode config
     const companyModes = (company as any)?.demoConfig?.demoModes as
       | Record<string, string[]>
       | undefined;
 
     const modeKeys = companyModes?.[demoMode] ?? DEFAULT_MODE_STEPS[demoMode];
 
-    // "full" mode (empty array) means all steps
     if (!modeKeys || modeKeys.length === 0) {
       return [...ALL_STEPS];
     }
@@ -450,6 +473,7 @@ function DemoWizardInner() {
 
           {/* Center: controls cluster */}
           <div className="flex items-center gap-2">
+            <MuteToggle />
             <PresentationToggle />
             <ViewModeToggle />
             {showStepLabel && (
@@ -478,132 +502,161 @@ function DemoWizardInner() {
         </div>
       )}
 
-      {/* ─── Progress Bar ─── */}
+      {/* ─── Progress Bar (Sprint 1D: grouped) ─── */}
       {showProgressBar && (
         <div className="shrink-0 px-4 pb-3">
-          <ProgressBar
-            step={currentStep}
+          <DemoProgressBar
+            currentStepKey={stepKey}
             steps={activeSteps}
             isPresentationMode={isPresentationMode}
+            grouped={activeSteps.length > 6}
           />
         </div>
       )}
 
-      {/* ─── Step Content ─── */}
+      {/* ─── Step Content (Sprint 1G: wrapped in error boundary) ─── */}
       <div
         className={`flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
       >
-        {stepKey === "welcome" && (
-          <div className="space-y-5">
-            <DemoWelcome
+        <DemoStepWrapper stepName={stepKey}>
+          {stepKey === "intake" && (
+            <DemoConcernIntake
+              onNext={(data) => {
+                setConcerns(data);
+                goNext();
+              }}
+              onBack={goBack}
+              initial={concerns}
+            />
+          )}
+          {stepKey === "welcome" && (
+            <div className="space-y-5">
+              <DemoWelcome
+                report={report}
+                companyColor={companyColor}
+                onNext={goNext}
+              />
+              {/* Demo Mode Selector — shown on Welcome before starting */}
+              {!demoStarted && (
+                <div className="mx-auto max-w-lg space-y-3 pb-4">
+                  <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
+                    Demo Mode
+                  </p>
+                  <DemoModeSelector
+                    companyDemoModes={
+                      (company as any)?.demoConfig?.demoModes
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          {stepKey === "score" && (
+            <DemoScoreReveal
+              score={score}
+              contaminants={contaminants}
               report={report}
-              companyColor={companyColor}
+              onNext={goNext}
+              onBack={goBack}
+              skipScoreAnimation={skipScoreAnimation}
+            />
+          )}
+          {stepKey === "contaminants" && (
+            <DemoContaminantWalkthrough
+              contaminants={contaminants}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
+          {stepKey === "impact" && (
+            <DemoImpact onNext={goNext} onBack={goBack} />
+          )}
+          {stepKey === "rooms" && (
+            <DemoRoomImpact
+              onNext={goNext}
+              onBack={goBack}
+              concerns={concerns}
+            />
+          )}
+          {stepKey === "test" && (
+            <DemoLiveTest
+              report={report}
+              contaminants={contaminants}
+              liveReadings={liveReadings}
+              onUpdateReadings={setLiveReadings}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
+          {stepKey === "transform" && (
+            <DemoScoreTransform
+              score={score ?? 0}
+              report={report}
+              company={company}
+              contaminants={contaminants}
+              liveReadings={liveReadings}
+              projectedScore={projectedScore ?? score ?? 0}
               onNext={goNext}
             />
-            {/* Demo Mode Selector — shown on Welcome before starting */}
-            {!demoStarted && (
-              <div className="mx-auto max-w-lg space-y-3 pb-4">
-                <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
-                  Demo Mode
-                </p>
-                <DemoModeSelector
-                  companyDemoModes={
-                    (company as any)?.demoConfig?.demoModes
-                  }
-                />
-              </div>
-            )}
-          </div>
-        )}
-        {stepKey === "score" && (
-          <DemoScoreReveal
-            score={score}
-            contaminants={contaminants}
-            report={report}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {stepKey === "contaminants" && (
-          <DemoContaminantWalkthrough
-            contaminants={contaminants}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {stepKey === "impact" && (
-          <DemoImpact onNext={goNext} onBack={goBack} />
-        )}
-        {stepKey === "test" && (
-          <DemoLiveTest
-            report={report}
-            contaminants={contaminants}
-            liveReadings={liveReadings}
-            onUpdateReadings={setLiveReadings}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {stepKey === "transform" && (
-          <DemoScoreTransform
-            score={score ?? 0}
-            report={report}
-            company={company}
-            contaminants={contaminants}
-            liveReadings={liveReadings}
-            projectedScore={projectedScore ?? score ?? 0}
-            onNext={goNext}
-          />
-        )}
-        {stepKey === "system" && (
-          <DemoSystemInfo company={company} report={report} onNext={goNext} />
-        )}
-        {stepKey === "pricing" && (
-          <DemoPricing
-            company={company}
-            onNext={goNext}
-            onPricingChange={setPricingState}
-            initialState={pricingState}
-          />
-        )}
-        {stepKey === "comparison" && (
-          <DemoCostComparison
-            company={company}
-            monthlyPayment={pricingState?.monthlyPayment}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {stepKey === "boost" && (
-          <DemoScoreBoost
-            projectedScore={projectedScore ?? score ?? 0}
-            boostedScore={boostedScore}
-            company={company}
-            report={report}
-            onBoostApplied={setBoostApplied}
-            onNext={goNext}
-          />
-        )}
-        {stepKey === "customerClose" && (
-          <DemoCustomerClose
-            report={report}
-            company={company}
-            finalScore={finalScore}
-            companyColor={companyColor}
-            onEndDemo={() => {
-              setIsCustomerHandOff(false);
-              goNext(); // → dealerClose
-            }}
-          />
-        )}
-        {stepKey === "dealerClose" && (
-          <DemoDealerClose
-            report={report}
-            score={finalScore}
-            companyColor={companyColor}
-            onEndDemo={exitDemo}
-          />
-        )}
+          )}
+          {stepKey === "system" && (
+            <DemoSystemInfo company={company} report={report} onNext={goNext} />
+          )}
+          {stepKey === "trust" && (
+            <DemoTrustProof
+              company={company}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
+          {stepKey === "pricing" && (
+            <DemoPricing
+              company={company}
+              onNext={goNext}
+              onPricingChange={setPricingState}
+              initialState={pricingState}
+            />
+          )}
+          {stepKey === "comparison" && (
+            <DemoCostComparison
+              company={company}
+              monthlyPayment={pricingState?.monthlyPayment}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
+          {stepKey === "boost" && (
+            <DemoScoreBoost
+              projectedScore={projectedScore ?? score ?? 0}
+              boostedScore={boostedScore}
+              company={company}
+              report={report}
+              onBoostApplied={setBoostApplied}
+              onNext={goNext}
+            />
+          )}
+          {stepKey === "customerClose" && (
+            <DemoCustomerClose
+              report={report}
+              company={company}
+              finalScore={finalScore}
+              companyColor={companyColor}
+              onEndDemo={() => {
+                setIsCustomerHandOff(false);
+                goNext(); // → dealerClose
+              }}
+            />
+          )}
+          {stepKey === "dealerClose" && (
+            <DemoDealerClose
+              report={report}
+              score={finalScore}
+              companyColor={companyColor}
+              demoTime={demoTimer}
+              onEndDemo={exitDemo}
+            />
+          )}
+        </DemoStepWrapper>
       </div>
 
       {/* ─── Bottom nav for middle steps ─── */}
@@ -663,7 +716,6 @@ function DemoWizardInner() {
 
 /* ──────────────── Presentation Mode CSS ──────────────── */
 function PresentationModeStyles() {
-  // Using `zoom` for uniform scaling — avoids fighting Tailwind utility classes (flag #1)
   return (
     <style>{`
       .presentation-mode .presentation-content {
