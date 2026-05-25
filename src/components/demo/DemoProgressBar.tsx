@@ -20,10 +20,10 @@ export interface SectionGroup {
 
 export const SECTION_GROUPS: SectionGroup[] = [
   { label: "Intro", color: "#3b82f6", keys: ["intake", "welcome"] },
-  { label: "Analysis", color: "#f59e0b", keys: ["score", "contaminants", "impact", "rooms"] },
+  { label: "Analysis", color: "#f59e0b", keys: ["score", "contaminants", "topConcerns", "impact", "rooms"] },
   { label: "Testing", color: "#06b6d4", keys: ["test", "transform"] },
   { label: "Solution", color: "#8b5cf6", keys: ["system", "trust", "pricing", "comparison", "boost"] },
-  { label: "Close", color: "#22c55e", keys: ["customerClose", "dealerClose"] },
+  { label: "Close", color: "#22c55e", keys: ["summary", "customerClose", "dealerClose"] },
 ];
 
 interface ProgressBarProps {

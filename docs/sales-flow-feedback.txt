@@ -1,0 +1,829 @@
+Yes. I watched through the presentation visually frame-by-frame. The biggest thing I see is this:
+
+The tool looks powerful, but the sales flow still feels more like a software/report walkthrough than a psychologically guided buying journey.
+
+That is fixable. The structure is close. You already have the right ingredients: score, contaminants, family impact, home impact, live test, system recommendation, proof, savings, pricing, QR handoff. But the emotional pacing and trust sequencing need work.
+
+My Main Diagnosis
+
+Right now the presentation does this:
+
+Collect data → show water score → show contaminants → show impacts → show system → show proof → show investment → show QR
+
+That is logical.
+
+But a buyer does not emotionally process it that way.
+
+A better high-ticket in-home sales flow should feel like:
+
+“I trust this person” → “This is about my home” → “I didn’t know that” → “That concerns me” → “This explains things I’ve noticed” → “There is a clear fix” → “This company seems credible” → “The price makes sense compared to the problem” → “I feel safe saying yes.”
+
+Your app currently has the information, but it needs more emotional choreography.
+
+What You Should Change First
+1. The opening needs a stronger “human agenda” before the score
+
+The first real screen says “Welcome Janet” and then jumps into “Let’s See Your Water Score.”
+
+That is clean, but it is too quick. The consumer has not yet been emotionally prepared for what the score means.
+
+Before showing the score, add a short screen that frames the presentation.
+
+Something like:
+
+“Today we’re going to look at three things:”
+
+What is in the water serving your home
+How it may affect your family, home, and appliances
+What can be done to improve it if you choose to
+
+Then add:
+
+“This is not a pass/fail test. It is a clarity report so you can make an informed decision.”
+
+Why this matters:
+If you show a scary score too early, skeptical buyers may feel like they are being manipulated. If you explain the rules first, the score feels more credible.
+
+2. The water score is good, but the scoring system needs context
+
+The score screen showed a score around 30/100 and labeled the water as At Risk.
+
+That is attention-grabbing, but it creates a trust problem if the buyer does not understand how the score was calculated.
+
+You need a “score explanation” moment before or directly under the score.
+
+Add a simple breakdown:
+
+Your Water Score is based on:
+
+contaminants detected
+levels above health guidelines
+hardness/mineral levels
+disinfectant levels
+whole-home usage exposure
+live in-home test results
+
+Then show:
+
+90–100 Excellent
+70–89 Good
+50–69 Needs Improvement
+0–49 Needs Attention
+
+I would be careful with the label “At Risk.” It is powerful, but it may feel fear-based. I would use:
+
+Needs Attention
+
+or
+
+High Concern
+
+“Your water is at risk” can sound like a scare tactic.
+“Your water needs attention” sounds more professional and consultative.
+
+3. The contaminant list is too dense too early
+
+The contaminant screen shows 23 contaminants detected, with categories like illegal, health, detected, etc.
+
+That is impressive, but it is visually heavy.
+
+The average consumer is not going to process a long contaminant table. They will either skim it, get overwhelmed, or mentally disengage.
+
+You should keep the full list available, but lead with a simplified “Top Concerns” section.
+
+Instead of immediately showing the full contaminant list, show:
+
+Your Top 3 Water Concerns
+1. Disinfection Byproducts
+
+Commonly linked to chlorine treatment and long-term exposure concerns.
+
+2. Hardness / Minerals
+
+Can affect appliances, fixtures, skin, laundry, and plumbing.
+
+3. Chlorine / Taste / Odor
+
+Can affect drinking water, showers, cooking, and daily comfort.
+
+Then add a button:
+
+View Full Contaminant Breakdown
+
+Why this works:
+Consumers buy from clarity. Too much technical proof too early creates cognitive overload.
+
+4. Make the report feel more “local” and less generic
+
+The report says Myrtle Beach City or similar utility data. That is good, but it should feel even more personal.
+
+Right now it feels like:
+
+“Here is a water report.”
+
+It should feel like:
+
+“This is the water profile connected to your home.”
+
+Change wording to:
+
+“This report is based on the utility serving your address.”
+
+Add:
+
+“This is not a national average.”
+
+And if possible:
+
+“Homes in this service area commonly show these same water concerns.”
+
+That one line creates authority and local relevance.
+
+5. The family impact section is one of the strongest parts — keep it, but simplify it
+
+The “How Your Water Affects Your Family” section is good. It connects water to skin, hair, drinking, babies, etc.
+
+But the copy needs to be more conversational and less like a health warning.
+
+For example, instead of:
+
+“Every shower is stripping your skin.”
+
+Use:
+
+“Chlorine and hard minerals can leave skin feeling dry after showers.”
+
+That sounds more believable.
+
+The strongest framing is:
+
+“This is not just drinking water. This is the water your family uses every day for showers, cooking, coffee, ice, laundry, dishes, and bathing.”
+
+That sentence should be repeated somewhere in the presentation because it reframes the whole product from a “water filter” to a whole-home protection system.
+
+6. The home and appliance damage section should become a major value anchor
+
+The appliance/home section is strong because it gives financial justification.
+
+The screen shows things like:
+
+dishwasher
+ice maker
+washing machine
+plumbing
+possible savings over 10 years
+$6,000–$10,000 potential savings
+
+This is good, but it needs to be moved closer to pricing.
+
+Right now, it appears before the live test and system reveal. I would use it twice:
+
+First mention it briefly during problem education.
+
+Then bring it back right before pricing as the financial justification.
+
+The buyer needs to hear:
+
+“This is not only a health/comfort issue. It can also be a home maintenance and appliance issue.”
+
+That gives them logical permission to spend money.
+
+7. The live water test should happen earlier
+
+The live test appears around the middle, after the contaminant and impact sections.
+
+I would move the live test earlier.
+
+Best sequence:
+
+Welcome
+Local water report
+Initial score
+Live water test
+Updated score
+Explain what it means
+Family/home impact
+Solution
+
+Why?
+
+Because the live test creates belief.
+
+Public data is credible, but physical demonstration is emotionally stronger.
+
+A homeowner may think:
+
+“That report could be generic.”
+
+But when they see their own tap water tested, it becomes harder to dismiss.
+
+The live test should be the “oh wow” moment.
+
+8. The score transformation is powerful — make it more dramatic
+
+The presentation shows a new score around 55 after test inputs.
+
+Then later it shows a boosted score around 94/99.
+
+This is one of your best psychological assets.
+
+You should turn this into a clear before/after transformation:
+
+Current Water Score
+
+30 / 100
+
+After Live Test
+
+55 / 100
+
+With Recommended System
+
+94 / 100
+
+The buyer should visually see:
+
+Before → Verified → Improved
+
+That is your emotional arc.
+
+Right now, the score changes are cool, but they feel like separate screens. They need to feel like a story.
+
+9. The system recommendation section needs to feel less like a product list
+
+The system screen shows features like carbon filtration, softening, sediment filtration, control valve, brine tank, bypass valve, installation, warranty, etc.
+
+That is useful, but it is too technical for most consumers.
+
+Create two layers:
+
+Simple Consumer Explanation
+
+What this system does for your home:
+
+reduces chlorine taste and odor
+improves shower and skin comfort
+protects appliances from hard water buildup
+improves laundry and cleaning
+gives cleaner water from every tap
+
+Then below that:
+
+Technical System Details
+
+carbon filtration
+sediment filtration
+water softener
+smart valve
+bypass valve
+professional installation
+
+The consumer needs benefits first, technical proof second.
+
+10. The proof section is good, but it needs more believable trust proof
+
+The screen shows reviews, certifications, and “500+ homes protected.”
+
+That is the right idea.
+
+But I would make it more local and specific.
+
+Instead of only:
+
+500+ homes protected
+
+Use:
+
+500+ homes protected in the Carolinas
+
+or
+
+Trusted by homeowners across Myrtle Beach, Conway, Florence, and surrounding areas
+
+If this is for dealers using the software, let each dealer customize this.
+
+Also add:
+
+real install photos
+before/after water test photos
+technician photo
+company owner photo
+years in business
+warranty badge
+financing badge
+Google review badge
+
+The more expensive the sale, the more the buyer needs reassurance that the company is real.
+
+11. The pricing screen is the biggest problem
+
+This is the section I would fix immediately.
+
+In the video, the investment screen showed things like:
+
+Project price: $0
+Exclusive price: $0
+Then discounts created a negative number like -$840
+Then financing showed a negative monthly number.
+
+That cannot happen in front of a customer.
+
+Even if it is because this was a demo, the app should never allow that state.
+
+This destroys trust instantly.
+
+You need safeguards:
+
+hide investment screen until a valid system price is entered
+do not allow discounts to exceed total price
+do not show financing if price is $0
+do not show negative monthly payments
+do not show “save $0”
+require dealer to enter price before moving forward
+show “Price pending” only on dealer side, never consumer side
+
+This is not a small bug. This is a sales-killer.
+
+A buyer seeing a broken price screen subconsciously thinks:
+
+“This company is not professional.”
+
+12. The discount stack feels too salesy
+
+The discount options shown:
+
+same-day decision
+referral credit
+military/first responder
+senior discount
+
+This can work, but be careful. Too many discounts can make the original price feel fake.
+
+A homeowner may think:
+
+“If they can just take $1,000 off, was the price inflated?”
+
+Better structure:
+
+Available Savings
+Installation scheduling credit
+Referral program credit
+Community appreciation discount
+Senior / military / first responder discount
+
+But only show discounts that actually apply.
+
+Also, instead of making the salesperson click a bunch of discounts in front of the customer, make the app show a clean final summary:
+
+Retail System Package: $10,995
+Current Program Savings: -$1,250
+Your Installed Price: $9,745
+Estimated Monthly Payment: $148–$176/mo
+
+That feels cleaner and more premium.
+
+13. The monthly expense comparison is strong but should come before final price
+
+The monthly expenses screen shows things like bottled water, water delivery, pitcher filters, appliance repairs, skincare products, plumbing maintenance, etc.
+
+That is a great section.
+
+But it should be used as a price anchor before the close.
+
+Best order:
+
+Show current hidden water costs
+Show yearly cost of doing nothing
+Show filtration yearly equivalent
+Then show system investment
+
+This makes the price feel less random.
+
+The buyer should think:
+
+“I am already paying for bad water in other ways.”
+
+That is the psychological bridge to price.
+
+14. The “Boost Your Score Even Higher” upsell feels risky
+
+The screen says something like:
+
+Boost Your Score Even Higher
+Score 94
+Unlock Score Boost
+
+This may be useful for add-ons, but in a sales presentation it can create doubt.
+
+Buyer may think:
+
+“Wait, I thought the system fixed the problem. Now there’s another upsell?”
+
+If you keep it, rename it.
+
+Instead of:
+
+Boost Your Score Even Higher
+
+Use:
+
+Optional Enhancements
+
+or
+
+Premium Protection Options
+
+And explain:
+
+“The recommended system solves the main issues. These are optional upgrades for homeowners who want maximum protection.”
+
+That removes the feeling that the base solution is incomplete.
+
+15. The final QR handoff is good, but the emotional close is missing
+
+The final screen has a QR code and says hand back to dealer.
+
+That is functional, but it needs a stronger buyer reassurance moment.
+
+Add a final summary screen before QR:
+
+Your Home Water Plan
+
+Current Score: 30
+Projected Score: 94
+Main Concerns: chlorine, hardness, disinfection byproducts
+Recommended Solution: whole-home filtration + softening
+Estimated Benefits: cleaner drinking water, better showers, appliance protection, reduced bottled water dependence
+Warranty: 20 years
+Next Step: choose installation date / review financing
+
+Then QR.
+
+This helps the buyer feel like the presentation reached a clear conclusion.
+
+The Ideal New Flow
+
+Here is the exact presentation flow I would change it to:
+
+1. Welcome / Set Expectations
+
+“Today we’ll look at your local water profile, verify it with a live test, and show what options exist if you want to improve it.”
+
+2. Home Profile
+
+Show:
+
+customer name
+address/service area
+utility provider
+source type
+household size
+pets/kids if entered
+current water setup
+3. Local Water Report
+
+Show:
+
+“Based on the utility serving your address”
+detected contaminants
+top 3 concerns
+avoid overwhelming table at first
+4. Initial Water Score
+
+Show current score with simple explanation.
+
+5. Live Test
+
+Do the physical test early.
+
+Let the homeowner see:
+
+chlorine
+hardness
+TDS
+pH
+6. Updated Score
+
+Show how the live test confirms or changes the score.
+
+7. What This Means for Your Family
+
+Show daily use:
+
+drinking
+cooking
+showers
+baby/kids
+pets
+skin/hair
+8. What This Means for Your Home
+
+Show:
+
+appliances
+fixtures
+water heater
+laundry
+plumbing
+cleaning
+9. Recommended Solution
+
+Show plain-English benefits first.
+
+Then technical system details.
+
+10. Projected Score Improvement
+
+Show:
+
+Current: 30 → With System: 94
+
+This should be one of the most dramatic screens.
+
+11. Proof
+
+Show:
+
+reviews
+local installs
+certifications
+warranty
+install photos
+dealer credibility
+12. Cost of Doing Nothing
+
+Show hidden monthly/yearly water costs.
+
+13. Investment
+
+Show clean pricing, no negative numbers, no confusing discount stack.
+
+14. Financing
+
+Show simple monthly range.
+
+15. Decision Page
+
+Give dealer a clean close screen:
+
+Option A: Move forward today
+Option B: Schedule follow-up
+Option C: Send report only
+
+16. Customer Report QR
+
+Send them home with the report.
+
+What I Would Change Visually
+Keep
+dark premium theme
+score ring
+progress bar
+gradient buttons
+card layout
+contaminant categories
+before/after scoring
+QR report handoff
+Change
+
+The design is sleek, but it feels a little too “software dashboard.” For homeowners, make it feel more like a premium health/home report.
+
+Use more:
+
+larger headlines
+fewer cards per screen
+more white space
+fewer tiny text blocks
+simple emotional labels
+clearer before/after visuals
+home/family imagery
+water glass visuals
+local map/utility badge
+dealer branding/photo
+
+Right now, some screens feel like the dealer is operating software in front of the homeowner. It should feel like the homeowner is watching a guided story about their home.
+
+Dealer-Side Issues
+
+From a dealer perspective, this is very strong because it gives reps structure.
+
+But you need to add more rep guidance.
+
+Add small private dealer prompts that the customer does not see, such as:
+
+Ask homeowner:
+“What concerns you more: drinking water, shower water, or protecting appliances?”
+
+Pause here:
+“Let the customer react before continuing.”
+
+Say this:
+“This is why we test both the local report and the water coming from your tap.”
+
+Watch for objection:
+If they say “we drink bottled water,” move to shower/cooking/appliance section.
+
+This turns the app from a report into a sales training system.
+
+Consumer-Side Issues
+
+From a consumer perspective, the tool looks impressive, but there are moments where it could trigger skepticism.
+
+Potential subconscious reactions:
+
+“This feels scary.”
+
+Caused by:
+
+red score
+“At Risk”
+contaminant count
+health warnings
+
+Fix:
+
+Use calm language and say:
+
+“We are not here to scare you. We are here to show you what is in the water and what options exist.”
+
+“This feels complicated.”
+
+Caused by:
+
+contaminant lists
+many categories
+many numbers
+technical system parts
+
+Fix:
+
+Lead with top 3 concerns and plain-English meaning.
+
+“This feels like a sales trick.”
+
+Caused by:
+
+discounts
+same-day savings
+score boost upsell
+big projected savings without enough explanation
+
+Fix:
+
+Use transparent pricing and explain assumptions.
+
+“Can I trust this?”
+
+Caused by:
+
+no visible source explanation
+generic reviews
+price glitches
+too much dramatic wording
+
+Fix:
+
+Show source, methodology, warranty, local proof, and real company details.
+
+Exact Copy Changes I Would Make
+Replace “At Risk”
+
+Use:
+
+Needs Attention
+
+or
+
+High Concern Area
+
+Replace “Your water has significant quality concerns that should be addressed immediately”
+
+Use:
+
+Your water profile shows several concerns worth addressing, especially because this water is used throughout the home every day.
+
+Replace “Every shower is stripping your skin”
+
+Use:
+
+Chlorine and hard minerals can contribute to dry skin, dry hair, and irritation after repeated showers.
+
+Replace “Hard water is silently destroying your home”
+
+Use:
+
+Hard water can slowly wear on appliances, fixtures, plumbing, and laundry over time.
+
+Replace “Boost Your Score Even Higher”
+
+Use:
+
+Optional Premium Protection
+
+Replace “Unlock Score Boost”
+
+Use:
+
+View Optional Upgrades
+
+Replace “Hand Back to Dealer”
+
+Use:
+
+Review Your Options With Your Water Specialist
+
+That sounds more premium and less transactional.
+
+Biggest Missing Piece
+
+The presentation needs more choice-based personalization.
+
+At the beginning, ask:
+
+What matters most to you?
+
+drinking water
+shower/skin/hair
+kids/family
+appliances
+taste/smell
+stains/build-up
+saving money on bottled water
+
+Then the report should emphasize that concern throughout.
+
+Example:
+
+If they choose “kids/family,” the family section becomes more prominent.
+
+If they choose “appliances,” the home cost section becomes more prominent.
+
+If they choose “taste/smell,” the chlorine and drinking water section becomes more prominent.
+
+This would make the app feel intelligent and personal.
+
+The Most Important Sales Psychology Fix
+
+Right now the presentation tells the buyer:
+
+“Here is what is wrong with your water.”
+
+It should make the buyer say:
+
+“Oh, that explains what I’ve been noticing.”
+
+That is the difference between information and persuasion.
+
+So add prompts like:
+
+“Have you noticed dry skin after showers?”
+“Do you see white buildup on faucets?”
+“Do you buy bottled water?”
+“Do you use a fridge filter or pitcher?”
+“Do your dishes ever come out spotted?”
+“Does your water have a chlorine smell?”
+“Have you ever had your water heater serviced?”
+
+When the buyer says yes, the system should connect it back:
+
+“That matches what this report is showing.”
+
+That one line is extremely powerful.
+
+Final Priority List
+Fix immediately
+Remove all possible $0, negative price, and negative monthly payment states.
+Add score methodology/context before showing scary score.
+Simplify contaminants into top 3 concerns first.
+Move live water test earlier.
+Change fear-heavy wording to calm authority.
+Add final summary before QR.
+Make pricing cleaner and less gimmicky.
+Add next
+Dealer talking prompts.
+Concern-based personalization.
+Local proof and install photos.
+Better before/after score transformation.
+Cost-of-inaction screen before pricing.
+Customer-friendly benefit layer before technical system details.
+Big future upgrade
+
+Build the presentation around a dynamic emotional path:
+
+If customer cares about family → family-heavy version
+If customer cares about money → appliance/savings-heavy version
+If customer cares about taste → drinking/chlorine-heavy version
+If customer is skeptical → proof/data-heavy version
+If customer is emotional → story/visual-heavy version
+
+That would make this feel less like software and more like an elite in-home closing system.
+
+Bottom Line
+
+The presentation has the right foundation and looks much better than most dealer tools. But to make it convert at a high level, it needs to stop feeling like a report viewer and start feeling like a guided emotional decision journey.
+
+The best version of this does not just show water data.
+
+It makes the homeowner think:
+
+“This is my home, this affects my family, this explains problems I already notice, this company seems credible, the solution makes sense, and I would feel irresponsible ignoring it.”

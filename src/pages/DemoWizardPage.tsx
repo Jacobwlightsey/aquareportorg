@@ -61,6 +61,8 @@ import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
 import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
 import { DemoScoreBoost } from "@/components/demo/DemoScoreBoost";
 import { DemoCustomerClose } from "@/components/demo/DemoCustomerClose";
+import { DemoTopConcerns } from "@/components/demo/DemoTopConcerns";
+import { DemoSummaryScreen } from "@/components/demo/DemoSummaryScreen";
 import { DemoDealerClose } from "@/components/demo/DemoDealerClose";
 import { DemoAssistant } from "@/components/demo/DemoAssistant";
 import { EndDemoModal } from "@/components/demo/EndDemoModal";
@@ -99,6 +101,7 @@ const ALL_STEPS: StepDef[] = [
   { key: "welcome",        label: "Welcome",       color: "#3b82f6" },   // 1. Welcome
   { key: "score",          label: "AquaScore",     color: "#10b981" },   // 2. Score
   { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },   // 3. Contaminants
+  { key: "topConcerns",    label: "Concerns",      color: "#f97316" },   // 3b. Top 3 Concerns (Phase 1)
   { key: "impact",         label: "Impact",        color: "#f43f5e" },   // 4. Impact
   { key: "rooms",          label: "Rooms",         color: "#f43f5e" },   // 4b. Room-by-room (Sprint 2B)
   { key: "test",           label: "Live Test",     color: "#06b6d4" },   // 5. Live Test
@@ -108,7 +111,8 @@ const ALL_STEPS: StepDef[] = [
   { key: "pricing",        label: "Pricing",       color: "#10b981" },   // 8. Pricing
   { key: "comparison",     label: "Compare",       color: "#ec4899" },   // 9. Comparison
   { key: "boost",          label: "Boost",         color: "#f59e0b" },   // 10. RO upsell (after compare)
-  { key: "customerClose",  label: "Close",         color: "#22c55e" },   // 11. Customer Close
+  { key: "summary",        label: "Summary",       color: "#10b981" },   // 11. Your Home Water Plan (Phase 1)
+  { key: "customerClose",  label: "Close",         color: "#22c55e" },   // 12. Customer Close
   { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },   // 12. Dealer Close
 ];
 
@@ -771,6 +775,12 @@ function DemoWizardInner() {
               onBack={goBack}
             />
           )}
+          {stepKey === "topConcerns" && (
+            <DemoTopConcerns
+              contaminants={contaminants}
+              onViewFull={goNext}
+            />
+          )}
           {stepKey === "impact" && (
             <DemoImpact onNext={goNext} onBack={goBack} />
           )}
@@ -835,6 +845,18 @@ function DemoWizardInner() {
               company={company}
               report={report}
               onBoostApplied={setBoostApplied}
+              onNext={goNext}
+            />
+          )}
+          {stepKey === "summary" && (
+            <DemoSummaryScreen
+              report={report}
+              company={company}
+              initialScore={score}
+              projectedScore={projectedScore}
+              contaminants={contaminants}
+              boostApplied={boostApplied}
+              companyColor={companyColor}
               onNext={goNext}
             />
           )}
