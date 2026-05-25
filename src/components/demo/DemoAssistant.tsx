@@ -192,6 +192,7 @@ export function DemoAssistant({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("chat");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastSentRef = useRef(0); // Rate-limit cooldown
 
   const askAI = useAction(api.demoAssistant.askDemoAssistant);
 
@@ -206,7 +207,11 @@ export function DemoAssistant({
 
   const handleSend = async (text?: string) => {
     const msg = text ?? input;
-    if (!msg.trim()) return;
+    if (!msg.trim() || loading) return;
+    // 2s cooldown between requests
+    const now = Date.now();
+    if (now - lastSentRef.current < 2000) return;
+    lastSentRef.current = now;
     setInput("");
 
     const userMsg: Message = { role: "user", content: msg };

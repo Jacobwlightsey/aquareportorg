@@ -325,6 +325,19 @@ function DemoWizardInner() {
   const [coaching, setCoaching] = useState<CoachingState>({ level: "green", tip: "" });
   const [showCoachingTip, setShowCoachingTip] = useState(false);
 
+  // Auto-dismiss coaching tooltip after 4s
+  useEffect(() => {
+    if (!showCoachingTip) return;
+    const t = setTimeout(() => setShowCoachingTip(false), 4000);
+    const handler = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest("[data-coaching-dot]")) {
+        setShowCoachingTip(false);
+      }
+    };
+    document.addEventListener("pointerdown", handler);
+    return () => { clearTimeout(t); document.removeEventListener("pointerdown", handler); };
+  }, [showCoachingTip]);
+
   // skipScoreAnimation from company config (Sprint 1 flag #2)
   const skipScoreAnimation = !!(company as any)?.demoConfig?.skipScoreAnimation;
 
@@ -547,6 +560,7 @@ function DemoWizardInner() {
               {/* Sprint 3E: Coaching indicator */}
               {demoStarted && (
                 <button
+                  data-coaching-dot
                   onClick={() => setShowCoachingTip((s) => !s)}
                   className="relative cursor-pointer"
                   title={coaching.tip}

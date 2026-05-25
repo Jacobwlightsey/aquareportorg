@@ -17,7 +17,7 @@ interface Props {
 export function tierInfo(score: number) {
   if (score >= 80)
     return {
-      tier: "🏆 Gold Tier",
+      tier: "Gold Tier",
       color: "#f59e0b",
       bg: "rgba(245,158,11,0.12)",
       border: "rgba(245,158,11,0.3)",
@@ -27,7 +27,7 @@ export function tierInfo(score: number) {
     };
   if (score >= 60)
     return {
-      tier: "🥈 Silver Tier",
+      tier: "Silver Tier",
       color: "#94a3b8",
       bg: "rgba(148,163,184,0.12)",
       border: "rgba(148,163,184,0.3)",
@@ -37,7 +37,7 @@ export function tierInfo(score: number) {
     };
   if (score >= 40)
     return {
-      tier: "⚠️ Bronze Tier",
+      tier: "Bronze Tier",
       color: "#f97316",
       bg: "rgba(249,115,22,0.12)",
       border: "rgba(249,115,22,0.3)",
@@ -46,7 +46,7 @@ export function tierInfo(score: number) {
       emoji: "⚠️",
     };
   return {
-    tier: "🚨 At Risk",
+    tier: "At Risk",
     color: "#ef4444",
     bg: "rgba(239,68,68,0.12)",
     border: "rgba(239,68,68,0.3)",
