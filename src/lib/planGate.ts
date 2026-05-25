@@ -66,7 +66,7 @@ export const PAGE_MIN_PLAN: Record<string, Plan> = {
   // Free trial gets Growth-level preview for the report experience
   "demo-wizard": "growth",
 
-  // ── Starter ($99/mo) ──
+  // ── Starter ($199/mo) ──
   pipeline: "starter",
   leads: "starter",
   appointments: "starter",
@@ -74,7 +74,7 @@ export const PAGE_MIN_PLAN: Record<string, Plan> = {
   commissions: "starter",
   reviews: "starter",
 
-  // ── Growth ($249/mo) ──
+  // ── Growth ($349/mo) ──
   analytics: "growth",
   "demo-analytics": "growth",
   retention: "growth",
@@ -82,7 +82,7 @@ export const PAGE_MIN_PLAN: Record<string, Plan> = {
   marketing: "growth",
   training: "growth",
 
-  // ── Pro ($499/mo) ──
+  // ── Pro ($599/mo) ──
   "territory-map": "pro",
 };
 
@@ -156,17 +156,17 @@ export function teamLimit(plan: Plan): number {
 
 export function upgradeMessage(feature: string): string {
   const msgs: Record<string, string> = {
-    flipbook: "Upgrade to Starter ($99/mo) to generate flipbook PDFs",
-    consumer_links: "Upgrade to Starter ($99/mo) to send myaquareport.com links",
-    demo_wizard: "Upgrade to Growth ($249/mo) to unlock the in-home Demo Wizard",
-    ai: "Upgrade to Growth ($249/mo) to unlock AI summaries & talking points",
-    verification: "Upgrade to Growth ($249/mo) to verify in-home test results",
-    filtration: "Upgrade to Growth ($249/mo) to verify filtration installations",
-    territory_basic: "Upgrade to Growth ($249/mo) for territory insights",
-    ai_sales_assistant: "Upgrade to Pro ($499/mo) for the AI sales assistant",
-    lead_pipeline: "Upgrade to Pro ($499/mo) to access the lead pipeline",
-    crm: "Upgrade to Pro ($499/mo) for CRM integration access",
-    white_label: "Upgrade to Pro ($499/mo) for white-labeled reports",
+    flipbook: "Upgrade to Starter ($199/mo) to generate flipbook PDFs",
+    consumer_links: "Upgrade to Starter ($199/mo) to send myaquareport.com links",
+    demo_wizard: "Upgrade to Growth ($349/mo) to unlock the in-home Demo Wizard",
+    ai: "Upgrade to Growth ($349/mo) to unlock AI summaries & talking points",
+    verification: "Upgrade to Growth ($349/mo) to verify in-home test results",
+    filtration: "Upgrade to Growth ($349/mo) to verify filtration installations",
+    territory_basic: "Upgrade to Growth ($349/mo) for territory insights",
+    ai_sales_assistant: "Upgrade to Pro ($599/mo) for the AI sales assistant",
+    lead_pipeline: "Upgrade to Pro ($599/mo) to access the lead pipeline",
+    crm: "Upgrade to Pro ($599/mo) for CRM integration access",
+    white_label: "Upgrade to Pro ($599/mo) for white-labeled reports",
   };
   return msgs[feature] || "Upgrade your plan to unlock this feature";
 }
@@ -199,9 +199,9 @@ export function planLabel(plan: Plan): string {
 export function planPrice(plan: Plan): string {
   const prices: Record<string, string> = {
     free: "Free",
-    starter: "$99/mo",
-    growth: "$249/mo",
-    pro: "$499/mo",
+    starter: "$199/mo",
+    growth: "$349/mo",
+    pro: "$599/mo",
     enterprise: "Contact us",
   };
   return prices[plan] || "";

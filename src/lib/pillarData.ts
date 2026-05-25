@@ -149,19 +149,19 @@ The dealers who adopt purpose-built software first gain a significant competitiv
 
 **Free Trial** — 1 premium report with all features unlocked. No credit card required.
 
-**Starter — $99/month**
+**Starter — $199/month**
 - 20 reports/month
 - 2 team members
 - AquaScore™ scoring
 - Digital report sharing
 
-**Growth — $249/month**
+**Growth — $349/month**
 - 50 reports/month
 - 5 team members
 - AI-powered summaries
 - Priority support
 
-**Pro — $499/month**
+**Pro — $599/month**
 - 150+ reports/month
 - 15 team members
 - Full white-label branding
@@ -180,7 +180,7 @@ Every plan includes professional report generation, customer management, and the
       {
         question: "How much does water treatment dealer software cost?",
         answer:
-          "AquaReport pricing starts with a free trial (1 report), then $99/month for Starter (20 reports), $249/month for Growth (50 reports), and $499/month for Pro (150+ reports). No setup fees or long-term contracts required.",
+          "AquaReport pricing starts with a free trial (1 report), then $199/month for Starter (20 reports), $349/month for Growth (50 reports), and $599/month for Pro (150+ reports). No setup fees or long-term contracts required.",
       },
       {
         question: "Can I use AquaReport on my phone or tablet in the field?",

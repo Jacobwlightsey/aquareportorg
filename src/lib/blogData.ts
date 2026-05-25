@@ -55,7 +55,7 @@ export const blogPosts: BlogPost[] = [
       {
         question: "How much does water quality report software cost?",
         answer:
-          "Pricing varies by platform. AquaReport starts free with 1 report, with paid plans from $99/month for 20 reports to $499/month for 150+ reports with white-labeling and AI features.",
+          "Pricing varies by platform. AquaReport starts free with 1 report, with paid plans from $199/month for 20 reports to $599/month for 150+ reports with white-labeling and AI features.",
       },
       {
         question: "Can I brand water quality reports with my company logo?",
@@ -142,11 +142,11 @@ The workflow is straightforward:
 Water quality report software typically follows a monthly SaaS model based on report volume:
 
 - **Free tier:** Most platforms offer 1–3 free reports so you can try the product. AquaReport gives you 1 full-featured premium report free.
-- **Starter ($99/month):** 20 reports/month, 2 team members. Perfect for solo dealers or small operations.
-- **Growth ($249/month):** 50 reports/month, 5 team members, AI-powered sales summaries. For growing dealers.
-- **Pro ($499/month):** 150+ reports/month, 15 team members, full white-label. For larger operations and franchises.
+- **Starter ($199/month):** 20 reports/month, 2 team members. Perfect for solo dealers or small operations.
+- **Growth ($349/month):** 50 reports/month, 5 team members, AI-powered sales summaries. For growing dealers.
+- **Pro ($599/month):** 150+ reports/month, 15 team members, full white-label. For larger operations and franchises.
 
-The ROI math is simple: if professional reports help you close even one additional $3,000 system per month, the software pays for itself 30–100x over.
+The ROI math is simple: if professional reports help you close even one additional $3,000 system per month, the software pays for itself 15–50x over.
 
 ## Getting Started
 
@@ -322,7 +322,7 @@ If you hand over paper results and never follow up, you'll lose most of your lea
       {
         question: "What is the best water testing software for small dealers?",
         answer:
-          "For small water treatment dealers, AquaReport offers the best value — start free with 1 report, then upgrade to the Starter plan at $99/month for 20 reports. It includes professional reporting, the Demo Wizard for in-home sales, and customer delivery via myaquareport.com.",
+          "For small water treatment dealers, AquaReport offers the best value — start free with 1 report, then upgrade to the Starter plan at $199/month for 20 reports. It includes professional reporting, the Demo Wizard for in-home sales, and customer delivery via myaquareport.com.",
       },
       {
         question: "Is there free water testing software?",
@@ -330,7 +330,7 @@ If you hand over paper results and never follow up, you'll lose most of your lea
           "AquaReport offers a free tier that gives you 1 full-featured report — including the AquaScore, branded PDF, and consumer delivery. This lets you try the full platform before committing to a paid plan.",
       },
     ],
-    content: `**The best water testing software for small dealers is one that creates professional reports fast, doesn't break the bank, and actually helps you close more sales — not just document results.** For solo operators and small teams, AquaReport's Starter plan at $99/month delivers professional-grade reporting, automated AquaScore™ grading, and an in-home Demo Wizard that larger competitors charge 3–5x more for.
+    content: `**The best water testing software for small dealers is one that creates professional reports fast, doesn't break the bank, and actually helps you close more sales — not just document results.** For solo operators and small teams, AquaReport's Starter plan at $199/month delivers professional-grade reporting, automated AquaScore™ grading, and an in-home Demo Wizard that larger competitors charge 3–5x more for.
 
 Running a small water treatment dealership means wearing every hat. You're the salesperson, the installer, the accountant, and the marketing department. The last thing you need is clunky software that takes longer to learn than it saves you. But you also can't afford to present test results on a napkin when your competitor is pulling up professional reports on a tablet.
 
@@ -349,10 +349,10 @@ You shouldn't need a training course to use your reporting software. If you can 
 ### Affordable Pricing
 Small dealers need to watch every dollar. Here's how AquaReport's pricing works:
 - **Free:** 1 premium report — try every feature with zero risk
-- **Starter ($99/mo):** 20 reports/month, 2 team members — covers most solo and small operations
-- **Growth ($249/mo):** 50 reports/month, 5 team members — when you start hiring
+- **Starter ($199/mo):** 20 reports/month, 2 team members — covers most solo and small operations
+- **Growth ($349/mo):** 50 reports/month, 5 team members — when you start hiring
 
-At $99/month, you need to close one additional deal per quarter (not per month — per quarter) to see positive ROI. If your average system sells for $3,000+, the math isn't even close.
+At $199/month, you need to close one additional deal per quarter (not per month — per quarter) to see positive ROI. If your average system sells for $3,000+, the math isn't even close.
 
 ### Mobile-Friendly
 You're in people's homes, not behind a desk. Your software needs to work on a tablet or phone. AquaReport's Demo Wizard is specifically designed for tablet use during in-home appointments.
@@ -385,7 +385,7 @@ Now add professional reporting with AquaReport:
 - **Average system price:** $4,000
 - **Monthly revenue:** $16,000
 - **Monthly improvement:** $4,000
-- **AquaReport cost:** $99/month
+- **AquaReport cost:** $199/month
 - **ROI:** 40x
 
 Even if professional reports only help you close one additional deal every other month, you're still looking at a 20x return on your software investment.
@@ -411,7 +411,7 @@ When you grow from 1 to 5 team members, upgrade to the Growth plan and everyone'
 ## Key Takeaways
 
 - Small dealers benefit the most from professional reporting software because the trust gap between "guy with a test kit" and "professional water quality analyst" is huge
-- AquaReport's Starter plan at $99/month is designed for small operations — 20 reports/month covers most solo dealers
+- AquaReport's Starter plan at $199/month is designed for small operations — 20 reports/month covers most solo dealers
 - The ROI math is overwhelmingly positive: one extra close every few months pays for the software many times over
 - Start with the free report to test every feature, then upgrade when you're ready
 - Professional reports don't just help you close — they set you up to scale when you're ready to hire`,
@@ -438,7 +438,7 @@ When you grow from 1 to 5 team members, upgrade to the Growth plan and everyone'
       {
         question: "Which AquaReport plan includes white labeling?",
         answer:
-          "Full white-label customization is available on the Pro plan ($499/month). Starter and Growth plans include company logo and basic branding on reports.",
+          "Full white-label customization is available on the Pro plan ($599/month). Starter and Growth plans include company logo and basic branding on reports.",
       },
     ],
     content: `**White label water quality reports are branded water test documents that display your company's name, logo, and colors — making the report look like it was built entirely by your business, not by a third-party software provider.** For water treatment dealers who want to present the most professional image possible, white labeling eliminates any mention of the reporting platform and puts your brand front and center.
@@ -1723,7 +1723,7 @@ Track these metrics monthly:
       {
         question: "Is water quality report software worth the cost?",
         answer:
-          "At $99/month for AquaReport Starter, you only need one additional sale per month to see massive ROI. If a professional report helps you close even one extra $3,000–$10,000 water treatment system per month, the software pays for itself 30–100x over.",
+          "At $199/month for AquaReport Starter, you only need one additional sale per month to see massive ROI. If a professional report helps you close even one extra $3,000–$10,000 water treatment system per month, the software pays for itself 15–50x over.",
       },
       {
         question:
@@ -1732,7 +1732,7 @@ Track these metrics monthly:
           "Most dealers see improved close rates within their first month of using professional digital reports. The combination of AquaScore-graded reports and the structured Demo Wizard immediately elevates the professionalism and consistency of every presentation.",
       },
     ],
-    content: `**Professional water quality reporting software delivers one of the highest ROIs of any tool a water treatment dealer can invest in — at $99/month, closing just one additional $4,000 system per month represents a 40x return, and most dealers see improved close rates from their very first month.** The math is simple: better presentations close more deals, and the software cost is negligible compared to the revenue it generates.
+    content: `**Professional water quality reporting software delivers one of the highest ROIs of any tool a water treatment dealer can invest in — at $199/month, closing just one additional $4,000 system per month represents a 20x return, and most dealers see improved close rates from their very first month.** The math is simple: better presentations close more deals, and the software cost is negligible compared to the revenue it generates.
 
 If you're evaluating whether to invest in reporting software, this article gives you the exact framework to calculate your expected return. Spoiler: the numbers are overwhelmingly in your favor.
 
@@ -1755,7 +1755,7 @@ Professional reports with AquaScore grading, visual data, and structured present
 - $4,000 average sale
 - Monthly revenue: $24,000
 - **Monthly increase: $6,000**
-- **AquaReport cost: $99/month**
+- **AquaReport cost: $199/month**
 - **ROI: 60x**
 
 Even at a conservative 5% close rate improvement (closing one more deal every 3 months), the ROI is still over 10x.
@@ -1773,7 +1773,7 @@ Data-driven presentations often support larger treatment packages. When the Aqua
 
 ## Real-World Scenario Modeling
 
-### Solo Dealer — Starter Plan ($99/month)
+### Solo Dealer — Starter Plan ($199/month)
 
 | Metric | Before | After | Change |
 |---|---|---|---|
@@ -1782,10 +1782,10 @@ Data-driven presentations often support larger treatment packages. When the Aqua
 | Closes/month | 2.8 | 3.8 | +1 |
 | Avg. sale | $3,500 | $3,850 | +$350 |
 | Monthly revenue | $9,800 | $14,630 | +$4,830 |
-| AquaReport cost | — | $99 | — |
+| AquaReport cost | — | $199 | — |
 | **Net monthly gain** | — | — | **$4,731** |
 
-### Growing Team — Growth Plan ($249/month)
+### Growing Team — Growth Plan ($349/month)
 
 | Metric | Before | After | Change |
 |---|---|---|---|
@@ -1795,10 +1795,10 @@ Data-driven presentations often support larger treatment packages. When the Aqua
 | Closes/month | 11.25 | 15.75 | +4.5 |
 | Avg. sale | $4,000 | $4,500 | +$500 |
 | Monthly revenue | $45,000 | $70,875 | +$25,875 |
-| AquaReport cost | — | $249 | — |
+| AquaReport cost | — | $349 | — |
 | **Net monthly gain** | — | — | **$25,626** |
 
-### Large Operation — Pro Plan ($499/month)
+### Large Operation — Pro Plan ($599/month)
 
 | Metric | Before | After | Change |
 |---|---|---|---|
@@ -1808,7 +1808,7 @@ Data-driven presentations often support larger treatment packages. When the Aqua
 | Closes/month | 33 | 45 | +12 |
 | Avg. sale | $4,500 | $5,000 | +$500 |
 | Monthly revenue | $148,500 | $225,000 | +$76,500 |
-| AquaReport cost | — | $499 | — |
+| AquaReport cost | — | $599 | — |
 | **Net monthly gain** | — | — | **$76,001** |
 
 ## What Drives the Close Rate Improvement?
@@ -1827,22 +1827,22 @@ Several specific features contribute to higher close rates:
 
 ## The Cost of Waiting
 
-Every month without professional reporting is a month of lost revenue. If professional reports would help you close even one additional $4,000 deal per month, waiting 6 months costs you $24,000 in lost revenue — 240x the cost of the software.
+Every month without professional reporting is a month of lost revenue. If professional reports would help you close even one additional $4,000 deal per month, waiting 6 months costs you $24,000 in lost revenue — 120x the cost of the software.
 
-The risk of trying AquaReport is one month of subscription ($99). The risk of not trying it is thousands in lost sales you'll never know about.
+The risk of trying AquaReport is one month of subscription ($199). The risk of not trying it is thousands in lost sales you'll never know about.
 
 ## Getting Started
 
 1. **Sign up free** at aquareport.org — your first premium report is included at no cost
 2. **Use the free report on your next appointment** — experience the full workflow
 3. **Compare results** to your typical presentation — did the homeowner engage differently?
-4. **Upgrade to Starter ($99/month)** when you're ready for consistent professional reporting
+4. **Upgrade to Starter ($199/month)** when you're ready for consistent professional reporting
 5. **Track your close rate** before and after — let the data tell the story
 
 ## Key Takeaways
 
 - Water quality reporting software delivers 10–60x ROI depending on your volume and close rate improvement
-- At $99/month, closing one additional $4,000 system pays for the software 40x over
+- At $199/month, closing one additional $4,000 system pays for the software 20x over
 - The ROI compounds: better close rates + higher average sale prices + referral leads + time savings
 - Every month of delay is lost revenue from deals you would have closed with professional reports
 - Start with the free report to prove the concept, then upgrade when you see the difference`,
