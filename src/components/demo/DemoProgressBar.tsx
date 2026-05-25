@@ -1,6 +1,9 @@
-/* ──── Sprint 1D: Grouped section progress bar ──── */
+/* ──── Grouped Section Progress Bar ────
+   Minimal, clean. designTokens colors.
+   ──── */
 
 import { Check } from "lucide-react";
+import { colors } from "@/lib/designTokens";
 
 export interface StepDef {
   key: string;
@@ -8,10 +11,6 @@ export interface StepDef {
   color: string;
 }
 
-/**
- * Group steps into logical sections for a cleaner progress visualization.
- * Each section has a label, color, and array of step keys it contains.
- */
 export interface SectionGroup {
   label: string;
   color: string;
@@ -19,31 +18,24 @@ export interface SectionGroup {
 }
 
 export const SECTION_GROUPS: SectionGroup[] = [
-  { label: "Your Home",   color: "#3b82f6", keys: ["intake", "welcome", "homeProfile", "customerConcerns"] },
-  { label: "Diagnosis",   color: "#f59e0b", keys: ["contaminants", "topConcerns", "score"] },
-  { label: "Verification",color: "#06b6d4", keys: ["test", "verifiedScore"] },
-  { label: "Impact",      color: "#f43f5e", keys: ["impact", "rooms"] },
-  { label: "Solution",    color: "#8b5cf6", keys: ["system", "transform", "trust"] },
-  { label: "Investment",  color: "#10b981", keys: ["comparison", "pricing", "boost"] },
-  { label: "Decision",    color: "#22c55e", keys: ["summary", "decision", "customerClose", "dealerClose"] },
+  { label: "Your Home",    color: "#3b82f6", keys: ["intake", "welcome", "homeProfile", "customerConcerns"] },
+  { label: "Diagnosis",    color: colors.warning, keys: ["contaminants", "topConcerns", "score"] },
+  { label: "Verification", color: colors.primary, keys: ["test", "verifiedScore"] },
+  { label: "Impact",       color: colors.critical, keys: ["impact", "rooms"] },
+  { label: "Solution",     color: "#8b5cf6", keys: ["system", "transform", "trust"] },
+  { label: "Investment",   color: colors.success, keys: ["comparison", "pricing", "boost"] },
+  { label: "Decision",     color: "#22c55e", keys: ["summary", "decision", "customerClose", "dealerClose"] },
 ];
 
 interface ProgressBarProps {
   currentStepKey: string;
   steps: StepDef[];
   isPresentationMode: boolean;
-  /** Use grouped mode (default) or flat mode */
   grouped?: boolean;
 }
 
-export function DemoProgressBar({
-  currentStepKey,
-  steps,
-  isPresentationMode,
-  grouped = true,
-}: ProgressBarProps) {
+export function DemoProgressBar({ currentStepKey, steps, isPresentationMode, grouped = true }: ProgressBarProps) {
   if (!grouped) {
-    // Flat mode — same as original but step-aware
     const stepIdx = steps.findIndex((s) => s.key === currentStepKey);
     return (
       <div className="flex gap-0.5">
@@ -52,12 +44,7 @@ export function DemoProgressBar({
             key={s.key}
             className={`flex-1 rounded-full transition-all duration-500 ${isPresentationMode ? "h-1.5" : "h-1"}`}
             style={{
-              background:
-                i < stepIdx
-                  ? s.color
-                  : i === stepIdx
-                    ? `${s.color}80`
-                    : "rgba(255,255,255,0.1)",
+              background: i < stepIdx ? s.color : i === stepIdx ? `${s.color}80` : `${colors.textFaint}15`,
             }}
           />
         ))}
@@ -65,23 +52,15 @@ export function DemoProgressBar({
     );
   }
 
-  // Grouped mode: show section pills
   const stepKeys = steps.map((s) => s.key);
   const currentIdx = stepKeys.indexOf(currentStepKey);
 
-  // Filter to only sections that have active steps
-  const activeSections = SECTION_GROUPS.filter((sg) =>
-    sg.keys.some((k) => stepKeys.includes(k)),
-  );
+  const activeSections = SECTION_GROUPS.filter((sg) => sg.keys.some((k) => stepKeys.includes(k)));
 
   return (
     <div className="flex items-center gap-1.5">
       {activeSections.map((section) => {
-        // Find the first and last step indices for this section
-        const sectionStepIndices = section.keys
-          .map((k) => stepKeys.indexOf(k))
-          .filter((i) => i >= 0);
-
+        const sectionStepIndices = section.keys.map((k) => stepKeys.indexOf(k)).filter((i) => i >= 0);
         if (sectionStepIndices.length === 0) return null;
 
         const firstIdx = Math.min(...sectionStepIndices);
@@ -91,26 +70,15 @@ export function DemoProgressBar({
         const isCurrent = currentIdx >= firstIdx && currentIdx <= lastIdx;
         const isPending = currentIdx < firstIdx;
 
-        // Sub-progress within section
         const stepsInSection = sectionStepIndices.length;
         const stepsCompleted = sectionStepIndices.filter((i) => i < currentIdx).length;
-        const subProgress = isCurrent
-          ? Math.max(stepsCompleted / stepsInSection, 0.1)
-          : isComplete
-            ? 1
-            : 0;
+        const subProgress = isCurrent ? Math.max(stepsCompleted / stepsInSection, 0.1) : isComplete ? 1 : 0;
 
         return (
           <div key={section.label} className="flex-1 flex flex-col items-center gap-1">
-            {/* Section label */}
             <span
-              className={`text-[8px] font-bold uppercase tracking-wider transition-all ${
-                isCurrent
-                  ? "text-white/70"
-                  : isComplete
-                    ? "text-white/40"
-                    : "text-white/20"
-              } ${isPresentationMode ? "text-[10px]" : ""}`}
+              className={`font-bold uppercase tracking-wider transition-all ${isPresentationMode ? "text-[10px]" : "text-[8px]"}`}
+              style={{ color: isCurrent ? colors.textSecondary : isComplete ? colors.textFaint : `${colors.textFaint}50` }}
             >
               {isComplete ? (
                 <span className="flex items-center gap-0.5">
@@ -121,12 +89,9 @@ export function DemoProgressBar({
                 section.label
               )}
             </span>
-            {/* Bar */}
             <div
-              className={`w-full rounded-full overflow-hidden ${
-                isPresentationMode ? "h-1.5" : "h-1"
-              }`}
-              style={{ background: "rgba(255,255,255,0.08)" }}
+              className={`w-full rounded-full overflow-hidden ${isPresentationMode ? "h-1.5" : "h-1"}`}
+              style={{ background: `${colors.textFaint}15` }}
             >
               <div
                 className="h-full rounded-full transition-all duration-500"

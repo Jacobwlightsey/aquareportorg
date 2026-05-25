@@ -1,35 +1,25 @@
-/* ──── Sprint 2C: Trust & Proof Section ──── */
+/* ──── Trust & Proof — "Real Results" ────
+   Fix #6: normalize report field names (customerCity/city, customerState/state)
+   Surface cards, designTokens colors.
+   ──── */
 
 import { Award, Camera, ChevronLeft, ChevronRight, Home, ShieldCheck, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { playTapSound, haptic } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
+import { colors } from "@/lib/designTokens";
 
 interface Props {
   company: any;
-  /** Report data — used for local area info (city, state, utilityName) */
   report?: any;
   onNext: () => void;
   onBack: () => void;
 }
 
-/* ──── Default placeholder content (flag #5: placeholders for unconfigured) ──── */
 const DEFAULT_REVIEWS = [
-  {
-    name: "Sarah M.",
-    rating: 5,
-    quote: "Our water tastes incredible now. My family noticed the difference on day one!",
-  },
-  {
-    name: "Mike & Jen R.",
-    rating: 5,
-    quote: "No more stains on our fixtures. The installation was quick and professional.",
-  },
-  {
-    name: "The Johnson Family",
-    rating: 4,
-    quote: "Worth every penny for our kids' health. Wish we had done this sooner.",
-  },
+  { name: "Sarah M.", rating: 5, quote: "Our water tastes incredible now. My family noticed the difference on day one!" },
+  { name: "Mike & Jen R.", rating: 5, quote: "No more stains on our fixtures. The installation was quick and professional." },
+  { name: "The Johnson Family", rating: 4, quote: "Worth every penny for our kids' health. Wish we had done this sooner." },
 ];
 
 const DEFAULT_CERTIFICATIONS = [
@@ -46,24 +36,13 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          className={`size-3.5 ${i <= rating ? "fill-amber-400 text-amber-400" : "text-white/10"}`}
-        />
+        <Star key={i} className={`size-3.5 ${i <= rating ? "fill-amber-400 text-amber-400" : ""}`} style={i > rating ? { color: colors.textFaint } : undefined} />
       ))}
     </div>
   );
 }
 
-function BeforeAfterSlider({
-  before,
-  after,
-  caption,
-}: {
-  before: string;
-  after: string;
-  caption?: string;
-}) {
+function BeforeAfterSlider({ before, after, caption }: { before: string; after: string; caption?: string }) {
   const [position, setPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -72,9 +51,7 @@ function BeforeAfterSlider({
     const el = containerRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
+      for (const entry of entries) setContainerWidth(entry.contentRect.width);
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -92,50 +69,23 @@ function BeforeAfterSlider({
       <div
         ref={containerRef}
         className="swipe-disabled relative h-48 rounded-xl overflow-hidden cursor-ew-resize select-none"
-        onMouseMove={(e) => {
-          if (e.buttons === 1) handleMove(e.clientX);
-        }}
+        onMouseMove={(e) => { if (e.buttons === 1) handleMove(e.clientX); }}
         onTouchMove={(e) => handleMove(e.touches[0].clientX)}
       >
-        {/* After (bottom layer) */}
-        <img
-          src={after}
-          alt="After"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        {/* Before (clip to position) */}
-        <div
-          className="absolute inset-0 overflow-hidden"
-          style={{ width: `${position}%` }}
-        >
-          <img
-            src={before}
-            alt="Before"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ minWidth: containerWidth || "100%" }}
-          />
+        <img src={after} alt="After" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 overflow-hidden" style={{ width: `${position}%` }}>
+          <img src={before} alt="Before" className="absolute inset-0 w-full h-full object-cover" style={{ minWidth: containerWidth || "100%" }} />
         </div>
-        {/* Divider */}
-        <div
-          className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-          style={{ left: `${position}%` }}
-        >
+        <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]" style={{ left: `${position}%` }}>
           <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center size-8 rounded-full bg-white/90 shadow-lg">
             <ChevronLeft className="size-3 text-gray-800 -mr-0.5" />
             <ChevronRight className="size-3 text-gray-800 -ml-0.5" />
           </div>
         </div>
-        {/* Labels */}
-        <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider bg-black/50 text-white px-2 py-0.5 rounded-full">
-          Before
-        </span>
-        <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider bg-emerald-500/80 text-white px-2 py-0.5 rounded-full">
-          After
-        </span>
+        <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider bg-black/50 text-white px-2 py-0.5 rounded-full">Before</span>
+        <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: `${colors.success}cc` }}>After</span>
       </div>
-      {caption && (
-        <p className="text-xs text-white/40 text-center">{caption}</p>
-      )}
+      {caption && <p className="text-[12px] text-center" style={{ color: colors.textFaint }}>{caption}</p>}
     </div>
   );
 }
@@ -147,63 +97,59 @@ export function DemoTrustProof({ company, report, onNext, onBack }: Props) {
   const reviews = hasCustomReviews ? trustConfig.reviews : DEFAULT_REVIEWS;
   const certs = trustConfig?.certifications?.length ? trustConfig.certifications : DEFAULT_CERTIFICATIONS;
   const installCount = trustConfig?.installCount ?? DEFAULT_INSTALL_COUNT;
-  // Local area: prioritize trust config → report city+state → company city → fallback
-  const reportArea = report?.city && report?.state ? `${report.city}, ${report.state}` : report?.city;
+
+  // Fix #6: normalize report field names
+  const reportArea =
+    (report?.customerCity || report?.city) && (report?.customerState || report?.state)
+      ? `${report.customerCity || report.city}, ${report.customerState || report.state}`
+      : report?.customerCity || report?.city;
   const installArea = trustConfig?.installArea ?? reportArea ?? company?.city ?? DEFAULT_INSTALL_AREA;
   const utilityName = report?.utilityName;
-  const gallery: Array<{ before: string; after: string; caption?: string }> =
-    trustConfig?.installGallery ?? [];
+  const gallery: Array<{ before: string; after: string; caption?: string }> = trustConfig?.installGallery ?? [];
 
   const animatedCount = useCountUp(installCount, 1500, 400);
-
   const reviewsRef = useRef<HTMLDivElement>(null);
 
   const scrollReviews = (dir: "left" | "right") => {
     playTapSound();
     if (!reviewsRef.current) return;
-    const amount = 280;
-    reviewsRef.current.scrollBy({
-      left: dir === "left" ? -amount : amount,
-      behavior: "smooth",
-    });
+    reviewsRef.current.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" });
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-2">
+    <div className="mx-auto max-w-lg space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.success}b0` }}>
           PROOF
-        </span>
-        <h2 className="text-2xl font-black mt-3">
-          Real Results
-        </h2>
-        <p className="text-sm text-white/40 mt-1.5">
+        </p>
+        <h2 className="text-[28px] font-bold mt-3 tracking-tight">Real Results</h2>
+        <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
           Families like yours, in your area
         </p>
       </div>
 
       {/* Install Counter */}
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center space-y-1">
-        <Home className="size-6 text-emerald-400 mx-auto mb-1" />
-        <p className="text-4xl font-black text-emerald-400">
+      <div className="rounded-2xl p-5 text-center space-y-1" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
+        <Home className="size-6 mx-auto mb-1" style={{ color: colors.success }} />
+        <p className="text-[36px] font-bold" style={{ color: colors.success }}>
           {animatedCount.toLocaleString()}+
         </p>
-        <p className="text-sm text-white/60">
+        <p className="text-[14px]" style={{ color: colors.textSecondary }}>
           Homes Protected in {installArea}
         </p>
       </div>
 
-      {/* Local utility info — builds trust with specificity */}
+      {/* Local utility */}
       {utilityName && (
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 flex items-start gap-3">
-          <div className="size-9 shrink-0 rounded-xl bg-blue-500/10 flex items-center justify-center text-lg">
+        <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: colors.surface }}>
+          <div className="size-9 shrink-0 rounded-xl flex items-center justify-center text-lg" style={{ background: `${colors.primary}10` }}>
             💧
           </div>
           <div>
-            <p className="text-sm font-semibold text-white/80">{utilityName}</p>
-            <p className="text-xs text-white/40 mt-0.5">
-              Your water provider — the report data comes directly from their testing
+            <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>{utilityName}</p>
+            <p className="text-[13px] mt-0.5" style={{ color: colors.textMuted }}>
+              Your water provider — report data comes directly from their testing
             </p>
           </div>
         </div>
@@ -213,64 +159,49 @@ export function DemoTrustProof({ company, report, onNext, onBack }: Props) {
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
               Customer Reviews
             </p>
             {!hasCustomReviews && (
-              <span className="text-[9px] bg-amber-400/10 text-amber-400/70 border border-amber-400/20 rounded-full px-2 py-0.5">
+              <span className="text-[9px] font-medium rounded-md px-2 py-0.5" style={{ background: `${colors.warning}10`, color: `${colors.warning}90` }}>
                 Examples — add yours in Settings
               </span>
             )}
           </div>
           {reviews.length > 2 && (
             <div className="flex gap-1">
-              <button
-                onClick={() => scrollReviews("left")}
-                className="p-1 rounded-lg bg-white/5 active:bg-white/10 cursor-pointer"
-              >
-                <ChevronLeft className="size-3.5" />
+              <button onClick={() => scrollReviews("left")} className="p-1 rounded-lg cursor-pointer" style={{ background: colors.surface }}>
+                <ChevronLeft className="size-3.5" style={{ color: colors.textFaint }} />
               </button>
-              <button
-                onClick={() => scrollReviews("right")}
-                className="p-1 rounded-lg bg-white/5 active:bg-white/10 cursor-pointer"
-              >
-                <ChevronRight className="size-3.5" />
+              <button onClick={() => scrollReviews("right")} className="p-1 rounded-lg cursor-pointer" style={{ background: colors.surface }}>
+                <ChevronRight className="size-3.5" style={{ color: colors.textFaint }} />
               </button>
             </div>
           )}
         </div>
-        <div
-          ref={reviewsRef}
-          className="swipe-disabled flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
-        >
+        <div ref={reviewsRef} className="swipe-disabled flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1">
           {reviews.map((r: any, i: number) => (
-            <div
-              key={i}
-              className="shrink-0 w-64 snap-start rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2"
-            >
+            <div key={i} className="shrink-0 w-64 snap-start rounded-2xl p-4 space-y-2" style={{ background: colors.surface }}>
               <StarRating rating={r.rating} />
-              <p className="text-sm text-white/70 leading-relaxed italic">
+              <p className="text-[14px] leading-relaxed italic" style={{ color: colors.textSecondary }}>
                 "{r.quote}"
               </p>
-              <p className="text-xs font-medium text-white/40">— {r.name}</p>
+              <p className="text-[12px] font-medium" style={{ color: colors.textFaint }}>— {r.name}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Certifications */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+      <div className="rounded-2xl p-5 space-y-3" style={{ background: colors.surface }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
           Certifications & Credentials
         </p>
         <div className="grid grid-cols-2 gap-2">
           {certs.map((cert: any, i: number) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 rounded-xl bg-white/[0.04] border border-white/5 p-3"
-            >
+            <div key={i} className="flex items-center gap-2 rounded-xl p-3" style={{ background: `${colors.textFaint}08` }}>
               <span className="text-lg">{cert.icon}</span>
-              <span className="text-sm font-medium text-white/70">{cert.label}</span>
+              <span className="text-[14px] font-medium" style={{ color: colors.textSecondary }}>{cert.label}</span>
             </div>
           ))}
         </div>
@@ -279,7 +210,7 @@ export function DemoTrustProof({ company, report, onNext, onBack }: Props) {
       {/* Before/After Gallery */}
       {gallery.length > 0 && (
         <div className="space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest px-1" style={{ color: colors.textFaint }}>
             Before & After
           </p>
           <div className="swipe-disabled space-y-4">
@@ -290,16 +221,11 @@ export function DemoTrustProof({ company, report, onNext, onBack }: Props) {
         </div>
       )}
 
-      {/* Placeholder when no gallery */}
       {gallery.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center space-y-2">
-          <Camera className="size-6 text-white/20 mx-auto" />
-          <p className="text-sm text-white/30">
-            Before & after photos will appear here
-          </p>
-          <p className="text-xs text-white/20">
-            Add them in Company Settings → Trust & Proof
-          </p>
+        <div className="rounded-2xl border border-dashed p-6 text-center space-y-2" style={{ borderColor: colors.border }}>
+          <Camera className="size-6 mx-auto" style={{ color: colors.textFaint }} />
+          <p className="text-[14px]" style={{ color: colors.textMuted }}>Before & after photos will appear here</p>
+          <p className="text-[12px]" style={{ color: colors.textFaint }}>Add them in Company Settings → Trust & Proof</p>
         </div>
       )}
     </div>

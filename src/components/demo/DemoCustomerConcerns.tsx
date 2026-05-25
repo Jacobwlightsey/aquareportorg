@@ -1,14 +1,15 @@
-/* ──── Phase 2: Customer Concerns — "What Matters Most To You?" ────
-   Customer-facing concern selection screen.
-   Stores selections in wizard state for conditional display
-   and future Phase 4 AI personalization.
+/* ──── Customer Concerns — Apple Onboarding Selection ────
+   "What Matters Most to You?"
+   Larger cards. More spacing. Fewer words.
+   Icon + short emotional phrase. Tactile press feedback.
+   Selected state should feel satisfying — not checkbox UI.
    ──── */
 
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { playTapSound, haptic } from "@/lib/demoSounds";
+import { colors } from "@/lib/designTokens";
 
-/** Customer concern key — stored in wizard state */
 export type CustomerConcernKey =
   | "drinking_water"
   | "family_health"
@@ -19,14 +20,11 @@ export type CustomerConcernKey =
   | "bottled_water_costs";
 
 export interface CustomerConcernState {
-  /** Selected concern keys */
   selected: CustomerConcernKey[];
-  /** Derived emphasis for flow ordering */
   emphasis: "family" | "home_expenses" | "drinking" | "general";
 }
 
 interface Props {
-  /** Previously selected concerns (for back-navigation) */
   initial?: CustomerConcernState | null;
   companyColor?: string;
   onNext: (state: CustomerConcernState) => void;
@@ -37,57 +35,14 @@ const CONCERN_OPTIONS: {
   label: string;
   description: string;
   icon: string;
-  color: string;
 }[] = [
-  {
-    key: "drinking_water",
-    label: "Drinking Water",
-    description: "Safe, clean water from every tap",
-    icon: "💧",
-    color: "#3b82f6",
-  },
-  {
-    key: "family_health",
-    label: "Family Health & Peace of Mind",
-    description: "Protect everyone in your home",
-    icon: "❤️",
-    color: "#ef4444",
-  },
-  {
-    key: "skin_and_hair",
-    label: "Skin & Hair",
-    description: "Softer skin, healthier hair",
-    icon: "✨",
-    color: "#ec4899",
-  },
-  {
-    key: "appliances_plumbing",
-    label: "Appliances & Plumbing",
-    description: "Protect your home investment",
-    icon: "🔧",
-    color: "#f59e0b",
-  },
-  {
-    key: "taste_or_smell",
-    label: "Taste or Smell",
-    description: "No more chlorine taste or odors",
-    icon: "👃",
-    color: "#8b5cf6",
-  },
-  {
-    key: "stains_buildup",
-    label: "Stains or Buildup",
-    description: "Eliminate hard water deposits",
-    icon: "🪨",
-    color: "#92400e",
-  },
-  {
-    key: "bottled_water_costs",
-    label: "Bottled Water Costs",
-    description: "Stop buying bottled water",
-    icon: "💰",
-    color: "#10b981",
-  },
+  { key: "drinking_water", label: "Drinking Water", description: "Safe, clean water from every tap", icon: "💧" },
+  { key: "family_health", label: "Family Health", description: "Protect everyone in your home", icon: "❤️" },
+  { key: "skin_and_hair", label: "Skin & Hair", description: "Softer skin, healthier hair", icon: "✨" },
+  { key: "appliances_plumbing", label: "Appliances & Plumbing", description: "Protect your home investment", icon: "🔧" },
+  { key: "taste_or_smell", label: "Taste or Smell", description: "No more chlorine taste or odors", icon: "👃" },
+  { key: "stains_buildup", label: "Stains or Buildup", description: "Eliminate hard water deposits", icon: "🪨" },
+  { key: "bottled_water_costs", label: "Bottled Water Costs", description: "Stop buying bottled water", icon: "💰" },
 ];
 
 function deriveEmphasis(selected: CustomerConcernKey[]): CustomerConcernState["emphasis"] {
@@ -99,10 +54,8 @@ function deriveEmphasis(selected: CustomerConcernKey[]): CustomerConcernState["e
   return "general";
 }
 
-export function DemoCustomerConcerns({ initial, companyColor = "#2563eb", onNext }: Props) {
-  const [selected, setSelected] = useState<CustomerConcernKey[]>(
-    initial?.selected ?? []
-  );
+export function DemoCustomerConcerns({ initial, companyColor = colors.primary, onNext }: Props) {
+  const [selected, setSelected] = useState<CustomerConcernKey[]>(initial?.selected ?? []);
 
   const toggle = (key: CustomerConcernKey) => {
     playTapSound();
@@ -114,65 +67,71 @@ export function DemoCustomerConcerns({ initial, companyColor = "#2563eb", onNext
 
   const handleContinue = () => {
     playTapSound();
-    onNext({
-      selected,
-      emphasis: deriveEmphasis(selected),
-    });
+    onNext({ selected, emphasis: deriveEmphasis(selected) });
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-2">
-      {/* Header */}
-      <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400/70">
-          YOUR PRIORITIES
-        </span>
-        <h2 className="text-2xl font-black mt-3 leading-tight">
-          What Matters Most to You?
+    <div className="mx-auto max-w-lg pt-6">
+      {/* Header — breathe */}
+      <div className="text-center mb-10">
+        <p className="text-[13px] font-medium tracking-wide uppercase" style={{ color: `${colors.primary}90` }}>
+          Your Priorities
+        </p>
+        <h2 className="text-[28px] sm:text-[32px] font-bold leading-tight tracking-tight mt-3">
+          What Matters Most?
         </h2>
-        <p className="text-sm text-white/40 mt-1.5">
-          Select any that apply — we'll tailor the rest to your family
+        <p className="text-[15px] mt-3" style={{ color: colors.textMuted }}>
+          Select any that apply
         </p>
       </div>
 
-      {/* Concern options */}
-      <div className="space-y-2.5">
+      {/* Concern cards — Apple onboarding style */}
+      <div className="space-y-3 mb-10">
         {CONCERN_OPTIONS.map((opt) => {
           const isSelected = selected.includes(opt.key);
           return (
             <button
               key={opt.key}
               onClick={() => toggle(opt.key)}
-              className={`w-full flex items-center gap-4 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
-                isSelected
-                  ? "border-white/20 bg-white/[0.06]"
-                  : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
-              }`}
+              className="w-full flex items-center gap-5 rounded-2xl p-5 text-left transition-all cursor-pointer active:scale-[0.98]"
+              style={{
+                background: isSelected ? colors.elevated : colors.surface,
+                border: `1px solid ${isSelected ? `${colors.primary}30` : colors.border}`,
+                boxShadow: isSelected ? `0 0 20px ${colors.primary}10` : "none",
+              }}
             >
+              {/* Icon — large, centered */}
               <div
-                className="size-11 shrink-0 rounded-xl flex items-center justify-center text-xl"
+                className="size-12 shrink-0 rounded-xl flex items-center justify-center text-2xl transition-all"
                 style={{
-                  background: isSelected ? `${opt.color}20` : "rgba(255,255,255,0.04)",
+                  background: isSelected ? `${colors.primary}15` : "rgba(255,255,255,0.03)",
                 }}
               >
                 {opt.icon}
               </div>
+
+              {/* Text */}
               <div className="flex-1 min-w-0">
                 <p
-                  className={`text-sm font-bold ${isSelected ? "text-white" : "text-white/70"}`}
+                  className="text-[16px] font-semibold transition-colors"
+                  style={{ color: isSelected ? colors.textPrimary : colors.textSecondary }}
                 >
                   {opt.label}
                 </p>
-                <p className="text-xs text-white/40 mt-0.5">{opt.description}</p>
+                <p className="text-[13px] mt-0.5" style={{ color: colors.textMuted }}>
+                  {opt.description}
+                </p>
               </div>
+
+              {/* Check indicator — satisfying selection */}
               <div
-                className={`size-6 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                  isSelected
-                    ? "border-emerald-400 bg-emerald-400"
-                    : "border-white/20"
-                }`}
+                className="size-7 shrink-0 rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: isSelected ? colors.success : "transparent",
+                  border: `2px solid ${isSelected ? colors.success : "rgba(255,255,255,0.12)"}`,
+                }}
               >
-                {isSelected && <Check className="size-3.5 text-black" />}
+                {isSelected && <Check className="size-4 text-black" strokeWidth={3} />}
               </div>
             </button>
           );
@@ -183,18 +142,15 @@ export function DemoCustomerConcerns({ initial, companyColor = "#2563eb", onNext
       <button
         onClick={handleContinue}
         disabled={selected.length === 0}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer disabled:opacity-40 disabled:scale-100"
+        className="w-full rounded-2xl py-4 text-[16px] font-bold active:scale-[0.97] transition-all cursor-pointer disabled:opacity-30"
         style={{
-          background:
-            selected.length > 0
-              ? `linear-gradient(135deg, ${companyColor}, #8b5cf6)`
-              : "rgba(255,255,255,0.06)",
-          boxShadow:
-            selected.length > 0 ? `0 4px 24px ${companyColor}30` : "none",
+          background: selected.length > 0
+            ? `linear-gradient(135deg, ${companyColor}, ${colors.primary})`
+            : colors.surface,
+          boxShadow: selected.length > 0 ? `0 4px 24px ${companyColor}20` : "none",
         }}
       >
         {selected.length === 0 ? "Select at least one" : "Continue"}
-        {selected.length > 0 && <ArrowRight className="size-5" />}
       </button>
     </div>
   );

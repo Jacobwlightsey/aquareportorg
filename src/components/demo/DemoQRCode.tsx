@@ -1,10 +1,11 @@
-/* ──── Sprint 2E: Real Scannable QR Code for close screens ──── */
+/* ──── QR Code — black on white, surface card ──── */
 
 import { Copy, Smartphone } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { playTapSound } from "@/lib/demoSounds";
+import { colors } from "@/lib/designTokens";
 
 interface Props {
   url: string;
@@ -26,29 +27,20 @@ export function DemoQRCode({ url, size = 180, label, companyColor = "#2563eb" }:
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center space-y-3">
+    <div className="rounded-2xl p-5 text-center space-y-3" style={{ background: colors.surface }}>
       <div className="flex items-center justify-center gap-2 mb-1">
-        <Smartphone className="size-4 text-white/40" />
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+        <Smartphone className="size-4" style={{ color: colors.textFaint }} />
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
           {label || "Scan to View on Your Phone"}
         </p>
       </div>
-
-      {/* Real scannable QR code */}
       <div className="mx-auto inline-block p-3 rounded-xl bg-white">
-        <QRCodeSVG
-          value={url}
-          size={size}
-          level="M"
-          bgColor="#ffffff"
-          fgColor="#000000"
-        />
+        <QRCodeSVG value={url} size={size} level="M" bgColor="#ffffff" fgColor="#000000" />
       </div>
-
-      {/* Copyable URL */}
       <button
         onClick={handleCopy}
-        className="flex items-center justify-center gap-1.5 mx-auto text-xs text-white/40 hover:text-white/70 transition-colors cursor-pointer"
+        className="flex items-center justify-center gap-1.5 mx-auto text-[12px] transition-colors cursor-pointer"
+        style={{ color: copied ? colors.success : colors.textFaint }}
       >
         <Copy className="size-3" />
         {copied ? "Copied!" : url.replace(/^https?:\/\//, "")}

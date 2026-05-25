@@ -1,34 +1,27 @@
-/* ──── Phase 1: Top 3 Water Concerns Summary ────
-   Shows the top 3 most important water concerns in plain English
-   before the full contaminant table. Reusable — works with any
-   contaminant array from the pipeline.
+/* ──── Top 3 Water Concerns Summary ────
+   Shows top 3 most important concerns before the full breakdown.
+   Fix #8: empty state fallback.
    ──── */
 
 import { AlertTriangle, ChevronDown, Eye, Shield, Skull } from "lucide-react";
 import { useMemo, useState } from "react";
 import { contaminantName } from "@/lib/supabase";
 import { playTapSound } from "@/lib/demoSounds";
+import { colors } from "@/lib/designTokens";
 
 interface Props {
   contaminants: any[];
-  /** Called when user clicks "View Full Breakdown" */
   onViewFull?: () => void;
-  /** Show the inline full breakdown instead of calling onViewFull */
   showFullInline?: boolean;
 }
 
-/* ──── Concern definitions ──── */
 interface ConcernDef {
   id: string;
   title: string;
   description: string;
   icon: typeof Skull;
   color: string;
-  bg: string;
-  border: string;
-  /** Returns true if a contaminant matches this concern */
   match: (name: string, c: any) => boolean;
-  /** Priority for sorting (lower = more important) */
   priority: number;
 }
 
@@ -38,20 +31,16 @@ const CONCERN_DEFS: ConcernDef[] = [
     title: "Legal Limit Violations",
     description: "Contaminants exceeding federal legal limits — above what the EPA considers safe for any level of exposure.",
     icon: Skull,
-    color: "#ef4444",
-    bg: "rgba(239,68,68,0.08)",
-    border: "rgba(239,68,68,0.25)",
+    color: colors.critical,
     match: (_name, c) => !!c.over_legal,
     priority: 0,
   },
   {
     id: "disinfection_byproducts",
     title: "Disinfection Byproducts",
-    description: "Potential concern related to chlorine treatment. These form when disinfectants react with organic matter in water and are linked to long-term health effects.",
+    description: "Potential concern related to chlorine treatment. These form when disinfectants react with organic matter and are linked to long-term health effects.",
     icon: AlertTriangle,
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.08)",
-    border: "rgba(245,158,11,0.25)",
+    color: colors.warning,
     match: (name) => {
       const n = name.toLowerCase();
       return n.includes("trihalomethane") || n.includes("tthm") || n.includes("haloacetic") ||
@@ -66,8 +55,6 @@ const CONCERN_DEFS: ConcernDef[] = [
     description: "Metals like lead, chromium, and arsenic can accumulate in the body over time. Even low levels may pose health risks with prolonged exposure.",
     icon: AlertTriangle,
     color: "#f97316",
-    bg: "rgba(249,115,22,0.08)",
-    border: "rgba(249,115,22,0.25)",
     match: (name) => {
       const n = name.toLowerCase();
       return n.includes("lead") || n.includes("chromium") || n.includes("arsenic") ||
@@ -83,8 +70,6 @@ const CONCERN_DEFS: ConcernDef[] = [
     description: "Can contribute to buildup on fixtures, appliances, and plumbing. May also affect skin, hair, and laundry over time.",
     icon: Shield,
     color: "#8b5cf6",
-    bg: "rgba(139,92,246,0.08)",
-    border: "rgba(139,92,246,0.25)",
     match: (name) => {
       const n = name.toLowerCase();
       return n.includes("hardness") || n.includes("calcium") || n.includes("magnesium") ||
@@ -97,9 +82,7 @@ const CONCERN_DEFS: ConcernDef[] = [
     title: "Chlorine / Taste / Odor",
     description: "Can affect drinking water, cooking, showers, and daily comfort. Chlorine and related compounds are the most common cause of water taste and smell issues.",
     icon: Shield,
-    color: "#06b6d4",
-    bg: "rgba(6,182,212,0.08)",
-    border: "rgba(6,182,212,0.25)",
+    color: colors.primary,
     match: (name) => {
       const n = name.toLowerCase();
       return n.includes("chlorine") || n.includes("chloramine") || n.includes("taste") || n.includes("odor");
@@ -111,9 +94,7 @@ const CONCERN_DEFS: ConcernDef[] = [
     title: "Radioactive Elements",
     description: "Naturally occurring radioactive materials can be present in groundwater. Elevated levels are linked to increased long-term health risks.",
     icon: Skull,
-    color: "#ef4444",
-    bg: "rgba(239,68,68,0.08)",
-    border: "rgba(239,68,68,0.25)",
+    color: colors.critical,
     match: (name) => {
       const n = name.toLowerCase();
       return n.includes("radium") || n.includes("uranium") || n.includes("radon") ||
@@ -126,9 +107,7 @@ const CONCERN_DEFS: ConcernDef[] = [
     title: "Health Guideline Exceedances",
     description: "Contaminants present above recommended health guidelines. While not necessarily illegal, they exceed levels associated with increased health risk.",
     icon: AlertTriangle,
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.08)",
-    border: "rgba(245,158,11,0.25)",
+    color: colors.warning,
     match: (_name, c) => !!c.over_health && !c.over_legal,
     priority: 1,
   },
@@ -150,9 +129,7 @@ function matchConcerns(contaminants: any[]): MatchedConcern[] {
         const existing = matched.get(def.id);
         if (existing) {
           existing.count++;
-          if (!existing.contaminants.includes(name)) {
-            existing.contaminants.push(name);
-          }
+          if (!existing.contaminants.includes(name)) existing.contaminants.push(name);
         } else {
           matched.set(def.id, { def, count: 1, contaminants: [name] });
         }
@@ -160,7 +137,6 @@ function matchConcerns(contaminants: any[]): MatchedConcern[] {
     }
   }
 
-  // Sort by priority, then by count (more matches = more relevant)
   return Array.from(matched.values())
     .sort((a, b) => a.def.priority - b.def.priority || b.count - a.count)
     .slice(0, 3);
@@ -170,34 +146,43 @@ export function DemoTopConcerns({ contaminants, onViewFull, showFullInline = fal
   const [showFull, setShowFull] = useState(false);
   const concerns = useMemo(() => matchConcerns(contaminants), [contaminants]);
 
-  if (concerns.length === 0) return null;
+  // Fix #8: empty state
+  if (concerns.length === 0) {
+    return (
+      <div className="mx-auto max-w-lg text-center space-y-4 pt-12">
+        <div className="text-4xl">✅</div>
+        <h2 className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>No Major Concerns Detected</h2>
+        <p className="text-[15px]" style={{ color: colors.textMuted }}>
+          Your water report didn't flag any high-priority contaminant categories.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-lg space-y-4">
+    <div className="mx-auto max-w-lg space-y-5">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.warning}b0` }}>
           KEY FINDINGS
-        </span>
-        <h2 className="text-2xl font-black mt-3">
-          Your Top Concerns
-        </h2>
-        <p className="text-sm text-white/40 mt-1.5">
+        </p>
+        <h2 className="text-[28px] font-bold mt-3 tracking-tight">Your Top Concerns</h2>
+        <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
           {contaminants.length} contaminants detected in your area
         </p>
       </div>
 
-      {/* Top 3 concern cards */}
+      {/* Top 3 cards */}
       <div className="space-y-3">
         {concerns.map((concern, i) => {
           const Icon = concern.def.icon;
           return (
             <div
               key={concern.def.id}
-              className="rounded-2xl border p-4 animate-in fade-in slide-in-from-bottom-3 duration-500"
+              className="rounded-2xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-500"
               style={{
-                background: concern.def.bg,
-                borderColor: concern.def.border,
+                background: `${concern.def.color}08`,
+                border: `1px solid ${concern.def.color}20`,
                 animationDelay: `${i * 150}ms`,
                 animationFillMode: "backwards",
               }}
@@ -205,25 +190,25 @@ export function DemoTopConcerns({ contaminants, onViewFull, showFullInline = fal
               <div className="flex items-start gap-3">
                 <div
                   className="size-9 shrink-0 rounded-xl flex items-center justify-center mt-0.5"
-                  style={{ background: `${concern.def.color}20` }}
+                  style={{ background: `${concern.def.color}15` }}
                 >
                   <Icon className="size-4" style={{ color: concern.def.color }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold" style={{ color: concern.def.color }}>
+                    <h3 className="text-[15px] font-semibold" style={{ color: concern.def.color }}>
                       {concern.def.title}
                     </h3>
                     {concern.count > 1 && (
                       <span
-                        className="text-[9px] font-bold rounded-full px-1.5 py-0.5"
-                        style={{ background: `${concern.def.color}20`, color: concern.def.color }}
+                        className="text-[10px] font-bold rounded-md px-1.5 py-0.5"
+                        style={{ background: `${concern.def.color}15`, color: concern.def.color }}
                       >
                         {concern.count} found
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-white/50 leading-relaxed mt-1">
+                  <p className="text-[13px] leading-relaxed mt-1" style={{ color: colors.textMuted }}>
                     {concern.def.description}
                   </p>
                 </div>
@@ -233,21 +218,19 @@ export function DemoTopConcerns({ contaminants, onViewFull, showFullInline = fal
         })}
       </div>
 
-      {/* View Full Breakdown button */}
+      {/* View Full Breakdown */}
       <button
         onClick={() => {
           playTapSound();
-          if (onViewFull) {
-            onViewFull();
-          } else if (showFullInline) {
-            setShowFull((s) => !s);
-          }
+          if (onViewFull) onViewFull();
+          else if (showFullInline) setShowFull((s) => !s);
         }}
-        className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] py-3 text-sm font-semibold text-white/60 hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors cursor-pointer"
+        className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-semibold transition-colors cursor-pointer"
+        style={{ background: colors.surface, color: colors.textSecondary }}
       >
         <Eye className="size-4" />
         {showFull ? "Hide Full Breakdown" : "View Full Contaminant Breakdown"}
-        {!showFull ? <ChevronDown className="size-3.5" /> : <ChevronDown className="size-3.5 rotate-180" />}
+        <ChevronDown className={`size-3.5 transition-transform ${showFull ? "rotate-180" : ""}`} />
       </button>
     </div>
   );

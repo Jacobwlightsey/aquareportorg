@@ -99,6 +99,10 @@ import {
 // Sprint 4E: Offline mode
 import { useOfflineBanner } from "@/hooks/useDemoOffline";
 
+// Visual sprint: Orientation lock + Header
+import { DemoOrientationLock } from "@/components/demo/DemoOrientationLock";
+import { DemoHeader } from "@/components/demo/DemoHeader";
+
 /* ──────────────── All possible steps — Phase 2 psychological sales flow ────
    Personalize → Diagnose → Verify → Emotionalize → Recommend → Transform → Justify → Decide
    ──────────────── */
@@ -163,11 +167,12 @@ function DemoModeSelector({
               playTapSound();
               setDemoMode(mode);
             }}
-            className={`flex-1 rounded-xl border px-3 py-2.5 text-center transition-all ${
-              isActive
-                ? "border-cyan-400/50 bg-cyan-400/10 text-white shadow-[0_0_16px_rgba(34,211,238,0.15)]"
-                : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]"
-            }`}
+            className="flex-1 rounded-xl px-3 py-2.5 text-center transition-all"
+            style={{
+              background: isActive ? "rgba(111,211,255,0.08)" : "rgba(255,255,255,0.02)",
+              border: isActive ? "1px solid rgba(111,211,255,0.3)" : "1px solid rgba(255,255,255,0.06)",
+              color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
+            }}
           >
             <p className={`text-sm font-bold ${isActive ? "text-white" : ""}`}>
               {info.label}
@@ -311,7 +316,9 @@ export function DemoWizardPage() {
       <PresentationModeContext.Provider value={presentationCtx}>
         <DemoModeContext.Provider value={demoModeCtx}>
           <ViewModeContext.Provider value={viewModeCtx}>
-            <DemoWizardInner />
+            <DemoOrientationLock>
+              <DemoWizardInner />
+            </DemoOrientationLock>
           </ViewModeContext.Provider>
         </DemoModeContext.Provider>
       </PresentationModeContext.Provider>
@@ -414,6 +421,7 @@ function DemoWizardInner() {
       pricingState,
       boostApplied,
       concerns,
+      customerConcerns,
       demoMode,
       viewMode,
       demoTime: demoTimer,
@@ -421,7 +429,7 @@ function DemoWizardInner() {
       stepTimings,
       timestamp: Date.now(),
     };
-  }, [currentStep, liveReadings, pricingState, boostApplied, concerns, demoMode, viewMode, demoTimer, demoStarted, stepTimings, reportId]);
+  }, [currentStep, liveReadings, pricingState, boostApplied, concerns, customerConcerns, demoMode, viewMode, demoTimer, demoStarted, stepTimings, reportId]);
 
   useDemoAutoSave(reportId, getStateForSave, currentStep, demoStarted);
 
@@ -436,6 +444,7 @@ function DemoWizardInner() {
     setPricingState(savedState.pricingState as PricingState | null);
     setBoostApplied(savedState.boostApplied);
     setConcerns(savedState.concerns as ConcernData | null);
+    setCustomerConcerns(savedState.customerConcerns as CustomerConcernState | null);
     setDemoTimer(savedState.demoTime);
     setDemoStarted(savedState.demoStarted);
     setStepTimings(savedState.stepTimings as StepTiming[]);
@@ -635,7 +644,8 @@ function DemoWizardInner() {
 
   return (
     <div
-      className={`fixed inset-0 flex flex-col bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white ${isPresentationMode ? "presentation-mode" : ""}`}
+      className={`fixed inset-0 flex flex-col text-white ${isPresentationMode ? "presentation-mode" : ""}`}
+      style={{ background: "#070B14" }}
       {...swipeProps}
     >
       {/* ─── Top Bar ─── */}
@@ -710,6 +720,13 @@ function DemoWizardInner() {
           )}
         </div>
       )}
+
+      {/* ─── Visual Sprint: Persistent brand header bar ─── */}
+      <DemoHeader
+        currentStep={currentStep + 1}
+        totalSteps={activeSteps.length}
+        companyName={report.companyName || company?.name}
+      />
 
       {/* ─── Sprint 4E: Offline Banner ─── */}
       {offlineBanner.show && (
@@ -919,6 +936,7 @@ function DemoWizardInner() {
               report={report}
               company={company}
               initialScore={score}
+              verifiedScore={score}
               projectedScore={projectedScore}
               contaminants={contaminants}
               boostApplied={boostApplied}

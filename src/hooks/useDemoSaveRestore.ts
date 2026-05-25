@@ -12,6 +12,7 @@ export interface DemoSaveState {
   pricingState: unknown;
   boostApplied: boolean;
   concerns: unknown;
+  customerConcerns: unknown;
   demoMode: string;
   viewMode: string;
   demoTime: number;

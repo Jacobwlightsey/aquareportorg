@@ -1,20 +1,11 @@
-/* ──── Sprint 1E+2E: Enhanced DemoDealerClose — merges DemoNextSteps + QR code ──── */
+/* ──── Dealer Close — "Wrap Up" ────
+   Save outcome, share report, follow-up. Surface cards, designTokens.
+   ──── */
 
 import { useAction, useMutation } from "convex/react";
 import {
-  Calendar,
-  Check,
-  CircleSlash,
-  ClipboardCopy,
-  ExternalLink,
-  Link as LinkIcon,
-  Loader2,
-  Mail,
-  MessageSquare,
-  Send,
-  Share2,
-  Timer,
-  X,
+  Calendar, Check, CircleSlash, ClipboardCopy, ExternalLink,
+  Loader2, Mail, MessageSquare, Send, Share2, Timer, X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +13,7 @@ import { api } from "../../../convex/_generated/api";
 import { ScoreGauge } from "./ScoreGauge";
 import { DemoQRCode } from "./DemoQRCode";
 import { DemoVoiceNote } from "./DemoVoiceNote";
+import { colors } from "@/lib/designTokens";
 
 interface Props {
   report: any;
@@ -32,9 +24,9 @@ interface Props {
 }
 
 const OUTCOMES = [
-  { key: "sold", label: "Sold", icon: Check, color: "#10b981" },
-  { key: "follow_up", label: "Follow-Up Needed", icon: Calendar, color: "#f59e0b" },
-  { key: "not_interested", label: "Not Interested", icon: X, color: "#ef4444" },
+  { key: "sold", label: "Sold", icon: Check, color: colors.success },
+  { key: "follow_up", label: "Follow-Up Needed", icon: Calendar, color: colors.warning },
+  { key: "not_interested", label: "Not Interested", icon: X, color: colors.critical },
   { key: "no_show", label: "No Show", icon: CircleSlash, color: "#6b7280" },
 ];
 
@@ -51,7 +43,6 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
   const [saved, setSaved] = useState(false);
   const saveDemoSession = useMutation(api.dealerShared.saveDemoSession);
 
-  // Sprint 4A: Spouse review link
   const createSpouseLink = useMutation(api.spouseReview.createSpouseReviewLink);
   const [spouseToken, setSpouseToken] = useState<string | null>(null);
   const [creatingSpouseLink, setCreatingSpouseLink] = useState(false);
@@ -74,37 +65,25 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
     }
   };
 
-  // Sprint 4B: Voice note attachment
   const [voiceAttached, setVoiceAttached] = useState(false);
 
-  // Sprint 4D: Proposal PDF
   const generateProposal = useAction(api.proposalPdf.generateProposalPdf);
   const [generatingProposal, setGeneratingProposal] = useState(false);
   const [proposalUrl, setProposalUrl] = useState<string | null>(null);
 
-  // Consumer referral (merged from DemoNextSteps)
   const [referralUrl, setReferralUrl] = useState("");
   const [creatingReferral, setCreatingReferral] = useState(false);
   const createReferral = useAction(api.referrals.createConsumerReferral);
 
   const displayScore = score ?? 0;
   const firstName = report.customerName?.split(" ")[0] || "the customer";
-  const shareUrl = report.shareToken
-    ? `${window.location.origin}/r/${report.shareToken}`
-    : null;
+  const shareUrl = report.shareToken ? `${window.location.origin}/r/${report.shareToken}` : null;
 
   const handleSave = async () => {
-    if (!outcome) {
-      toast.error("Please select a demo outcome first");
-      return;
-    }
+    if (!outcome) { toast.error("Please select a demo outcome first"); return; }
     setSaving(true);
     try {
-      await saveDemoSession({
-        reportId: report._id,
-        outcome,
-        notes: notes.trim() || undefined,
-      });
+      await saveDemoSession({ reportId: report._id, outcome, notes: notes.trim() || undefined });
       setSaved(true);
       toast.success("Demo session saved!");
     } catch (err: any) {
@@ -131,101 +110,106 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-2">
+    <div className="mx-auto max-w-lg space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30 rounded-full px-3 py-1">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.success}b0` }}>
           WRAP UP
-        </span>
-        <h2 className="text-2xl font-black mt-3">Next Steps</h2>
-        <p className="text-sm text-white/50 mt-1">
+        </p>
+        <h2 className="text-[28px] font-bold mt-3 tracking-tight">Next Steps</h2>
+        <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
           Save the demo outcome and share the report with {firstName}
         </p>
       </div>
 
       {/* Score summary + timer */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 flex items-center gap-5">
+      <div className="rounded-2xl p-5 flex items-center gap-5" style={{ background: colors.surface }}>
         <ScoreGauge score={displayScore} size={100} animate={false} />
         <div className="flex-1">
-          <p className="text-sm text-white/50 mb-1">{report.customerName || "Customer"}'s AquaScore</p>
-          <p className="text-3xl font-black">{displayScore}</p>
-          <p className="text-xs text-white/40 mt-0.5">{report.totalContaminants} contaminants detected</p>
+          <p className="text-[13px] mb-1" style={{ color: colors.textMuted }}>{report.customerName || "Customer"}'s AquaScore</p>
+          <p className="text-[32px] font-bold" style={{ color: colors.textPrimary }}>{displayScore}</p>
+          <p className="text-[12px] mt-0.5" style={{ color: colors.textFaint }}>{report.totalContaminants} contaminants detected</p>
           {demoTime != null && demoTime > 0 && (
             <div className="flex items-center gap-1.5 mt-2">
-              <Timer className="size-3 text-white/30" />
-              <span className="text-xs text-white/30 font-mono">{formatTime(demoTime)}</span>
+              <Timer className="size-3" style={{ color: colors.textFaint }} />
+              <span className="text-[12px] font-mono" style={{ color: colors.textFaint }}>{formatTime(demoTime)}</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Outcome selection */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Demo Outcome</p>
+      <div className="rounded-2xl p-5 space-y-3" style={{ background: colors.surface }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>Demo Outcome</p>
         <div className="grid grid-cols-2 gap-2">
-          {OUTCOMES.map((o) => (
-            <button
-              key={o.key}
-              onClick={() => setOutcome(o.key)}
-              className={`flex items-center gap-2 rounded-xl p-3 border transition-all cursor-pointer ${
-                outcome === o.key
-                  ? "border-white/30 bg-white/10"
-                  : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
-              }`}
-            >
-              <o.icon
-                className="size-4 shrink-0"
-                style={{ color: outcome === o.key ? o.color : "rgba(255,255,255,0.3)" }}
-              />
-              <span className={`text-sm font-medium ${outcome === o.key ? "text-white" : "text-white/50"}`}>
-                {o.label}
-              </span>
-            </button>
-          ))}
+          {OUTCOMES.map((o) => {
+            const isSelected = outcome === o.key;
+            return (
+              <button
+                key={o.key}
+                onClick={() => setOutcome(o.key)}
+                className="flex items-center gap-2 rounded-xl p-3 transition-all cursor-pointer"
+                style={{
+                  background: isSelected ? `${o.color}12` : `${colors.textFaint}08`,
+                  border: `1px solid ${isSelected ? `${o.color}30` : colors.border}`,
+                }}
+              >
+                <o.icon className="size-4 shrink-0" style={{ color: isSelected ? o.color : colors.textFaint }} />
+                <span className="text-[14px] font-medium" style={{ color: isSelected ? colors.textPrimary : colors.textMuted }}>
+                  {o.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Notes */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Demo Notes</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: colors.textFaint }}>Demo Notes</p>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Key takeaways, objections, follow-up items…"
-            className="w-full h-24 rounded-xl bg-white/[0.06] border border-white/10 p-3 text-sm text-white placeholder-white/20 outline-none focus:border-white/30 transition-colors resize-none"
+            className="w-full h-24 rounded-xl p-3 text-[14px] outline-none transition-colors resize-none"
+            style={{
+              background: `${colors.textFaint}08`,
+              border: `1px solid ${colors.border}`,
+              color: colors.textPrimary,
+            }}
           />
         </div>
       </div>
 
-      {/* ──── Consumer referral (merged from DemoNextSteps) ──── */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-white/40">
+      {/* Share Report */}
+      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
           Share Report with Customer
         </p>
 
         {referralUrl ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3">
-              <Check className="size-5 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
+              <Check className="size-5 shrink-0" style={{ color: colors.success }} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-emerald-300">Consumer link ready</p>
-                <p className="text-xs text-emerald-400/60 truncate">{referralUrl}</p>
+                <p className="text-[14px] font-medium" style={{ color: colors.success }}>Consumer link ready</p>
+                <p className="text-[12px] truncate" style={{ color: `${colors.success}80` }}>{referralUrl}</p>
               </div>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => copy(referralUrl, "Link")}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-white/5 py-3 text-sm font-semibold active:bg-white/10 cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-semibold cursor-pointer"
+                style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
               >
-                <ClipboardCopy className="size-4" />
-                Copy Link
+                <ClipboardCopy className="size-4" />Copy Link
               </button>
               {report.customerEmail && (
                 <a
                   href={`mailto:${report.customerEmail}?subject=Your Water Quality Report&body=Hi ${firstName},%0A%0AHere's your personalized water quality report: ${encodeURIComponent(referralUrl)}%0A%0AView your AquaScore and detailed contaminant analysis.`}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-500/15 border border-blue-500/25 py-3 text-sm font-semibold text-blue-400 active:bg-blue-500/25"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-semibold"
+                  style={{ background: `${colors.primary}12`, color: colors.primary }}
                 >
-                  <Mail className="size-4" />
-                  Email
+                  <Mail className="size-4" />Email
                 </a>
               )}
             </div>
@@ -234,67 +218,50 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
           <button
             onClick={handleCreateReferral}
             disabled={creatingReferral}
-            className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold active:scale-[0.97] transition-transform cursor-pointer"
-            style={{ background: "linear-gradient(135deg, #22c55e, #10b981)" }}
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-[14px] font-bold active:scale-[0.97] transition-transform cursor-pointer disabled:opacity-50"
+            style={{ background: `linear-gradient(135deg, #22c55e, ${colors.success})` }}
           >
-            {creatingReferral ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Share2 className="size-4" />
-                Generate myaquareport.com Link
-              </>
-            )}
+            {creatingReferral ? <><Loader2 className="size-4 animate-spin" />Creating...</> : <><Share2 className="size-4" />Generate myaquareport.com Link</>}
           </button>
         )}
 
-        {/* Share full report link */}
         {shareUrl && (
           <div className="flex gap-2">
             <button
               onClick={() => copy(shareUrl, "Report link")}
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-white/5 py-2.5 text-xs font-semibold text-white/60 active:bg-white/10 cursor-pointer"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-[12px] font-semibold cursor-pointer"
+              style={{ background: `${colors.textFaint}08`, color: colors.textMuted }}
             >
-              <ExternalLink className="size-3.5" />
-              Copy Full Report Link
+              <ExternalLink className="size-3.5" />Copy Full Report Link
             </button>
             <a
               href={`${shareUrl}/flipbook`}
               target="_blank"
               rel="noopener"
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-white/5 py-2.5 text-xs font-semibold text-white/60 active:bg-white/10"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-[12px] font-semibold"
+              style={{ background: `${colors.textFaint}08`, color: colors.textMuted }}
             >
-              <MessageSquare className="size-3.5" />
-              Open Flipbook
+              <MessageSquare className="size-3.5" />Open Flipbook
             </a>
           </div>
         )}
       </div>
 
-      {/* Sprint 2E: QR code for report */}
+      {/* QR */}
       {report.shareToken && (
-        <DemoQRCode
-          url={`https://myaquareport.com/r/${report.shareToken}`}
-          label="Customer's Report QR Code"
-          companyColor={companyColor}
-        />
+        <DemoQRCode url={`https://myaquareport.com/r/${report.shareToken}`} label="Customer's Report QR Code" companyColor={companyColor} />
       )}
 
-      {/* Follow-Up quick actions */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
-        <p className="text-xs font-bold uppercase tracking-wider text-white/40">
-          Follow-Up
-        </p>
+      {/* Follow-Up */}
+      <div className="rounded-2xl p-5 space-y-3" style={{ background: colors.surface }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>Follow-Up</p>
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => toast.info("Coming soon — follow-up scheduling will be available in a future update.")}
-            className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer"
+            className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer"
+            style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
           >
-            <Calendar className="size-4 text-blue-400 shrink-0" />
-            Schedule Follow-Up
+            <Calendar className="size-4 shrink-0" style={{ color: colors.primary }} />Schedule Follow-Up
           </button>
           {!proposalUrl ? (
             <button
@@ -302,26 +269,16 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
                 setGeneratingProposal(true);
                 try {
                   const result = await generateProposal({ reportId: report._id });
-                  if (result.ok && result.pdfUrl) {
-                    setProposalUrl(result.pdfUrl);
-                    toast.success("Proposal PDF generated!");
-                  } else {
-                    toast.error((result as any).message || "Could not generate proposal.");
-                  }
-                } catch (e: any) {
-                  toast.error(e.message || "Proposal generation failed");
-                } finally {
-                  setGeneratingProposal(false);
-                }
+                  if (result.ok && result.pdfUrl) { setProposalUrl(result.pdfUrl); toast.success("Proposal PDF generated!"); }
+                  else toast.error((result as any).message || "Could not generate proposal.");
+                } catch (e: any) { toast.error(e.message || "Proposal generation failed"); }
+                finally { setGeneratingProposal(false); }
               }}
               disabled={generatingProposal}
-              className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer disabled:opacity-50"
+              style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
             >
-              {generatingProposal ? (
-                <Loader2 className="size-4 text-violet-400 shrink-0 animate-spin" />
-              ) : (
-                <Send className="size-4 text-violet-400 shrink-0" />
-              )}
+              {generatingProposal ? <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: "#8b5cf6" }} /> : <Send className="size-4 shrink-0" style={{ color: "#8b5cf6" }} />}
               {generatingProposal ? "Generating…" : "Generate Proposal"}
             </button>
           ) : (
@@ -329,54 +286,44 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
               href={proposalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-violet-600/20 border border-violet-500/30 p-3 text-left text-sm font-medium hover:bg-violet-600/30 cursor-pointer"
+              className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer"
+              style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", color: "#a78bfa" }}
             >
-              <ExternalLink className="size-4 text-violet-400 shrink-0" />
-              View Proposal PDF
+              <ExternalLink className="size-4 shrink-0" />View Proposal PDF
             </a>
           )}
         </div>
 
-        {/* Sprint 4A: Spouse Review Link */}
+        {/* Spouse Review Link */}
         {!spouseToken ? (
           <button
             onClick={handleCreateSpouseLink}
             disabled={creatingSpouseLink}
-            className="w-full flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer disabled:opacity-50"
+            className="w-full flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer disabled:opacity-50"
+            style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
           >
-            {creatingSpouseLink ? (
-              <Loader2 className="size-4 text-pink-400 shrink-0 animate-spin" />
-            ) : (
-              <Mail className="size-4 text-pink-400 shrink-0" />
-            )}
+            {creatingSpouseLink ? <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: "#ec4899" }} /> : <Mail className="size-4 shrink-0" style={{ color: "#ec4899" }} />}
             Generate Spouse Review Link
           </button>
         ) : (
-          <DemoQRCode
-            url={spouseReviewUrl}
-            size={120}
-            label="Spouse Review Link (expires 72h)"
-            companyColor="#ec4899"
-          />
+          <DemoQRCode url={spouseReviewUrl} size={120} label="Spouse Review Link (expires 72h)" companyColor="#ec4899" />
         )}
       </div>
 
-      {/* Sprint 4B: Voice Note */}
+      {/* Voice Note */}
       {!voiceAttached ? (
         <DemoVoiceNote
           onAttach={(_blob, _mime) => {
             setVoiceAttached(true);
             toast.success("Voice note attached to this demo session!");
-            // Note: actual upload to Convex storage would go here in a future iteration
           }}
         />
       ) : (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1">
-          <div className="flex items-center gap-2 text-sm text-emerald-400">
-            <Check className="size-4 shrink-0" />
-            Voice note attached
+        <div className="rounded-xl p-3 space-y-1" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
+          <div className="flex items-center gap-2 text-[14px]" style={{ color: colors.success }}>
+            <Check className="size-4 shrink-0" />Voice note attached
           </div>
-          <p className="text-[10px] text-white/30 pl-6">Saved for this session — cloud upload coming soon</p>
+          <p className="text-[10px] pl-6" style={{ color: colors.textFaint }}>Saved for this session — cloud upload coming soon</p>
         </div>
       )}
 
@@ -385,20 +332,21 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
         <button
           onClick={handleSave}
           disabled={saving || !outcome}
-          className="w-full rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: `linear-gradient(135deg, ${companyColor}, #10b981)`, boxShadow: `0 4px 24px ${companyColor}30` }}
+          className="w-full rounded-2xl py-4 text-[16px] font-bold active:scale-[0.97] transition-transform cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: `linear-gradient(135deg, ${companyColor}, ${colors.success})`, boxShadow: `0 4px 24px ${companyColor}20` }}
         >
           {saving ? "Saving…" : "Save & End Demo"}
         </button>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3">
-            <Check className="size-5 text-emerald-400" />
-            <span className="text-sm font-bold text-emerald-400">Demo session saved!</span>
+          <div className="flex items-center justify-center gap-2 rounded-xl p-3" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
+            <Check className="size-5" style={{ color: colors.success }} />
+            <span className="text-[14px] font-bold" style={{ color: colors.success }}>Demo session saved!</span>
           </div>
           <button
             onClick={onEndDemo}
-            className="w-full rounded-2xl border border-white/10 py-4 text-base font-medium cursor-pointer hover:bg-white/5 transition-colors"
+            className="w-full rounded-2xl py-4 text-[16px] font-medium cursor-pointer transition-colors"
+            style={{ background: colors.surface, color: colors.textSecondary }}
           >
             Back to Customer Detail
           </button>
