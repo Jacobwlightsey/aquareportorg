@@ -1,185 +1,213 @@
-/* ──── Impact — "How This Affects Your Home" ────
-   Sidebar-style tabs on tablet, horizontal pills on mobile.
-   Surface cards, designTokens, mockup layout.
+/* ──── Impact / Family Safety — Mockup-faithful sidebar + severity badges ────
+   Left sidebar tabs (vertical). Right content: contaminant cards with severity.
+   Active tab = filled primary background with white text.
+   Contaminant-driven from actual report data.
    ──── */
 
-import { Droplets, Home, ShieldAlert, Sparkles } from "lucide-react";
+import { Droplets, Home, Shield, ShieldAlert, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { playTapSound } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
 import type { CustomerConcernKey } from "./DemoCustomerConcerns";
 
 interface Props {
+  contaminants?: any[];
   onNext: () => void;
   onBack: () => void;
   customerConcerns?: { selected: CustomerConcernKey[] } | null;
 }
 
-const IMPACT_TABS = [
-  {
-    key: "skin",
-    label: "Skin & Hair",
-    icon: Sparkles,
-    color: colors.primary,
-    title: "Every shower is stripping your skin.",
-    highlight: "Chlorine and dissolved minerals remove the natural oils your skin and hair need — every single day.",
-    body: "Most families blame their shampoo or moisturizer. The real culprit is the water itself. During a 10-minute hot shower, you're exposed to more chlorine than drinking 8 glasses of tap water.",
-    without: ["Chlorine steam with every shower", "Dry, irritated skin & brittle hair", "Skin absorbs chemicals through pores"],
-    withF: ["Clean, chemical-free steam", "Softer skin & healthier hair", "No airborne disinfectant exposure"],
-  },
-  {
-    key: "family",
-    label: "Family Safety",
-    icon: ShieldAlert,
-    color: colors.critical,
-    title: "Your family deserves better than \"legal.\"",
-    highlight: null,
-    body: `Legal limits haven't been meaningfully updated in over 20 years. Children, pregnant women, and the elderly are most vulnerable to contaminants that are technically "within limits" but far exceed health-protective guidelines.`,
-    without: ["Lead impacts developing brains", "Nitrates endanger infants under 6mo", "Contaminants accumulate silently over years"],
-    withF: ["Safe water for every age", "Contaminants removed at source", "Long-term health confidence"],
-  },
-  {
-    key: "home",
-    label: "Home & Appliances",
-    icon: Home,
-    color: colors.warning,
-    stat: "40%",
-    statLabel: "reduction in appliance\nlifespan from hard water",
-    title: "Hard water is silently destroying your home.",
-    highlight: null,
-    body: "Scale buildup coats the inside of water heaters, dishwashers, and washing machines — forcing them to work harder, use more energy, and fail sooner. The average homeowner spends $300–$500 more per year on energy and repairs.",
-    without: ["Scale buildup in pipes & heaters", "Shorter appliance lifespans", "Higher energy bills every month"],
-    withF: ["Clean pipes, no mineral buildup", "Appliances last years longer", "Lower energy costs"],
-  },
-  {
-    key: "taste",
-    label: "Taste & Drinking",
-    icon: Droplets,
-    color: colors.primary,
-    stat: "$1,200",
-    statLabel: "average family spends\nper year on bottled water",
-    title: "Clean water should taste like nothing.",
-    highlight: "That metallic taste, chlorine smell, or earthy odor is your water telling you something.",
-    body: "Chlorine byproducts, minerals, and dissolved organics create the distinctive taste most families simply accept as normal. When it tastes better, families drink more of it.",
-    without: ["Chlorine taste & chemical odor", "Buying bottled water constantly", "Unpleasant cooking water"],
-    withF: ["Pure, clean taste at every tap", "No more bottled water expense", "Better tasting coffee, tea & food"],
-  },
+/* ── Severity badge styles ── */
+const SEVERITY = {
+  HIGH: { bg: `${colors.critical}20`, color: colors.critical, label: "HIGH" },
+  ELEVATED: { bg: `${colors.warning}20`, color: colors.warning, label: "ELEVATED" },
+  MODERATE: { bg: `${colors.primary}20`, color: colors.primary, label: "MODERATE" },
+};
+
+function getSeverity(c: any) {
+  if (c.over_legal) return SEVERITY.HIGH;
+  if (c.over_health) return SEVERITY.ELEVATED;
+  return SEVERITY.MODERATE;
+}
+
+/* ── Tab definitions ── */
+const CATEGORY_TABS = [
+  { key: "family_health", label: "Family Health", icon: ShieldAlert },
+  { key: "skin_and_hair", label: "Skin & Hair", icon: Sparkles },
+  { key: "appliances_plumbing", label: "Appliances", icon: Home },
+  { key: "taste_or_smell", label: "Taste & Odor", icon: Droplets },
+  { key: "bottled_water_costs", label: "Bottled Water", icon: Droplets },
+  { key: "stains_buildup", label: "Hard Water", icon: Home },
+  { key: "drinking_water", label: "Peace of Mind", icon: Shield },
 ];
+
+/* ── Map contaminant names to categories ── */
+const TAB_CONTAMINANT_MAPPING: Record<string, string[]> = {
+  family_health: ["lead", "nitrate", "nitrite", "arsenic", "chromium", "radium", "uranium", "pfas", "pfoa", "pfos"],
+  skin_and_hair: ["chlorine", "chloramine", "hardness", "calcium", "magnesium"],
+  appliances_plumbing: ["hardness", "calcium", "magnesium", "iron", "manganese", "tds"],
+  taste_or_smell: ["chlorine", "chloramine", "tds", "sulfate", "iron", "manganese"],
+  bottled_water_costs: ["tds", "chlorine", "lead", "pfas", "trihalomethane", "haloacetic"],
+  stains_buildup: ["hardness", "calcium", "magnesium", "iron"],
+  drinking_water: [], // Show ALL contaminants above health guidelines
+};
+
+/* ── Health impact descriptions ── */
+const CONTAMINANT_IMPACTS: Record<string, string> = {
+  lead: "Linked to developmental issues in children",
+  nitrate: "Associated with blue baby syndrome",
+  nitrite: "Dangerous for infants and pregnant women",
+  arsenic: "Linked to cancer and cardiovascular disease",
+  chromium: "Known carcinogen at elevated levels",
+  radium: "Radioactive element linked to bone cancer",
+  uranium: "Toxic to kidneys at elevated levels",
+  pfas: "Linked to immune and hormone disruption",
+  pfoa: "Linked to cancer and thyroid disease",
+  pfos: "Persistent chemical linked to liver damage",
+  chlorine: "Can irritate skin, eyes, and respiratory system",
+  chloramine: "Causes dry skin and damages rubber seals",
+  hardness: "Causes scale buildup and skin irritation",
+  calcium: "Contributes to hard water scale",
+  magnesium: "Contributes to hard water",
+  iron: "Causes staining and metallic taste",
+  manganese: "Causes black staining and bitter taste",
+  tds: "High dissolved solids affect taste",
+  sulfate: "Causes bitter taste and digestive issues",
+  trihalomethane: "Disinfection byproduct linked to cancer",
+  haloacetic: "Disinfection byproduct with health risks",
+};
+
+function getContaminantName(c: any): string {
+  return c.contaminantName || c.name || c.contaminant || "Unknown";
+}
+
+function matchesCategory(c: any, categoryKey: string): boolean {
+  const names = TAB_CONTAMINANT_MAPPING[categoryKey];
+  if (!names || names.length === 0) {
+    // Peace of Mind: show all contaminants above health guidelines
+    return c.over_legal || c.over_health;
+  }
+  const cName = getContaminantName(c).toLowerCase();
+  return names.some(n => cName.includes(n));
+}
 
 function bestStartingTab(selected?: CustomerConcernKey[]): number {
   if (!selected?.length) return 0;
   const s = new Set(selected);
-  if (s.has("family_health")) return 1;
-  if (s.has("skin_and_hair")) return 0;
-  if (s.has("appliances_plumbing") || s.has("stains_buildup")) return 2;
-  if (s.has("taste_or_smell") || s.has("drinking_water") || s.has("bottled_water_costs")) return 3;
-  return 0;
+  const idx = CATEGORY_TABS.findIndex(t => s.has(t.key as CustomerConcernKey));
+  return idx >= 0 ? idx : 0;
 }
 
-export function DemoImpact({ onNext, onBack, customerConcerns }: Props) {
+/* ── Section titles per tab ── */
+const SECTION_TITLES: Record<string, { title: string; subtitle: string }> = {
+  family_health: { title: "Family Safety", subtitle: "What's in your water matters." },
+  skin_and_hair: { title: "Skin & Hair", subtitle: "What every shower does to you." },
+  appliances_plumbing: { title: "Home & Appliances", subtitle: "What your water costs your home." },
+  taste_or_smell: { title: "Taste & Quality", subtitle: "What you're actually drinking." },
+  bottled_water_costs: { title: "Bottled Water", subtitle: "What you're already spending." },
+  stains_buildup: { title: "Hard Water", subtitle: "The silent damage in your pipes." },
+  drinking_water: { title: "Peace of Mind", subtitle: "Every contaminant above safe levels." },
+};
+
+export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns }: Props) {
   const startTab = useMemo(() => bestStartingTab(customerConcerns?.selected), [customerConcerns]);
   const [activeIdx, setActiveIdx] = useState(startTab);
-  const tab = IMPACT_TABS[activeIdx];
-  const Icon = tab.icon;
+  const tab = CATEGORY_TABS[activeIdx];
+  const section = SECTION_TITLES[tab.key] || { title: "Impact", subtitle: "How this affects your daily life." };
+
+  /* Filter contaminants for this category, sorted by severity */
+  const filtered = useMemo(() => {
+    const matched = contaminants.filter(c => matchesCategory(c, tab.key));
+    return matched.sort((a, b) => {
+      const aSev = a.over_legal ? 3 : a.over_health ? 2 : 1;
+      const bSev = b.over_legal ? 3 : b.over_health ? 2 : 1;
+      return bSev - aSev;
+    }).slice(0, 8);
+  }, [contaminants, tab.key]);
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
-      {/* Header */}
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.critical}b0` }}>
-          DAILY IMPACT
-        </p>
-        <h2 className="text-[28px] font-bold mt-3 leading-tight tracking-tight">
-          How This Affects Your Home
-        </h2>
-      </div>
-
-      {/* Tab pills — sidebar style on wider, horizontal on narrow */}
-      <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0">
-        {IMPACT_TABS.map((t, i) => {
-          const TabIcon = t.icon;
-          const isActive = i === activeIdx;
-          return (
-            <button
-              key={t.key}
-              onClick={() => { playTapSound(); setActiveIdx(i); }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-left transition-all cursor-pointer whitespace-nowrap shrink-0"
-              style={{
-                background: isActive ? `${t.color}12` : colors.surface,
-                border: isActive ? `1px solid ${t.color}30` : `1px solid transparent`,
-              }}
-            >
-              <TabIcon className="size-4" style={{ color: isActive ? t.color : colors.textFaint }} />
-              <span
-                className="text-[14px] font-medium"
-                style={{ color: isActive ? t.color : colors.textMuted }}
+    <div className="mx-auto w-full max-w-5xl px-8 pt-6">
+      {/* 2-column: sidebar left, content right */}
+      <div className="flex gap-8" style={{ minHeight: "420px" }}>
+        {/* Left sidebar — vertical tabs */}
+        <div className="shrink-0 w-[140px] space-y-1 pt-1 rounded-2xl p-3" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+          {CATEGORY_TABS.map((t, i) => {
+            const TabIcon = t.icon;
+            const isActive = i === activeIdx;
+            return (
+              <button
+                key={t.key}
+                onClick={() => { playTapSound(); setActiveIdx(i); }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer"
+                style={{
+                  background: isActive ? colors.primary : "transparent",
+                  color: isActive ? "#000" : colors.textMuted,
+                }}
               >
-                {t.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab content */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface }}>
-        <div className="p-6 space-y-5">
-          {/* Stat (if present) */}
-          {"stat" in tab && tab.stat && (
-            <div className="flex items-center gap-4">
-              <div
-                className="size-14 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${tab.color}12` }}
-              >
-                <p className="text-[20px] font-bold" style={{ color: tab.color }}>{tab.stat}</p>
-              </div>
-              <p className="text-[13px] whitespace-pre-line" style={{ color: colors.textMuted }}>{tab.statLabel}</p>
-            </div>
-          )}
-
-          {/* Title */}
-          <h3 className="text-[20px] font-bold leading-snug" style={{ color: colors.textPrimary }}>{tab.title}</h3>
-
-          {/* Highlight */}
-          {tab.highlight && (
-            <p className="text-[15px] font-medium leading-relaxed" style={{ color: tab.color }}>{tab.highlight}</p>
-          )}
-
-          {/* Body */}
-          <p className="text-[15px] leading-relaxed" style={{ color: colors.textMuted }}>{tab.body}</p>
-
-          {/* Without / With */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
-            <div className="space-y-2.5">
-              <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: `${colors.critical}90` }}>Without Filtration</p>
-              {tab.without.map((item, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <div className="size-1.5 rounded-full mt-2 shrink-0" style={{ background: `${colors.critical}80` }} />
-                  <span className="text-[13px]" style={{ color: colors.textMuted }}>{item}</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2.5">
-              <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: `${colors.success}90` }}>With Filtration</p>
-              {tab.withF.map((item, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <div className="size-1.5 rounded-full mt-2 shrink-0" style={{ background: `${colors.success}80` }} />
-                  <span className="text-[13px]" style={{ color: colors.textMuted }}>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+                <TabIcon className="size-4 shrink-0" />
+                <span className="text-[13px] font-medium leading-tight">{t.label}</span>
+              </button>
+            );
+          })}
         </div>
-      </div>
 
-      {/* Nav */}
-      <div className="flex gap-3">
-        <button onClick={onBack} className="flex-1 rounded-2xl py-3 text-[14px] font-medium cursor-pointer" style={{ background: colors.surface, color: colors.textMuted }}>
-          ← Back
-        </button>
-        <button onClick={onNext} className="flex-1 rounded-2xl py-3 text-[14px] font-semibold cursor-pointer" style={{ background: `${colors.primary}15`, color: colors.primary }}>
-          Continue →
-        </button>
+        {/* Right content */}
+        <div className="flex-1 min-w-0">
+          {/* Title */}
+          <div className="mb-8">
+            <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight" style={{ color: colors.textPrimary }}>
+              {section.title}
+            </h2>
+            <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
+              {section.subtitle}
+            </p>
+          </div>
+
+          {/* Contaminant list with severity badges */}
+          <div className="space-y-1 mb-8">
+            {filtered.length > 0 ? filtered.map((c, i) => {
+              const name = getContaminantName(c);
+              const sev = getSeverity(c);
+              const impact = CONTAMINANT_IMPACTS[name.toLowerCase()] || c.health_effects || "Found in your water supply";
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-3.5"
+                  style={{ borderBottom: `1px solid ${colors.border}` }}
+                >
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <span className="text-base mt-0.5">⚠️</span>
+                    <div>
+                      <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>
+                        {name}
+                      </p>
+                      <p className="text-[13px] mt-0.5" style={{ color: colors.textMuted }}>
+                        {impact}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className="shrink-0 ml-4 rounded-lg px-3 py-1 text-[11px] font-bold tracking-wider uppercase"
+                    style={{ background: sev.bg, color: sev.color }}
+                  >
+                    {sev.label}
+                  </span>
+                </div>
+              );
+            }) : (
+              <div className="py-8 text-center">
+                <p className="text-[14px]" style={{ color: colors.textMuted }}>
+                  No specific contaminants detected in this category.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <p className="text-[13px]" style={{ color: colors.textFaint }}>
+            These results are from your lab report and local water data.
+          </p>
+        </div>
       </div>
     </div>
   );

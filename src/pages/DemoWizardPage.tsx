@@ -350,6 +350,7 @@ function DemoWizardInner() {
   const [demoTimer, setDemoTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [demoStarted, setDemoStarted] = useState(false);
+  const [coachingOpen, setCoachingOpen] = useState(false);
 
   // State shared across steps
   const [liveReadings, setLiveReadings] = useState<FieldWaterReadings>({});
@@ -496,10 +497,7 @@ function DemoWizardInner() {
   // Sprint 3E: Track step timing + update coaching
   const stepKey = activeSteps[currentStep]?.key ?? "welcome";
 
-  // Phase 3: Reset transition overlay on step change
-  useEffect(() => {
-    setTransitionDone(false);
-  }, [stepKey]);
+  // Transition overlay removed — transitionDone always true
   const overLegalCount = useMemo(
     () => contaminants.filter((c: any) => c.over_legal).length,
     [contaminants],
@@ -726,6 +724,10 @@ function DemoWizardInner() {
         currentStep={currentStep + 1}
         totalSteps={activeSteps.length}
         companyName={report.companyName || company?.name}
+        companyLogo={company?.logo}
+        isRepView={viewMode === "rep"}
+        coachingOpen={coachingOpen}
+        onToggleCoaching={() => setCoachingOpen((o: boolean) => !o)}
       />
 
       {/* ─── Sprint 4E: Offline Banner ─── */}
@@ -750,14 +752,7 @@ function DemoWizardInner() {
         </div>
       )}
 
-      {/* ─── Phase 3+4A: Transitional narration overlay (concern-aware) ─── */}
-      {demoStarted && (
-        <DemoTransitionOverlay
-          currentStep={stepKey}
-          onComplete={() => setTransitionDone(true)}
-          customerConcerns={customerConcerns}
-        />
-      )}
+      {/* Transition overlay removed per user request */}
 
       {/* ─── Step Content (Sprint 1G: wrapped in error boundary) ─── */}
       <div
@@ -852,7 +847,7 @@ function DemoWizardInner() {
             />
           )}
           {stepKey === "impact" && (
-            <DemoImpact onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} />
+            <DemoImpact contaminants={contaminants} onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} />
           )}
           {stepKey === "rooms" && (
             <DemoRoomImpact
@@ -976,11 +971,15 @@ function DemoWizardInner() {
         </DemoStepWrapper>
       </div>
 
-      {/* Sprint 3A+4A: Rep Talking Points — concern-aware (only in rep view) */}
+      {/* Rep Coaching Panel — slide-out drawer (only in rep view) */}
       {viewMode === "rep" && demoStarted && (
-        <div className="fixed inset-x-0 bottom-16 z-30">
-          <DemoTalkingPoints currentStep={stepKey} company={company} customerConcerns={customerConcerns} />
-        </div>
+        <DemoTalkingPoints
+          currentStep={stepKey}
+          company={company}
+          customerConcerns={customerConcerns}
+          isOpen={coachingOpen}
+          onClose={() => setCoachingOpen(false)}
+        />
       )}
 
       {/* ─── Bottom nav for middle steps ─── */}

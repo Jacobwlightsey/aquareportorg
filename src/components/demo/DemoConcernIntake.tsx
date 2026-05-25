@@ -136,7 +136,7 @@ export function DemoConcernIntake({ onNext, onBack, initial }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-2">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-2">
       {/* Header */}
       <div className="text-center">
         <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400 border border-violet-500/30 rounded-full px-3 py-1">

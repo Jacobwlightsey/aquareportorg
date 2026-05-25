@@ -33,7 +33,7 @@ export function ScoreGauge({
   const cbRef = useRef(onAnimationComplete);
   cbRef.current = onAnimationComplete;
 
-  const strokeWidth = Math.max(14, size * 0.065);
+  const strokeWidth = Math.max(14, size * 0.075);
   const radius = (size - strokeWidth * 2 - 8) / 2;
   const circ = 2 * Math.PI * radius;
   const color = scoreColor(display);
@@ -93,13 +93,13 @@ export function ScoreGauge({
       className="relative inline-flex items-center justify-center"
       style={{ width: size, height: size, opacity }}
     >
-      {/* Ambient glow */}
+      {/* Ambient glow — cinematic bloom */}
       <div
         className="absolute inset-0 rounded-full transition-all duration-1000"
         style={{
           boxShadow: pulseActive
-            ? `0 0 ${size * 0.3}px ${size * 0.05}px ${color}25, 0 0 ${size * 0.6}px ${size * 0.15}px ${color}10`
-            : `0 0 ${size * 0.2}px ${size * 0.03}px ${color}15`,
+            ? `0 0 ${size * 0.35}px ${size * 0.08}px ${color}30, 0 0 ${size * 0.7}px ${size * 0.2}px ${color}18, 0 0 ${size * 1.2}px ${size * 0.3}px ${color}08`
+            : `0 0 ${size * 0.25}px ${size * 0.06}px ${color}22, 0 0 ${size * 0.5}px ${size * 0.12}px ${color}10`,
           animation: pulseActive ? "gaugeBreath 3s ease-in-out infinite" : "none",
         }}
       />
@@ -113,30 +113,37 @@ export function ScoreGauge({
         role="img"
         aria-label={`AquaScore ${display} out of 100`}
       >
-        {/* Track */}
+        <defs>
+          <linearGradient id={`gauge-grad-${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.7" />
+            <stop offset="60%" stopColor={color} stopOpacity="1" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.9" />
+          </linearGradient>
+        </defs>
+        {/* Track — visible enough to define the ring */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.04)"
+          stroke="rgba(255,255,255,0.07)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${circ * arcFraction} ${circ * (1 - arcFraction)}`}
         />
-        {/* Filled arc with gradient feel */}
+        {/* Filled arc with gradient + multi-layer glow */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={`url(#gauge-grad-${size})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${circ * arcFraction} ${circ * (1 - arcFraction)}`}
           strokeDashoffset={Math.max(0, offset)}
           style={{
-            filter: `drop-shadow(0 0 ${strokeWidth}px ${color}80)`,
+            filter: `drop-shadow(0 0 ${strokeWidth * 0.8}px ${color}90) drop-shadow(0 0 ${strokeWidth * 2}px ${color}40)`,
             transition: "stroke 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         />

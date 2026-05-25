@@ -20,7 +20,7 @@ export function DemoVoiceNote({ onAttach }: Props) {
   // Preview
   if (voice.audioUrl && voice.audioBlob) {
     return (
-      <div className="rounded-xl p-4 space-y-3" style={{ background: colors.surface }}>
+      <div className="rounded-xl p-4 space-y-3" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.textFaint }}>
           Voice Note ({formatTime(voice.duration)})
         </p>

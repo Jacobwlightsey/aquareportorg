@@ -110,7 +110,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.success}b0` }}>
@@ -123,7 +123,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
       </div>
 
       {/* Score summary + timer */}
-      <div className="rounded-2xl p-5 flex items-center gap-5" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 flex items-center gap-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <ScoreGauge score={displayScore} size={100} animate={false} />
         <div className="flex-1">
           <p className="text-[13px] mb-1" style={{ color: colors.textMuted }}>{report.customerName || "Customer"}'s AquaScore</p>
@@ -139,7 +139,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
       </div>
 
       {/* Outcome selection */}
-      <div className="rounded-2xl p-5 space-y-3" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 space-y-3" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>Demo Outcome</p>
         <div className="grid grid-cols-2 gap-2">
           {OUTCOMES.map((o) => {
@@ -181,7 +181,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
       </div>
 
       {/* Share Report */}
-      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
           Share Report with Customer
         </p>
@@ -253,7 +253,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
       )}
 
       {/* Follow-Up */}
-      <div className="rounded-2xl p-5 space-y-3" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 space-y-3" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>Follow-Up</p>
         <div className="grid grid-cols-2 gap-2">
           <button

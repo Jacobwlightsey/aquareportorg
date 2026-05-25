@@ -27,7 +27,7 @@ export function DemoQRCode({ url, size = 180, label, companyColor = "#2563eb" }:
   };
 
   return (
-    <div className="rounded-2xl p-5 text-center space-y-3" style={{ background: colors.surface }}>
+    <div className="rounded-2xl p-5 text-center space-y-3" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
       <div className="flex items-center justify-center gap-2 mb-1">
         <Smartphone className="size-4" style={{ color: colors.textFaint }} />
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>

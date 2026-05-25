@@ -84,7 +84,7 @@ function ContaminantDetail({ c, onClose }: { c: any; onClose: () => void }) {
   const ratio = c.health_guideline && c.health_guideline > 0 ? c.detected_level / c.health_guideline : c.detected_level > 0 ? 1 : 0;
 
   return (
-    <div className="rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-300" style={{ background: colors.surface }}>
+    <div className="rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-300" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
       <div
         className="p-4 pb-3 flex items-start justify-between"
         style={{
@@ -177,7 +177,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
 
   if (!sorted.length) {
     return (
-      <div className="mx-auto max-w-lg pt-8 text-center">
+      <div className="mx-auto w-full max-w-5xl px-8 pt-8 text-center">
         <FlaskConical className="mx-auto size-12 mb-4" style={{ color: colors.textFaint }} />
         <p style={{ color: colors.textMuted }}>No contaminant data available</p>
       </div>
@@ -185,7 +185,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.warning}b0` }}>
@@ -209,7 +209,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
           <p className="text-[22px] font-bold" style={{ color: colors.warning }}>{healthCount}</p>
           <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: `${colors.warning}90` }}>Health Risks</p>
         </div>
-        <div className="rounded-xl p-4 text-center" style={{ background: colors.surface }}>
+        <div className="rounded-xl p-4 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <Shield className="size-5 mx-auto mb-1" style={{ color: colors.textMuted }} />
           <p className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>{sorted.length}</p>
           <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: colors.textFaint }}>Total Found</p>
@@ -230,7 +230,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
           const isExpanded = expandedCategories.has(cat);
 
           return (
-            <div key={cat} className="rounded-xl overflow-hidden" style={{ background: colors.surface }}>
+            <div key={cat} className="rounded-xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
               <button
                 onClick={() => toggleCategory(cat)}
                 className="w-full flex items-center justify-between p-3 text-left cursor-pointer transition-colors hover:opacity-80"

@@ -118,7 +118,7 @@ export function DemoRoomImpact({ onNext, onBack, concerns }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.critical}b0` }}>

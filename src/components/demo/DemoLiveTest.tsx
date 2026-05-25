@@ -175,7 +175,7 @@ export function DemoLiveTest({ report, contaminants, liveReadings, onUpdateReadi
     });
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.primary}b0` }}>
@@ -216,7 +216,7 @@ export function DemoLiveTest({ report, contaminants, liveReadings, onUpdateReadi
 
       {/* Reading Comparison */}
       {readingRows.length > 0 && (
-        <div className="rounded-2xl p-5 space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ background: colors.surface }}>
+        <div className="rounded-2xl p-5 space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: colors.textFaint }}>Reading Comparison</p>
           {readingRows.map((r) => (
             <div key={r.key} className="flex items-center justify-between">

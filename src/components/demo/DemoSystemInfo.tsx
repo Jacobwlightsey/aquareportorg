@@ -62,7 +62,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
   const hasContent = productName || productBullets.length || productImage || systemIncludes.length;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.primary}b0` }}>
@@ -90,7 +90,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* Key features */}
       {productBullets.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="p-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${colors.border}` }}>
             <Sparkles className="size-4" style={{ color: colors.warning }} />
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>Key Features</p>
@@ -110,7 +110,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* System includes */}
       {systemIncludes.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="p-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${colors.border}` }}>
             <Droplets className="size-4" style={{ color: colors.primary }} />
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>System Includes</p>
@@ -151,7 +151,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* How it works */}
       {howItWorks.length > 0 && (
-        <div className="rounded-2xl p-5" style={{ background: colors.surface }}>
+        <div className="rounded-2xl p-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="flex items-center gap-2 mb-4">
             <Info className="size-4" style={{ color: "#8b5cf6" }} />
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>How It Works</p>
@@ -177,7 +177,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* Additional products */}
       {additionalProducts?.map((prod: any, i: number) => (
-        <div key={i} className="rounded-2xl overflow-hidden" style={{ background: colors.surface }}>
+        <div key={i} className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="p-5">
             {prod.image && (
               <div className="rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center h-32">
@@ -204,7 +204,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
       {callouts.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {callouts.slice(0, 3).map((c: string, i: number) => (
-            <div key={i} className="rounded-xl p-3 text-center" style={{ background: colors.surface }}>
+            <div key={i} className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
               <Sparkles className="size-4 mx-auto mb-1.5" style={{ color }} />
               <p className="text-[10px] font-bold leading-tight" style={{ color: colors.textSecondary }}>{c}</p>
             </div>

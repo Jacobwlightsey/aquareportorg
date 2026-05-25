@@ -52,7 +52,7 @@ export function DemoCostComparison({ company, report, score, concerns, onNext, o
   const maxCost = Math.max(...costs.map((c) => (showYearly ? c.monthlyCost * 12 : c.monthlyCost)));
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.critical}b0` }}>
@@ -69,7 +69,7 @@ export function DemoCostComparison({ company, report, score, concerns, onNext, o
 
       {/* Toggle */}
       <div className="flex justify-center">
-        <div className="flex gap-1 rounded-xl p-1" style={{ background: colors.surface }}>
+        <div className="flex gap-1 rounded-xl p-1" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <button
             onClick={() => { playTapSound(); setShowYearly(false); }}
             className="px-4 py-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer"
@@ -105,7 +105,7 @@ export function DemoCostComparison({ company, report, score, concerns, onNext, o
       </div>
 
       {/* Cost breakdown */}
-      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
           COST BREAKDOWN
         </p>

@@ -35,7 +35,7 @@ export function DemoScoreExplainer({ currentScore, defaultExpanded = false, comp
     : null;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
       {/* Toggle header */}
       <button
         onClick={() => setExpanded((e) => !e)}

@@ -92,7 +92,7 @@ export function DemoHomeProfile({
   const selectedConcerns = concerns?.concerns?.map((k) => CONCERN_LABELS[k] || k).filter(Boolean) ?? [];
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-6 pt-4">
       {/* Street View hero */}
       <div className="relative overflow-hidden rounded-2xl h-44 sm:h-52">
         <img
@@ -127,7 +127,7 @@ export function DemoHomeProfile({
       </p>
 
       {/* Customer info card */}
-      <div className="rounded-2xl p-5 space-y-1" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 space-y-1" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: colors.textFaint }}>
           Profile
         </p>
@@ -172,7 +172,7 @@ export function DemoHomeProfile({
 
       {/* Selected concerns */}
       {selectedConcerns.length > 0 && (
-        <div className="rounded-2xl p-5" style={{ background: colors.surface }}>
+        <div className="rounded-2xl p-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: colors.textFaint }}>
             Your Priorities
           </p>
@@ -192,7 +192,7 @@ export function DemoHomeProfile({
 
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[18px] font-bold" style={{ color: colors.textPrimary }}>
             {report?.populationServed?.toLocaleString() ?? "—"}
           </p>
@@ -200,7 +200,7 @@ export function DemoHomeProfile({
             People Served
           </p>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[18px] font-bold capitalize" style={{ color: colors.textPrimary }}>
             {report?.waterSource || "Municipal"}
           </p>
@@ -208,7 +208,7 @@ export function DemoHomeProfile({
             Water Source
           </p>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[18px] font-bold" style={{ color: colors.textPrimary }}>{report?.totalContaminants ?? "—"}</p>
           <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: colors.textFaint }}>
             Detected

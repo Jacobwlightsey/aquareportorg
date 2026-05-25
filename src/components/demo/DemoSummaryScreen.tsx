@@ -1,13 +1,9 @@
-/* ──── Summary Screen — Premium Recommendation ────
-   "Your Home Water Plan"
-   Should feel like receiving a personalized recommendation.
-   NOT a feature recap. NOT a checklist.
-   Lots of whitespace. Simplified sections. Vertical rhythm.
+/* ──── Summary Screen — Mockup-faithful 2-column layout ────
+   Left: "Your Home Water Plan" + bullet benefits + download button.
+   Right: Score Journey card (3 mini gauges) + Top Priorities pills + "Thank you!".
    ──── */
 
-import { CheckCircle, Droplets, Shield, Sparkles } from "lucide-react";
-import { useMemo } from "react";
-import { contaminantName } from "@/lib/supabase";
+import { Download } from "lucide-react";
 import { ScoreGauge } from "./ScoreGauge";
 import { colors, scoreColor } from "@/lib/designTokens";
 import type { CustomerConcernState } from "./DemoCustomerConcerns";
@@ -25,55 +21,27 @@ interface Props {
   onNext: () => void;
 }
 
-function deriveTopConcerns(contaminants: any[]): string[] {
-  const categories = new Map<string, number>();
-  for (const c of contaminants) {
-    const name = contaminantName(c).toLowerCase();
-    let cat = "";
-    if (name.includes("chlorine") || name.includes("chloramine")) cat = "Chlorine";
-    else if (name.includes("trihalomethane") || name.includes("tthm") || name.includes("haloacetic")) cat = "Disinfection byproducts";
-    else if (name.includes("hardness") || name.includes("calcium") || name.includes("magnesium")) cat = "Hardness";
-    else if (name.includes("lead") || name.includes("chromium") || name.includes("arsenic")) cat = "Heavy metals";
-    else if (name.includes("radium") || name.includes("uranium") || name.includes("radon")) cat = "Radioactive elements";
-    else if (name.includes("nitrate") || name.includes("nitrite")) cat = "Nitrates";
-    else if (c.over_legal) cat = "Legal violations";
-    else if (c.over_health) cat = "Health concerns";
-    if (cat) categories.set(cat, (categories.get(cat) || 0) + 1);
-  }
-  return Array.from(categories.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([cat]) => cat);
-}
-
 const CONCERN_LABELS: Record<string, string> = {
   drinking_water: "Drinking Water",
   family_health: "Family Health",
   skin_and_hair: "Skin & Hair",
-  appliances_plumbing: "Home & Appliances",
-  taste_or_smell: "Taste & Smell",
-  stains_buildup: "Stains & Buildup",
+  appliances_plumbing: "Appliances",
+  taste_or_smell: "Taste & Odor",
+  stains_buildup: "Hard Water",
   bottled_water_costs: "Bottled Water Costs",
+  peace_of_mind: "Peace of Mind",
 };
 
-function prioritizedBenefits(emphasis?: string) {
-  const all = [
-    { icon: Droplets, text: "Cleaner drinking water", color: colors.primary },
-    { icon: Shield, text: "Appliance & plumbing protection", color: colors.success },
-    { icon: Sparkles, text: "Better showers & skin comfort", color: colors.primary },
-    { icon: CheckCircle, text: "Reduced bottled water spending", color: colors.success },
-  ];
-  if (!emphasis || emphasis === "general") return all;
-  const idx = all.findIndex((_, i) =>
-    (emphasis === "drinking" && i === 0) ||
-    (emphasis === "home_expenses" && i === 1) ||
-    (emphasis === "family" && i === 0)
-  );
-  if (idx > 0) {
-    const [item] = all.splice(idx, 1);
-    all.unshift(item);
-  }
-  return all;
+const BENEFITS = [
+  "Protect Your Family",
+  "Improve Your Water",
+  "Reduce Costs",
+  "Enjoy Peace of Mind",
+];
+
+function midScore(current: number, projected: number): number {
+  const mid = Math.round(current + (projected - current) * 0.4);
+  return Math.max(current + 5, Math.min(projected - 10, mid));
 }
 
 export function DemoSummaryScreen({
@@ -88,166 +56,122 @@ export function DemoSummaryScreen({
   customerConcerns,
   onNext,
 }: Props) {
-  const firstName = report?.customerName?.split(" ")[0] || "your home";
-  const companyName = report?.companyName || company?.name || "";
-  const displayScore = projectedScore ?? verifiedScore ?? initialScore ?? 0;
-  const topConcerns = useMemo(() => deriveTopConcerns(contaminants), [contaminants]);
-  const benefits = prioritizedBenefits(customerConcerns?.emphasis);
+  const baseScore = initialScore ?? 0;
+  const basic = midScore(baseScore, projectedScore ?? baseScore);
 
-  // Score journey data
   const journeySteps = [
-    initialScore != null ? { label: "Starting", score: initialScore } : null,
-    verifiedScore != null ? { label: "Verified", score: verifiedScore } : null,
-    projectedScore != null ? { label: "Projected", score: projectedScore } : null,
-  ].filter(Boolean) as { label: string; score: number }[];
+    initialScore != null ? { label: "BEFORE", score: initialScore, size: 60 } : null,
+    initialScore != null && projectedScore != null ? { label: "BASIC FILTRATION", score: basic, size: 60 } : null,
+    projectedScore != null ? { label: "AQUAREPORT SYSTEM", score: projectedScore, size: 70 } : null,
+  ].filter(Boolean) as { label: string; score: number; size: number }[];
 
   return (
-    <div className="mx-auto max-w-lg pt-6">
-      {/* Header */}
-      <div className="text-center mb-10">
-        <p className="text-[13px] font-medium tracking-wide uppercase" style={{ color: `${colors.success}90` }}>
-          Your Plan
-        </p>
-        <h2 className="text-[28px] sm:text-[32px] font-bold leading-tight tracking-tight mt-3">
-          Here's Where We Stand
-        </h2>
-        <p className="text-[15px] mt-3" style={{ color: colors.textMuted }}>
-          Everything we covered for {firstName}
-        </p>
-      </div>
-
-      {/* Score — hero gauge */}
-      <div className="flex flex-col items-center mb-10">
-        <ScoreGauge score={displayScore} size={180} animate animationDuration={1800} />
-        <p className="text-[13px] mt-4" style={{ color: colors.textMuted }}>
-          {projectedScore != null ? "Projected AquaScore" : "Current AquaScore"}
-        </p>
-      </div>
-
-      {/* Score Journey — if multiple data points */}
-      {journeySteps.length >= 2 && (
-        <div className="rounded-2xl p-6 mb-8" style={{ background: colors.surface }}>
-          <p className="text-[12px] font-medium tracking-wide uppercase mb-5 text-center" style={{ color: colors.textMuted }}>
-            Score Journey
+    <div className="mx-auto w-full max-w-5xl px-8 pt-6">
+      {/* 2-column layout */}
+      <div className="flex gap-10 items-start" style={{ minHeight: "400px" }}>
+        {/* Left column */}
+        <div className="flex-1">
+          <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight leading-tight" style={{ color: colors.textPrimary }}>
+            Your Home<br />Water Plan
+          </h2>
+          <p className="text-[15px] mt-3 mb-8" style={{ color: colors.textMuted }}>
+            Your personalized plan for healthier, better water.
           </p>
-          <div className="flex items-baseline justify-center gap-6">
-            {journeySteps.map((step, i) => (
-              <div key={step.label} className="flex items-baseline gap-6">
-                <div className="text-center">
-                  <p
-                    className={`tabular-nums font-bold ${i === journeySteps.length - 1 ? "text-[36px]" : "text-[22px]"}`}
-                    style={{ color: i === journeySteps.length - 1 ? colors.success : `${scoreColor(step.score)}70` }}
-                  >
-                    {step.score}
-                  </p>
-                  <p className="text-[11px] mt-1" style={{ color: colors.textFaint }}>
-                    {step.label}
-                  </p>
-                </div>
-                {i < journeySteps.length - 1 && (
-                  <span className="text-[16px]" style={{ color: colors.textFaint }}>→</span>
-                )}
+
+          {/* Benefits — bullet dots, not icon boxes */}
+          <div className="space-y-4 mb-8">
+            {BENEFITS.map((b) => (
+              <div key={b} className="flex items-center gap-3">
+                <div className="size-1.5 rounded-full shrink-0" style={{ background: colors.textSecondary }} />
+                <span className="text-[15px]" style={{ color: colors.textSecondary }}>{b}</span>
               </div>
             ))}
           </div>
+
+          {/* Download button — outline style */}
+          <button
+            className="flex items-center gap-2 rounded-2xl px-6 py-3 text-[14px] font-medium cursor-pointer active:scale-[0.97] transition-transform"
+            style={{ border: `1px solid ${colors.primary}30`, color: colors.primary }}
+          >
+            <Download className="size-4" />
+            Download Your Plan
+          </button>
         </div>
-      )}
 
-      {/* Your Priorities — from customer selections */}
-      {customerConcerns && customerConcerns.selected.length > 0 && (
-        <div className="mb-8">
-          <p className="text-[12px] font-medium tracking-wide uppercase mb-4" style={{ color: colors.textMuted }}>
-            Your Priorities
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {customerConcerns.selected.map((key) => (
-              <span
-                key={key}
-                className="rounded-full px-4 py-1.5 text-[13px] font-medium"
-                style={{ background: `${colors.primary}15`, color: `${colors.primary}cc` }}
-              >
-                {CONCERN_LABELS[key] || key}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Key Findings — from contaminant data */}
-      {topConcerns.length > 0 && (
-        <div className="mb-8">
-          <p className="text-[12px] font-medium tracking-wide uppercase mb-4" style={{ color: colors.textMuted }}>
-            Key Findings
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {topConcerns.map((concern) => (
-              <span
-                key={concern}
-                className="rounded-full px-4 py-1.5 text-[13px] font-medium"
-                style={{ background: `${colors.warning}15`, color: `${colors.warning}cc` }}
-              >
-                {concern}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recommended Solution */}
-      <div className="rounded-2xl p-6 mb-8" style={{ background: colors.surface }}>
-        <p className="text-[12px] font-medium tracking-wide uppercase mb-3" style={{ color: colors.textMuted }}>
-          Recommended Solution
-        </p>
-        <p className="text-[16px] font-medium" style={{ color: colors.textPrimary }}>
-          Whole-home filtration {boostApplied ? "+ softening + premium protection" : "+ softening"}
-        </p>
-      </div>
-
-      {/* Benefits — clean list */}
-      <div className="mb-8">
-        <p className="text-[12px] font-medium tracking-wide uppercase mb-4" style={{ color: colors.textMuted }}>
-          Primary Benefits
-        </p>
-        <div className="space-y-4">
-          {benefits.map((b, i) => (
-            <div key={i} className="flex items-center gap-4">
-              <div
-                className="size-9 shrink-0 rounded-xl flex items-center justify-center"
-                style={{ background: `${b.color}12` }}
-              >
-                <b.icon className="size-4" style={{ color: b.color }} />
+        {/* Right column */}
+        <div className="w-80 shrink-0">
+          {/* Score Journey card — 3 mini gauges */}
+          {journeySteps.length >= 2 && (
+            <div className="rounded-2xl p-5 mb-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+              <p className="text-[10px] font-bold tracking-widest uppercase mb-4" style={{ color: colors.textMuted }}>
+                Your Score Journey
+              </p>
+              <div className="flex items-end justify-center gap-4">
+                {journeySteps.map((step, i) => (
+                  <div key={step.label} className="flex flex-col items-center">
+                    <ScoreGauge score={step.score} size={step.size} animationDuration={1200 + i * 400} />
+                    <p className="text-[9px] font-bold tracking-wider uppercase mt-2 text-center max-w-[70px]" style={{ color: scoreColor(step.score) }}>
+                      {step.label}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <span className="text-[15px]" style={{ color: colors.textSecondary }}>
-                {b.text}
-              </span>
             </div>
-          ))}
-        </div>
-      </div>
+          )}
 
-      {/* Next step */}
-      <div className="rounded-2xl p-6 text-center mb-8" style={{ background: `${colors.success}08` }}>
-        <p className="text-[15px] font-medium" style={{ color: colors.textSecondary }}>
-          Review your options with your water specialist
-        </p>
-        {companyName && (
-          <p className="text-[13px] mt-2" style={{ color: colors.textFaint }}>
-            {companyName}
-          </p>
-        )}
+          {/* Top Priorities pills */}
+          {customerConcerns && customerConcerns.selected.length > 0 && (
+            <div className="mb-5">
+              <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: colors.textMuted }}>
+                Your Top Priorities
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {customerConcerns.selected.map((key) => (
+                  <span
+                    key={key}
+                    className="rounded-full px-4 py-1.5 text-[13px] font-medium"
+                    style={{ background: `${colors.primary}15`, color: `${colors.primary}cc` }}
+                  >
+                    {CONCERN_LABELS[key] || key}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Closing message */}
+          <div className="mt-6">
+            <p className="text-[15px] leading-relaxed" style={{ color: colors.textMuted }}>
+              You're one step away from<br />better water for your home.
+            </p>
+            <p
+              className="mt-4"
+              style={{
+                fontFamily: "'Georgia', 'Times New Roman', serif",
+                fontStyle: "italic",
+                fontSize: "28px",
+                color: colors.success,
+              }}
+            >
+              Thank you!
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Continue */}
-      <button
-        onClick={onNext}
-        className="w-full rounded-2xl py-4 text-[16px] font-bold active:scale-[0.97] transition-transform cursor-pointer mb-4"
-        style={{
-          background: `linear-gradient(135deg, ${companyColor}, ${colors.success})`,
-          boxShadow: `0 4px 24px ${companyColor}20`,
-        }}
-      >
-        Continue
-      </button>
+      <div className="mt-8">
+        <button
+          onClick={onNext}
+          className="w-full max-w-sm mx-auto block rounded-2xl py-4 text-[16px] font-bold active:scale-[0.97] transition-transform cursor-pointer"
+          style={{
+            background: `linear-gradient(135deg, ${companyColor}, ${colors.primary})`,
+            boxShadow: `0 4px 24px ${companyColor}20`,
+          }}
+        >
+          Continue
+        </button>
+      </div>
     </div>
   );
 }

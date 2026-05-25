@@ -57,7 +57,7 @@ export function DemoSolution({ score, company, report: _report, onNext: _onNext,
   const hasCustomProduct = company?.solutionProductName;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <div className="inline-flex size-14 items-center justify-center rounded-full mb-3" style={{ background: "rgba(139,92,246,0.1)" }}>
@@ -70,7 +70,7 @@ export function DemoSolution({ score, company, report: _report, onNext: _onNext,
       </div>
 
       {/* Before → After */}
-      <div className="rounded-2xl p-5" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <div className="flex items-center justify-center gap-4">
           <div className="text-center">
             <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: colors.textFaint }}>Current</p>
@@ -130,7 +130,7 @@ export function DemoSolution({ score, company, report: _report, onNext: _onNext,
 
       {/* Default systems */}
       {!hasCustomProduct && SYSTEMS.map((sys) => (
-        <div key={sys.name} className="rounded-2xl overflow-hidden" style={{ background: colors.surface }}>
+        <div key={sys.name} className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="p-4 flex items-center justify-between" style={{ background: `${colors.primary}06` }}>
             <div>
               <h3 className="text-[16px] font-bold" style={{ color: colors.textPrimary }}>{sys.name}</h3>
@@ -153,7 +153,7 @@ export function DemoSolution({ score, company, report: _report, onNext: _onNext,
       ))}
 
       {/* How it works */}
-      <div className="rounded-2xl p-5" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: colors.textFaint }}>How It Works</p>
         <div className="space-y-3">
           {HOW_STEPS.map((item, i) => (

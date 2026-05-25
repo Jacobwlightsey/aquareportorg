@@ -47,7 +47,7 @@ export function DemoNextSteps({ report, reportId, onEndDemo }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
         <div className="inline-flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-green-500/20 border border-emerald-500/30 mb-3">

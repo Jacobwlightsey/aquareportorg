@@ -30,12 +30,12 @@ export const colors = {
   /** Text hierarchy */
   textPrimary: "rgba(255, 255, 255, 0.92)",
   textSecondary: "rgba(255, 255, 255, 0.55)",
-  textMuted: "rgba(255, 255, 255, 0.32)",
+  textMuted: "rgba(255, 255, 255, 0.40)",
   textFaint: "rgba(255, 255, 255, 0.18)",
 
-  /** Borders — use sparingly */
-  border: "rgba(255, 255, 255, 0.06)",
-  borderActive: "rgba(255, 255, 255, 0.12)",
+  /** Borders — visible but restrained */
+  border: "rgba(255, 255, 255, 0.08)",
+  borderActive: "rgba(255, 255, 255, 0.14)",
 } as const;
 
 /** Typography scale — 4 levels only */
@@ -68,10 +68,10 @@ export const spring = {
 
 /** Score tier colors — aligned to the 5-color palette */
 export function scoreColor(s: number): string {
-  if (s >= 80) return colors.warning;    // Gold — amber
-  if (s >= 60) return colors.primary;    // Silver — cyan/blue
-  if (s >= 40) return "#F59E0B";         // Bronze — warm amber
-  return colors.critical;                 // At risk — coral
+  if (s >= 80) return colors.success;    // Excellent — green
+  if (s >= 60) return colors.primary;    // Good — cyan
+  if (s >= 40) return colors.warning;    // Fair — amber
+  return colors.critical;                // At Risk — coral
 }
 
 export function scoreLabel(s: number): string {
@@ -82,8 +82,8 @@ export function scoreLabel(s: number): string {
 }
 
 export function scoreTierInfo(s: number) {
-  if (s >= 80) return { label: "Excellent", color: colors.warning, desc: "Your water quality is outstanding." };
+  if (s >= 80) return { label: "Excellent", color: colors.success, desc: "Your water quality is outstanding." };
   if (s >= 60) return { label: "Good", color: colors.primary, desc: "Your water is mostly clean with a few areas to monitor." };
-  if (s >= 40) return { label: "Fair", color: "#F59E0B", desc: "Some contaminants are above recommended health levels." };
+  if (s >= 40) return { label: "Fair", color: colors.warning, desc: "Some contaminants are above recommended health levels." };
   return { label: "At Risk", color: colors.critical, desc: "Significant quality concerns that should be addressed." };
 }

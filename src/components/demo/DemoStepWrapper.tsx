@@ -35,7 +35,7 @@ export class DemoStepWrapper extends Component<Props, ErrorState> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="mx-auto max-w-lg pt-12 text-center space-y-4">
+        <div className="mx-auto w-full max-w-5xl px-8 pt-12 text-center space-y-4">
           <AlertTriangle className="size-10 mx-auto" style={{ color: colors.warning }} />
           <div>
             <h3 className="text-[18px] font-bold" style={{ color: colors.textPrimary }}>Something went wrong</h3>
@@ -64,7 +64,7 @@ export class DemoStepWrapper extends Component<Props, ErrorState> {
 
     if (this.props.isLoading) {
       return (
-        <div className="mx-auto max-w-lg pt-12 text-center space-y-4">
+        <div className="mx-auto w-full max-w-5xl px-8 pt-12 text-center space-y-4">
           <Loader2 className="size-8 mx-auto animate-spin" style={{ color: colors.primary }} />
           <p className="text-[14px]" style={{ color: colors.textFaint }}>Loading…</p>
         </div>

@@ -39,7 +39,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
   const firstName = report.customerName?.split(" ")[0] || "Homeowner";
 
   return (
-    <div className="mx-auto max-w-lg pt-6">
+    <div className="mx-auto w-full max-w-5xl px-8 pt-6">
       {/* Street View hero */}
       <div className="relative overflow-hidden rounded-2xl h-48 sm:h-56 mb-8">
         <img
@@ -77,7 +77,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
 
       {/* Info cards */}
       <div className="grid grid-cols-2 gap-3 mb-8">
-        <div className="rounded-2xl p-4" style={{ background: colors.surface }}>
+        <div className="rounded-2xl p-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="size-4" style={{ color: colors.primary }} />
             <span className="text-[11px] font-medium tracking-wide uppercase" style={{ color: colors.textMuted }}>Customer</span>
@@ -89,7 +89,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
             <p className="text-[12px] mt-1 truncate" style={{ color: colors.textFaint }}>{report.customerPhone}</p>
           )}
         </div>
-        <div className="rounded-2xl p-4" style={{ background: colors.surface }}>
+        <div className="rounded-2xl p-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="flex items-center gap-2 mb-3">
             <Droplets className="size-4" style={{ color: colors.primary }} />
             <span className="text-[11px] font-medium tracking-wide uppercase" style={{ color: colors.textMuted }}>Water Utility</span>
@@ -105,7 +105,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
 
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-2 mb-8">
-        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[18px] font-bold" style={{ color: colors.textPrimary }}>
             {report.populationServed?.toLocaleString() ?? "—"}
           </p>
@@ -113,7 +113,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
             People Served
           </p>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[18px] font-bold capitalize" style={{ color: colors.textPrimary }}>
             {report.waterSource || "Municipal"}
           </p>
@@ -121,7 +121,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
             Water Source
           </p>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <p className="text-[18px] font-bold" style={{ color: colors.textPrimary }}>
             {report.totalContaminants}
           </p>
@@ -132,7 +132,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
       </div>
 
       {/* Agenda */}
-      <div className="rounded-2xl p-6 mb-8" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-6 mb-8" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[12px] font-medium tracking-wide uppercase mb-4" style={{ color: colors.textMuted }}>
           What we'll cover today
         </p>

@@ -7,7 +7,7 @@ interface Props {
 
 export function DemoCustomerStep({ report, onNext }: Props) {
   return (
-    <div className="mx-auto max-w-lg space-y-6 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-6 pt-4">
       {/* Greeting */}
       <div className="text-center">
         <div className="inline-flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 mb-4">

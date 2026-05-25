@@ -101,7 +101,7 @@ export function DemoScoreBoost({ projectedScore, boostedScore, company, report, 
     : null;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-6 pt-4">
       {modal}
 
       {/* Header */}

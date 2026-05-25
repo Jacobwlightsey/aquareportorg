@@ -38,7 +38,7 @@ export function DemoCustomerClose({ report, company, finalScore, companyColor, o
   }, [celebrated]);
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-6 pt-4">
       {/* Header */}
       <div className="text-center">
         <div className="inline-flex items-center justify-center size-16 rounded-full mb-4" style={{ background: `${colors.warning}12` }}>
@@ -57,7 +57,7 @@ export function DemoCustomerClose({ report, company, finalScore, companyColor, o
       </div>
 
       {/* Benefits */}
-      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>What You're Getting</p>
         {BENEFITS.map((b, i) => (
           <div key={i} className="flex items-start gap-3">
@@ -78,7 +78,7 @@ export function DemoCustomerClose({ report, company, finalScore, companyColor, o
       )}
 
       {/* Company footer */}
-      <div className="rounded-2xl p-5 text-center" style={{ background: colors.surface }}>
+      <div className="rounded-2xl p-5 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <p className="text-[14px]" style={{ color: colors.textMuted }}>
           Thank you for choosing <span className="font-semibold" style={{ color: colors.textPrimary }}>{companyName}</span>
         </p>
