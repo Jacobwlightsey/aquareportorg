@@ -733,11 +733,12 @@ function DemoWizardInner() {
         </div>
       )}
 
-      {/* ─── Phase 3: Transitional narration overlay ─── */}
+      {/* ─── Phase 3+4A: Transitional narration overlay (concern-aware) ─── */}
       {demoStarted && (
         <DemoTransitionOverlay
           currentStep={stepKey}
           onComplete={() => setTransitionDone(true)}
+          customerConcerns={customerConcerns}
         />
       )}
 
@@ -834,7 +835,7 @@ function DemoWizardInner() {
             />
           )}
           {stepKey === "impact" && (
-            <DemoImpact onNext={goNext} onBack={goBack} />
+            <DemoImpact onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} />
           )}
           {stepKey === "rooms" && (
             <DemoRoomImpact
@@ -882,6 +883,7 @@ function DemoWizardInner() {
           {stepKey === "trust" && (
             <DemoTrustProof
               company={company}
+              report={report}
               onNext={goNext}
               onBack={goBack}
             />
@@ -921,6 +923,7 @@ function DemoWizardInner() {
               contaminants={contaminants}
               boostApplied={boostApplied}
               companyColor={companyColor}
+              customerConcerns={customerConcerns}
               onNext={goNext}
             />
           )}
@@ -955,10 +958,10 @@ function DemoWizardInner() {
         </DemoStepWrapper>
       </div>
 
-      {/* Sprint 3A: Rep Talking Points (only in rep view) */}
+      {/* Sprint 3A+4A: Rep Talking Points — concern-aware (only in rep view) */}
       {viewMode === "rep" && demoStarted && (
         <div className="fixed inset-x-0 bottom-16 z-30">
-          <DemoTalkingPoints currentStep={stepKey} company={company} />
+          <DemoTalkingPoints currentStep={stepKey} company={company} customerConcerns={customerConcerns} />
         </div>
       )}
 

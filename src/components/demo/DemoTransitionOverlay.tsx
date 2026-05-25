@@ -1,21 +1,23 @@
-/* ──── Phase 3: Transitional Narration Overlay ────
+/* ──── Phase 3+4A: Transitional Narration Overlay ────
    Emotional bridge cues between key steps.
-   Not scripts the rep reads — on-screen narration the homeowner sees.
-   Appears for ~2.5s then fades, giving a "breathing room" between beats.
+   Phase 4A: narration adapts to what the homeowner selected as their concerns.
+   Appears for ~2.8s then fades, giving breathing room between beats.
    ──── */
 
 import { useEffect, useState } from "react";
+import type { CustomerConcernKey } from "./DemoCustomerConcerns";
 
 interface TransitionDef {
-  /** Step key that triggers this overlay (shown when entering this step) */
+  /** Step key that triggers this overlay */
   beforeStep: string;
-  /** The narration line */
+  /** Default narration line */
   text: string;
   /** Subtle emoji/icon for visual anchor */
   icon?: string;
+  /** Concern-specific overrides — use the first matching concern */
+  overrides?: { concerns: CustomerConcernKey[]; text: string }[];
 }
 
-/** Transitions keyed by the step they precede */
 const TRANSITIONS: TransitionDef[] = [
   {
     beforeStep: "verifiedScore",
@@ -26,11 +28,21 @@ const TRANSITIONS: TransitionDef[] = [
     beforeStep: "impact",
     text: "Here's how this affects\ndaily life in your home.",
     icon: "🏠",
+    overrides: [
+      { concerns: ["family_health"], text: "Here's how this affects\nyour family every day." },
+      { concerns: ["skin_and_hair"], text: "Here's what your water does\nto your skin and hair." },
+      { concerns: ["appliances_plumbing", "stains_buildup"], text: "Here's what your water\nis doing to your home." },
+      { concerns: ["taste_or_smell", "drinking_water"], text: "Here's what you're actually\ndrinking every day." },
+    ],
   },
   {
     beforeStep: "comparison",
     text: "Most homeowners don't realize\nwhat poor water quietly costs them.",
     icon: "💡",
+    overrides: [
+      { concerns: ["bottled_water_costs"], text: "Let's look at what you're\nalready spending on water." },
+      { concerns: ["appliances_plumbing"], text: "Between repairs, replacements,\nand energy — it adds up fast." },
+    ],
   },
   {
     beforeStep: "pricing",
@@ -41,6 +53,10 @@ const TRANSITIONS: TransitionDef[] = [
     beforeStep: "transform",
     text: "Here's the transformation\nwe're talking about.",
     icon: "✨",
+    overrides: [
+      { concerns: ["family_health"], text: "Here's what changes\nfor your family." },
+      { concerns: ["skin_and_hair"], text: "Here's what changes\nfrom the very first day." },
+    ],
   },
 ];
 
@@ -48,20 +64,29 @@ const TRANSITION_MAP = new Map(TRANSITIONS.map((t) => [t.beforeStep, t]));
 
 /** Duration the overlay is visible (ms) */
 const VISIBLE_MS = 2800;
-/** Fade-in duration (ms) */
 const FADE_IN_MS = 600;
-/** Fade-out duration (ms) */
 const FADE_OUT_MS = 500;
 
 interface Props {
   currentStep: string;
-  /** Call this when the overlay finishes to allow step content to appear */
   onComplete: () => void;
+  /** Homeowner concerns — used to pick contextual narration */
+  customerConcerns?: { selected: CustomerConcernKey[] } | null;
 }
 
-export function DemoTransitionOverlay({ currentStep, onComplete }: Props) {
+function resolveText(def: TransitionDef, selected?: CustomerConcernKey[]): string {
+  if (!def.overrides || !selected?.length) return def.text;
+  const s = new Set(selected);
+  for (const ov of def.overrides) {
+    if (ov.concerns.some((c) => s.has(c))) return ov.text;
+  }
+  return def.text;
+}
+
+export function DemoTransitionOverlay({ currentStep, onComplete, customerConcerns }: Props) {
   const [phase, setPhase] = useState<"entering" | "visible" | "exiting" | "done">("done");
   const [activeDef, setActiveDef] = useState<TransitionDef | null>(null);
+  const [activeText, setActiveText] = useState("");
 
   useEffect(() => {
     const def = TRANSITION_MAP.get(currentStep);
@@ -71,6 +96,7 @@ export function DemoTransitionOverlay({ currentStep, onComplete }: Props) {
     }
 
     setActiveDef(def);
+    setActiveText(resolveText(def, customerConcerns?.selected));
     setPhase("entering");
 
     const fadeInTimer = setTimeout(() => setPhase("visible"), FADE_IN_MS);
@@ -102,7 +128,6 @@ export function DemoTransitionOverlay({ currentStep, onComplete }: Props) {
         transition: `opacity ${phase === "entering" ? FADE_IN_MS : FADE_OUT_MS}ms ease`,
       }}
       onClick={() => {
-        // Allow tap to skip
         setPhase("done");
         onComplete();
       }}
@@ -112,14 +137,13 @@ export function DemoTransitionOverlay({ currentStep, onComplete }: Props) {
           <div className="text-4xl mb-5 opacity-60">{activeDef.icon}</div>
         )}
         <p className="text-xl font-medium text-white/80 leading-relaxed whitespace-pre-line tracking-wide">
-          {activeDef.text}
+          {activeText}
         </p>
       </div>
     </div>
   );
 }
 
-/** Check if a step has a transition overlay */
 export function hasTransition(stepKey: string): boolean {
   return TRANSITION_MAP.has(stepKey);
 }

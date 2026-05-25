@@ -8,22 +8,19 @@ import { CheckCircle, Droplets, Shield, Sparkles, TrendingUp } from "lucide-reac
 import { useMemo } from "react";
 import { contaminantName } from "@/lib/supabase";
 import { ScoreGauge } from "./ScoreGauge";
+import type { CustomerConcernState } from "./DemoCustomerConcerns";
 
 interface Props {
   report: any;
   company?: any;
-  /** Initial score from local data */
   initialScore?: number;
-  /** Score after live test verification */
   verifiedScore?: number;
-  /** Projected score with recommended system */
   projectedScore?: number;
-  /** Contaminant array for deriving top concerns */
   contaminants?: any[];
-  /** Whether the boost/optional upgrade was applied */
   boostApplied?: boolean;
-  /** Company primary color */
   companyColor?: string;
+  /** Homeowner-selected concerns — shown in the recap */
+  customerConcerns?: CustomerConcernState | null;
   onNext: () => void;
 }
 
@@ -112,6 +109,35 @@ function ScoreJourneyMini({
   );
 }
 
+/** Concern key → display label */
+const CONCERN_LABELS: Record<string, string> = {
+  drinking_water: "Drinking Water",
+  family_health: "Family Health",
+  skin_and_hair: "Skin & Hair",
+  appliances_plumbing: "Home & Appliances",
+  taste_or_smell: "Taste & Smell",
+  stains_buildup: "Stains & Buildup",
+  bottled_water_costs: "Bottled Water Costs",
+};
+
+/** Build benefits list prioritized by customer concerns */
+function prioritizedBenefits(emphasis?: string) {
+  const all = [
+    { icon: Droplets, text: "Cleaner drinking water", color: "#3b82f6", keys: ["drinking", "general"] },
+    { icon: Shield, text: "Appliance & plumbing protection", color: "#10b981", keys: ["home_expenses"] },
+    { icon: Sparkles, text: "Better showers & skin comfort", color: "#06b6d4", keys: ["general"] },
+    { icon: CheckCircle, text: "Reduced bottled water spending", color: "#8b5cf6", keys: ["home_expenses"] },
+  ];
+  if (!emphasis || emphasis === "general") return all;
+  // Move the most relevant benefit to the top
+  const idx = all.findIndex((b) => b.keys.includes(emphasis));
+  if (idx > 0) {
+    const [item] = all.splice(idx, 1);
+    all.unshift(item);
+  }
+  return all;
+}
+
 export function DemoSummaryScreen({
   report,
   company,
@@ -121,6 +147,7 @@ export function DemoSummaryScreen({
   contaminants = [],
   boostApplied = false,
   companyColor = "#2563eb",
+  customerConcerns,
   onNext,
 }: Props) {
   const firstName = report?.customerName?.split(" ")[0] || "your home";
@@ -128,12 +155,7 @@ export function DemoSummaryScreen({
   const displayScore = projectedScore ?? verifiedScore ?? initialScore ?? 0;
   const topConcerns = useMemo(() => deriveTopConcerns(contaminants), [contaminants]);
 
-  const benefits = [
-    { icon: Droplets, text: "Cleaner drinking water", color: "#3b82f6" },
-    { icon: Shield, text: "Appliance & plumbing protection", color: "#10b981" },
-    { icon: Sparkles, text: "Better showers & skin comfort", color: "#06b6d4" },
-    { icon: CheckCircle, text: "Reduced bottled water dependence", color: "#8b5cf6" },
-  ];
+  const benefits = prioritizedBenefits(customerConcerns?.emphasis);
 
   return (
     <div className="mx-auto max-w-lg space-y-5 pt-2">
@@ -172,11 +194,30 @@ export function DemoSummaryScreen({
 
       {/* Plan details grid */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
-        {/* Main Concerns */}
+        {/* What You Told Us — from customerConcerns */}
+        {customerConcerns && customerConcerns.selected.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">
+              Your Priorities
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {customerConcerns.selected.map((key) => (
+                <span
+                  key={key}
+                  className="rounded-full bg-violet-500/10 border border-violet-500/20 px-3 py-1 text-xs font-semibold text-violet-400"
+                >
+                  {CONCERN_LABELS[key] || key}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Main Concerns — from contaminant data */}
         {topConcerns.length > 0 && (
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">
-              Main Concerns
+              Key Findings
             </p>
             <div className="flex flex-wrap gap-2">
               {topConcerns.map((concern) => (
