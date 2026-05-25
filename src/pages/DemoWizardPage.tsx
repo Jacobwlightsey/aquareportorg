@@ -69,18 +69,26 @@ import { EndDemoModal } from "@/components/demo/EndDemoModal";
 import { DemoStepWrapper } from "@/components/demo/DemoStepWrapper";
 import { DemoProgressBar, type StepDef } from "@/components/demo/DemoProgressBar";
 
-/* ──────────────── All possible steps ──────────────── */
+// Sprint 2 components
+import { DemoConcernIntake, type ConcernData } from "@/components/demo/DemoConcernIntake";
+import { DemoRoomImpact } from "@/components/demo/DemoRoomImpact";
+import { DemoTrustProof } from "@/components/demo/DemoTrustProof";
+
+/* ──────────────── All possible steps (15-step order) ──────────────── */
 const ALL_STEPS: StepDef[] = [
-  { key: "welcome",       label: "Welcome",       color: "#3b82f6" },
+  { key: "intake",         label: "Intake",        color: "#8b5cf6" },   // Sprint 2A
+  { key: "welcome",        label: "Welcome",       color: "#3b82f6" },
   { key: "score",          label: "AquaScore",     color: "#10b981" },
   { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },
   { key: "impact",         label: "Impact",        color: "#f43f5e" },
+  { key: "rooms",          label: "Rooms",         color: "#f43f5e" },   // Sprint 2B
   { key: "test",           label: "Live Test",     color: "#06b6d4" },
   { key: "transform",      label: "Transform",     color: "#8b5cf6" },
+  { key: "boost",          label: "Boost",         color: "#f59e0b" },
   { key: "system",         label: "System",        color: "#6366f1" },
+  { key: "trust",          label: "Trust",         color: "#22c55e" },   // Sprint 2C
   { key: "pricing",        label: "Pricing",       color: "#10b981" },
   { key: "comparison",     label: "Compare",       color: "#ec4899" },
-  { key: "boost",          label: "Boost",         color: "#f59e0b" },
   { key: "customerClose",  label: "Close",         color: "#22c55e" },
   { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },
 ];
@@ -299,6 +307,7 @@ function DemoWizardInner() {
   const [pricingState, setPricingState] = useState<PricingState | null>(null);
   const [boostApplied, setBoostApplied] = useState(false);
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
+  const [concerns, setConcerns] = useState<ConcernData | null>(null);
 
   // skipScoreAnimation from company config (Sprint 1 flag #2)
   const skipScoreAnimation = !!(company as any)?.demoConfig?.skipScoreAnimation;
@@ -510,6 +519,16 @@ function DemoWizardInner() {
         className={`flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
       >
         <DemoStepWrapper stepName={stepKey}>
+          {stepKey === "intake" && (
+            <DemoConcernIntake
+              onNext={(data) => {
+                setConcerns(data);
+                goNext();
+              }}
+              onBack={goBack}
+              initial={concerns}
+            />
+          )}
           {stepKey === "welcome" && (
             <div className="space-y-5">
               <DemoWelcome
@@ -552,6 +571,13 @@ function DemoWizardInner() {
           {stepKey === "impact" && (
             <DemoImpact onNext={goNext} onBack={goBack} />
           )}
+          {stepKey === "rooms" && (
+            <DemoRoomImpact
+              onNext={goNext}
+              onBack={goBack}
+              concerns={concerns}
+            />
+          )}
           {stepKey === "test" && (
             <DemoLiveTest
               report={report}
@@ -575,6 +601,13 @@ function DemoWizardInner() {
           )}
           {stepKey === "system" && (
             <DemoSystemInfo company={company} report={report} onNext={goNext} />
+          )}
+          {stepKey === "trust" && (
+            <DemoTrustProof
+              company={company}
+              onNext={goNext}
+              onBack={goBack}
+            />
           )}
           {stepKey === "pricing" && (
             <DemoPricing

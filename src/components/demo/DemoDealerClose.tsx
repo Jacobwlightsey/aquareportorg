@@ -1,4 +1,4 @@
-/* ──── Sprint 1E: Enhanced DemoDealerClose — merges DemoNextSteps functionality ──── */
+/* ──── Sprint 1E+2E: Enhanced DemoDealerClose — merges DemoNextSteps + QR code ──── */
 
 import { useAction, useMutation } from "convex/react";
 import {
@@ -20,6 +20,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
 import { ScoreGauge } from "./ScoreGauge";
+import { DemoQRCode } from "./DemoQRCode";
 
 interface Props {
   report: any;
@@ -240,6 +241,15 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
           </div>
         )}
       </div>
+
+      {/* Sprint 2E: QR code for report */}
+      {report.shareToken && (
+        <DemoQRCode
+          url={`https://myaquareport.com/r/${report.shareToken}`}
+          label="Customer's Report QR Code"
+          companyColor={companyColor}
+        />
+      )}
 
       {/* Follow-Up quick actions */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
