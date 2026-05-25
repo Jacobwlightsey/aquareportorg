@@ -50,6 +50,7 @@ import { ReviewsPage } from "./pages/ReviewsPage";
 import { TerritoryMapPage } from "./pages/TerritoryMapPage";
 import { MarketingPage } from "./pages/MarketingPage";
 import { TrainingPage } from "./pages/TrainingPage";
+import { SpouseReviewPage } from "./pages/SpouseReviewPage";
 
 function App() {
   return (
@@ -57,6 +58,9 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <Toaster />
         <Routes>
+          {/* Sprint 4A: Spouse review — public, no auth */}
+          <Route path="/review/:token" element={<SpouseReviewPage />} />
+
           {/* Public customer report — no layout chrome */}
           <Route path="/r/:shareToken" element={<CustomerReportPage />} />
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />

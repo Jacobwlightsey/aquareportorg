@@ -12,7 +12,7 @@ export const DemoModeContext = createContext<DemoModeCtx>({
   setDemoMode: () => {},
 });
 
-/** Default step keys for each mode (updated for 15-step order) */
+/** Default step keys for each mode (matches original 12-step flow + extras) */
 export const DEFAULT_MODE_STEPS: Record<DemoModeType, string[]> = {
   quick: [
     "welcome",
@@ -28,12 +28,14 @@ export const DEFAULT_MODE_STEPS: Record<DemoModeType, string[]> = {
     "score",
     "contaminants",
     "impact",
+    "rooms",
     "test",
     "transform",
-    "boost",
     "system",
     "trust",
     "pricing",
+    "comparison",
+    "boost",
     "customerClose",
     "dealerClose",
   ],

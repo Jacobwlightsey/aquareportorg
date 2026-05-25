@@ -82,23 +82,34 @@ import {
   type StepTiming,
 } from "@/lib/demoCoaching";
 
+// Sprint 4C: Save & Resume
+import {
+  useDemoAutoSave,
+  useDemoResume,
+  clearDemoState,
+  type DemoSaveState,
+} from "@/hooks/useDemoSaveRestore";
+
+// Sprint 4E: Offline mode
+import { useOfflineBanner } from "@/hooks/useDemoOffline";
+
 /* ──────────────── All possible steps (15-step order) ──────────────── */
 const ALL_STEPS: StepDef[] = [
-  { key: "intake",         label: "Intake",        color: "#8b5cf6" },   // Sprint 2A
-  { key: "welcome",        label: "Welcome",       color: "#3b82f6" },
-  { key: "score",          label: "AquaScore",     color: "#10b981" },
-  { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },
-  { key: "impact",         label: "Impact",        color: "#f43f5e" },
-  { key: "rooms",          label: "Rooms",         color: "#f43f5e" },   // Sprint 2B
-  { key: "test",           label: "Live Test",     color: "#06b6d4" },
-  { key: "transform",      label: "Transform",     color: "#8b5cf6" },
-  { key: "boost",          label: "Boost",         color: "#f59e0b" },
-  { key: "system",         label: "System",        color: "#6366f1" },
-  { key: "trust",          label: "Trust",         color: "#22c55e" },   // Sprint 2C
-  { key: "pricing",        label: "Pricing",       color: "#10b981" },
-  { key: "comparison",     label: "Compare",       color: "#ec4899" },
-  { key: "customerClose",  label: "Close",         color: "#22c55e" },
-  { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },
+  { key: "intake",         label: "Intake",        color: "#8b5cf6" },   // Sprint 2A (pre-demo)
+  { key: "welcome",        label: "Welcome",       color: "#3b82f6" },   // 1. Welcome
+  { key: "score",          label: "AquaScore",     color: "#10b981" },   // 2. Score
+  { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },   // 3. Contaminants
+  { key: "impact",         label: "Impact",        color: "#f43f5e" },   // 4. Impact
+  { key: "rooms",          label: "Rooms",         color: "#f43f5e" },   // 4b. Room-by-room (Sprint 2B)
+  { key: "test",           label: "Live Test",     color: "#06b6d4" },   // 5. Live Test
+  { key: "transform",      label: "Transform",     color: "#8b5cf6" },   // 6. Transform
+  { key: "system",         label: "System",        color: "#6366f1" },   // 7. System
+  { key: "trust",          label: "Trust",         color: "#22c55e" },   // 7b. Trust proof (Sprint 2C)
+  { key: "pricing",        label: "Pricing",       color: "#10b981" },   // 8. Pricing
+  { key: "comparison",     label: "Compare",       color: "#ec4899" },   // 9. Comparison
+  { key: "boost",          label: "Boost",         color: "#f59e0b" },   // 10. RO upsell (after compare)
+  { key: "customerClose",  label: "Close",         color: "#22c55e" },   // 11. Customer Close
+  { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },   // 12. Dealer Close
 ];
 
 /* ──────────────── Helpers ──────────────── */
@@ -368,6 +379,44 @@ function DemoWizardInner() {
     };
   }, [demoStarted]);
 
+  // Sprint 4C: Save & Resume
+  const { showResume, savedState, onResume, onFresh } = useDemoResume(reportId);
+
+  const getStateForSave = useCallback((): DemoSaveState | null => {
+    if (!reportId) return null;
+    return {
+      currentStep,
+      liveReadings,
+      pricingState,
+      boostApplied,
+      concerns,
+      demoMode,
+      viewMode,
+      demoTime: demoTimer,
+      demoStarted,
+      stepTimings,
+      timestamp: Date.now(),
+    };
+  }, [currentStep, liveReadings, pricingState, boostApplied, concerns, demoMode, viewMode, demoTimer, demoStarted, stepTimings, reportId]);
+
+  useDemoAutoSave(reportId, getStateForSave, currentStep, demoStarted);
+
+  // Sprint 4E: Offline banner
+  const offlineBanner = useOfflineBanner();
+
+  // Restore state when user chooses "Resume"
+  useEffect(() => {
+    if (!savedState || showResume) return; // Only restore after user clicks Resume
+    setCurrentStep(savedState.currentStep);
+    setLiveReadings(savedState.liveReadings as FieldWaterReadings);
+    setPricingState(savedState.pricingState as PricingState | null);
+    setBoostApplied(savedState.boostApplied);
+    setConcerns(savedState.concerns as ConcernData | null);
+    setDemoTimer(savedState.demoTime);
+    setDemoStarted(savedState.demoStarted);
+    setStepTimings(savedState.stepTimings as StepTiming[]);
+  }, [savedState, showResume]);
+
   // Contaminants & score
   const contaminants = useMemo(
     () => parseContaminants(report?.contaminants),
@@ -407,6 +456,7 @@ function DemoWizardInner() {
 
   const exitDemo = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (reportId) clearDemoState(reportId); // Sprint 4C: clear saved state on exit
     navigate(`/customers/${reportId}`);
   }, [navigate, reportId]);
 
@@ -522,6 +572,38 @@ function DemoWizardInner() {
   const showProgressBar = !isCustomerFacing;
   const showAssistantFAB = !isCustomerView;
 
+  /* Sprint 4C: Resume dialog */
+  if (showResume && savedState) {
+    const mins = Math.floor(savedState.demoTime / 60);
+    const secs = savedState.demoTime % 60;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 text-center space-y-4">
+          <div className="text-3xl">💾</div>
+          <h2 className="text-lg font-bold">Resume Previous Demo?</h2>
+          <p className="text-sm text-white/60">
+            You have a saved demo in progress — step {savedState.currentStep + 1},{" "}
+            {mins > 0 ? `${mins}m ${secs}s` : `${secs}s`} elapsed.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onFresh}
+              className="flex-1 rounded-xl bg-white/10 py-3 text-sm font-semibold hover:bg-white/15 transition-colors"
+            >
+              Start Fresh
+            </button>
+            <button
+              onClick={onResume}
+              className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-bold hover:bg-blue-500 transition-colors"
+            >
+              Resume
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`fixed inset-0 flex flex-col bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white ${isPresentationMode ? "presentation-mode" : ""}`}
@@ -600,6 +682,16 @@ function DemoWizardInner() {
         </div>
       )}
 
+      {/* ─── Sprint 4E: Offline Banner ─── */}
+      {offlineBanner.show && (
+        <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-2 bg-amber-600/90 text-white text-xs font-semibold">
+          <span>📡 You're offline — demo data is cached, but AI assistant and saving are unavailable.</span>
+          <button onClick={offlineBanner.dismiss} className="text-white/80 hover:text-white text-xs underline cursor-pointer">
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* ─── Progress Bar (Sprint 1D: grouped) ─── */}
       {showProgressBar && (
         <div className="shrink-0 px-4 pb-3">
@@ -618,14 +710,27 @@ function DemoWizardInner() {
       >
         <DemoStepWrapper stepName={stepKey}>
           {stepKey === "intake" && (
-            <DemoConcernIntake
-              onNext={(data) => {
-                setConcerns(data);
-                goNext();
-              }}
-              onBack={goBack}
-              initial={concerns}
-            />
+            <div className="space-y-5">
+              {/* Demo Mode Selector — shown on Intake step (first step) */}
+              <div className="mx-auto max-w-lg space-y-3">
+                <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
+                  Demo Length
+                </p>
+                <DemoModeSelector
+                  companyDemoModes={
+                    (company as any)?.demoConfig?.demoModes
+                  }
+                />
+              </div>
+              <DemoConcernIntake
+                onNext={(data) => {
+                  setConcerns(data);
+                  goNext();
+                }}
+                onBack={goBack}
+                initial={concerns}
+              />
+            </div>
           )}
           {stepKey === "welcome" && (
             <div className="space-y-5">
@@ -634,11 +739,11 @@ function DemoWizardInner() {
                 companyColor={companyColor}
                 onNext={goNext}
               />
-              {/* Demo Mode Selector — shown on Welcome before starting */}
-              {!demoStarted && (
+              {/* Fallback mode selector if intake step was skipped (e.g. quick mode) */}
+              {!demoStarted && !activeSteps.some((s) => s.key === "intake") && (
                 <div className="mx-auto max-w-lg space-y-3 pb-4">
                   <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
-                    Demo Mode
+                    Demo Length
                   </p>
                   <DemoModeSelector
                     companyDemoModes={
