@@ -1,8 +1,9 @@
-import { Calculator, Check, ChevronDown, ChevronUp, CreditCard, Gift, Pencil, Sparkles, Tag } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Calculator, Check, ChevronDown, ChevronUp, CreditCard, Gift, Pencil, Sparkles, Tag } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { playRevealSound, playTapSound, playToggleSound } from "@/lib/demoSounds";
+import { useViewMode } from "@/hooks/useViewMode";
 
 export interface PricingState {
   programPrice: number;
@@ -52,14 +53,21 @@ function AnimatedPrice({ value, className }: { value: number; className?: string
   return <span className={className}>${display.toLocaleString()}</span>;
 }
 
+/* ──── Phase 1: Placeholder defaults for pricing ──── */
+const PLACEHOLDER_PROGRAM_PRICE = 12995;
+const PLACEHOLDER_REVEAL_PRICE = 9995;
+const PLACEHOLDER_MONTHLY = 149;
+
 export function DemoPricing({ company, onNext, onPricingChange, initialState }: Props) {
   const cfg = company?.demoConfig;
-  const savedProgramPrice = cfg?.programPrice ?? 0;
-  const revealPrice = cfg?.revealPrice ?? 0;
-  const systemCostMonthly = cfg?.systemCostMonthly ?? 0;
+  const savedProgramPrice = cfg?.programPrice || PLACEHOLDER_PROGRAM_PRICE;
+  const revealPrice = cfg?.revealPrice || PLACEHOLDER_REVEAL_PRICE;
+  const systemCostMonthly = cfg?.systemCostMonthly || PLACEHOLDER_MONTHLY;
   const discountOptions = cfg?.discountOptions?.length ? cfg.discountOptions : DEFAULT_DISCOUNTS;
   const color = company?.primaryColor || "#2563eb";
   const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
+  const { viewMode } = useViewMode();
+  const isRepView = viewMode === "rep";
 
   const [programPrice, setProgramPrice] = useState(initialState?.programPrice ?? savedProgramPrice);
   const [editingPrice, setEditingPrice] = useState(false);
@@ -68,8 +76,24 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
   const [selected, setSelected] = useState<Set<string>>(new Set(initialState?.discountsApplied ?? []));
   const [monthly, setMonthly] = useState(initialState?.monthlyPayment?.toString() ?? systemCostMonthly.toString());
 
+  /* ──── Phase 1: Pricing Guardrails ──── */
   const totalDiscount = discountOptions.filter((d: any) => selected.has(d.id)).reduce((sum: number, d: any) => sum + d.amount, 0);
-  const currentPrice = revealPrice - totalDiscount;
+  // Cap discounts: can never exceed the reveal price
+  const safeDiscount = Math.min(totalDiscount, revealPrice);
+  const currentPrice = Math.max(0, revealPrice - safeDiscount);
+
+  // Validate pricing state
+  const hasProgramPrice = programPrice > 0;
+  const hasRevealPrice = revealPrice > 0;
+  const hasValidPricing = hasProgramPrice && hasRevealPrice && currentPrice > 0;
+  const safeMonthly = Math.max(0, parseFloat(monthly) || systemCostMonthly);
+
+  // Check if pricing uses placeholder values (dealer hasn't customized yet)
+  const isUsingPlaceholders = useMemo(() => {
+    const cfgPrice = cfg?.programPrice;
+    const cfgReveal = cfg?.revealPrice;
+    return !cfgPrice && !cfgReveal;
+  }, [cfg]);
 
   useEffect(() => {
     onPricingChange({
@@ -77,9 +101,9 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
       revealedPrice: revealPrice,
       currentPrice,
       discountsApplied: Array.from(selected),
-      monthlyPayment: parseFloat(monthly) || systemCostMonthly,
+      monthlyPayment: safeMonthly,
     });
-  }, [currentPrice, selected, monthly]);
+  }, [currentPrice, selected, monthly, safeMonthly]);
 
   const handleReveal = () => { setRevealed(true); playRevealSound(); };
   const toggleDiscount = (id: string) => {
@@ -101,6 +125,19 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
         <h2 className="text-2xl font-black mt-3">Your Investment</h2>
         <p className="text-sm text-white/50 mt-1">Protection for your entire home</p>
       </div>
+
+      {/* Phase 1: Dealer-only placeholder warning */}
+      {isRepView && isUsingPlaceholders && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2.5">
+          <AlertTriangle className="size-4 text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-amber-400">Using placeholder pricing</p>
+            <p className="text-[11px] text-amber-400/60 mt-0.5 leading-relaxed">
+              These are demo values. Set your real pricing in Settings → Demo Config to customize the program price, reveal price, and monthly payment.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Program price (crossed out) — editable inline */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center relative group">
@@ -165,7 +202,7 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
         <div className={`p-6 text-center ${revealed ? "" : "filter blur-lg"} transition-all duration-700`}>
           <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70 mb-2">Your Exclusive Price</p>
           <AnimatedPrice value={currentPrice} className="text-5xl font-black text-emerald-400" />
-          {totalDiscount > 0 && (
+          {safeDiscount > 0 && programPrice > currentPrice && currentPrice > 0 && (
             <p className="text-sm text-emerald-400/70 mt-2 font-semibold">
               You save ${(programPrice - currentPrice).toLocaleString()}!
             </p>
@@ -173,8 +210,8 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
         </div>
       </div>
 
-      {/* Savings badge */}
-      {revealed && (
+      {/* Savings badge — only show when there's a real positive saving */}
+      {revealed && programPrice > currentPrice && currentPrice > 0 && (
         <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 animate-in fade-in duration-500">
           <Sparkles className="size-4 text-emerald-400" />
           <span className="text-sm font-bold text-emerald-400">
@@ -246,8 +283,8 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
         </div>
       )}
 
-      {/* ──── Sprint 2D: Financing Breakdown ──── */}
-      {revealed && <FinancingSection company={company} currentPrice={currentPrice} />}
+      {/* ──── Sprint 2D: Financing Breakdown — only show with valid positive price ──── */}
+      {revealed && currentPrice > 0 && <FinancingSection company={company} currentPrice={currentPrice} />}
 
       {/* Continue */}
       {revealed && (
@@ -285,10 +322,11 @@ function FinancingSection({ company, currentPrice }: { company: any; currentPric
   const [selectedTerm, setSelectedTerm] = useState<number>(terms[0]);
   const [customApr, setCustomApr] = useState(defaultApr.toString());
 
-  if (!enabled) return null;
+  // Phase 1: Don't render financing if price is invalid
+  if (!enabled || currentPrice <= 0 || !Number.isFinite(currentPrice)) return null;
 
   const apr = parseFloat(customApr) || defaultApr;
-  const payment = calcMonthly(currentPrice, apr, selectedTerm);
+  const payment = Math.max(0, calcMonthly(currentPrice, apr, selectedTerm));
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500 delay-300">

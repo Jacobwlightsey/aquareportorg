@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { playRevealSound, playProcessingSound, haptic } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
 import { ScoreGauge } from "./ScoreGauge";
+import { DemoScoreExplainer } from "./DemoScoreExplainer";
 
 interface Props {
   score?: number;
@@ -300,6 +301,9 @@ export function DemoScoreReveal({
             </div>
             <p className="text-sm text-white/70 leading-relaxed">{info.desc}</p>
           </div>
+
+          {/* Phase 1: Score Methodology Explainer */}
+          <DemoScoreExplainer currentScore={s} />
 
           {/* Quick Stats — with count-up animation (Sprint 1C) */}
           <div className="grid grid-cols-3 gap-3">

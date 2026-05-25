@@ -1,0 +1,290 @@
+Hey Viktor — this is excellent context and honestly very encouraging.
+
+The biggest thing that stands out is that the architecture is already much more aligned with this sales-flow vision than I initially assumed. If the wizard is already step-based, with independent React components, ALL_STEPS controlling order, and mode presets like quick/standard/full/custom, then this is not really a rebuild. It is exactly what you said: re-choreographing the presentation.
+
+That changes the whole conversation.
+
+The strongest part of your response is that the proposed 16-step flow maps almost 1:1 to the components that already exist. That means the opportunity is not to create a bunch of brand-new software from scratch. The opportunity is to take the existing ingredients and sequence them into a much stronger emotional buying journey.
+
+Right now, the product already has the core pieces:
+- intake
+- welcome
+- water score
+- contaminants
+- family impact
+- home impact
+- rooms
+- live test
+- comparison
+- boost/upgrades
+- system recommendation
+- proof
+- expenses
+- pricing
+- dealer close / QR
+
+The opportunity is to make those pieces feel less like a report walkthrough and more like a guided in-home sales presentation.
+
+In other words, the goal is not more complexity. The goal is better emotional pacing.
+
+The buyer journey should feel like:
+
+1. This is about my home.
+2. This is based on local data.
+3. The score makes sense because I understand how it was calculated.
+4. The live test confirms this is real.
+5. This affects things I care about.
+6. There is a clear solution.
+7. The solution creates a measurable transformation.
+8. The company seems credible.
+9. The cost makes sense compared to what the problem is already costing me.
+10. I have a clear next step.
+
+That is the psychological flow we want the wizard to produce.
+
+Your phase plan is strong.
+
+Phase 1 — Foundation Fixes
+
+I agree with starting here because these are trust-critical.
+
+Pricing guardrails are the top priority. The customer-facing pricing screen should never show $0, negative discounts, negative final price, negative savings, or negative monthly payments. That is the kind of bug that instantly kills credibility in the home.
+
+The score methodology explainer is also important because the score is emotionally powerful, but without context it can feel arbitrary or manipulative. A simple explainer gives it legitimacy.
+
+The Top 3 Concerns component is exactly right. Lead with simple human-readable concerns, then let the full contaminant table be expandable. This keeps the proof without overwhelming the homeowner.
+
+The Final Summary screen is also important because the current QR handoff feels functional but not emotionally complete. The homeowner needs a conclusion before the report delivery.
+
+Phase 2 — Flow Rebuild
+
+This is where the product really starts becoming a sales weapon.
+
+The new DemoHomeProfile component is important because it makes the report feel personal before the score appears. The homeowner needs to feel, “This is about my house,” before they see a 30/100 or any concerning result.
+
+The DemoCustomerConcerns screen is worth building now. I would not backlog it. Even a simple version adds a lot of value.
+
+“What matters most to you?” does more than collect data. It creates a micro-commitment. If the homeowner selects family, drinking water, skin/hair, appliances, taste, odor, stains, or bottled water costs, they are telling the system and the rep what emotional angle matters most. Even if the only first version is reordering or emphasizing sections based on that answer, it will make the presentation feel much more custom.
+
+Moving DemoLiveTest earlier is one of the biggest conversion improvements. The ideal sequence is:
+
+Local data says this.
+Now let’s verify your tap water.
+The live test confirms it.
+
+That is much stronger than showing a wall of data first and making the homeowner wait for the physical proof.
+
+Moving DemoExpenses before DemoPricing is also right. Cost-of-inaction should anchor the price before the investment is shown. The buyer should feel like they are already paying for poor water through bottled water, filters, appliance wear, plumbing buildup, cleaning products, and comfort issues. Then the system price becomes a comparison instead of a random large number.
+
+The DemoDecisionPage is a very strong addition. Ending with only QR/report delivery feels unfinished. The final decision page should give the rep a clean structured close:
+
+- Move forward today
+- Schedule a follow-up
+- Send my report
+
+That way even a “not today” still becomes a captured next step instead of a dead end.
+
+Phase 3 — Emotional Polish
+
+This is where the wizard starts feeling elite.
+
+The DemoScoreJourney component is one of the most important screens in the whole product. The score transformation should be treated like a major emotional moment, not just a comparison widget.
+
+The visual should clearly show:
+
+Starting Score → Verified Score → Projected Score
+
+Example:
+30 → 55 → 94
+
+That is the “wow” moment. It gives the homeowner a before/after transformation they can immediately understand.
+
+I also agree with merging DemoFamilyImpact and DemoHomeImpact into one section, but not flattening them too much. They are two different buying triggers.
+
+Family Impact = heart / protection / emotion
+Home Impact = wallet / maintenance / financial logic
+
+The ideal layout is probably one section with two big cards:
+
+Your Family
+- drinking
+- cooking
+- showers
+- skin
+- hair
+- kids
+- pets
+
+Your Home
+- appliances
+- plumbing
+- water heater
+- fixtures
+- laundry
+- scale buildup
+
+That lets both emotional triggers stay distinct while keeping the flow tight.
+
+The system recommendation should definitely be benefits-first, technical second. Homeowners care first about what changes in daily life, not the internal parts of the system.
+
+Lead with:
+- cleaner water throughout the home
+- better drinking and cooking water
+- improved shower comfort
+- reduced chlorine taste and odor
+- appliance and plumbing protection
+- less hard water buildup
+
+Then make the technical specs expandable:
+- carbon filtration
+- sediment filtration
+- softener
+- smart valve
+- brine tank
+- bypass valve
+- installation details
+
+DemoBoost should be renamed to Optional Premium Protection. “Boost” can make the base recommendation feel incomplete, like they are being upsold after being told the system solves the problem. Optional Premium Protection feels more professional.
+
+Phase 4 — Smart Personalization
+
+This is where the product becomes hard to compete with.
+
+The concern selection should eventually feed into presentation emphasis and ordering.
+
+Examples:
+
+If the homeowner selects Family Health:
+- show Family Impact before Home Impact
+- emphasize drinking, cooking, showers, kids, pets
+- use protective language
+
+If they select Appliances / Plumbing:
+- show Home Impact first
+- emphasize hard water, scale, water heater, dishwasher, laundry, fixtures
+- lean into cost-of-inaction
+
+If they select Taste / Odor:
+- emphasize chlorine, drinking water, cooking, ice, coffee
+- show taste/odor sections earlier
+
+If they select Skeptical / Just Want Data, or if the rep flags them as skeptical later:
+- emphasize methodology
+- expand contaminants
+- show proof, certifications, reviews, source data earlier
+
+This does not need to be full AI at first. A lightweight context/state layer is enough.
+
+One additional recommendation: consider eventually adding a Presentation State Engine.
+
+This would track things like:
+- selected primary concern
+- household size
+- kids/pets
+- bottled water usage
+- current filter setup
+- homeowner concern type
+- spouse present or not
+- urgency level
+- skepticism level
+- objection markers
+
+Then the wizard can intelligently emphasize sections without needing full AI.
+
+Example:
+
+If concern = family and kids = yes:
+- emphasize family impact
+- soften copy into protective language
+- show daily-use examples
+
+If concern = appliances:
+- emphasize home impact and cost-of-inaction
+- show water heater, dishwasher, plumbing, laundry, fixtures
+
+If skeptical = true:
+- show methodology, proof, reviews, certifications, and source data more prominently
+
+This would turn the wizard from a static report into an adaptive sales presentation engine.
+
+Another big opportunity: transitional narration.
+
+The screens matter, but the transitions between screens are what will make this feel like a premium guided presentation instead of software.
+
+The rep needs short bridge language, not full scripts.
+
+Examples:
+
+Before Live Test:
+“The report gives us the local water picture. Now let’s verify what is actually coming out of your tap today.”
+
+Before Family/Home Impact:
+“Now that we’ve verified the water profile, the next question is what this means inside the home every day.”
+
+Before Expenses:
+“Most homeowners do not realize they may already be paying for poor water in other ways.”
+
+Before Pricing:
+“Now that we’ve looked at the problem, the impact, and the solution, let’s look at what it would take to fix it.”
+
+These could be dealer-only cues/tooltips. Not visible to the customer. Not a full script. Just emotional bridge prompts.
+
+This would help average reps present more like top reps.
+
+The important caution: do not let the UI get bloated.
+
+The winning version should feel:
+- calm
+- premium
+- authoritative
+- visual
+- guided
+- emotionally intelligent
+
+It should not feel:
+- noisy
+- over-animated
+- chart-heavy
+- too technical
+- like a CRM backend
+- like an enterprise dashboard
+
+The visual direction should feel more like:
+- Apple keynote
+- premium health report
+- modern home consultation
+- luxury diagnostic tool
+
+Not:
+- insurance portal
+- generic SaaS dashboard
+- overloaded analytics screen
+
+Overall, I think your build plan is exactly the right direction.
+
+Phase 1 fixes trust.
+Phase 2 fixes the sales journey.
+Phase 3 creates emotional momentum.
+Phase 4 creates the competitive moat.
+
+The real product here is bigger than “water report software.”
+
+What this is becoming is a psychologically optimized in-home sales presentation platform for water dealers.
+
+And long term, the same framework could apply to other high-ticket in-home industries:
+- solar
+- HVAC
+- roofing
+- windows
+- home security
+- pest control
+- insurance
+- remodeling
+
+The universal flow is:
+
+Diagnose → Personalize → Demonstrate → Emotionally Frame → Prove → Justify → Close
+
+That is what top reps do naturally. The software can systematize it.
+
+So yes, I’d move forward with the four-phase plan. Start with Phase 1, but build every piece as reusable and compatible with the Phase 2 flow. The biggest value will come once Phase 2 and Phase 3 are complete, because that is when the wizard stops feeling like a report viewer and starts feeling like a guided buying journey.
