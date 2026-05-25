@@ -50,6 +50,9 @@ export interface ProposalData {
   repName?: string;
   repPhone?: string;
   date: string;
+
+  // Projected score (if available from filtration model; otherwise defaults to +30)
+  projectedScore?: number;
 }
 
 function tierLabel(score: number) {
@@ -61,7 +64,7 @@ function tierLabel(score: number) {
 
 export function buildProposalHtml(d: ProposalData): string {
   const tier = tierLabel(d.waterScore);
-  const projectedScore = Math.min(d.waterScore + 30, 99);
+  const projectedScore = d.projectedScore ?? Math.min(d.waterScore + 30, 99);
 
   const contaminantRows = d.topContaminants
     .map(

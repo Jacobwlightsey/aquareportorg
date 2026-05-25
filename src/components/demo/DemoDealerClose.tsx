@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { QRCodeSVG } from "qrcode.react";
 import { api } from "../../../convex/_generated/api";
 import { ScoreGauge } from "./ScoreGauge";
 import { DemoQRCode } from "./DemoQRCode";
@@ -353,30 +352,12 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
             Generate Spouse Review Link
           </button>
         ) : (
-          <div className="rounded-xl border border-pink-500/20 bg-pink-500/5 p-4 space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-pink-400">
-              Spouse Review Link (expires in 72h)
-            </p>
-            <div className="flex items-center gap-2">
-              <input
-                readOnly
-                value={spouseReviewUrl}
-                className="flex-1 rounded-lg bg-white/5 px-3 py-2 text-xs text-white/80 font-mono truncate border border-white/10"
-              />
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(spouseReviewUrl);
-                  toast.success("Link copied!");
-                }}
-                className="rounded-lg bg-white/10 p-2 hover:bg-white/15 cursor-pointer"
-              >
-                <ClipboardCopy className="size-4" />
-              </button>
-            </div>
-            <div className="flex justify-center">
-              <QRCodeSVG value={spouseReviewUrl} size={120} bgColor="transparent" fgColor="#ffffff" />
-            </div>
-          </div>
+          <DemoQRCode
+            url={spouseReviewUrl}
+            size={120}
+            label="Spouse Review Link (expires 72h)"
+            companyColor="#ec4899"
+          />
         )}
       </div>
 
@@ -390,9 +371,12 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
           }}
         />
       ) : (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 flex items-center gap-2 text-sm text-emerald-400">
-          <Check className="size-4 shrink-0" />
-          Voice note attached
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1">
+          <div className="flex items-center gap-2 text-sm text-emerald-400">
+            <Check className="size-4 shrink-0" />
+            Voice note attached
+          </div>
+          <p className="text-[10px] text-white/30 pl-6">Saved for this session — cloud upload coming soon</p>
         </div>
       )}
 

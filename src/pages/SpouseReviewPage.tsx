@@ -94,6 +94,8 @@ export function SpouseReviewPage() {
 
   const d = result.data;
   const tier = tierInfo(d.waterScore);
+  // TODO: accept real projected score from the demo filtration model
+  // once it's stored on the report record; +30 is a conservative estimate
   const projectedScore = Math.min(d.waterScore + 30, 99);
 
   return (

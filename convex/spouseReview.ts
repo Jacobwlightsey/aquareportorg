@@ -27,12 +27,10 @@ export const createSpouseReviewLink = mutation({
     if (!report) throw new Error("Report not found");
 
     // Generate a unique token
-    const token =
-      Array.from({ length: 32 }, () =>
-        "abcdefghijklmnopqrstuvwxyz0123456789".charAt(
-          Math.floor(Math.random() * 36)
-        )
-      ).join("");
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    const randomBytes = new Uint8Array(32);
+    crypto.getRandomValues(randomBytes);
+    const token = Array.from(randomBytes, (b) => chars[b % chars.length]).join("");
 
     const now = Date.now();
 
