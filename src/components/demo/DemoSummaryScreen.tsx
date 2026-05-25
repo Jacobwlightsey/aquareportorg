@@ -139,12 +139,12 @@ export function DemoSummaryScreen({
     <div className="mx-auto max-w-lg space-y-5 pt-2">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30 rounded-full px-3 py-1">
-          SUMMARY
+        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">
+          YOUR PLAN
         </span>
-        <h2 className="text-2xl font-black mt-3">Your Home Water Plan</h2>
-        <p className="text-sm text-white/50 mt-1">
-          Here's what we covered for {firstName}
+        <h2 className="text-2xl font-black mt-3">Here's Where We Stand</h2>
+        <p className="text-sm text-white/40 mt-1.5">
+          Everything we covered for {firstName}
         </p>
       </div>
 

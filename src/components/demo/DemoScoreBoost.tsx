@@ -101,16 +101,16 @@ export function DemoScoreBoost({ projectedScore, boostedScore, company, report, 
 
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 border border-amber-500/30 rounded-full px-3 py-1">
-          BONUS
+        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">
+          OPTIONAL UPGRADE
         </span>
         <h2 className="text-2xl font-black mt-3 leading-tight">
-          {boosted ? "Score Boosted!" : "Boost Your Score Even Higher"}
+          {boosted ? "Upgrade Applied" : "Go Even Further"}
         </h2>
-        <p className="text-sm text-white/50 mt-1">
+        <p className="text-sm text-white/40 mt-1.5">
           {boosted
-            ? "Your RO system takes your water to the next level"
-            : "Add a free RO system for maximum protection"}
+            ? "Premium drinking water protection added"
+            : "Add premium drinking water protection — included free"}
         </p>
       </div>
 
@@ -133,7 +133,7 @@ export function DemoScoreBoost({ projectedScore, boostedScore, company, report, 
           style={{ background: `linear-gradient(135deg, #f59e0b, #f97316)`, boxShadow: "0 4px 24px rgba(245,158,11,0.3)" }}
         >
           <Sparkles className="inline size-5 mr-2 -mt-0.5" />
-          Unlock Score Boost →
+          See the Upgrade →
         </button>
       ) : (
         <button

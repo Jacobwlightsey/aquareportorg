@@ -531,3 +531,25 @@ less buyer confusion
 higher perceived authority
 more emotional momentum
 without throwing away what already works
+=== REVIEWER FEEDBACK ON PHASE 2 (round 2) — 2026-05-25 ===
+
+Key validations:
+- Psychological spine (Personalize→Diagnose→Verify→Emotionalize→Recommend→Transform→Justify→Decide) is correct
+- 7-group progress system creates "narrative momentum" — progression psychology
+- Verified Score bridge is one of the strongest additions (generic → specific trust)
+- Derived emphasis architecture (capture now, personalize later) was the right call
+- Score Journey (30→55→94) may become the signature moment — "visual hero's journey for water quality"
+
+Phase 3 guidance:
+- Focus on emotional clarity, NOT feature expansion
+- Transitional narration overlays at key beats (emotional bridge cues)
+- Presentation fatigue is the #1 risk — app needs to FEEL shorter than it is
+- Design direction: Apple keynote / Tesla ordering / luxury medical diagnostics
+- Fewer words, stronger headlines, smoother transitions, bigger emotional beats
+- UI should whisper "This is sophisticated" not scream "LOOK AT ALL THIS DATA"
+
+Bigger picture:
+- Product is now "structured persuasion infrastructure"
+- Future potential: "conversion optimization infrastructure for in-home sales"
+- Category-defining vs merely good software depends on Phase 3 polish
+- Real-world testing critical before over-optimizing

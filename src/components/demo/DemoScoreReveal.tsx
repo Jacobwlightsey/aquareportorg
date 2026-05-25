@@ -286,7 +286,7 @@ export function DemoScoreReveal({
           {/* Verified mode header */}
           {verifiedMode && (
             <div className="text-center mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30 rounded-full px-3 py-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">
                 VERIFIED RESULTS
               </span>
               <h2 className="text-xl font-black mt-3 leading-tight">

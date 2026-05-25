@@ -1,3 +1,9 @@
+/* ──── Phase 3: Score Transform — The Signature Moment ────
+   This is the emotional climax of the presentation.
+   Problem → Proof → Resolution. The visual hero's journey.
+   Bigger, calmer, more cinematic. Not more data — more breathing room.
+   ──── */
+
 import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { playRevealSound, playCelebrationSound } from "@/lib/demoSounds";
@@ -45,88 +51,120 @@ export function DemoScoreTransform({ score, report, company, contaminants, liveR
   const companyColor = company?.primaryColor || report.companyColor || "#2563eb";
   const displayScore = transformed ? projectedScore : score;
   const rows = readingRows(liveReadings, report);
+  const improvement = projectedScore - score;
 
   const handleTransform = () => {
     setTransformed(true);
     playRevealSound();
-    setTimeout(() => playCelebrationSound(), 2000); // celebration when animation finishes
+    setTimeout(() => playCelebrationSound(), 2200);
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-2">
-      {/* Header */}
-      <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400 border border-violet-500/30 rounded-full px-3 py-1">
-          YOUR TRANSFORMATION
-        </span>
-        <h2 className="text-2xl font-black mt-3 leading-tight">
-          {transformed ? "Your New Water Score" : "Ready to See the Difference?"}
-        </h2>
-        <p className="text-sm text-white/50 mt-1">
-          {transformed
-            ? "This is what whole-home filtration does for your water"
-            : "See how we can transform your water quality"}
-        </p>
-      </div>
-
-      {/* Score gauge */}
-      <div className="flex flex-col items-center py-2">
-        <ScoreGauge score={displayScore} size={200} animationDuration={transformed ? 2500 : 1200} />
-        {transformed && (
-          <div className="mt-3 flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <TrendingUp className="size-4 text-emerald-400" />
-            <span className="text-sm font-bold text-emerald-400">+{projectedScore - score} point improvement</span>
+    <div className="mx-auto max-w-lg pt-4">
+      {/* ── Pre-transform: cinematic anticipation ── */}
+      {!transformed && (
+        <div className="flex flex-col items-center text-center space-y-8">
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400/70">
+              Your Water, Transformed
+            </span>
+            <h2 className="text-3xl font-black leading-tight">
+              Ready to See<br />the Difference?
+            </h2>
           </div>
-        )}
-      </div>
 
-      {/* Before/After readings (shown after transform) */}
-      {transformed && rows.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Reading Comparison</p>
-          {rows.map((r) => (
-            <div key={r.key} className="flex items-center justify-between">
-              <span className="text-sm text-white/70">
-                {r.icon} {r.label}
-              </span>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-red-400/70 line-through">
-                  {r.before} {r.unit}
-                </span>
-                <ArrowRight className="size-3 text-white/30" />
-                <span className="text-emerald-400 font-bold">
-                  {r.after} {r.unit}
-                </span>
-              </div>
-            </div>
-          ))}
+          {/* Current score — smaller, muted */}
+          <div className="opacity-60">
+            <ScoreGauge score={score} size={160} animate={false} />
+            <p className="text-xs text-white/30 mt-2">Current Score</p>
+          </div>
+
+          {/* The big button — the moment of transformation */}
+          <button
+            onClick={handleTransform}
+            className="flex items-center gap-3 rounded-2xl px-10 py-5 text-lg font-bold active:scale-[0.97] transition-all cursor-pointer"
+            style={{
+              background: `linear-gradient(135deg, ${companyColor}, #8b5cf6)`,
+              boxShadow: `0 8px 40px ${companyColor}40`,
+            }}
+          >
+            <Sparkles className="size-5" />
+            Transform Your Water
+          </button>
         </div>
       )}
 
-      {/* Transform button OR continue */}
-      {!transformed ? (
-        <button
-          onClick={handleTransform}
-          className="w-full flex items-center justify-center gap-3 rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-all cursor-pointer relative overflow-hidden group"
-          style={{
-            background: `linear-gradient(135deg, ${companyColor}, #8b5cf6)`,
-            boxShadow: `0 4px 24px ${companyColor}40`,
-          }}
-        >
-          <Sparkles className="size-5" />
-          Transform Your Water →
-        </button>
-      ) : (
-        <button
-          onClick={onNext}
-          className="w-full rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer"
-          style={{
-            background: `linear-gradient(135deg, ${companyColor}, #06b6d4)`,
-            boxShadow: `0 4px 24px ${companyColor}30`,
-          }}
-        >
-          See Your System →
-        </button>
+      {/* ── Post-transform: the hero reveal ── */}
+      {transformed && (
+        <div className="flex flex-col items-center text-center space-y-8 animate-in fade-in duration-700">
+          {/* Score Journey: the narrative arc */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">
+              Score Journey
+            </span>
+            <div className="flex items-center justify-center gap-6">
+              <div>
+                <p className="text-3xl font-black tabular-nums text-red-400/60">{score}</p>
+                <p className="text-[10px] text-white/30 mt-1">Before</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <TrendingUp className="size-5 text-white/20" />
+              </div>
+              <div>
+                <p className="text-5xl font-black tabular-nums text-emerald-400">{projectedScore}</p>
+                <p className="text-[10px] text-emerald-400/60 mt-1">After</p>
+              </div>
+            </div>
+          </div>
+
+          {/* The gauge — large, proud, center stage */}
+          <div className="py-2">
+            <ScoreGauge score={projectedScore} size={240} animationDuration={2500} />
+          </div>
+
+          {/* Improvement badge */}
+          <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-5 py-2.5">
+            <TrendingUp className="size-4 text-emerald-400" />
+            <span className="text-sm font-bold text-emerald-400">+{improvement} point improvement</span>
+          </div>
+
+          {/* Reading comparison — clean, quiet */}
+          {rows.length > 0 && (
+            <div className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/25">
+                What Changes
+              </p>
+              {rows.map((r) => (
+                <div key={r.key} className="flex items-center justify-between">
+                  <span className="text-sm text-white/50">
+                    {r.icon} {r.label}
+                  </span>
+                  <div className="flex items-center gap-2.5 text-sm">
+                    <span className="text-white/25 line-through">
+                      {r.before} {r.unit}
+                    </span>
+                    <ArrowRight className="size-3 text-white/15" />
+                    <span className="text-emerald-400 font-semibold">
+                      {r.after} {r.unit}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Continue — understated, let the moment breathe */}
+          <button
+            onClick={onNext}
+            className="w-full rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer"
+            style={{
+              background: `linear-gradient(135deg, ${companyColor}, #06b6d4)`,
+              boxShadow: `0 4px 24px ${companyColor}25`,
+            }}
+          >
+            Continue →
+          </button>
+        </div>
       )}
     </div>
   );

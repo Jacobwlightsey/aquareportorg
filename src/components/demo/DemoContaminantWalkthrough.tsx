@@ -191,13 +191,13 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
     <div className="mx-auto max-w-lg space-y-4 pt-2">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 border border-amber-500/30 rounded-full px-3 py-1">
-          WATER ANALYSIS
+        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">
+          FULL BREAKDOWN
         </span>
         <h2 className="text-2xl font-black mt-3">
           {totalCount} Contaminants Detected
         </h2>
-        <p className="text-sm text-white/50 mt-1">
+        <p className="text-sm text-white/40 mt-1.5">
           Tap any contaminant for details
         </p>
       </div>

@@ -176,14 +176,14 @@ export function DemoTopConcerns({ contaminants, onViewFull, showFullInline = fal
     <div className="mx-auto max-w-lg space-y-4">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 border border-amber-500/30 rounded-full px-3 py-1">
-          WATER ANALYSIS
+        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">
+          KEY FINDINGS
         </span>
         <h2 className="text-2xl font-black mt-3">
-          Your Top Water Concerns
+          Your Top Concerns
         </h2>
-        <p className="text-sm text-white/50 mt-1">
-          Based on {contaminants.length} contaminants detected in your area
+        <p className="text-sm text-white/40 mt-1.5">
+          {contaminants.length} contaminants detected in your area
         </p>
       </div>
 

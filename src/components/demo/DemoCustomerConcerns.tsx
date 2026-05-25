@@ -124,15 +124,14 @@ export function DemoCustomerConcerns({ initial, companyColor = "#2563eb", onNext
     <div className="mx-auto max-w-lg space-y-5 pt-2">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400 border border-violet-500/30 rounded-full px-3 py-1">
-          PERSONALIZE
+        <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400/70">
+          YOUR PRIORITIES
         </span>
         <h2 className="text-2xl font-black mt-3 leading-tight">
-          What Matters Most<br />
-          <span className="text-violet-400">To You?</span>
+          What Matters Most to You?
         </h2>
-        <p className="text-sm text-white/50 mt-1">
-          Select what's important — we'll focus on what matters to your family
+        <p className="text-sm text-white/40 mt-1.5">
+          Select any that apply — we'll tailor the rest to your family
         </p>
       </div>
 

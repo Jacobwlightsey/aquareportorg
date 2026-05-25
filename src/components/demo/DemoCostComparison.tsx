@@ -78,12 +78,12 @@ export function DemoCostComparison({ company, monthlyPayment, onNext: _onNext, o
     <div className="mx-auto max-w-lg space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
-        <div className="inline-flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/30 mb-3">
-          <DollarSign className="size-7 text-pink-400" />
-        </div>
-        <h2 className="text-2xl font-black">Cost Comparison</h2>
-        <p className="text-sm text-white/50 mt-1">
-          What you're spending now vs. whole-home filtration
+        <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400/70">
+          CURRENT EXPENSES
+        </span>
+        <h2 className="text-2xl font-black mt-3">What You're Spending Now</h2>
+        <p className="text-sm text-white/40 mt-1.5">
+          Most families don't realize the true cost of unfiltered water
         </p>
       </div>
 
