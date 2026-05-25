@@ -63,6 +63,9 @@ import { DemoScoreBoost } from "@/components/demo/DemoScoreBoost";
 import { DemoCustomerClose } from "@/components/demo/DemoCustomerClose";
 import { DemoTopConcerns } from "@/components/demo/DemoTopConcerns";
 import { DemoSummaryScreen } from "@/components/demo/DemoSummaryScreen";
+import { DemoHomeProfile } from "@/components/demo/DemoHomeProfile";
+import { DemoCustomerConcerns, type CustomerConcernState } from "@/components/demo/DemoCustomerConcerns";
+import { DemoDecisionPage } from "@/components/demo/DemoDecisionPage";
 import { DemoDealerClose } from "@/components/demo/DemoDealerClose";
 import { DemoAssistant } from "@/components/demo/DemoAssistant";
 import { EndDemoModal } from "@/components/demo/EndDemoModal";
@@ -95,25 +98,39 @@ import {
 // Sprint 4E: Offline mode
 import { useOfflineBanner } from "@/hooks/useDemoOffline";
 
-/* ──────────────── All possible steps (15-step order) ──────────────── */
+/* ──────────────── All possible steps — Phase 2 psychological sales flow ────
+   Personalize → Diagnose → Verify → Emotionalize → Recommend → Transform → Justify → Decide
+   ──────────────── */
 const ALL_STEPS: StepDef[] = [
-  { key: "intake",         label: "Intake",        color: "#8b5cf6" },   // Sprint 2A (pre-demo)
-  { key: "welcome",        label: "Welcome",       color: "#3b82f6" },   // 1. Welcome
-  { key: "score",          label: "AquaScore",     color: "#10b981" },   // 2. Score
-  { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },   // 3. Contaminants
-  { key: "topConcerns",    label: "Concerns",      color: "#f97316" },   // 3b. Top 3 Concerns (Phase 1)
-  { key: "impact",         label: "Impact",        color: "#f43f5e" },   // 4. Impact
-  { key: "rooms",          label: "Rooms",         color: "#f43f5e" },   // 4b. Room-by-room (Sprint 2B)
-  { key: "test",           label: "Live Test",     color: "#06b6d4" },   // 5. Live Test
-  { key: "transform",      label: "Transform",     color: "#8b5cf6" },   // 6. Transform
-  { key: "system",         label: "System",        color: "#6366f1" },   // 7. System
-  { key: "trust",          label: "Trust",         color: "#22c55e" },   // 7b. Trust proof (Sprint 2C)
-  { key: "pricing",        label: "Pricing",       color: "#10b981" },   // 8. Pricing
-  { key: "comparison",     label: "Compare",       color: "#ec4899" },   // 9. Comparison
-  { key: "boost",          label: "Boost",         color: "#f59e0b" },   // 10. RO upsell (after compare)
-  { key: "summary",        label: "Summary",       color: "#10b981" },   // 11. Your Home Water Plan (Phase 1)
-  { key: "customerClose",  label: "Close",         color: "#22c55e" },   // 12. Customer Close
-  { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },   // 12. Dealer Close
+  // ── Personalize ──
+  { key: "intake",            label: "Intake",          color: "#8b5cf6" },   // Dealer-only pre-demo
+  { key: "welcome",           label: "Welcome",         color: "#3b82f6" },   // Welcome / Agenda
+  { key: "homeProfile",       label: "Your Home",       color: "#06b6d4" },   // Phase 2: Home Water Profile
+  { key: "customerConcerns",  label: "Priorities",      color: "#8b5cf6" },   // Phase 2: What Matters Most
+  // ── Diagnose ──
+  { key: "contaminants",      label: "Contaminants",    color: "#f59e0b" },   // Local Water Report
+  { key: "topConcerns",       label: "Top Concerns",    color: "#f97316" },   // Top 3 Concerns
+  { key: "score",             label: "AquaScore",       color: "#10b981" },   // Initial Water Score
+  // ── Verify ──
+  { key: "test",              label: "Live Test",       color: "#06b6d4" },   // Live Water Test (moved earlier)
+  { key: "verifiedScore",     label: "Verified",        color: "#10b981" },   // Phase 2: Verified Score view
+  // ── Emotionalize ──
+  { key: "impact",            label: "Impact",          color: "#f43f5e" },   // Family + Home Impact
+  { key: "rooms",             label: "Rooms",           color: "#f43f5e" },   // Room-by-room
+  // ── Recommend ──
+  { key: "system",            label: "System",          color: "#6366f1" },   // System Recommendation
+  // ── Transform ──
+  { key: "transform",         label: "Transform",       color: "#8b5cf6" },   // Score Journey
+  { key: "trust",             label: "Proof",           color: "#22c55e" },   // Trust proof
+  // ── Justify ──
+  { key: "comparison",        label: "Expenses",        color: "#ec4899" },   // Cost of Inaction (moved before pricing)
+  { key: "pricing",           label: "Investment",      color: "#10b981" },   // Investment
+  { key: "boost",             label: "Upgrade",         color: "#f59e0b" },   // RO upsell
+  // ── Decide ──
+  { key: "summary",           label: "Summary",         color: "#10b981" },   // Final Summary
+  { key: "decision",          label: "Decision",        color: "#2563eb" },   // Phase 2: Decision Page
+  { key: "customerClose",     label: "Close",           color: "#22c55e" },   // Customer Close / QR
+  { key: "dealerClose",       label: "Wrap Up",         color: "#64748b" },   // Dealer Close
 ];
 
 /* ──────────────── Helpers ──────────────── */
@@ -332,6 +349,7 @@ function DemoWizardInner() {
   const [boostApplied, setBoostApplied] = useState(false);
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
   const [concerns, setConcerns] = useState<ConcernData | null>(null);
+  const [customerConcerns, setCustomerConcerns] = useState<CustomerConcernState | null>(null);
 
   // Sprint 3E: Coaching indicators
   const [stepEnteredAt, setStepEnteredAt] = useState(Date.now());
@@ -758,6 +776,25 @@ function DemoWizardInner() {
               )}
             </div>
           )}
+          {stepKey === "homeProfile" && (
+            <DemoHomeProfile
+              report={report}
+              company={company}
+              concerns={concerns}
+              companyColor={companyColor}
+              onNext={goNext}
+            />
+          )}
+          {stepKey === "customerConcerns" && (
+            <DemoCustomerConcerns
+              initial={customerConcerns}
+              companyColor={companyColor}
+              onNext={(state) => {
+                setCustomerConcerns(state);
+                goNext();
+              }}
+            />
+          )}
           {stepKey === "score" && (
             <DemoScoreReveal
               score={score}
@@ -799,6 +836,18 @@ function DemoWizardInner() {
               onUpdateReadings={setLiveReadings}
               onNext={goNext}
               onBack={goBack}
+            />
+          )}
+          {stepKey === "verifiedScore" && (
+            <DemoScoreReveal
+              score={score}
+              contaminants={contaminants}
+              report={report}
+              onNext={goNext}
+              onBack={goBack}
+              skipScoreAnimation={skipScoreAnimation}
+              verifiedMode
+              liveReadings={liveReadings}
             />
           )}
           {stepKey === "transform" && (
@@ -858,6 +907,13 @@ function DemoWizardInner() {
               boostApplied={boostApplied}
               companyColor={companyColor}
               onNext={goNext}
+            />
+          )}
+          {stepKey === "decision" && (
+            <DemoDecisionPage
+              customerName={report.customerName}
+              companyColor={companyColor}
+              onDecision={() => goNext()}
             />
           )}
           {stepKey === "customerClose" && (

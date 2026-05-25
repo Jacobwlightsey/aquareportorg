@@ -19,11 +19,13 @@ export interface SectionGroup {
 }
 
 export const SECTION_GROUPS: SectionGroup[] = [
-  { label: "Intro", color: "#3b82f6", keys: ["intake", "welcome"] },
-  { label: "Analysis", color: "#f59e0b", keys: ["score", "contaminants", "topConcerns", "impact", "rooms"] },
-  { label: "Testing", color: "#06b6d4", keys: ["test", "transform"] },
-  { label: "Solution", color: "#8b5cf6", keys: ["system", "trust", "pricing", "comparison", "boost"] },
-  { label: "Close", color: "#22c55e", keys: ["summary", "customerClose", "dealerClose"] },
+  { label: "Your Home",   color: "#3b82f6", keys: ["intake", "welcome", "homeProfile", "customerConcerns"] },
+  { label: "Diagnosis",   color: "#f59e0b", keys: ["contaminants", "topConcerns", "score"] },
+  { label: "Verification",color: "#06b6d4", keys: ["test", "verifiedScore"] },
+  { label: "Impact",      color: "#f43f5e", keys: ["impact", "rooms"] },
+  { label: "Solution",    color: "#8b5cf6", keys: ["system", "transform", "trust"] },
+  { label: "Investment",  color: "#10b981", keys: ["comparison", "pricing", "boost"] },
+  { label: "Decision",    color: "#22c55e", keys: ["summary", "decision", "customerClose", "dealerClose"] },
 ];
 
 interface ProgressBarProps {
