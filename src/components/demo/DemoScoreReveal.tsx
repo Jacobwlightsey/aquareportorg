@@ -1,4 +1,4 @@
-import { AlertTriangle, Award, Check, Shield, TrendingDown } from "lucide-react";
+import { AlertTriangle, Award, Check, Shield, Sparkles, TrendingDown } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { playRevealSound, playProcessingSound, haptic } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
