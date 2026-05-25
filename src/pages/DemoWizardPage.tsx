@@ -724,6 +724,7 @@ function DemoWizardInner() {
       )}
 
       {/* ─── Visual Sprint: Persistent brand header bar ─── */}
+      <div className="relative z-10">
       <DemoHeader
         currentStep={currentStep + 1}
         totalSteps={activeSteps.length}
@@ -733,6 +734,7 @@ function DemoWizardInner() {
         coachingOpen={coachingOpen}
         onToggleCoaching={() => setCoachingOpen((o: boolean) => !o)}
       />
+      </div>
 
       {/* ─── Sprint 4E: Offline Banner ─── */}
       {offlineBanner.show && (
@@ -746,7 +748,7 @@ function DemoWizardInner() {
 
       {/* ─── Progress Bar (Sprint 1D: grouped) ─── */}
       {showProgressBar && (
-        <div className="shrink-0 px-4 pb-3">
+        <div className="relative z-10 shrink-0 px-4 pb-3">
           <DemoProgressBar
             currentStepKey={stepKey}
             steps={activeSteps}
@@ -991,7 +993,7 @@ function DemoWizardInner() {
         currentStep > 0 &&
         currentStep < activeSteps.length - 2 && (
           <div
-            className={`fixed inset-x-0 bottom-0 flex items-center justify-between gap-3 px-4 pt-3 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent safe-area-bottom ${isPresentationMode ? "pb-5" : "pb-4"}`}
+            className={`fixed inset-x-0 bottom-0 z-20 flex items-center justify-between gap-3 px-4 pt-3 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent safe-area-bottom ${isPresentationMode ? "pb-5" : "pb-4"}`}
           >
             <button
               onClick={goBack}
