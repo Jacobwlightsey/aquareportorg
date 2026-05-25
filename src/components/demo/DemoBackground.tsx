@@ -23,6 +23,7 @@ const STEP_ASSETS: Record<string, { file: string; opacity: number }> = {
   system:           { file: "12_system.webp",            opacity: 0.40 },
   transform:        { file: "13_scoreTransform.webp",    opacity: 0.35 },
   trust:            { file: "14_trustProof.webp",        opacity: 0.25 },
+  beforeAfter:      { file: "13_scoreTransform.webp",    opacity: 0.25 },
   comparison:       { file: "15_comparison.webp",        opacity: 0.25 },
   pricing:          { file: "16_pricing.webp",           opacity: 0.25 },
   investmentBreakdown: { file: "16_pricing.webp",      opacity: 0.20 },

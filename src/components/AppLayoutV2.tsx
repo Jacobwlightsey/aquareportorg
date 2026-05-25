@@ -3,6 +3,7 @@ import { AppSidebarV2 } from "./AppSidebarV2";
 import { MobileNav } from "./MobileNav";
 import { SEO } from "./SEO";
 import { OnboardingModal } from "./OnboardingModal";
+import { FullscreenToggle } from "./FullscreenToggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "./ui/sidebar";
 
 /** Regex to detect full-screen demo routes that skip the layout chrome */
@@ -29,6 +30,7 @@ export function AppLayoutV2() {
         </main>
       </SidebarInset>
       <MobileNav />
+      <FullscreenToggle />
       <OnboardingModal />
     </SidebarProvider>
   );

@@ -19,6 +19,8 @@ interface Props {
   companyColor?: string;
   customerConcerns?: CustomerConcernState | null;
   onNext: () => void;
+  liveReadings?: Record<string, any>;
+  concerns?: any;
 }
 
 const CONCERN_LABELS: Record<string, string> = {
@@ -55,15 +57,20 @@ export function DemoSummaryScreen({
   companyColor = colors.primary,
   customerConcerns,
   onNext,
+  liveReadings,
+  concerns,
 }: Props) {
-  const baseScore = initialScore ?? 0;
-  const basic = midScore(baseScore, projectedScore ?? baseScore);
-
   const journeySteps = [
-    initialScore != null ? { label: "BEFORE", score: initialScore, size: 60 } : null,
-    initialScore != null && projectedScore != null ? { label: "BASIC FILTRATION", score: basic, size: 60 } : null,
-    projectedScore != null ? { label: "AQUAREPORT SYSTEM", score: projectedScore, size: 70 } : null,
+    initialScore != null ? { label: "TODAY", score: initialScore, size: 60 } : null,
+    verifiedScore != null && verifiedScore !== initialScore ? { label: "VERIFIED", score: verifiedScore, size: 60 } : null,
+    projectedScore != null ? { label: "WITH SYSTEM", score: projectedScore, size: 70 } : null,
   ].filter(Boolean) as { label: string; score: number; size: number }[];
+
+  const totalContaminants = contaminants.length;
+  const legalViolations = contaminants.filter((c: any) => c.over_legal).length;
+  const householdSize = concerns?.people ?? null;
+  const hasKids = concerns?.kids ?? false;
+  const hasPets = concerns?.pets ?? false;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-8 pt-6">
@@ -75,20 +82,48 @@ export function DemoSummaryScreen({
             Your Home<br />Water Plan
           </h2>
           <p className="text-[15px] mt-3 mb-8" style={{ color: colors.textMuted }}>
-            Your personalized plan for healthier, better water.
+            Based on everything we've discussed today.
           </p>
 
-          {/* Benefits — bullet dots, not icon boxes */}
-          <div className="space-y-4 mb-8">
+          {/* Personalized recap */}
+          <div className="space-y-3 mb-8">
+            {totalContaminants > 0 && (
+              <div className="flex items-start gap-3">
+                <span className="text-[14px] shrink-0 mt-0.5">🧪</span>
+                <span className="text-[14px]" style={{ color: colors.textSecondary }}>
+                  <strong style={{ color: colors.textPrimary }}>{totalContaminants} contaminants</strong> detected
+                  {legalViolations > 0 && <span style={{ color: colors.critical }}> ({legalViolations} above legal limits)</span>}
+                  {" — all addressed by the system."}
+                </span>
+              </div>
+            )}
+            {householdSize && (
+              <div className="flex items-start gap-3">
+                <span className="text-[14px] shrink-0 mt-0.5">👨‍👩‍👧‍👦</span>
+                <span className="text-[14px]" style={{ color: colors.textSecondary }}>
+                  Whole-home protection for your household of <strong style={{ color: colors.textPrimary }}>{householdSize}</strong>
+                  {hasKids ? ", including your children" : ""}
+                  {hasPets ? " and pets" : ""}.
+                </span>
+              </div>
+            )}
+            {projectedScore != null && initialScore != null && (
+              <div className="flex items-start gap-3">
+                <span className="text-[14px] shrink-0 mt-0.5">📈</span>
+                <span className="text-[14px]" style={{ color: colors.textSecondary }}>
+                  Score improvement: <strong style={{ color: colors.critical }}>{initialScore}</strong> → <strong style={{ color: colors.success }}>{projectedScore}</strong>
+                  {" (+"}
+                  {projectedScore - initialScore} points).
+                </span>
+              </div>
+            )}
             {BENEFITS.map((b) => (
-              <div key={b} className="flex items-center gap-3">
-                <div className="size-1.5 rounded-full shrink-0" style={{ background: colors.textSecondary }} />
-                <span className="text-[15px]" style={{ color: colors.textSecondary }}>{b}</span>
+              <div key={b} className="flex items-start gap-3">
+                <span className="text-[14px] shrink-0 mt-0.5">✅</span>
+                <span className="text-[14px]" style={{ color: colors.textSecondary }}>{b}</span>
               </div>
             ))}
           </div>
-
-          {/* Download button removed — no backend yet */}
         </div>
 
         {/* Right column */}
@@ -99,11 +134,14 @@ export function DemoSummaryScreen({
               <p className="text-[10px] font-bold tracking-widest uppercase mb-4" style={{ color: colors.textMuted }}>
                 Your Score Journey
               </p>
-              <div className="flex items-end justify-center gap-4">
+              <div className="flex items-end justify-center gap-6">
                 {journeySteps.map((step, i) => (
-                  <div key={step.label} className="flex flex-col items-center">
+                  <div key={step.label} className="flex flex-col items-center min-w-[80px]">
                     <ScoreGauge score={step.score} size={step.size} animationDuration={1200 + i * 400} />
-                    <p className="text-[9px] font-bold tracking-wider uppercase mt-2 text-center max-w-[70px]" style={{ color: scoreColor(step.score) }}>
+                    <p className="text-[22px] font-bold mt-1 tabular-nums" style={{ color: scoreColor(step.score) }}>
+                      {step.score}
+                    </p>
+                    <p className="text-[8px] font-bold tracking-wider uppercase text-center" style={{ color: colors.textFaint }}>
                       {step.label}
                     </p>
                   </div>

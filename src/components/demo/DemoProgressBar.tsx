@@ -18,13 +18,12 @@ export interface SectionGroup {
 }
 
 export const SECTION_GROUPS: SectionGroup[] = [
-  { label: "Your Home",    color: "#3b82f6", keys: ["intake", "welcome", "homeProfile", "customerConcerns"] },
-  { label: "Diagnosis",    color: colors.warning, keys: ["contaminants", "topConcerns", "score"] },
-  { label: "Verification", color: colors.primary, keys: ["test", "verifiedScore"] },
-  { label: "Impact",       color: colors.critical, keys: ["impact", "rooms"] },
-  { label: "Solution",     color: "#8b5cf6", keys: ["system", "transform", "trust"] },
-  { label: "Investment",   color: colors.success, keys: ["comparison", "pricing", "boost"] },
-  { label: "Decision",     color: "#22c55e", keys: ["summary", "decision", "customerClose", "dealerClose"] },
+  { label: "Home",         color: "#3b82f6", keys: ["intake", "welcome", "homeProfile", "customerConcerns"] },
+  { label: "Diagnose",     color: colors.warning, keys: ["topConcerns", "contaminants", "score", "test", "verifiedScore"] },
+  { label: "Impact",       color: colors.critical, keys: ["impact"] },
+  { label: "Solution",     color: "#8b5cf6", keys: ["scoreImprovement", "system", "trust", "beforeAfter"] },
+  { label: "Investment",   color: colors.success, keys: ["comparison", "pricing", "investmentBreakdown", "transform", "boost"] },
+  { label: "Close",        color: "#22c55e", keys: ["summary", "decision", "customerClose", "dealerClose"] },
 ];
 
 interface ProgressBarProps {
@@ -58,7 +57,7 @@ export function DemoProgressBar({ currentStepKey, steps, isPresentationMode, gro
   const activeSections = SECTION_GROUPS.filter((sg) => sg.keys.some((k) => stepKeys.includes(k)));
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1 overflow-hidden">
       {activeSections.map((section) => {
         const sectionStepIndices = section.keys.map((k) => stepKeys.indexOf(k)).filter((i) => i >= 0);
         if (sectionStepIndices.length === 0) return null;
@@ -75,9 +74,9 @@ export function DemoProgressBar({ currentStepKey, steps, isPresentationMode, gro
         const subProgress = isCurrent ? Math.max(stepsCompleted / stepsInSection, 0.1) : isComplete ? 1 : 0;
 
         return (
-          <div key={section.label} className="flex-1 flex flex-col items-center gap-1">
+          <div key={section.label} className="flex-1 min-w-0 flex flex-col items-center gap-1">
             <span
-              className={`font-bold uppercase tracking-wider transition-all ${isPresentationMode ? "text-[10px]" : "text-[8px]"}`}
+              className={`font-bold uppercase tracking-wider transition-all truncate max-w-full ${isPresentationMode ? "text-[10px]" : "text-[7px] landscape:text-[6px]"}`}
               style={{ color: isCurrent ? colors.textSecondary : isComplete ? colors.textFaint : `${colors.textFaint}50` }}
             >
               {isComplete ? (

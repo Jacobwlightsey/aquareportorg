@@ -1,7 +1,8 @@
 /* ──── Score Transform / Score Journey — 3 progressive gauges ────
-   Mockup-faithful: "Your Score Journey" with 3 side-by-side gauges.
-   No pre-screen / reveal button — gauges fill in sequence on mount.
-   Quote card at bottom.
+   Three stages:
+   1. Before Water Test (report-only score)
+   2. After Live Results (verified/current score)
+   3. With The System (projected score)
    ──── */
 
 import { ArrowRight } from "lucide-react";
@@ -17,6 +18,7 @@ interface Props {
   liveReadings: Record<string, any>;
   projectedScore: number;
   onNext: () => void;
+  reportBaseScore?: number;
 }
 
 const IDEAL_READINGS: Record<string, number> = { chlorine: 0.02, ph: 7, hardness: 0.3, tds: 25 };
@@ -45,38 +47,37 @@ function readingRows(readings: Record<string, any>, report: any) {
     }));
 }
 
-/* Estimate a "basic filtration" mid-score */
-function midScore(current: number, projected: number): number {
-  const mid = Math.round(current + (projected - current) * 0.4);
-  return Math.max(current + 5, Math.min(projected - 10, mid));
-}
-
-export function DemoScoreTransform({ score, report, company, contaminants, liveReadings, projectedScore, onNext }: Props) {
+export function DemoScoreTransform({ score, report, company, contaminants, liveReadings, projectedScore, onNext, reportBaseScore }: Props) {
   const companyColor = company?.primaryColor || report.companyColor || colors.primary;
-  const basic = midScore(score, projectedScore);
   const rows = readingRows(liveReadings, report);
   const [showReadings, setShowReadings] = useState(false);
 
+  // Use reportBaseScore if available, otherwise fall back to score
+  const beforeTestScore = reportBaseScore ?? score;
+
   const journeySteps = [
-    { score: score, label: "BEFORE", sublabel: "Your Water Today", color: scoreColor(score), size: 100 },
-    { score: basic, label: "WITH BASIC FILTRATION", sublabel: "Carbon Filter System", color: scoreColor(basic), size: 100 },
-    { score: projectedScore, label: "WITH AQUAREPORT SYSTEM", sublabel: "Whole Home Protection", color: scoreColor(projectedScore), size: 120 },
+    { score: beforeTestScore, label: "BEFORE WATER TEST", sublabel: "Report Data Only", color: scoreColor(beforeTestScore), size: 100 },
+    { score: score, label: "AFTER LIVE RESULTS", sublabel: "Verified In-Home", color: scoreColor(score), size: 100 },
+    { score: projectedScore, label: "WITH THE SYSTEM", sublabel: "Whole Home Protection", color: scoreColor(projectedScore), size: 120 },
   ];
 
   return (
     <div className="mx-auto w-full max-w-5xl px-8 pt-6">
       {/* Title */}
       <div className="text-center mb-12">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.primary}b0` }}>
+          THE FULL PICTURE
+        </p>
         <h2 style={{ fontSize: "clamp(28px, 4vw, 32px)", fontWeight: 700, letterSpacing: "-0.02em" }}>
           <span style={{ color: colors.textPrimary }}>Your Score </span>
           <span style={{ color: colors.primary }}>Journey</span>
         </h2>
         <p className="text-[15px] mt-3" style={{ color: colors.textMuted }}>
-          See the transformation proper water treatment can make.
+          From report to reality to resolution.
         </p>
       </div>
 
-      {/* 3 gauges side by side — staggered animation, responsive spacing */}
+      {/* 3 gauges side by side — staggered animation */}
       <div className="flex items-end justify-center gap-4 sm:gap-6 lg:gap-10 mb-12 flex-wrap">
         {journeySteps.map((step, i) => (
           <div key={step.label} className="flex flex-col items-center">
@@ -98,18 +99,42 @@ export function DemoScoreTransform({ score, report, company, contaminants, liveR
         ))}
       </div>
 
-      {/* Quote card */}
+      {/* Score progression explanation */}
       <div
-        className="max-w-xl mx-auto rounded-2xl p-5 flex items-start gap-4 mb-8"
+        className="max-w-xl mx-auto rounded-2xl p-5 mb-8"
         style={{ background: colors.surface, border: `1px solid ${colors.border}` }}
       >
-        <span className="text-xl shrink-0 mt-0.5">💬</span>
-        <p className="text-[15px] leading-relaxed" style={{ color: colors.textSecondary }}>
-          From concerning to exceptional.{" "}
-          <span style={{ color: colors.textPrimary, fontWeight: 600 }}>
-            That's the power of proper water treatment.
-          </span>
-        </p>
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <span className="text-[18px] shrink-0 mt-0.5">📋</span>
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>Report Data</p>
+              <p className="text-[12px]" style={{ color: colors.textMuted }}>
+                Your utility's water quality report showed a baseline score of {beforeTestScore}.
+              </p>
+            </div>
+          </div>
+          {score !== beforeTestScore && (
+            <div className="flex items-start gap-3">
+              <span className="text-[18px] shrink-0 mt-0.5">🧪</span>
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>Live Test</p>
+                <p className="text-[12px]" style={{ color: colors.textMuted }}>
+                  Testing your water at home {score < beforeTestScore ? "revealed additional concerns" : "confirmed the report"}, bringing your score to {score}.
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="flex items-start gap-3">
+            <span className="text-[18px] shrink-0 mt-0.5">✅</span>
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: colors.success }}>With The System</p>
+              <p className="text-[12px]" style={{ color: colors.textMuted }}>
+                Proper whole-home treatment brings your score to {projectedScore} — a +{projectedScore - score} point improvement.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* What Changes — collapsed by default */}

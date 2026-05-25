@@ -107,80 +107,104 @@ function getContaminantInfo(name: string): ContaminantInfo | null {
   return null;
 }
 
-function ContaminantDetail({ c, onClose }: { c: any; onClose: () => void }) {
+/** Generate fallback info for contaminants without specific data */
+function getFallbackInfo(c: any): ContaminantInfo {
+  const name = contaminantName(c);
+  if (c.over_legal) {
+    return {
+      what: `${name} was detected in your water above EPA legal limits.`,
+      health: "Exceeding the legal limit means your water utility is in violation. Prolonged exposure to levels this high may pose health risks including organ damage and increased cancer risk.",
+      home: "At these concentrations, contaminants can affect your plumbing, appliances, and everyday water use.",
+    };
+  }
+  if (c.over_health) {
+    return {
+      what: `${name} was detected in your water above health guidelines set by the EWG.`,
+      health: "While technically within legal limits, health guidelines are based on the latest science and are often much stricter. Long-term exposure at these levels may still pose health risks.",
+      home: "Even at legal levels, some contaminants contribute to buildup, taste issues, or equipment wear over time.",
+    };
+  }
+  return {
+    what: `${name} was detected in your water at measurable levels.`,
+    health: "While currently within guidelines, any presence of contaminants means your water is not pure. Combined exposure to multiple chemicals compounds the risk.",
+    home: "Trace contaminants can contribute to off-tastes, odors, and reduced water quality throughout your home.",
+  };
+}
+
+function ContaminantDetailModal({ c, onClose }: { c: any; onClose: () => void }) {
   const ratio = c.health_guideline && c.health_guideline > 0 ? c.detected_level / c.health_guideline : c.detected_level > 0 ? 1 : 0;
-  const info = getContaminantInfo(contaminantName(c));
+  const info = getContaminantInfo(contaminantName(c)) ?? getFallbackInfo(c);
 
   return (
-    <div className="rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-300" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+    /* ── Modal overlay ── */
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+    >
       <div
-        className="p-4 pb-3 flex items-start justify-between"
-        style={{
-          background: c.over_legal ? `${colors.critical}08` : c.over_health ? `${colors.warning}08` : `${colors.textFaint}05`,
-        }}
+        className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl animate-in fade-in zoom-in-95 duration-200"
+        style={{ background: colors.elevated, border: `1px solid ${colors.border}` }}
       >
-        <div className="flex items-center gap-3">
-          <SeverityIcon c={c} />
-          <div>
-            <h3 className="text-[16px] font-semibold" style={{ color: colors.textPrimary }}>{contaminantName(c)}</h3>
-            <div className="flex gap-2 mt-1">
-              <SeverityBadge c={c} />
-              {c.times_above_ewg != null && c.times_above_ewg > 1 && (
-                <span className="text-[11px] font-semibold" style={{ color: `${colors.warning}b0` }}>{c.times_above_ewg}× EWG guideline</span>
-              )}
+        {/* Header */}
+        <div
+          className="p-5 pb-4 flex items-start justify-between sticky top-0 z-10"
+          style={{
+            background: c.over_legal ? `${colors.critical}08` : c.over_health ? `${colors.warning}08` : `${colors.textFaint}05`,
+            borderBottom: `1px solid ${colors.border}`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <SeverityIcon c={c} />
+            <div>
+              <h3 className="text-[18px] font-bold" style={{ color: colors.textPrimary }}>{contaminantName(c)}</h3>
+              <div className="flex gap-2 mt-1">
+                <SeverityBadge c={c} />
+                {c.times_above_ewg != null && c.times_above_ewg > 1 && (
+                  <span className="text-[11px] font-semibold" style={{ color: `${colors.warning}b0` }}>{c.times_above_ewg}× EWG guideline</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70 cursor-pointer">
-          <X className="size-4" style={{ color: colors.textFaint }} />
-        </button>
-      </div>
-
-      <div className="p-4 space-y-3">
-        <div>
-          <div className="flex items-end justify-between mb-1.5">
-            <span className="text-[24px] font-bold" style={{ color: colors.textPrimary }}>
-              {c.detected_level} <span className="text-[13px] font-normal" style={{ color: colors.textFaint }}>{c.unit}</span>
-            </span>
-          </div>
-          <SeverityBar ratio={ratio} />
-          <div className="flex justify-between mt-1">
-            <span className="text-[11px]" style={{ color: colors.textFaint }}>0</span>
-            {c.health_guideline != null && <span className="text-[11px]" style={{ color: colors.textFaint }}>Health: {c.health_guideline} {c.unit}</span>}
-            {c.legal_limit != null && <span className="text-[11px]" style={{ color: colors.textFaint }}>Legal: {c.legal_limit} {c.unit}</span>}
-          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:opacity-70 cursor-pointer" style={{ background: `${colors.textFaint}15` }}>
+            <X className="size-5" style={{ color: colors.textMuted }} />
+          </button>
         </div>
 
-        {/* What is this contaminant */}
-        {info && (
-          <div className="rounded-xl p-3.5 space-y-1" style={{ background: `${colors.textFaint}08` }}>
+        <div className="p-5 space-y-4">
+          {/* Detection bar */}
+          <div>
+            <div className="flex items-end justify-between mb-2">
+              <span className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>
+                {c.detected_level} <span className="text-[14px] font-normal" style={{ color: colors.textFaint }}>{c.unit}</span>
+              </span>
+            </div>
+            <SeverityBar ratio={ratio} />
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[11px]" style={{ color: colors.textFaint }}>0</span>
+              {c.health_guideline != null && <span className="text-[11px]" style={{ color: colors.textFaint }}>Health: {c.health_guideline} {c.unit}</span>}
+              {c.legal_limit != null && <span className="text-[11px]" style={{ color: colors.textFaint }}>Legal: {c.legal_limit} {c.unit}</span>}
+            </div>
+          </div>
+
+          {/* What is this contaminant */}
+          <div className="rounded-xl p-4 space-y-1.5" style={{ background: `${colors.textFaint}08` }}>
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>What Is It</p>
             <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.what}</p>
           </div>
-        )}
 
-        {/* Health effects */}
-        {info && (
-          <div className="rounded-xl p-3.5 space-y-1" style={{ background: `${colors.critical}06` }}>
+          {/* Health effects */}
+          <div className="rounded-xl p-4 space-y-1.5" style={{ background: `${colors.critical}06` }}>
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.critical}90` }}>❤️ Health Effects</p>
             <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.health}</p>
           </div>
-        )}
 
-        {/* Home effects */}
-        {info && (
-          <div className="rounded-xl p-3.5 space-y-1" style={{ background: `${colors.warning}06` }}>
+          {/* Home effects */}
+          <div className="rounded-xl p-4 space-y-1.5" style={{ background: `${colors.warning}06` }}>
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.warning}90` }}>🏠 Home Effects</p>
             <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.home}</p>
           </div>
-        )}
-
-        {/* Fallback to generic effect if no info available */}
-        {!info && c.effect && (
-          <p className="text-[13px] leading-relaxed rounded-lg p-3" style={{ color: colors.textSecondary, background: `${colors.textFaint}08` }}>
-            {c.effect}
-          </p>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -269,9 +293,9 @@ export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBa
         </div>
       </div>
 
-      {/* Detail card */}
+      {/* Detail modal */}
       {expandedDetail !== null && sorted[expandedDetail] && (
-        <ContaminantDetail c={sorted[expandedDetail]} onClose={() => setExpandedDetail(null)} />
+        <ContaminantDetailModal c={sorted[expandedDetail]} onClose={() => setExpandedDetail(null)} />
       )}
 
       {/* Categorized list */}

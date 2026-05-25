@@ -5,13 +5,12 @@ import {
   ChevronLeft,
   Droplets,
   Lock,
-  Maximize,
-  Minimize,
   User,
   Home,
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { FullscreenToggle } from "@/components/FullscreenToggle";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { parseContaminants } from "@/lib/pipeline";
@@ -57,6 +56,7 @@ import { DemoImpact } from "@/components/demo/DemoImpact";
 import { DemoLiveTest } from "@/components/demo/DemoLiveTest";
 import { DemoScoreTransform } from "@/components/demo/DemoScoreTransform";
 import { DemoScoreImprovement } from "@/components/demo/DemoScoreImprovement";
+import { DemoBeforeAfter } from "@/components/demo/DemoBeforeAfter";
 import { DemoSystemInfo } from "@/components/demo/DemoSystemInfo";
 import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
 import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
@@ -126,6 +126,7 @@ const ALL_STEPS: StepDef[] = [
   { key: "scoreImprovement",    label: "Improvement",     color: "#8b5cf6" },   // Score improvement reveal → 94
   { key: "system",              label: "System",          color: "#3b82f6" },   // Filtration system product page
   { key: "trust",               label: "Proof",           color: "#22c55e" },   // Trust proof (directly after system)
+  { key: "beforeAfter",         label: "Before & After",  color: "#8b5cf6" },   // Chemical before/after comparison
   // ── Justify ──
   { key: "comparison",          label: "Expenses",        color: "#ec4899" },   // What unfiltered water costs
   { key: "pricing",             label: "Investment",      color: "#10b981" },   // Investment overview
@@ -300,38 +301,7 @@ function useSwipeNavigation(goNext: () => void, goBack: () => void) {
 }
 
 
-/* ──────────────── Fullscreen Toggle ──────────────── */
-function FullscreenToggle() {
-  const [isFs, setIsFs] = React.useState(!!document.fullscreenElement);
-
-  React.useEffect(() => {
-    const handler = () => setIsFs(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
-
-  const toggle = () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      document.documentElement.requestFullscreen?.();
-    }
-  };
-
-  return (
-    <button
-      onClick={toggle}
-      className={`flex items-center justify-center rounded-lg p-1.5 transition-all ${
-        isFs
-          ? "bg-cyan-400/10 text-cyan-300 border border-cyan-400/30"
-          : "bg-white/5 text-white/70 active:bg-white/10"
-      }`}
-      title={isFs ? "Exit Fullscreen" : "Fullscreen"}
-    >
-      {isFs ? <Minimize className="size-3.5" /> : <Maximize className="size-3.5" />}
-    </button>
-  );
-}
+/* FullscreenToggle now imported from shared component */
 
 /* ═══════════════════════════════════════════════════════
    Main Page — wraps everything in context providers
@@ -720,7 +690,7 @@ function DemoWizardInner() {
           {/* Center: controls cluster */}
           <div className="flex items-center gap-2">
             <MuteToggle />
-            <FullscreenToggle />
+            <FullscreenToggle compact />
             <ViewModeToggle />
             {showStepLabel && (
               <p className="text-xs font-bold tracking-wider text-white/40">
@@ -914,6 +884,7 @@ function DemoWizardInner() {
               liveReadings={liveReadings}
               projectedScore={projectedScore ?? score ?? 0}
               onNext={goNext}
+              reportBaseScore={reportBaseScore}
             />
           )}
           {stepKey === "scoreImprovement" && (
@@ -930,6 +901,14 @@ function DemoWizardInner() {
             <DemoTrustProof
               company={company}
               report={report}
+              onNext={goNext}
+            />
+          )}
+          {stepKey === "beforeAfter" && (
+            <DemoBeforeAfter
+              score={score ?? 0}
+              projectedScore={projectedScore ?? 94}
+              contaminants={contaminants}
               onNext={goNext}
             />
           )}
@@ -973,7 +952,7 @@ function DemoWizardInner() {
             <DemoSummaryScreen
               report={report}
               company={company}
-              initialScore={score}
+              initialScore={reportBaseScore ?? score}
               verifiedScore={score}
               projectedScore={projectedScore}
               contaminants={contaminants}
@@ -981,6 +960,8 @@ function DemoWizardInner() {
               companyColor={companyColor}
               customerConcerns={customerConcerns}
               onNext={goNext}
+              liveReadings={liveReadings}
+              concerns={concerns}
             />
           )}
           {stepKey === "decision" && (

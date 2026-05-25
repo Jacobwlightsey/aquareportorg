@@ -1,10 +1,10 @@
 /* ──── Score Improvement — "How We Improve Your Score" ────
    Transition step between Impact and System. Shows current score
-   transforming to projected (e.g. 94). Emotional payoff moment.
+   with a reveal button. On tap → animates to projected (e.g. 94).
    ──── */
 
-import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowRight, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { useState } from "react";
 import { playRevealSound, haptic } from "@/lib/demoSounds";
 import { ScoreGauge } from "./ScoreGauge";
 import { tierInfo } from "./DemoScoreReveal";
@@ -24,20 +24,22 @@ const IMPROVEMENTS = [
 ];
 
 export function DemoScoreImprovement({ currentScore, projectedScore, onNext }: Props) {
-  const [phase, setPhase] = useState<"before" | "animating" | "after">("before");
-  const displayScore = phase === "before" ? currentScore : projectedScore;
+  const [phase, setPhase] = useState<"waiting" | "animating" | "revealed">("waiting");
+  const displayScore = phase === "waiting" ? currentScore : projectedScore;
   const info = tierInfo(displayScore);
+  const currentInfo = tierInfo(currentScore);
   const delta = projectedScore - currentScore;
 
-  useEffect(() => {
-    const t1 = setTimeout(() => setPhase("animating"), 1200);
-    const t2 = setTimeout(() => {
-      setPhase("after");
+  const handleReveal = () => {
+    if (phase !== "waiting") return;
+    setPhase("animating");
+    haptic("medium");
+    setTimeout(() => {
+      setPhase("revealed");
       playRevealSound();
-      haptic("medium");
-    }, 2800);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
+      haptic("heavy");
+    }, 1800);
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl px-8 pt-8">
@@ -53,24 +55,26 @@ export function DemoScoreImprovement({ currentScore, projectedScore, onNext }: P
           className="text-[28px] sm:text-[32px] font-bold tracking-tight mt-3"
           style={{ color: colors.textPrimary }}
         >
-          How We Improve Your Score
+          {phase === "revealed" ? "Your New Water Score" : "How We Improve Your Score"}
         </h2>
         <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
-          See what proper water treatment does for your home.
+          {phase === "revealed"
+            ? "This is what proper water treatment does for your home."
+            : "See what proper water treatment does for your home."}
         </p>
       </div>
 
-      {/* Score gauge — centered, animates from current → projected */}
-      <div className="flex flex-col items-center mb-10">
+      {/* Score gauge — centered */}
+      <div className="flex flex-col items-center mb-8">
         <div className="relative">
           <ScoreGauge
             score={displayScore}
             size={220}
             animate={true}
-            animationDuration={phase === "animating" ? 1600 : 800}
+            animationDuration={phase === "animating" ? 1800 : 800}
           />
           {/* Glow effect on reveal */}
-          {phase === "after" && (
+          {phase === "revealed" && (
             <div
               className="absolute inset-0 rounded-full animate-pulse"
               style={{
@@ -89,16 +93,25 @@ export function DemoScoreImprovement({ currentScore, projectedScore, onNext }: P
         {/* Tier badge */}
         <div
           className="mt-4 rounded-full px-5 py-2 flex items-center gap-2 transition-all duration-700"
-          style={{ background: info.bg, border: `1px solid ${info.border}` }}
+          style={{
+            background: phase === "revealed" ? info.bg : currentInfo.bg,
+            border: `1px solid ${phase === "revealed" ? info.border : currentInfo.border}`,
+          }}
         >
-          <info.icon className="size-4" style={{ color: info.color }} />
-          <span className="text-[14px] font-bold" style={{ color: info.color }}>
-            {info.tier}
+          {phase === "revealed"
+            ? <info.icon className="size-4" style={{ color: info.color }} />
+            : <currentInfo.icon className="size-4" style={{ color: currentInfo.color }} />
+          }
+          <span
+            className="text-[14px] font-bold"
+            style={{ color: phase === "revealed" ? info.color : currentInfo.color }}
+          >
+            {phase === "revealed" ? info.tier : currentInfo.tier}
           </span>
         </div>
 
-        {/* Delta indicator */}
-        {phase === "after" && delta > 0 && (
+        {/* Delta indicator — only after reveal */}
+        {phase === "revealed" && delta > 0 && (
           <div
             className="mt-4 flex items-center gap-2 rounded-full px-4 py-2 animate-in fade-in slide-in-from-bottom-3 duration-500"
             style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}20` }}
@@ -111,48 +124,65 @@ export function DemoScoreImprovement({ currentScore, projectedScore, onNext }: P
         )}
       </div>
 
-      {/* What changes — animated list */}
-      <div
-        className="max-w-lg mx-auto rounded-2xl p-5 mb-8 space-y-3"
-        style={{ background: colors.surface, border: `1px solid ${colors.border}` }}
-      >
-        <p
-          className="text-[10px] font-bold uppercase tracking-widest mb-3"
-          style={{ color: colors.textFaint }}
+      {/* ── REVEAL BUTTON — shown before reveal ── */}
+      {phase === "waiting" && (
+        <button
+          onClick={handleReveal}
+          className="w-full max-w-md mx-auto flex items-center justify-center gap-3 rounded-2xl py-5 text-[18px] font-bold active:scale-[0.97] transition-transform cursor-pointer mb-8"
+          style={{
+            background: `linear-gradient(135deg, ${colors.success}, ${colors.primary})`,
+            boxShadow: `0 8px 32px ${colors.success}30`,
+          }}
         >
-          WHAT WE ADDRESS
-        </p>
-        {IMPROVEMENTS.map((item, i) => (
-          <div
-            key={item.label}
-            className="flex items-center gap-3 animate-in fade-in slide-in-from-left-3"
-            style={{ animationDelay: `${item.delay}ms`, animationFillMode: "both" }}
+          <Zap className="size-5" />
+          Improve Your Score
+        </button>
+      )}
+
+      {/* What changes — animated list, only after reveal */}
+      {phase === "revealed" && (
+        <div
+          className="max-w-lg mx-auto rounded-2xl p-5 mb-8 space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500"
+          style={{ background: colors.surface, border: `1px solid ${colors.border}` }}
+        >
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-3"
+            style={{ color: colors.textFaint }}
           >
-            <span className="text-lg shrink-0">{item.emoji}</span>
-            <span className="text-[14px]" style={{ color: colors.textSecondary }}>
-              {item.label}
-            </span>
-            {phase === "after" && (
+            WHAT WE ADDRESS
+          </p>
+          {IMPROVEMENTS.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center gap-3 animate-in fade-in slide-in-from-left-3"
+              style={{ animationDelay: `${item.delay}ms`, animationFillMode: "both" }}
+            >
+              <span className="text-lg shrink-0">{item.emoji}</span>
+              <span className="text-[14px]" style={{ color: colors.textSecondary }}>
+                {item.label}
+              </span>
               <Sparkles
                 className="size-3.5 ml-auto shrink-0 animate-in fade-in"
                 style={{ color: colors.success, animationDelay: `${item.delay + 400}ms` }}
               />
-            )}
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Continue button */}
-      <button
-        onClick={onNext}
-        className="w-full max-w-lg mx-auto block flex items-center justify-center gap-2 rounded-2xl py-4 text-[16px] font-bold active:scale-[0.97] transition-transform cursor-pointer"
-        style={{
-          background: `linear-gradient(135deg, ${colors.success}, ${colors.primary})`,
-          boxShadow: `0 4px 24px ${colors.success}20`,
-        }}
-      >
-        See How It Works <ArrowRight className="size-5" />
-      </button>
+      {/* Continue button — only after reveal */}
+      {phase === "revealed" && (
+        <button
+          onClick={onNext}
+          className="w-full max-w-lg mx-auto block flex items-center justify-center gap-2 rounded-2xl py-4 text-[16px] font-bold active:scale-[0.97] transition-transform cursor-pointer animate-in fade-in duration-500"
+          style={{
+            background: `linear-gradient(135deg, ${colors.success}, ${colors.primary})`,
+            boxShadow: `0 4px 24px ${colors.success}20`,
+          }}
+        >
+          See How It Works <ArrowRight className="size-5" />
+        </button>
+      )}
     </div>
   );
 }
