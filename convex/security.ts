@@ -158,10 +158,10 @@ export function checkTierAccess(company: any, feature: string, isFreeTrial?: boo
 
 export function tierAccessMessage(feature: string) {
   if (feature === "lead_pipeline") {
-    return "Upgrade to Pro ($499/mo) to access the lead pipeline.";
+    return "Upgrade to Pro ($599/mo) to access the lead pipeline.";
   }
   if (feature === "verify_in_home_results" || feature === "verify_filtration_installs" || feature === "issue_consumer_reports") {
-    return "Upgrade to Growth ($249/mo) to verify test results and issue consumer reports.";
+    return "Upgrade to Growth ($349/mo) to verify test results and issue consumer reports.";
   }
   return "Upgrade your plan to access this feature.";
 }

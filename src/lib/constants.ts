@@ -18,8 +18,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "starter",
     name: "Starter",
-    monthlyPrice: 99,
-    annualPrice: 999,
+    monthlyPrice: 199,
+    annualPrice: 1990,
     monthlyPriceId: "price_1TYFRdRjbFWooo6z8bUCcayO",
     annualPriceId: "price_1TZf2rRjbFWooo6zaAr2qjgc",
     reportLimit: 20,
@@ -37,8 +37,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "growth",
     name: "Growth",
-    monthlyPrice: 249,
-    annualPrice: 2499,
+    monthlyPrice: 349,
+    annualPrice: 3490,
     monthlyPriceId: "price_1TZf2qRjbFWooo6zpoX4pUKU",
     annualPriceId: "price_1TZf2rRjbFWooo6zrLgZQU8j",
     reportLimit: 50,
@@ -58,8 +58,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "pro",
     name: "Pro",
-    monthlyPrice: 499,
-    annualPrice: 3999,
+    monthlyPrice: 599,
+    annualPrice: 5990,
     monthlyPriceId: "price_1TYFS1RjbFWooo6z24F2OLu7",
     annualPriceId: "price_1TZf2rRjbFWooo6zgKimExIw",
     reportLimit: 150,

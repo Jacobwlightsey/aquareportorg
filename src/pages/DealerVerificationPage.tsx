@@ -110,7 +110,7 @@ function UpgradeCard({ message }: { message?: string }) {
         <div>
           <h2 className="text-lg font-semibold">Verification tools are locked</h2>
           <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-            {message || "Upgrade to Growth ($249/mo) to verify test results and issue consumer reports."}
+            {message || "Upgrade to Growth ($349/mo) to verify test results and issue consumer reports."}
           </p>
         </div>
         <Button asChild>

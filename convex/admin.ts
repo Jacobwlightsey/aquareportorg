@@ -145,7 +145,7 @@ export const getPlatformStats = query({
     }
 
     // MRR
-    const planPrices: Record<string, number> = { starter: 99, growth: 249, pro: 499, enterprise: 499 };
+    const planPrices: Record<string, number> = { starter: 199, growth: 349, pro: 599, enterprise: 599 };
     let mrr = 0;
     for (const c of companies) {
       if (c.stripeStatus === "active" && c.stripePlan) {

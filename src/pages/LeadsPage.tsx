@@ -384,7 +384,7 @@ function ConsumerLeadPipeline({
           <div>
             <h2 className="font-semibold">Consumer Lead Pipeline</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {context?.messages.pro || "Upgrade to Pro ($499/mo) to access the lead pipeline."}
+              {context?.messages.pro || "Upgrade to Pro ($599/mo) to access the lead pipeline."}
             </p>
           </div>
           <Button asChild>

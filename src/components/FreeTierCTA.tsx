@@ -101,9 +101,9 @@ export function FreeTrialExhausted() {
       </div>
       <div className="mt-8 grid gap-3 sm:grid-cols-3 max-w-lg w-full">
         {[
-          { plan: "Starter", price: "$99/mo", reports: "20 reports/mo" },
-          { plan: "Growth", price: "$249/mo", reports: "50 reports/mo" },
-          { plan: "Pro", price: "$499/mo", reports: "150+ reports/mo" },
+          { plan: "Starter", price: "$199/mo", reports: "20 reports/mo" },
+          { plan: "Growth", price: "$349/mo", reports: "50 reports/mo" },
+          { plan: "Pro", price: "$599/mo", reports: "150+ reports/mo" },
         ].map((p) => (
           <div key={p.plan} className="rounded-lg border p-3 text-center">
             <p className="font-semibold text-sm">{p.plan}</p>
