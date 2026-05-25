@@ -5,8 +5,12 @@ import {
   ChevronLeft,
   Droplets,
   Lock,
+  Monitor,
+  MonitorOff,
+  User,
+  Home,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { parseContaminants } from "@/lib/pipeline";
 import { hasPlanOverride, upgradeMessage } from "@/lib/planGate";
@@ -14,6 +18,27 @@ import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { computeAquaScore, type FieldWaterReadings } from "@/lib/waterScore";
 import { playTapSound } from "@/lib/demoSounds";
 import { api } from "../../convex/_generated/api";
+
+// Sprint 0 hooks
+import {
+  PresentationModeContext,
+  usePresentationModeProvider,
+  usePresentationMode,
+} from "@/hooks/usePresentationMode";
+import {
+  DemoModeContext,
+  useDemoModeProvider,
+  useDemoMode,
+  DEFAULT_MODE_STEPS,
+  MODE_LABELS,
+  type DemoModeType,
+} from "@/hooks/useDemoMode";
+import {
+  ViewModeContext,
+  useViewModeProvider,
+  useViewMode,
+  type ViewModeType,
+} from "@/hooks/useViewMode";
 
 // Step components
 import { DemoWelcome } from "@/components/demo/DemoWelcome";
@@ -31,7 +56,8 @@ import { DemoDealerClose } from "@/components/demo/DemoDealerClose";
 import { DemoAssistant } from "@/components/demo/DemoAssistant";
 import { EndDemoModal } from "@/components/demo/EndDemoModal";
 
-const STEPS = [
+/* ──────────────── All possible steps ──────────────── */
+const ALL_STEPS = [
   { key: "welcome",       label: "Welcome",       color: "#3b82f6" },
   { key: "score",          label: "AquaScore",     color: "#10b981" },
   { key: "contaminants",   label: "Contaminants",  color: "#f59e0b" },
@@ -46,25 +72,37 @@ const STEPS = [
   { key: "dealerClose",    label: "Wrap Up",       color: "#64748b" },
 ] as const;
 
+type StepDef = (typeof ALL_STEPS)[number];
+
+/* ──────────────── Helpers ──────────────── */
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function ProgressBar({ step, total }: { step: number; total: number }) {
+/* ──────────────── Progress bar — mode-aware ──────────────── */
+function ProgressBar({
+  step,
+  steps,
+  isPresentationMode,
+}: {
+  step: number;
+  steps: StepDef[];
+  isPresentationMode: boolean;
+}) {
   return (
     <div className="flex gap-0.5">
-      {Array.from({ length: total }).map((_, i) => (
+      {steps.map((s, i) => (
         <div
-          key={i}
-          className="h-1 flex-1 rounded-full transition-all duration-500"
+          key={s.key}
+          className={`flex-1 rounded-full transition-all duration-500 ${isPresentationMode ? "h-1.5" : "h-1"}`}
           style={{
             background:
               i < step
-                ? STEPS[i]?.color ?? "#3b82f6"
+                ? s.color
                 : i === step
-                  ? `${STEPS[i]?.color ?? "#3b82f6"}80`
+                  ? `${s.color}80`
                   : "rgba(255,255,255,0.1)",
           }}
         />
@@ -73,18 +111,175 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
+/* ──────────────── Demo Mode Selector (shown on Welcome) ──────────────── */
+function DemoModeSelector({
+  companyDemoModes,
+}: {
+  companyDemoModes?: Record<string, string[]>;
+}) {
+  const { demoMode, setDemoMode } = useDemoMode();
+
+  const modes: DemoModeType[] = ["quick", "standard", "full"];
+
+  return (
+    <div className="flex gap-2 w-full max-w-sm mx-auto">
+      {modes.map((mode) => {
+        const isActive = demoMode === mode;
+        const info = MODE_LABELS[mode];
+        return (
+          <button
+            key={mode}
+            onClick={() => {
+              playTapSound();
+              setDemoMode(mode);
+            }}
+            className={`flex-1 rounded-xl border px-3 py-2.5 text-center transition-all ${
+              isActive
+                ? "border-cyan-400/50 bg-cyan-400/10 text-white shadow-[0_0_16px_rgba(34,211,238,0.15)]"
+                : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]"
+            }`}
+          >
+            <p className={`text-sm font-bold ${isActive ? "text-white" : ""}`}>
+              {info.label}
+            </p>
+            <p className="text-[10px] text-white/40 mt-0.5">{info.time}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ──────────────── View Mode Toggle Button ──────────────── */
+function ViewModeToggle() {
+  const { viewMode, toggleViewMode } = useViewMode();
+  const isRep = viewMode === "rep";
+
+  return (
+    <button
+      onClick={() => {
+        playTapSound();
+        toggleViewMode();
+      }}
+      className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all ${
+        isRep
+          ? "bg-white/5 text-white/70 active:bg-white/10"
+          : "bg-cyan-400/10 text-cyan-300 border border-cyan-400/30 active:bg-cyan-400/20"
+      }`}
+      title={isRep ? "Switch to Customer View" : "Switch to Rep View"}
+    >
+      {isRep ? <User className="size-3" /> : <Home className="size-3" />}
+      <span className="hidden sm:inline">{isRep ? "Rep" : "Customer"}</span>
+    </button>
+  );
+}
+
+/* ──────────────── Presentation Mode Toggle Button ──────────────── */
+function PresentationToggle() {
+  const { isPresentationMode, toggle } = usePresentationMode();
+
+  return (
+    <button
+      onClick={() => {
+        playTapSound();
+        toggle();
+      }}
+      className={`flex items-center justify-center rounded-lg p-1.5 transition-all ${
+        isPresentationMode
+          ? "bg-amber-400/10 text-amber-300 border border-amber-400/30"
+          : "bg-white/5 text-white/70 active:bg-white/10"
+      }`}
+      title={isPresentationMode ? "Exit Presentation Mode" : "Presentation Mode"}
+    >
+      {isPresentationMode ? (
+        <MonitorOff className="size-3.5" />
+      ) : (
+        <Monitor className="size-3.5" />
+      )}
+    </button>
+  );
+}
+
+/* ──────────────── Swipe Detection Hook ──────────────── */
+function useSwipeNavigation(goNext: () => void, goBack: () => void) {
+  const touchStart = useRef<{ x: number; y: number; target: EventTarget | null } | null>(null);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStart.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      target: e.target,
+    };
+  }, []);
+
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStart.current) return;
+
+      // Flag #3: skip swipe if the touch started inside a .swipe-disabled container
+      // (e.g., before/after image sliders, horizontally scrollable areas)
+      const target = touchStart.current.target as HTMLElement | null;
+      if (target?.closest?.(".swipe-disabled")) {
+        touchStart.current = null;
+        return;
+      }
+
+      const dx = e.changedTouches[0].clientX - touchStart.current.x;
+      const dy = e.changedTouches[0].clientY - touchStart.current.y;
+      touchStart.current = null;
+      if (Math.abs(dx) < 50 || Math.abs(dy) > 30) return; // too short or too vertical
+      if (dx < 0) goNext();
+      else goBack();
+    },
+    [goNext, goBack],
+  );
+
+  return { onTouchStart, onTouchEnd };
+}
+
+/* ═══════════════════════════════════════════════════════
+   Main Page — wraps everything in context providers
+   ═══════════════════════════════════════════════════════ */
 export function DemoWizardPage() {
+  const presentationCtx = usePresentationModeProvider();
+  const demoModeCtx = useDemoModeProvider();
+  const viewModeCtx = useViewModeProvider();
+
+  return (
+    <PresentationModeContext.Provider value={presentationCtx}>
+      <DemoModeContext.Provider value={demoModeCtx}>
+        <ViewModeContext.Provider value={viewModeCtx}>
+          <DemoWizardInner />
+        </ViewModeContext.Provider>
+      </DemoModeContext.Provider>
+    </PresentationModeContext.Provider>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   Inner component — all demo logic
+   ═══════════════════════════════════════════════════════ */
+function DemoWizardInner() {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
-  const report = useQuery(api.reports.getReport, reportId ? { reportId: reportId as any } : "skip");
+  const report = useQuery(
+    api.reports.getReport,
+    reportId ? { reportId: reportId as any } : "skip",
+  );
   const company = useQuery(api.companies.getMyCompany);
   const { effectivePlan } = useFreeTrial();
+
+  // Sprint 0 contexts
+  const { isPresentationMode } = usePresentationMode();
+  const { demoMode } = useDemoMode();
+  const { viewMode } = useViewMode();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [showEndModal, setShowEndModal] = useState(false);
   const [showAssistant, setShowAssistant] = useState(false);
   const [demoTimer, setDemoTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [demoStarted, setDemoStarted] = useState(false);
 
   // State shared across steps
   const [liveReadings, setLiveReadings] = useState<FieldWaterReadings>({});
@@ -92,14 +287,40 @@ export function DemoWizardPage() {
   const [boostApplied, setBoostApplied] = useState(false);
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
 
-  // Timer
+  /* ─── Active steps based on demo mode ─── */
+  const activeSteps: StepDef[] = useMemo(() => {
+    // Check for company-level mode config
+    const companyModes = (company as any)?.demoConfig?.demoModes as
+      | Record<string, string[]>
+      | undefined;
+
+    const modeKeys = companyModes?.[demoMode] ?? DEFAULT_MODE_STEPS[demoMode];
+
+    // "full" mode (empty array) means all steps
+    if (!modeKeys || modeKeys.length === 0) {
+      return [...ALL_STEPS];
+    }
+
+    const stepMap = new Map(ALL_STEPS.map((s) => [s.key, s]));
+    return modeKeys
+      .map((k) => stepMap.get(k))
+      .filter((s): s is StepDef => s !== undefined);
+  }, [demoMode, company]);
+
+  // Timer — only runs after demo starts
   useEffect(() => {
+    if (!demoStarted) return;
     timerRef.current = setInterval(() => setDemoTimer((t) => t + 1), 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, []);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [demoStarted]);
 
   // Contaminants & score
-  const contaminants = useMemo(() => parseContaminants(report?.contaminants), [report?.contaminants]);
+  const contaminants = useMemo(
+    () => parseContaminants(report?.contaminants),
+    [report?.contaminants],
+  );
 
   const score = useMemo(() => {
     if (!report) return undefined;
@@ -112,21 +333,40 @@ export function DemoWizardPage() {
     return computeAquaScore(report.waterScore, contaminants, readings);
   }, [report, contaminants, liveReadings]);
 
-  // Projected score: always 94 with whole-home filtration, 99 with RO
+  // Projected scores
   const projectedScore = 94;
   const boostedScore = 99;
   const finalScore = boostApplied ? boostedScore : projectedScore;
 
-  const companyColor = company?.primaryColor || report?.companyColor || "#2563eb";
+  const companyColor =
+    company?.primaryColor || report?.companyColor || "#2563eb";
 
-  const goNext = useCallback(() => { playTapSound(); setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1)); }, []);
-  const goBack = useCallback(() => { playTapSound(); setCurrentStep((s) => Math.max(s - 1, 0)); }, []);
+  /* ─── Navigation ─── */
+  const goNext = useCallback(() => {
+    playTapSound();
+    if (!demoStarted) setDemoStarted(true);
+    setCurrentStep((s) => Math.min(s + 1, activeSteps.length - 1));
+  }, [activeSteps.length, demoStarted]);
+
+  const goBack = useCallback(() => {
+    playTapSound();
+    setCurrentStep((s) => Math.max(s - 1, 0));
+  }, []);
+
   const exitDemo = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     navigate(`/customers/${reportId}`);
   }, [navigate, reportId]);
 
-  // Loading
+  // Swipe navigation
+  const swipeProps = useSwipeNavigation(goNext, goBack);
+
+  // Clamp step when mode changes shrinks the list
+  useEffect(() => {
+    setCurrentStep((s) => Math.min(s, activeSteps.length - 1));
+  }, [activeSteps.length]);
+
+  /* ─── Loading ─── */
   if (report === undefined) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827]">
@@ -140,25 +380,36 @@ export function DemoWizardPage() {
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
         <AlertTriangle className="mb-4 size-12 text-amber-500/50" />
         <p className="font-semibold">Customer not found</p>
-        <button onClick={() => navigate("/customers")} className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium">
+        <button
+          onClick={() => navigate("/customers")}
+          className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium"
+        >
           Back
         </button>
       </div>
     );
   }
 
-  // Plan gate
+  /* ─── Plan gate ─── */
   if (!hasPlanOverride(effectivePlan as any, "growth")) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
         <Lock className="mb-4 size-12 text-white/20" />
-        <p className="font-semibold text-lg">Demo Wizard</p>
-        <p className="mt-2 text-sm text-white/50 max-w-xs text-center">{upgradeMessage("demo_wizard")}</p>
+        <p className="text-lg font-semibold">Demo Wizard</p>
+        <p className="mt-2 max-w-xs text-center text-sm text-white/50">
+          {upgradeMessage("demo_wizard")}
+        </p>
         <div className="mt-6 flex gap-3">
-          <button onClick={() => navigate(`/customers/${reportId}`)} className="rounded-xl bg-white/10 px-5 py-2.5 text-sm font-medium hover:bg-white/15 transition-colors">
+          <button
+            onClick={() => navigate(`/customers/${reportId}`)}
+            className="rounded-xl bg-white/10 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/15"
+          >
             ← Back
           </button>
-          <button onClick={() => navigate("/subscription")} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium hover:bg-blue-500 transition-colors">
+          <button
+            onClick={() => navigate("/subscription")}
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-blue-500"
+          >
             View Plans
           </button>
         </div>
@@ -166,44 +417,103 @@ export function DemoWizardPage() {
     );
   }
 
-  const stepKey = STEPS[currentStep].key;
-
-  // Customer-facing steps hide the top bar timer etc
+  const currentStepDef = activeSteps[currentStep];
+  const stepKey = currentStepDef?.key ?? "welcome";
   const isCustomerFacing = isCustomerHandOff && stepKey === "customerClose";
+  const isCustomerView = viewMode === "customer";
+
+  // In customer view, hide certain UI elements
+  const showTopBarChrome = !isCustomerFacing && !isCustomerView;
+  const showStepLabel = !isCustomerFacing && !isCustomerView && !isPresentationMode;
+  const showTimer = !isCustomerFacing && !isCustomerView;
+  const showProgressBar = !isCustomerFacing;
+  const showAssistantFAB = !isCustomerView;
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white">
-      {/* Top Bar */}
+    <div
+      className={`fixed inset-0 flex flex-col bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white ${isPresentationMode ? "presentation-mode" : ""}`}
+      {...swipeProps}
+    >
+      {/* ─── Top Bar ─── */}
       {!isCustomerFacing && (
-        <div className="flex shrink-0 items-center justify-between px-4 pt-3 pb-2 safe-area-top">
+        <div
+          className={`flex shrink-0 items-center justify-between px-4 safe-area-top ${isPresentationMode ? "pt-4 pb-2" : "pt-3 pb-2"}`}
+        >
+          {/* Left: Exit */}
           <button
             onClick={() => setShowEndModal(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 active:bg-white/10"
+            className={`flex items-center gap-1.5 rounded-lg bg-white/5 text-white/70 active:bg-white/10 ${isPresentationMode ? "px-4 py-2 text-sm" : "px-3 py-1.5 text-xs"} font-medium`}
           >
-            <ChevronLeft className="size-3.5" />
+            <ChevronLeft className={isPresentationMode ? "size-4" : "size-3.5"} />
             Exit
           </button>
-          <p className="text-xs font-bold tracking-wider text-white/40">
-            {currentStep + 1}/{STEPS.length} — {STEPS[currentStep].label.toUpperCase()}
-          </p>
-          <div className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-mono font-medium text-white/70">{formatTime(demoTimer)}</span>
+
+          {/* Center: controls cluster */}
+          <div className="flex items-center gap-2">
+            <PresentationToggle />
+            <ViewModeToggle />
+            {showStepLabel && (
+              <p className="text-xs font-bold tracking-wider text-white/40">
+                {currentStep + 1}/{activeSteps.length} —{" "}
+                {currentStepDef?.label.toUpperCase()}
+              </p>
+            )}
           </div>
+
+          {/* Right: Timer */}
+          {showTimer ? (
+            <div
+              className={`flex items-center gap-1.5 rounded-lg bg-white/5 ${isPresentationMode ? "px-4 py-2" : "px-3 py-1.5"}`}
+            >
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span
+                className={`font-mono font-medium text-white/70 ${isPresentationMode ? "text-sm" : "text-xs"}`}
+              >
+                {formatTime(demoTimer)}
+              </span>
+            </div>
+          ) : (
+            <div className="w-16" /> /* spacer */
+          )}
         </div>
       )}
 
-      {/* Progress Bar */}
-      {!isCustomerFacing && (
+      {/* ─── Progress Bar ─── */}
+      {showProgressBar && (
         <div className="shrink-0 px-4 pb-3">
-          <ProgressBar step={currentStep} total={STEPS.length} />
+          <ProgressBar
+            step={currentStep}
+            steps={activeSteps}
+            isPresentationMode={isPresentationMode}
+          />
         </div>
       )}
 
-      {/* Step Content */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-28">
+      {/* ─── Step Content ─── */}
+      <div
+        className={`flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
+      >
         {stepKey === "welcome" && (
-          <DemoWelcome report={report} companyColor={companyColor} onNext={goNext} />
+          <div className="space-y-5">
+            <DemoWelcome
+              report={report}
+              companyColor={companyColor}
+              onNext={goNext}
+            />
+            {/* Demo Mode Selector — shown on Welcome before starting */}
+            {!demoStarted && (
+              <div className="mx-auto max-w-lg space-y-3 pb-4">
+                <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
+                  Demo Mode
+                </p>
+                <DemoModeSelector
+                  companyDemoModes={
+                    (company as any)?.demoConfig?.demoModes
+                  }
+                />
+              </div>
+            )}
+          </div>
         )}
         {stepKey === "score" && (
           <DemoScoreReveal
@@ -215,7 +525,11 @@ export function DemoWizardPage() {
           />
         )}
         {stepKey === "contaminants" && (
-          <DemoContaminantWalkthrough contaminants={contaminants} onNext={goNext} onBack={goBack} />
+          <DemoContaminantWalkthrough
+            contaminants={contaminants}
+            onNext={goNext}
+            onBack={goBack}
+          />
         )}
         {stepKey === "impact" && (
           <DemoImpact onNext={goNext} onBack={goBack} />
@@ -253,7 +567,12 @@ export function DemoWizardPage() {
           />
         )}
         {stepKey === "comparison" && (
-          <DemoCostComparison company={company} monthlyPayment={pricingState?.monthlyPayment} onNext={goNext} onBack={goBack} />
+          <DemoCostComparison
+            company={company}
+            monthlyPayment={pricingState?.monthlyPayment}
+            onNext={goNext}
+            onBack={goBack}
+          />
         )}
         {stepKey === "boost" && (
           <DemoScoreBoost
@@ -287,39 +606,46 @@ export function DemoWizardPage() {
         )}
       </div>
 
-      {/* Bottom nav for middle steps */}
-      {!isCustomerFacing && currentStep > 0 && currentStep < STEPS.length - 2 && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center justify-between gap-3 px-4 pb-4 pt-3 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent safe-area-bottom">
-          <button
-            onClick={goBack}
-            disabled={currentStep === 0}
-            className="flex items-center gap-1 rounded-xl bg-white/5 px-5 py-3 text-sm font-semibold disabled:opacity-30 active:bg-white/10"
+      {/* ─── Bottom nav for middle steps ─── */}
+      {!isCustomerFacing &&
+        currentStep > 0 &&
+        currentStep < activeSteps.length - 2 && (
+          <div
+            className={`fixed inset-x-0 bottom-0 flex items-center justify-between gap-3 px-4 pt-3 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent safe-area-bottom ${isPresentationMode ? "pb-5" : "pb-4"}`}
           >
-            <ChevronLeft className="size-4" />
-            Back
-          </button>
-          <button
-            onClick={goNext}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold active:scale-[0.97] transition-transform"
-            style={{
-              background: `linear-gradient(135deg, ${STEPS[currentStep].color}, ${STEPS[Math.min(currentStep + 1, STEPS.length - 1)].color})`,
-            }}
-          >
-            Next <ArrowRight className="size-4" />
-          </button>
-        </div>
+            <button
+              onClick={goBack}
+              disabled={currentStep === 0}
+              className={`flex items-center gap-1 rounded-xl bg-white/5 font-semibold disabled:opacity-30 active:bg-white/10 ${isPresentationMode ? "px-6 py-4 text-base" : "px-5 py-3 text-sm"}`}
+            >
+              <ChevronLeft className={isPresentationMode ? "size-5" : "size-4"} />
+              Back
+            </button>
+            <button
+              onClick={goNext}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl font-bold active:scale-[0.97] transition-transform ${isPresentationMode ? "py-4 text-base" : "py-3 text-sm"}`}
+              style={{
+                background: `linear-gradient(135deg, ${currentStepDef?.color ?? "#3b82f6"}, ${activeSteps[Math.min(currentStep + 1, activeSteps.length - 1)]?.color ?? "#3b82f6"})`,
+              }}
+            >
+              Next{" "}
+              <ArrowRight className={isPresentationMode ? "size-5" : "size-4"} />
+            </button>
+          </div>
+        )}
+
+      {/* ─── AI Assistant (hidden in customer view) ─── */}
+      {showAssistantFAB && (
+        <DemoAssistant
+          show={showAssistant}
+          onToggle={() => setShowAssistant((s) => !s)}
+          report={report}
+          contaminants={contaminants}
+          currentStep={stepKey}
+        />
       )}
 
-      {/* AI Assistant */}
-      <DemoAssistant
-        show={showAssistant}
-        onToggle={() => setShowAssistant((s) => !s)}
-        report={report}
-        contaminants={contaminants}
-        currentStep={STEPS[currentStep].key}
-      />
-
-      {/* End Demo Modal */}
+      {/* ─── End Demo Modal ─── */}
       {showEndModal && (
         <EndDemoModal
           report={report}
@@ -328,6 +654,40 @@ export function DemoWizardPage() {
           onFinished={exitDemo}
         />
       )}
+
+      {/* ─── Presentation Mode CSS (injected) ─── */}
+      {isPresentationMode && <PresentationModeStyles />}
     </div>
+  );
+}
+
+/* ──────────────── Presentation Mode CSS ──────────────── */
+function PresentationModeStyles() {
+  // Using `zoom` for uniform scaling — avoids fighting Tailwind utility classes (flag #1)
+  return (
+    <style>{`
+      .presentation-mode .presentation-content {
+        zoom: 1.25;
+        max-width: 100%;
+      }
+      @supports not (zoom: 1.25) {
+        .presentation-mode .presentation-content {
+          transform: scale(1.25);
+          transform-origin: top center;
+        }
+      }
+      .presentation-mode .presentation-content > * {
+        max-width: 42rem;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      /* Larger touch targets in presentation mode */
+      .presentation-mode button,
+      .presentation-mode [role="button"],
+      .presentation-mode a {
+        min-height: 48px;
+        min-width: 48px;
+      }
+    `}</style>
   );
 }
