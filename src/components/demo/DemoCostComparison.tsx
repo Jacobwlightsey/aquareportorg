@@ -4,7 +4,7 @@
    ──── */
 
 import { DollarSign, TrendingDown, TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { playTapSound } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
 import { colors } from "@/lib/designTokens";
@@ -13,6 +13,7 @@ interface Props {
   company: any;
   onNext: () => void;
   onBack: () => void;
+  onExpensesChange?: (monthly: number) => void;
 }
 
 interface CostItem {
@@ -31,7 +32,7 @@ const DEFAULT_COSTS: CostItem[] = [
   { id: "energy", label: "Energy Waste", placeholder: 15, color: colors.primary, description: "Scale reduces heater efficiency" },
 ];
 
-export function DemoCostComparison({ company, onNext, onBack }: Props) {
+export function DemoCostComparison({ company, onNext, onBack, onExpensesChange }: Props) {
   const [showYearly, setShowYearly] = useState(false);
   const costs = useMemo(() => {
     const cc = (company as any)?.demoConfig?.costComparison;
@@ -52,6 +53,9 @@ export function DemoCostComparison({ company, onNext, onBack }: Props) {
   };
 
   const monthlyTotal = Object.values(values).reduce((s, v) => s + v, 0);
+
+  // Report expenses up to parent
+  useEffect(() => { onExpensesChange?.(monthlyTotal); }, [monthlyTotal, onExpensesChange]);
   const yearlyTotal = monthlyTotal * 12;
   const displayTotal = showYearly ? yearlyTotal : monthlyTotal;
 

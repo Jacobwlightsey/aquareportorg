@@ -860,6 +860,20 @@ export const getEnhancedDemoAnalytics = query({
   },
 });
 
+export const getDemoSessionsByReport = query({
+  args: { reportId: v.id("reports") },
+  handler: async (ctx, { reportId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    return await ctx.db
+      .query("demoSessions")
+      .withIndex("by_report", (q) => q.eq("reportId", reportId))
+      .order("desc")
+      .collect();
+  },
+});
+
 export const saveDemoSession = mutation({
   args: {
     reportId: v.optional(v.id("reports")),
@@ -868,6 +882,15 @@ export const saveDemoSession = mutation({
     durationSeconds: v.optional(v.number()),
     customerName: v.optional(v.string()),
     waterScore: v.optional(v.number()),
+    // Demo Report fields
+    selectedConcerns: v.optional(v.string()),
+    liveReadings: v.optional(v.string()),
+    verifiedScore: v.optional(v.number()),
+    stepTimings: v.optional(v.string()),
+    monthlyExpenses: v.optional(v.number()),
+    boostApplied: v.optional(v.boolean()),
+    pricingSnapshot: v.optional(v.string()),
+    demoMode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -899,6 +922,14 @@ export const saveDemoSession = mutation({
       durationSeconds: args.durationSeconds,
       customerName,
       waterScore,
+      selectedConcerns: args.selectedConcerns,
+      liveReadings: args.liveReadings,
+      verifiedScore: args.verifiedScore,
+      stepTimings: args.stepTimings,
+      monthlyExpenses: args.monthlyExpenses,
+      boostApplied: args.boostApplied,
+      pricingSnapshot: args.pricingSnapshot,
+      demoMode: args.demoMode,
     });
 
     return sessionId;

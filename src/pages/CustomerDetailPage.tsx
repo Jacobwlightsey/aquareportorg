@@ -49,6 +49,7 @@ import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { FreeTierBanner } from "@/components/FreeTierCTA";
 import { PlanGate } from "@/components/PlanGate";
 import { api } from "../../convex/_generated/api";
+import { DemoReport } from "@/components/demo/DemoReport";
 
 /* ── AquaScore Gauge ─────────────────────────────────────── */
 
@@ -271,6 +272,10 @@ export function CustomerDetailPage() {
   const [, setSendingReferral] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const generateReportPdf = useAction(api.reportPdf.generateReportPdf);
+  const demoSessions = useQuery(
+    api.dealerShared.getDemoSessionsByReport,
+    reportId ? { reportId: reportId as any } : "skip"
+  );
   const [activeTab, setActiveTab] = useState("overview");
 
   const contaminants = useMemo(
@@ -587,6 +592,11 @@ export function CustomerDetailPage() {
           <TabsTrigger value="activity" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 data-[state=active]:bg-transparent pb-2">
             Activity
           </TabsTrigger>
+          {demoSessions && demoSessions.length > 0 && (
+            <TabsTrigger value="demo" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 data-[state=active]:bg-transparent pb-2">
+              Demo Report
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* OVERVIEW TAB */}
@@ -752,6 +762,15 @@ export function CustomerDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* DEMO REPORT TAB */}
+        {demoSessions && demoSessions.length > 0 && (
+          <TabsContent value="demo" className="space-y-4 mt-4">
+            {demoSessions.map((session) => (
+              <DemoReport key={session._id} session={session as any} />
+            ))}
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

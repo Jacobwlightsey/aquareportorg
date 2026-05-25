@@ -59,6 +59,7 @@ import { DemoScoreTransform } from "@/components/demo/DemoScoreTransform";
 import { DemoSystemInfo } from "@/components/demo/DemoSystemInfo";
 import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
 import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
+import { DemoInvestmentBreakdown } from "@/components/demo/DemoInvestmentBreakdown";
 import { DemoScoreBoost } from "@/components/demo/DemoScoreBoost";
 import { DemoCustomerClose } from "@/components/demo/DemoCustomerClose";
 import { DemoTopConcerns } from "@/components/demo/DemoTopConcerns";
@@ -126,7 +127,8 @@ const ALL_STEPS: StepDef[] = [
   { key: "rooms",             label: "Rooms",           color: "#f43f5e" },   // Room-by-room
   // ── Justify ──
   { key: "comparison",        label: "Expenses",        color: "#ec4899" },   // Cost of Inaction
-  { key: "pricing",           label: "Investment",      color: "#10b981" },   // Investment
+  { key: "pricing",           label: "Investment",      color: "#10b981" },   // Investment Overview
+  { key: "investmentBreakdown", label: "Breakdown",    color: "#10b981" },   // Investment Details
   { key: "boost",             label: "Upgrade",         color: "#f59e0b" },   // RO upsell
   // ── Convince ──
   { key: "trust",             label: "Proof",           color: "#22c55e" },   // Trust proof
@@ -392,6 +394,7 @@ function DemoWizardInner() {
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
   const [concerns, setConcerns] = useState<ConcernData | null>(null);
   const [customerConcerns, setCustomerConcerns] = useState<CustomerConcernState | null>(null);
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   // transitionDone removed — transitions handled by DemoBackground
 
   // Sprint 3E: Coaching indicators
@@ -917,6 +920,15 @@ function DemoWizardInner() {
               onBack={goBack}
               onPricingChange={setPricingState}
               initialState={pricingState}
+              monthlyExpenses={monthlyExpenses}
+            />
+          )}
+          {stepKey === "investmentBreakdown" && (
+            <DemoInvestmentBreakdown
+              company={company}
+              pricingState={pricingState}
+              onPricingChange={setPricingState}
+              onNext={goNext}
             />
           )}
           {stepKey === "comparison" && (
@@ -924,6 +936,7 @@ function DemoWizardInner() {
               company={company}
               onNext={goNext}
               onBack={goBack}
+              onExpensesChange={setMonthlyExpenses}
             />
           )}
           {stepKey === "boost" && (
@@ -976,6 +989,15 @@ function DemoWizardInner() {
               companyColor={companyColor}
               demoTime={demoTimer}
               onEndDemo={exitDemo}
+              demoReportData={{
+                selectedConcerns: customerConcerns ? JSON.stringify(customerConcerns.selected) : undefined,
+                liveReadings: liveReadings ? JSON.stringify(liveReadings) : undefined,
+                verifiedScore: finalScore,
+                stepTimings: stepTimings.length ? JSON.stringify(stepTimings) : undefined,
+                monthlyExpenses: monthlyExpenses || undefined,
+                boostApplied: boostApplied || undefined,
+                pricingSnapshot: pricingState ? JSON.stringify(pricingState) : undefined,
+              }}
             />
           )}
         </DemoStepWrapper>

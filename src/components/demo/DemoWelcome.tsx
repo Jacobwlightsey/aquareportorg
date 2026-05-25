@@ -7,7 +7,7 @@ import { Check, Droplets, Home, MapPin, TrendingUp } from "lucide-react";
 import { playTapSound } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
 
-const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY || "";
+const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY || "";
 const FALLBACK_HOUSE =
   "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=600&fit=crop&q=80";
 

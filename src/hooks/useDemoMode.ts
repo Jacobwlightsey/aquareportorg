@@ -37,6 +37,7 @@ export const DEFAULT_MODE_STEPS: Record<DemoModeType, string[]> = {
     "transform",
     "comparison",
     "pricing",
+    "investmentBreakdown",
     "boost",
     "trust",
     "summary",

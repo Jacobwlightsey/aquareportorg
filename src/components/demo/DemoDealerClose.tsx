@@ -15,12 +15,23 @@ import { DemoQRCode } from "./DemoQRCode";
 import { DemoVoiceNote } from "./DemoVoiceNote";
 import { colors } from "@/lib/designTokens";
 
+interface DemoReportData {
+  selectedConcerns?: string;
+  liveReadings?: string;
+  verifiedScore?: number;
+  stepTimings?: string;
+  monthlyExpenses?: number;
+  boostApplied?: boolean;
+  pricingSnapshot?: string;
+}
+
 interface Props {
   report: any;
   score: number;
   companyColor: string;
   demoTime?: number;
   onEndDemo: () => void;
+  demoReportData?: DemoReportData;
 }
 
 const OUTCOMES = [
@@ -36,7 +47,7 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDemo }: Props) {
+export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDemo, demoReportData }: Props) {
   const [outcome, setOutcome] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -83,7 +94,13 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
     if (!outcome) { toast.error("Please select a demo outcome first"); return; }
     setSaving(true);
     try {
-      await saveDemoSession({ reportId: report._id, outcome, notes: notes.trim() || undefined });
+      await saveDemoSession({
+        reportId: report._id,
+        outcome,
+        notes: notes.trim() || undefined,
+        durationSeconds: demoTime || undefined,
+        ...demoReportData,
+      });
       setSaved(true);
       toast.success("Demo session saved!");
     } catch (err: any) {
