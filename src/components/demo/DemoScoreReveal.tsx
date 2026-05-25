@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Shield, Sparkles, TrendingDown, Zap } from "lucide-react";
+import { AlertTriangle, Award, Check, Shield, TrendingDown } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { playRevealSound, playProcessingSound, haptic } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -13,50 +13,40 @@ interface Props {
   skipScoreAnimation?: boolean;
 }
 
-/* ──── Sprint 1A: 5-tier score labels ──── */
+/* ──── Score tier labels (standardized across dealer + consumer platforms) ──── */
 export function tierInfo(score: number) {
-  if (score >= 85)
+  if (score >= 80)
     return {
-      tier: "Excellent",
-      color: "#10b981",
-      bg: "rgba(16,185,129,0.12)",
-      border: "rgba(16,185,129,0.3)",
-      icon: Sparkles,
-      desc: "Your water meets or exceeds all health guidelines. Outstanding quality.",
-      emoji: "✨",
-    };
-  if (score >= 70)
-    return {
-      tier: "Good",
-      color: "#3b82f6",
-      bg: "rgba(59,130,246,0.12)",
-      border: "rgba(59,130,246,0.3)",
-      icon: Shield,
-      desc: "Your water is mostly clean with a few areas worth monitoring.",
-      emoji: "👍",
-    };
-  if (score >= 50)
-    return {
-      tier: "Fair",
+      tier: "🏆 Gold Tier",
       color: "#f59e0b",
       bg: "rgba(245,158,11,0.12)",
       border: "rgba(245,158,11,0.3)",
+      icon: Award,
+      desc: "Your water meets or exceeds all health guidelines. Outstanding quality.",
+      emoji: "🏆",
+    };
+  if (score >= 60)
+    return {
+      tier: "🥈 Silver Tier",
+      color: "#94a3b8",
+      bg: "rgba(148,163,184,0.12)",
+      border: "rgba(148,163,184,0.3)",
+      icon: Shield,
+      desc: "Your water is mostly clean with a few areas worth monitoring.",
+      emoji: "🥈",
+    };
+  if (score >= 40)
+    return {
+      tier: "⚠️ Bronze Tier",
+      color: "#f97316",
+      bg: "rgba(249,115,22,0.12)",
+      border: "rgba(249,115,22,0.3)",
       icon: AlertTriangle,
       desc: "Your water has some contaminants above recommended health levels.",
       emoji: "⚠️",
     };
-  if (score >= 30)
-    return {
-      tier: "Concerning",
-      color: "#f97316",
-      bg: "rgba(249,115,22,0.12)",
-      border: "rgba(249,115,22,0.3)",
-      icon: Zap,
-      desc: "Your water has several contaminants that exceed guidelines. Action recommended.",
-      emoji: "⚡",
-    };
   return {
-    tier: "High Risk",
+    tier: "🚨 At Risk",
     color: "#ef4444",
     bg: "rgba(239,68,68,0.12)",
     border: "rgba(239,68,68,0.3)",
@@ -116,6 +106,12 @@ export function DemoScoreReveal({
   // Number scramble for phase 2
   const [scrambleNum, setScrambleNum] = useState(0);
   const scrambleRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scanBarStyles = useRef(
+    Array.from({ length: 12 }, () => ({
+      height: `${20 + Math.random() * 40}px`,
+      opacity: 0.3 + Math.random() * 0.5,
+    })),
+  ).current;
 
   // Count-up for stats (only when phase 3)
   const detected = useCountUp(contaminants.length, 1000, 300, phase === 3);
@@ -250,9 +246,9 @@ export function DemoScoreReveal({
                   key={i}
                   className="w-2 rounded-full bg-gradient-to-t from-cyan-500 to-blue-500"
                   style={{
-                    height: `${20 + Math.random() * 40}px`,
+                    height: scanBarStyles[i].height,
                     animation: `pulse 0.8s ease-in-out ${i * 0.1}s infinite alternate`,
-                    opacity: 0.3 + Math.random() * 0.5,
+                    opacity: scanBarStyles[i].opacity,
                   }}
                 />
               ))}

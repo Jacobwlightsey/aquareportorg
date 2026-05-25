@@ -1,7 +1,7 @@
 /* ──── Sprint 2C: Trust & Proof Section ──── */
 
 import { Award, Camera, ChevronLeft, ChevronRight, Home, ShieldCheck, Star } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { playTapSound, haptic } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
 
@@ -64,6 +64,19 @@ function BeforeAfterSlider({
 }) {
   const [position, setPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleMove = (clientX: number) => {
     if (!containerRef.current) return;
@@ -97,7 +110,7 @@ function BeforeAfterSlider({
             src={before}
             alt="Before"
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ minWidth: containerRef.current?.offsetWidth ?? "100%" }}
+            style={{ minWidth: containerWidth || "100%" }}
           />
         </div>
         {/* Divider */}
@@ -128,7 +141,8 @@ function BeforeAfterSlider({
 export function DemoTrustProof({ company, onNext, onBack }: Props) {
   const trustConfig = (company as any)?.demoConfig?.trustSection;
 
-  const reviews = trustConfig?.reviews?.length ? trustConfig.reviews : DEFAULT_REVIEWS;
+  const hasCustomReviews = !!trustConfig?.reviews?.length;
+  const reviews = hasCustomReviews ? trustConfig.reviews : DEFAULT_REVIEWS;
   const certs = trustConfig?.certifications?.length ? trustConfig.certifications : DEFAULT_CERTIFICATIONS;
   const installCount = trustConfig?.installCount ?? DEFAULT_INSTALL_COUNT;
   const installArea = trustConfig?.installArea ?? company?.city ?? DEFAULT_INSTALL_AREA;
@@ -178,9 +192,16 @@ export function DemoTrustProof({ company, onNext, onBack }: Props) {
       {/* Customer Reviews */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
-            Customer Reviews
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+              Customer Reviews
+            </p>
+            {!hasCustomReviews && (
+              <span className="text-[9px] bg-amber-400/10 text-amber-400/70 border border-amber-400/20 rounded-full px-2 py-0.5">
+                Examples — add yours in Settings
+              </span>
+            )}
+          </div>
           {reviews.length > 2 && (
             <div className="flex gap-1">
               <button

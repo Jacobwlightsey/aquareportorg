@@ -240,13 +240,15 @@ export function DemoConcernIntake({ onNext, onBack, initial }: Props) {
       {/* Continue */}
       <button
         onClick={handleContinue}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer"
+        disabled={concerns.length === 0}
+        className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer disabled:opacity-40 disabled:scale-100"
         style={{
           background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
-          boxShadow: "0 4px 24px rgba(99,102,241,0.3)",
+          boxShadow: concerns.length > 0 ? "0 4px 24px rgba(99,102,241,0.3)" : "none",
         }}
       >
-        Start Demo <ArrowRight className="size-5" />
+        {concerns.length === 0 ? "Select at least one concern" : "Start Demo"}{" "}
+        <ArrowRight className="size-5" />
       </button>
     </div>
   );

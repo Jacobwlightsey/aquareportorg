@@ -74,6 +74,14 @@ import { DemoConcernIntake, type ConcernData } from "@/components/demo/DemoConce
 import { DemoRoomImpact } from "@/components/demo/DemoRoomImpact";
 import { DemoTrustProof } from "@/components/demo/DemoTrustProof";
 
+// Sprint 3 components
+import { DemoTalkingPoints } from "@/components/demo/DemoTalkingPoints";
+import {
+  evaluateCoaching,
+  type CoachingState,
+  type StepTiming,
+} from "@/lib/demoCoaching";
+
 /* ──────────────── All possible steps (15-step order) ──────────────── */
 const ALL_STEPS: StepDef[] = [
   { key: "intake",         label: "Intake",        color: "#8b5cf6" },   // Sprint 2A
@@ -262,6 +270,7 @@ export function DemoWizardPage() {
   // Sync mute state to the global sound module
   useEffect(() => {
     setGlobalMute(soundMuteCtx.isMuted);
+    return () => setGlobalMute(false);
   }, [soundMuteCtx.isMuted]);
 
   return (
@@ -308,6 +317,13 @@ function DemoWizardInner() {
   const [boostApplied, setBoostApplied] = useState(false);
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
   const [concerns, setConcerns] = useState<ConcernData | null>(null);
+
+  // Sprint 3E: Coaching indicators
+  const [stepEnteredAt, setStepEnteredAt] = useState(Date.now());
+  const [stepTimings, setStepTimings] = useState<StepTiming[]>([]);
+  const [scoreRevealSkipped, setScoreRevealSkipped] = useState(false);
+  const [coaching, setCoaching] = useState<CoachingState>({ level: "green", tip: "" });
+  const [showCoachingTip, setShowCoachingTip] = useState(false);
 
   // skipScoreAnimation from company config (Sprint 1 flag #2)
   const skipScoreAnimation = !!(company as any)?.demoConfig?.skipScoreAnimation;
@@ -381,6 +397,47 @@ function DemoWizardInner() {
     navigate(`/customers/${reportId}`);
   }, [navigate, reportId]);
 
+  // Sprint 3E: Track step timing + update coaching
+  const stepKey = activeSteps[currentStep]?.key ?? "welcome";
+  const overLegalCount = useMemo(
+    () => contaminants.filter((c: any) => c.over_legal).length,
+    [contaminants],
+  );
+
+  useEffect(() => {
+    // Record timing for previous step
+    setStepTimings((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.stepKey !== stepKey) {
+        return [
+          ...prev.slice(0, -1),
+          { ...last, duration: (Date.now() - last.enteredAt) / 1000 },
+          { stepKey, enteredAt: Date.now(), duration: 0 },
+        ];
+      }
+      if (!last || last.stepKey !== stepKey) {
+        return [...prev, { stepKey, enteredAt: Date.now(), duration: 0 }];
+      }
+      return prev;
+    });
+    setStepEnteredAt(Date.now());
+  }, [stepKey]);
+
+  // Update coaching indicator every 5 seconds
+  useEffect(() => {
+    if (!demoStarted) return;
+    const interval = setInterval(() => {
+      setCoaching(
+        evaluateCoaching(stepKey, stepEnteredAt, stepTimings, overLegalCount, scoreRevealSkipped),
+      );
+    }, 5000);
+    // Also evaluate immediately on step change
+    setCoaching(
+      evaluateCoaching(stepKey, stepEnteredAt, stepTimings, overLegalCount, scoreRevealSkipped),
+    );
+    return () => clearInterval(interval);
+  }, [stepKey, stepEnteredAt, demoStarted, overLegalCount, scoreRevealSkipped]);
+
   // Swipe navigation
   const swipeProps = useSwipeNavigation(goNext, goBack);
 
@@ -441,7 +498,7 @@ function DemoWizardInner() {
   }
 
   const currentStepDef = activeSteps[currentStep];
-  const stepKey = currentStepDef?.key ?? "welcome";
+  // stepKey already declared above (Sprint 3E coaching)
   const isCustomerFacing = isCustomerHandOff && stepKey === "customerClose";
   const isCustomerView = viewMode === "customer";
 
@@ -484,17 +541,44 @@ function DemoWizardInner() {
             )}
           </div>
 
-          {/* Right: Timer */}
+          {/* Right: Timer + Coaching dot */}
           {showTimer ? (
-            <div
-              className={`flex items-center gap-1.5 rounded-lg bg-white/5 ${isPresentationMode ? "px-4 py-2" : "px-3 py-1.5"}`}
-            >
-              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span
-                className={`font-mono font-medium text-white/70 ${isPresentationMode ? "text-sm" : "text-xs"}`}
+            <div className="flex items-center gap-2">
+              {/* Sprint 3E: Coaching indicator */}
+              {demoStarted && (
+                <button
+                  onClick={() => setShowCoachingTip((s) => !s)}
+                  className="relative cursor-pointer"
+                  title={coaching.tip}
+                >
+                  <span
+                    className={`block size-2.5 rounded-full transition-colors ${
+                      coaching.level === "green"
+                        ? "bg-emerald-400"
+                        : coaching.level === "yellow"
+                          ? "bg-amber-400 animate-pulse"
+                          : "bg-red-400 animate-pulse"
+                    }`}
+                  />
+                  {showCoachingTip && (
+                    <div className="absolute top-7 right-0 z-50 w-56 rounded-xl border border-white/10 bg-[#0d1530]/95 backdrop-blur-xl p-3 shadow-xl">
+                      <p className="text-[10px] text-white/60 leading-relaxed">
+                        {coaching.tip}
+                      </p>
+                    </div>
+                  )}
+                </button>
+              )}
+              <div
+                className={`flex items-center gap-1.5 rounded-lg bg-white/5 ${isPresentationMode ? "px-4 py-2" : "px-3 py-1.5"}`}
               >
-                {formatTime(demoTimer)}
-              </span>
+                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span
+                  className={`font-mono font-medium text-white/70 ${isPresentationMode ? "text-sm" : "text-xs"}`}
+                >
+                  {formatTime(demoTimer)}
+                </span>
+              </div>
             </div>
           ) : (
             <div className="w-16" /> /* spacer */
@@ -659,6 +743,13 @@ function DemoWizardInner() {
         </DemoStepWrapper>
       </div>
 
+      {/* Sprint 3A: Rep Talking Points (only in rep view) */}
+      {viewMode === "rep" && demoStarted && (
+        <div className="fixed inset-x-0 bottom-16 z-30">
+          <DemoTalkingPoints currentStep={stepKey} company={company} />
+        </div>
+      )}
+
       {/* ─── Bottom nav for middle steps ─── */}
       {!isCustomerFacing &&
         currentStep > 0 &&
@@ -695,6 +786,9 @@ function DemoWizardInner() {
           report={report}
           contaminants={contaminants}
           currentStep={stepKey}
+          concerns={concerns}
+          score={score}
+          pricingState={pricingState}
         />
       )}
 

@@ -257,11 +257,17 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
           Follow-Up
         </p>
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer">
+          <button
+            onClick={() => toast.info("Coming soon — follow-up scheduling will be available in a future update.")}
+            className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer"
+          >
             <Calendar className="size-4 text-blue-400 shrink-0" />
             Schedule Follow-Up
           </button>
-          <button className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer">
+          <button
+            onClick={() => toast.info("Coming soon — proposal sending will be available in a future update.")}
+            className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer"
+          >
             <Send className="size-4 text-violet-400 shrink-0" />
             Send Proposal
           </button>
