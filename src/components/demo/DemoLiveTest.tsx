@@ -273,7 +273,7 @@ export function DemoLiveTest({ report, contaminants, liveReadings, onUpdateReadi
         >
           {saving ? <><Loader2 className="size-4 animate-spin" />Saving & syncing...</>
             : saved ? <><Check className="size-4" />Saved & synced to myaquareport.com</>
-            : <><Droplets className="size-4" />Save & Sync to Consumer</>}
+            : <><Droplets className="size-4" />Save & Sync to Homeowner</>}
         </button>
       )}
     </div>

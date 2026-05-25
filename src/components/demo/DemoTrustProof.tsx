@@ -13,7 +13,6 @@ interface Props {
   company: any;
   report?: any;
   onNext: () => void;
-  onBack: () => void;
 }
 
 const DEFAULT_REVIEWS = [
@@ -42,7 +41,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function DemoTrustProof({ company, report, onNext, onBack }: Props) {
+export function DemoTrustProof({ company, report, onNext }: Props) {
   const trustConfig = (company as any)?.demoConfig?.trustSection;
   const hasCustomReviews = !!trustConfig?.reviews?.length;
   const reviews = hasCustomReviews ? trustConfig.reviews : DEFAULT_REVIEWS;

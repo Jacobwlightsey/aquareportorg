@@ -29,7 +29,7 @@ export function DemoCustomerStep({ report, onNext }: Props) {
           </div>
           <div>
             <p className="font-bold">{report.customerName || "Homeowner"}</p>
-            <p className="text-xs text-white/40">Customer</p>
+            <p className="text-xs text-white/40">Homeowner</p>
           </div>
         </div>
 

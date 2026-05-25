@@ -5,7 +5,7 @@
    ──── */
 
 import { AlertTriangle, Check, ChevronDown, ChevronUp, Minus, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { playTapSound, playToggleSound } from "@/lib/demoSounds";
 import { useViewMode } from "@/hooks/useViewMode";
 import { colors } from "@/lib/designTokens";
@@ -26,6 +26,7 @@ interface Props {
   initialState?: PricingState | null;
   monthlyExpenses?: number;
   concerns?: { householdSize?: number; bathrooms?: number; hasKids?: boolean; hasPets?: boolean; currentSolution?: string } | null;
+  costBreakdown?: Record<string, number> | null;
 }
 
 const PLACEHOLDER_PROGRAM_PRICE = 12995;
@@ -72,7 +73,7 @@ function useAnimatedNum(target: number, duration = 600) {
   return val;
 }
 
-export function DemoPricing({ company, onNext, onBack, onPricingChange, initialState, monthlyExpenses = 0, concerns }: Props) {
+export function DemoPricing({ company, onNext, onBack, onPricingChange, initialState, monthlyExpenses = 0, concerns, costBreakdown }: Props) {
   const cfg = company?.demoConfig;
   const savedProgramPrice = cfg?.programPrice || PLACEHOLDER_PROGRAM_PRICE;
   const revealPrice = cfg?.revealPrice || PLACEHOLDER_REVEAL_PRICE;
@@ -82,9 +83,40 @@ export function DemoPricing({ company, onNext, onBack, onPricingChange, initialS
 
   const isUsingPlaceholders = useMemo(() => !cfg?.programPrice && !cfg?.revealPrice, [cfg]);
 
-  // Expense deduction state
-  const [deducted, setDeducted] = useState<Set<string>>(new Set());
+  // Auto-populate deductions from cost breakdown entered on the Expenses step
+  // Map CostComparison IDs → Pricing EXPENSE_ITEMS IDs
+  const COST_TO_EXPENSE: Record<string, string> = {
+    bottled_water: "bottled_water",
+    appliance_repairs: "appliance_wear",
+    plumbing: "plumbing",
+    cleaning: "cleaning",
+    energy: "water_heater",
+  };
+
+  const autoDeducted = useMemo(() => {
+    if (!costBreakdown) return new Set<string>();
+    const s = new Set<string>();
+    for (const [costId, val] of Object.entries(costBreakdown)) {
+      if (val > 0 && COST_TO_EXPENSE[costId]) {
+        s.add(COST_TO_EXPENSE[costId]);
+      }
+    }
+    return s;
+  }, [costBreakdown]);
+
+  // Expense deduction state — seed from auto-populated on first render
+  const [deducted, setDeducted] = useState<Set<string>>(autoDeducted);
   const [showExpenses, setShowExpenses] = useState(false);
+
+  // Re-seed when costBreakdown first arrives (navigating forward from Expenses)
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (autoDeducted.size > 0 && !seededRef.current) {
+      setDeducted(autoDeducted);
+      setShowExpenses(true);
+      seededRef.current = true;
+    }
+  }, [autoDeducted]);
 
   const householdSize = concerns?.householdSize ?? 2;
 

@@ -59,7 +59,7 @@ import { DemoScoreImprovement } from "@/components/demo/DemoScoreImprovement";
 import { DemoBeforeAfter } from "@/components/demo/DemoBeforeAfter";
 import { DemoSystemInfo } from "@/components/demo/DemoSystemInfo";
 import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
-import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
+import { DemoCostComparison, type CostBreakdown } from "@/components/demo/DemoCostComparison";
 import { DemoInvestmentBreakdown } from "@/components/demo/DemoInvestmentBreakdown";
 import { DemoScoreBoost } from "@/components/demo/DemoScoreBoost";
 import { DemoCustomerClose } from "@/components/demo/DemoCustomerClose";
@@ -149,46 +149,6 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-/* ──────────────── Demo Mode Selector (shown on Welcome) ──────────────── */
-function DemoModeSelector({
-  companyDemoModes,
-}: {
-  companyDemoModes?: Record<string, string[]>;
-}) {
-  const { demoMode, setDemoMode } = useDemoMode();
-
-  const modes: DemoModeType[] = ["quick", "standard", "full"];
-
-  return (
-    <div className="flex gap-2 w-full max-w-sm mx-auto">
-      {modes.map((mode) => {
-        const isActive = demoMode === mode;
-        const info = MODE_LABELS[mode];
-        return (
-          <button
-            key={mode}
-            onClick={() => {
-              playTapSound();
-              setDemoMode(mode);
-            }}
-            className="flex-1 rounded-xl px-3 py-2.5 text-center transition-all"
-            style={{
-              background: isActive ? "rgba(111,211,255,0.08)" : "rgba(255,255,255,0.02)",
-              border: isActive ? "1px solid rgba(111,211,255,0.3)" : "1px solid rgba(255,255,255,0.06)",
-              color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
-            }}
-          >
-            <p className={`text-sm font-bold ${isActive ? "text-white" : ""}`}>
-              {info.label}
-            </p>
-            <p className="text-[10px] text-white/40 mt-0.5">{info.time}</p>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 /* ──────────────── View Mode Toggle Button ──────────────── */
 function ViewModeToggle() {
   const { viewMode, toggleViewMode } = useViewMode();
@@ -213,31 +173,7 @@ function ViewModeToggle() {
   );
 }
 
-/* ──────────────── Presentation Mode Toggle Button ──────────────── */
-function PresentationToggle() {
-  const { isPresentationMode, toggle } = usePresentationMode();
-
-  return (
-    <button
-      onClick={() => {
-        playTapSound();
-        toggle();
-      }}
-      className={`flex items-center justify-center rounded-lg p-1.5 transition-all ${
-        isPresentationMode
-          ? "bg-amber-400/10 text-amber-300 border border-amber-400/30"
-          : "bg-white/5 text-white/70 active:bg-white/10"
-      }`}
-      title={isPresentationMode ? "Exit Presentation Mode" : "Presentation Mode"}
-    >
-      {isPresentationMode ? (
-        <MonitorOff className="size-3.5" />
-      ) : (
-        <Monitor className="size-3.5" />
-      )}
-    </button>
-  );
-}
+/* ──────────────── (DemoModeSelector + PresentationToggle removed — dead code) ──────────────── */}
 
 /* ──────────────── Mute Toggle Button (Sprint 1 addition) ──────────────── */
 function MuteToggle() {
@@ -356,6 +292,7 @@ function DemoWizardInner() {
   const [showAssistant, setShowAssistant] = useState(false);
   const [demoTimer, setDemoTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [demoStarted, setDemoStarted] = useState(false);
   const [coachingOpen, setCoachingOpen] = useState(false);
 
@@ -367,6 +304,7 @@ function DemoWizardInner() {
   const [concerns, setConcerns] = useState<ConcernData | null>(null);
   const [customerConcerns, setCustomerConcerns] = useState<CustomerConcernState | null>(null);
   const [monthlyExpenses, setMonthlyExpenses] = useState(0);
+  const [costBreakdown, setCostBreakdown] = useState<CostBreakdown | null>(null);
   // transitionDone removed — transitions handled by DemoBackground
 
   // Sprint 3E: Coaching indicators
@@ -517,6 +455,11 @@ function DemoWizardInner() {
     if (reportId) clearDemoState(reportId); // Sprint 4C: clear saved state on exit
     navigate(`/customers/${reportId}`);
   }, [navigate, reportId]);
+
+  // Scroll content to top on step change
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [currentStep]);
 
   // Sprint 3E: Track step timing + update coaching
   const stepKey = activeSteps[currentStep]?.key ?? "welcome";
@@ -785,6 +728,7 @@ function DemoWizardInner() {
 
       {/* ─── Step Content (Sprint 1G: wrapped in error boundary) ─── */}
       <div
+        ref={contentRef}
         className={`relative z-10 flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
       >
         <DemoStepWrapper stepName={stepKey}>
@@ -921,6 +865,7 @@ function DemoWizardInner() {
               initialState={pricingState}
               monthlyExpenses={monthlyExpenses}
               concerns={concerns}
+              costBreakdown={costBreakdown}
             />
           )}
           {stepKey === "investmentBreakdown" && (
@@ -937,6 +882,7 @@ function DemoWizardInner() {
               onNext={goNext}
               onBack={goBack}
               onExpensesChange={setMonthlyExpenses}
+              onCostBreakdownChange={setCostBreakdown}
             />
           )}
           {stepKey === "boost" && (

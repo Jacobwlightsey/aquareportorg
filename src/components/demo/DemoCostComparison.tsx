@@ -9,11 +9,16 @@ import { playTapSound } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
 import { colors } from "@/lib/designTokens";
 
+export interface CostBreakdown {
+  [id: string]: number;
+}
+
 interface Props {
   company: any;
   onNext: () => void;
   onBack: () => void;
   onExpensesChange?: (monthly: number) => void;
+  onCostBreakdownChange?: (breakdown: CostBreakdown) => void;
 }
 
 interface CostItem {
@@ -32,7 +37,7 @@ const DEFAULT_COSTS: CostItem[] = [
   { id: "energy", label: "Energy Waste", placeholder: 15, color: colors.primary, description: "Scale reduces heater efficiency" },
 ];
 
-export function DemoCostComparison({ company, onNext, onBack, onExpensesChange }: Props) {
+export function DemoCostComparison({ company, onNext, onBack, onExpensesChange, onCostBreakdownChange }: Props) {
   const [showYearly, setShowYearly] = useState(false);
   const costs = useMemo(() => {
     const cc = (company as any)?.demoConfig?.costComparison;
@@ -56,6 +61,7 @@ export function DemoCostComparison({ company, onNext, onBack, onExpensesChange }
 
   // Report expenses up to parent
   useEffect(() => { onExpensesChange?.(monthlyTotal); }, [monthlyTotal, onExpensesChange]);
+  useEffect(() => { onCostBreakdownChange?.(values); }, [values, onCostBreakdownChange]);
   const yearlyTotal = monthlyTotal * 12;
   const displayTotal = showYearly ? yearlyTotal : monthlyTotal;
 

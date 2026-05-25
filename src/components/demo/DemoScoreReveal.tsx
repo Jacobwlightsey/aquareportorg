@@ -181,7 +181,7 @@ export function DemoScoreReveal({
     <div className="mx-auto w-full max-w-5xl px-8 pt-8" onClick={skipToReveal}>
       {/* Pre-start */}
       {phase === null && (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
+        <div className="flex flex-col items-center justify-center text-center space-y-6">
           <div className="space-y-3">
             <Sparkles className="mx-auto size-8 animate-pulse" style={{ color: colors.warning }} />
             <h2 className="text-[32px] font-bold tracking-tight" style={{ color: colors.textPrimary }}>
@@ -237,7 +237,7 @@ export function DemoScoreReveal({
 
       {/* Phases 0-2: processing */}
       {phase !== null && phase < 3 && (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-10">
+        <div className="flex flex-col items-center justify-center min-h-[40vh] text-center space-y-10">
           <div className="text-5xl animate-bounce">{PHASE_DATA[phase].icon}</div>
           <div>
             <p className="text-[20px] font-semibold animate-pulse" style={{ color: colors.textPrimary }}>

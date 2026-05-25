@@ -80,7 +80,7 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
         <div className="rounded-2xl p-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="size-4" style={{ color: colors.primary }} />
-            <span className="text-[11px] font-medium tracking-wide uppercase" style={{ color: colors.textMuted }}>Customer</span>
+            <span className="text-[11px] font-medium tracking-wide uppercase" style={{ color: colors.textMuted }}>Homeowner</span>
           </div>
           <p className="font-semibold text-[15px] truncate" style={{ color: colors.textPrimary }}>
             {report.customerName || "Homeowner"}

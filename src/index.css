@@ -245,3 +245,32 @@ input:focus, textarea:focus, select:focus,
   color: #22d3ee;
   border-color: rgba(6, 182, 212, 0.3);
 }
+
+/* ── Compact sidebar in landscape mode (tablet) ── */
+@media (orientation: landscape) and (max-height: 700px) {
+  [data-sidebar="group"] {
+    padding: 0.25rem 0.5rem;
+  }
+  [data-sidebar="group-label"] {
+    height: 1.5rem;
+    font-size: 9px;
+  }
+  [data-sidebar="menu"] {
+    gap: 0;
+  }
+  [data-sidebar="menu-button"][data-size="default"] {
+    height: 1.75rem;
+    font-size: 12px;
+    padding: 0.25rem 0.5rem;
+  }
+  [data-sidebar="menu-button"] svg {
+    width: 14px;
+    height: 14px;
+  }
+  [data-sidebar="header"] {
+    padding: 0.25rem 0.5rem;
+  }
+  [data-sidebar="footer"] {
+    padding: 0.25rem 0.5rem;
+  }
+}
