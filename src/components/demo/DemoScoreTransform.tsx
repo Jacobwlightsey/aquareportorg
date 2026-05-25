@@ -76,8 +76,8 @@ export function DemoScoreTransform({ score, report, company, contaminants, liveR
         </p>
       </div>
 
-      {/* 3 gauges side by side — staggered animation */}
-      <div className="flex items-end justify-center gap-6 lg:gap-10 mb-12">
+      {/* 3 gauges side by side — staggered animation, responsive spacing */}
+      <div className="flex items-end justify-center gap-4 sm:gap-6 lg:gap-10 mb-12 flex-wrap">
         {journeySteps.map((step, i) => (
           <div key={step.label} className="flex flex-col items-center">
             <ScoreGauge

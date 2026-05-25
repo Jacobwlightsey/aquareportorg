@@ -1,10 +1,10 @@
-/* ──── Impact / Family Safety — Mockup-faithful sidebar + severity badges ────
-   Left sidebar tabs (vertical). Right content: contaminant cards with severity.
-   Active tab = filled primary background with white text.
-   Contaminant-driven from actual report data.
+/* ──── Impact / Personalized — Sidebar tabs + info cards per concern ────
+   Left sidebar tabs (vertical). Right content: personalized impact cards
+   (not just chemical lists). Each tab shows what this concern means
+   for the customer's daily life, with relevant contaminant data.
    ──── */
 
-import { Droplets, Home, Shield, ShieldAlert, Sparkles } from "lucide-react";
+import { Droplets, Home, Shield, ShieldAlert, Sparkles, Heart, Banknote, Layers } from "lucide-react";
 import { useMemo, useState } from "react";
 import { playTapSound } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
@@ -36,9 +36,9 @@ const CATEGORY_TABS = [
   { key: "skin_and_hair", label: "Skin & Hair", icon: Sparkles },
   { key: "appliances_plumbing", label: "Appliances", icon: Home },
   { key: "taste_or_smell", label: "Taste & Odor", icon: Droplets },
-  { key: "bottled_water_costs", label: "Bottled Water", icon: Droplets },
-  { key: "stains_buildup", label: "Hard Water", icon: Home },
-  { key: "drinking_water", label: "Peace of Mind", icon: Shield },
+  { key: "bottled_water_costs", label: "Bottled Water", icon: Banknote },
+  { key: "stains_buildup", label: "Hard Water", icon: Layers },
+  { key: "peace_of_mind", label: "Peace of Mind", icon: Shield },
 ];
 
 /* ── Map contaminant names to categories ── */
@@ -49,32 +49,80 @@ const TAB_CONTAMINANT_MAPPING: Record<string, string[]> = {
   taste_or_smell: ["chlorine", "chloramine", "tds", "sulfate", "iron", "manganese"],
   bottled_water_costs: ["tds", "chlorine", "lead", "pfas", "trihalomethane", "haloacetic"],
   stains_buildup: ["hardness", "calcium", "magnesium", "iron"],
-  drinking_water: [], // Show ALL contaminants above health guidelines
+  peace_of_mind: [], // Show ALL contaminants above health guidelines
 };
 
-/* ── Health impact descriptions ── */
-const CONTAMINANT_IMPACTS: Record<string, string> = {
-  lead: "Linked to developmental issues in children",
-  nitrate: "Associated with blue baby syndrome",
-  nitrite: "Dangerous for infants and pregnant women",
-  arsenic: "Linked to cancer and cardiovascular disease",
-  chromium: "Known carcinogen at elevated levels",
-  radium: "Radioactive element linked to bone cancer",
-  uranium: "Toxic to kidneys at elevated levels",
-  pfas: "Linked to immune and hormone disruption",
-  pfoa: "Linked to cancer and thyroid disease",
-  pfos: "Persistent chemical linked to liver damage",
-  chlorine: "Can irritate skin, eyes, and respiratory system",
-  chloramine: "Causes dry skin and damages rubber seals",
-  hardness: "Causes scale buildup and skin irritation",
-  calcium: "Contributes to hard water scale",
-  magnesium: "Contributes to hard water",
-  iron: "Causes staining and metallic taste",
-  manganese: "Causes black staining and bitter taste",
-  tds: "High dissolved solids affect taste",
-  sulfate: "Causes bitter taste and digestive issues",
-  trihalomethane: "Disinfection byproduct linked to cancer",
-  haloacetic: "Disinfection byproduct with health risks",
+/* ── Personalized impact info per tab ── */
+interface ImpactInfo {
+  title: string;
+  subtitle: string;
+  cards: { emoji: string; heading: string; body: string }[];
+}
+
+const TAB_INFO: Record<string, ImpactInfo> = {
+  family_health: {
+    title: "Family Safety",
+    subtitle: "How your water affects the people you love.",
+    cards: [
+      { emoji: "👶", heading: "Children & Development", body: "Kids absorb contaminants faster than adults. Lead, nitrates, and PFAS are linked to developmental issues, learning delays, and immune system disruption in children." },
+      { emoji: "🤰", heading: "Pregnancy & Fertility", body: "Many contaminants found in your water — including nitrates, arsenic, and disinfection byproducts — are associated with complications during pregnancy." },
+      { emoji: "🧬", heading: "Long-Term Exposure", body: "Contaminants accumulate over time. Even low levels of heavy metals and PFAS can contribute to chronic health conditions with daily exposure." },
+    ],
+  },
+  skin_and_hair: {
+    title: "Skin & Hair",
+    subtitle: "What every shower is doing to you.",
+    cards: [
+      { emoji: "🚿", heading: "Chlorine in Your Shower", body: "You absorb more chlorine through a 10-minute hot shower than drinking 8 glasses of water. Steam opens pores and allows chemicals directly into your bloodstream." },
+      { emoji: "💇", heading: "Dry Hair & Breakage", body: "Hard water minerals coat hair strands, making them brittle, dull, and resistant to color treatments. Chlorine strips natural oils." },
+      { emoji: "🧴", heading: "Skin Irritation", body: "Eczema, dry skin, and unexplained rashes are commonly linked to chlorine and hard water. Children and sensitive skin are especially affected." },
+    ],
+  },
+  appliances_plumbing: {
+    title: "Home & Appliances",
+    subtitle: "The hidden damage hard water does to your home.",
+    cards: [
+      { emoji: "🔧", heading: "Plumbing Scale", body: "Hard water deposits build up inside pipes, reducing flow and water pressure over time. Eventually this leads to expensive re-piping." },
+      { emoji: "🫧", heading: "Water Heater Efficiency", body: "Just ¼ inch of scale on heating elements reduces efficiency by 25%. Your water heater works harder and costs more every month." },
+      { emoji: "🧺", heading: "Appliance Lifespan", body: "Dishwashers, washing machines, and coffee makers last 30-50% longer with treated water. Scale is the #1 cause of appliance failure." },
+    ],
+  },
+  taste_or_smell: {
+    title: "Taste & Quality",
+    subtitle: "What you're actually tasting and smelling.",
+    cards: [
+      { emoji: "🥤", heading: "Chlorine Taste", body: "That pool-water taste comes from chlorine and chloramine disinfectants. It affects drinking water, coffee, tea, ice cubes, and cooking." },
+      { emoji: "🍳", heading: "Cooking Quality", body: "Contaminants in your water affect the taste of everything you cook — pasta, soups, rice, and even baked goods." },
+      { emoji: "🧊", heading: "Ice & Beverages", body: "Cloudy ice cubes, off-tasting drinks, and mineral deposits in your coffee maker are all signs of water quality issues." },
+    ],
+  },
+  bottled_water_costs: {
+    title: "Bottled Water",
+    subtitle: "What you're already spending to avoid your tap.",
+    cards: [
+      { emoji: "💰", heading: "Monthly Costs", body: "The average family spends $50-80/month on bottled water. That's $600-960/year — often more than a whole-home filtration system costs monthly." },
+      { emoji: "🌍", heading: "Environmental Impact", body: "A family of four uses ~1,000 plastic bottles per year. 80% end up in landfills. Each takes 450 years to decompose." },
+      { emoji: "⚠️", heading: "Not Actually Better", body: "25% of bottled water is just repackaged tap water. FDA standards for bottled water are actually less strict than EPA tap water standards." },
+    ],
+  },
+  stains_buildup: {
+    title: "Hard Water",
+    subtitle: "The silent damage happening right now.",
+    cards: [
+      { emoji: "🪞", heading: "Fixtures & Glass", body: "White crusty deposits on faucets, showerheads, and glass doors are calcium and magnesium scale. They get worse over time and are increasingly hard to remove." },
+      { emoji: "👕", heading: "Laundry", body: "Hard water makes clothes fade faster, feel stiff, and look dingy. You end up using 50% more detergent and still get worse results." },
+      { emoji: "🚰", heading: "Pipe Buildup", body: "Scale narrows pipes from the inside. A home with 15+ gpg hardness can lose 75% of pipe diameter within 10 years." },
+    ],
+  },
+  peace_of_mind: {
+    title: "Peace of Mind",
+    subtitle: "Every contaminant above safe levels in your water.",
+    cards: [
+      { emoji: "🛡️", heading: "Know What's In Your Water", body: "Most families never test their water. You now have real data — and the ability to act on it. That's already a step most people never take." },
+      { emoji: "📊", heading: "Continuous Protection", body: "A whole-home system doesn't just filter once — it protects every drop from every faucet, shower, and appliance 24/7." },
+      { emoji: "✅", heading: "Nothing to Worry About", body: "Once treated, you won't need to think about water quality again. No more bottles, no more guessing, no more concern." },
+    ],
+  },
 };
 
 function getContaminantName(c: any): string {
@@ -84,7 +132,6 @@ function getContaminantName(c: any): string {
 function matchesCategory(c: any, categoryKey: string): boolean {
   const names = TAB_CONTAMINANT_MAPPING[categoryKey];
   if (!names || names.length === 0) {
-    // Peace of Mind: show all contaminants above health guidelines
     return c.over_legal || c.over_health;
   }
   const cName = getContaminantName(c).toLowerCase();
@@ -98,22 +145,11 @@ function bestStartingTab(selected?: CustomerConcernKey[]): number {
   return idx >= 0 ? idx : 0;
 }
 
-/* ── Section titles per tab ── */
-const SECTION_TITLES: Record<string, { title: string; subtitle: string }> = {
-  family_health: { title: "Family Safety", subtitle: "What's in your water matters." },
-  skin_and_hair: { title: "Skin & Hair", subtitle: "What every shower does to you." },
-  appliances_plumbing: { title: "Home & Appliances", subtitle: "What your water costs your home." },
-  taste_or_smell: { title: "Taste & Quality", subtitle: "What you're actually drinking." },
-  bottled_water_costs: { title: "Bottled Water", subtitle: "What you're already spending." },
-  stains_buildup: { title: "Hard Water", subtitle: "The silent damage in your pipes." },
-  drinking_water: { title: "Peace of Mind", subtitle: "Every contaminant above safe levels." },
-};
-
 export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns }: Props) {
   const startTab = useMemo(() => bestStartingTab(customerConcerns?.selected), [customerConcerns]);
   const [activeIdx, setActiveIdx] = useState(startTab);
   const tab = CATEGORY_TABS[activeIdx];
-  const section = SECTION_TITLES[tab.key] || { title: "Impact", subtitle: "How this affects your daily life." };
+  const info = TAB_INFO[tab.key] || { title: "Impact", subtitle: "How this affects your daily life.", cards: [] };
 
   /* Filter contaminants for this category, sorted by severity */
   const filtered = useMemo(() => {
@@ -122,7 +158,7 @@ export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns
       const aSev = a.over_legal ? 3 : a.over_health ? 2 : 1;
       const bSev = b.over_legal ? 3 : b.over_health ? 2 : 1;
       return bSev - aSev;
-    }).slice(0, 8);
+    }).slice(0, 6);
   }, [contaminants, tab.key]);
 
   return (
@@ -154,58 +190,70 @@ export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns
         {/* Right content */}
         <div className="flex-1 min-w-0">
           {/* Title */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight" style={{ color: colors.textPrimary }}>
-              {section.title}
+              {info.title}
             </h2>
             <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
-              {section.subtitle}
+              {info.subtitle}
             </p>
           </div>
 
-          {/* Contaminant list with severity badges */}
-          <div className="space-y-1 mb-8">
-            {filtered.length > 0 ? filtered.map((c, i) => {
-              const name = getContaminantName(c);
-              const sev = getSeverity(c);
-              const impact = CONTAMINANT_IMPACTS[name.toLowerCase()] || c.health_effects || "Found in your water supply";
-              return (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-3.5"
-                  style={{ borderBottom: `1px solid ${colors.border}` }}
-                >
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <span className="text-base mt-0.5">⚠️</span>
-                    <div>
-                      <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>
-                        {name}
-                      </p>
-                      <p className="text-[13px] mt-0.5" style={{ color: colors.textMuted }}>
-                        {impact}
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className="shrink-0 ml-4 rounded-lg px-3 py-1 text-[11px] font-bold tracking-wider uppercase"
-                    style={{ background: sev.bg, color: sev.color }}
-                  >
-                    {sev.label}
-                  </span>
-                </div>
-              );
-            }) : (
-              <div className="py-8 text-center">
-                <p className="text-[14px]" style={{ color: colors.textMuted }}>
-                  No specific contaminants detected in this category.
+          {/* Personalized impact info cards */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {info.cards.map((card, i) => (
+              <div
+                key={i}
+                className="rounded-2xl p-4 space-y-2"
+                style={{ background: colors.surface, border: `1px solid ${colors.border}` }}
+              >
+                <span className="text-2xl">{card.emoji}</span>
+                <h4 className="text-[14px] font-semibold" style={{ color: colors.textPrimary }}>
+                  {card.heading}
+                </h4>
+                <p className="text-[12px] leading-relaxed" style={{ color: colors.textMuted }}>
+                  {card.body}
                 </p>
               </div>
-            )}
+            ))}
           </div>
 
+          {/* Related contaminants found */}
+          {filtered.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: colors.textFaint }}>
+                FOUND IN YOUR WATER
+              </p>
+              {filtered.map((c, i) => {
+                const name = getContaminantName(c);
+                const sev = getSeverity(c);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-2.5"
+                    style={{ borderBottom: `1px solid ${colors.border}` }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-1.5 rounded-full" style={{ background: sev.color }} />
+                      <span className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
+                        {name}
+                      </span>
+                    </div>
+                    <span
+                      className="shrink-0 ml-4 rounded-lg px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase"
+                      style={{ background: sev.bg, color: sev.color }}
+                    >
+                      {sev.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Footer */}
-          <p className="text-[13px]" style={{ color: colors.textFaint }}>
-            These results are from your lab report and local water data.
+          <p className="text-[13px] mt-4" style={{ color: colors.textFaint }}>
+            Based on your water data and selected concerns.
           </p>
         </div>
       </div>

@@ -3,7 +3,7 @@
    Fix #8: empty state fallback.
    ──── */
 
-import { AlertTriangle, ChevronDown, Eye, Shield, Skull } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, Eye, Shield, Skull } from "lucide-react";
 import { useMemo, useState } from "react";
 import { contaminantName } from "@/lib/supabase";
 import { playTapSound } from "@/lib/demoSounds";
@@ -144,6 +144,7 @@ function matchConcerns(contaminants: any[]): MatchedConcern[] {
 
 export function DemoTopConcerns({ contaminants, onViewFull, showFullInline = false }: Props) {
   const [showFull, setShowFull] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const concerns = useMemo(() => matchConcerns(contaminants), [contaminants]);
 
   // Fix #8: empty state
@@ -172,14 +173,15 @@ export function DemoTopConcerns({ contaminants, onViewFull, showFullInline = fal
         </p>
       </div>
 
-      {/* Top 3 cards */}
+      {/* Top 3 cards — expandable */}
       <div className="space-y-3">
         {concerns.map((concern, i) => {
           const Icon = concern.def.icon;
+          const isExpanded = expandedId === concern.def.id;
           return (
             <div
               key={concern.def.id}
-              className="rounded-2xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-500"
+              className="rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500"
               style={{
                 background: `${concern.def.color}08`,
                 border: `1px solid ${concern.def.color}20`,
@@ -187,32 +189,58 @@ export function DemoTopConcerns({ contaminants, onViewFull, showFullInline = fal
                 animationFillMode: "backwards",
               }}
             >
-              <div className="flex items-start gap-3">
-                <div
-                  className="size-9 shrink-0 rounded-xl flex items-center justify-center mt-0.5"
-                  style={{ background: `${concern.def.color}15` }}
-                >
-                  <Icon className="size-4" style={{ color: concern.def.color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-[15px] font-semibold" style={{ color: concern.def.color }}>
-                      {concern.def.title}
-                    </h3>
-                    {concern.count > 1 && (
-                      <span
-                        className="text-[10px] font-bold rounded-md px-1.5 py-0.5"
-                        style={{ background: `${concern.def.color}15`, color: concern.def.color }}
-                      >
-                        {concern.count} found
-                      </span>
-                    )}
+              <button
+                onClick={() => { playTapSound(); setExpandedId(isExpanded ? null : concern.def.id); }}
+                className="w-full p-4 text-left cursor-pointer"
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="size-9 shrink-0 rounded-xl flex items-center justify-center mt-0.5"
+                    style={{ background: `${concern.def.color}15` }}
+                  >
+                    <Icon className="size-4" style={{ color: concern.def.color }} />
                   </div>
-                  <p className="text-[13px] leading-relaxed mt-1" style={{ color: colors.textMuted }}>
-                    {concern.def.description}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[15px] font-semibold" style={{ color: concern.def.color }}>
+                        {concern.def.title}
+                      </h3>
+                      {concern.count > 1 && (
+                        <span
+                          className="text-[10px] font-bold rounded-md px-1.5 py-0.5"
+                          style={{ background: `${concern.def.color}15`, color: concern.def.color }}
+                        >
+                          {concern.count} found
+                        </span>
+                      )}
+                      <span className="ml-auto shrink-0">
+                        {isExpanded
+                          ? <ChevronUp className="size-4" style={{ color: concern.def.color }} />
+                          : <ChevronDown className="size-4" style={{ color: colors.textFaint }} />
+                        }
+                      </span>
+                    </div>
+                    <p className="text-[13px] leading-relaxed mt-1" style={{ color: colors.textMuted }}>
+                      {concern.def.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </button>
+
+              {/* Expanded: show matched contaminants */}
+              {isExpanded && (
+                <div className="px-4 pb-4 space-y-1.5" style={{ borderTop: `1px solid ${concern.def.color}15` }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest pt-3 pb-1" style={{ color: colors.textFaint }}>
+                    DETECTED IN YOUR WATER
+                  </p>
+                  {concern.contaminants.map((name) => (
+                    <div key={name} className="flex items-center gap-2 py-1">
+                      <div className="size-1.5 rounded-full" style={{ background: concern.def.color }} />
+                      <span className="text-[13px] font-medium" style={{ color: colors.textSecondary }}>{name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

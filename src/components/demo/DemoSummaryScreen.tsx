@@ -3,7 +3,7 @@
    Right: Score Journey card (3 mini gauges) + Top Priorities pills + "Thank you!".
    ──── */
 
-import { Download } from "lucide-react";
+// Download import removed — button not wired yet
 import { ScoreGauge } from "./ScoreGauge";
 import { colors, scoreColor } from "@/lib/designTokens";
 import type { CustomerConcernState } from "./DemoCustomerConcerns";
@@ -88,14 +88,7 @@ export function DemoSummaryScreen({
             ))}
           </div>
 
-          {/* Download button — outline style */}
-          <button
-            className="flex items-center gap-2 rounded-2xl px-6 py-3 text-[14px] font-medium cursor-pointer active:scale-[0.97] transition-transform"
-            style={{ border: `1px solid ${colors.primary}30`, color: colors.primary }}
-          >
-            <Download className="size-4" />
-            Download Your Plan
-          </button>
+          {/* Download button removed — no backend yet */}
         </div>
 
         {/* Right column */}

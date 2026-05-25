@@ -11,6 +11,30 @@ import { ScoreGauge } from "./ScoreGauge";
 import { DemoScoreExplainer } from "./DemoScoreExplainer";
 import { colors } from "@/lib/designTokens";
 
+/** Per-reading severity color for verified score display */
+function readingSeverityColor(key: string, value: number): string {
+  switch (key) {
+    case "chlorine":
+      if (value < 0.2) return colors.success;
+      if (value <= 1) return colors.warning;
+      return colors.critical;
+    case "ph":
+      if (value >= 6.8 && value <= 7.4) return colors.success;
+      if ((value >= 6.5 && value < 6.8) || (value > 7.4 && value <= 8.5)) return colors.warning;
+      return colors.critical;
+    case "hardness":
+      if (value <= 3.5) return colors.success;
+      if (value <= 7) return colors.warning;
+      return colors.critical;
+    case "tds":
+      if (value <= 150) return colors.success;
+      if (value <= 300) return colors.warning;
+      return colors.critical;
+    default:
+      return colors.textSecondary;
+  }
+}
+
 interface Props {
   score?: number;
   contaminants: any[];
@@ -25,24 +49,24 @@ interface Props {
 export function tierInfo(score: number) {
   if (score >= 80)
     return {
-      tier: "Excellent", color: colors.success, bg: `${colors.success}12`,
+      tier: "Gold", color: colors.success, bg: `${colors.success}12`,
       border: `${colors.success}30`, icon: Award,
       desc: "Your water meets or exceeds all health guidelines. Outstanding quality.",
     };
   if (score >= 60)
     return {
-      tier: "Good", color: colors.primary, bg: `${colors.primary}12`,
+      tier: "Silver", color: colors.primary, bg: `${colors.primary}12`,
       border: `${colors.primary}30`, icon: Shield,
       desc: "Your water is mostly clean with a few areas worth monitoring.",
     };
   if (score >= 40)
     return {
-      tier: "Needs Improvement", color: colors.warning, bg: `${colors.warning}12`,
+      tier: "Bronze", color: colors.warning, bg: `${colors.warning}12`,
       border: `${colors.warning}30`, icon: AlertTriangle,
       desc: "Your water has some contaminants above recommended health levels.",
     };
   return {
-    tier: "Needs Attention", color: colors.critical, bg: `${colors.critical}12`,
+    tier: "At Risk", color: colors.critical, bg: `${colors.critical}12`,
     border: `${colors.critical}30`, icon: TrendingDown,
     desc: "Your water has significant quality concerns that should be addressed.",
   };
@@ -159,7 +183,7 @@ export function DemoScoreReveal({
             <p className="text-[20px] font-semibold animate-pulse" style={{ color: colors.textPrimary }}>
               {PHASE_DATA[phase].label}
             </p>
-            <p className="text-[13px] mt-3" style={{ color: colors.textFaint }}>Tap anywhere to skip</p>
+            <p className="text-[13px] mt-3 sr-only" style={{ color: colors.textFaint }}>Tap anywhere to skip</p>
           </div>
           {phase === 2 && (
             <div className="text-[72px] font-black tabular-nums" style={{ color: colors.textFaint }}>
@@ -174,7 +198,7 @@ export function DemoScoreReveal({
                   className="w-2 rounded-full"
                   style={{
                     height: `${20 + Math.random() * 40}px`,
-                    background: `linear-gradient(to top, ${colors.primary}, #3b82f6)`,
+                    background: colors.primary,
                     animation: `pulse 0.8s ease-in-out ${i * 0.1}s infinite alternate`,
                     opacity: 0.3 + Math.random() * 0.5,
                   }}
@@ -249,14 +273,18 @@ export function DemoScoreReveal({
                         { key: "tds", label: "TDS", unit: "ppm" },
                       ]
                         .filter((r) => liveReadings[r.key] != null)
-                        .map((r) => (
-                          <div key={r.key} className="flex items-center justify-between">
-                            <span className="text-[14px]" style={{ color: colors.textSecondary }}>{r.label}</span>
-                            <span className="text-[14px] font-semibold" style={{ color: colors.success }}>
-                              {liveReadings[r.key]} {r.unit}
-                            </span>
-                          </div>
-                        ))}
+                        .map((r) => {
+                          const val = parseFloat(String(liveReadings[r.key]));
+                          const sevColor = Number.isFinite(val) ? readingSeverityColor(r.key, val) : colors.textSecondary;
+                          return (
+                            <div key={r.key} className="flex items-center justify-between">
+                              <span className="text-[14px]" style={{ color: colors.textSecondary }}>{r.label}</span>
+                              <span className="text-[14px] font-semibold" style={{ color: sevColor }}>
+                                {liveReadings[r.key]} {r.unit}
+                              </span>
+                            </div>
+                          );
+                        })}
                     </div>
                   )}
                   {/* Tier label */}

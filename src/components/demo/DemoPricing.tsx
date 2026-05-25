@@ -252,30 +252,10 @@ export function DemoPricing({ company, onNext, onBack, onPricingChange, initialS
       {/* Financing — collapsed */}
       <FinancingSection company={company} currentPrice={currentPrice} />
 
-      {/* Footer: Back / Guarantee / CTA */}
-      <div className="flex items-center justify-between py-4 mt-2">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1 text-[14px] font-medium cursor-pointer"
-          style={{ color: colors.textMuted }}
-        >
-          ← Back
-        </button>
-        <div className="flex items-center gap-2">
-          <Check className="size-4" style={{ color: colors.success }} />
-          <span className="text-[13px]" style={{ color: colors.textMuted }}>30-Day Satisfaction Guarantee</span>
-        </div>
-        <button
-          onClick={onNext}
-          className="flex items-center gap-2 rounded-xl px-8 py-3 text-[15px] font-bold active:scale-[0.97] transition-transform cursor-pointer"
-          style={{
-            background: `linear-gradient(135deg, ${colors.critical}, #e11d48)`,
-            boxShadow: `0 4px 16px ${colors.critical}30`,
-          }}
-        >
-          Let's Get Started
-          <span>→</span>
-        </button>
+      {/* Guarantee note — nav handled by bottom bar */}
+      <div className="flex items-center justify-center gap-2 py-4 mt-2">
+        <Check className="size-4" style={{ color: colors.success }} />
+        <span className="text-[13px]" style={{ color: colors.textMuted }}>30-Day Satisfaction Guarantee</span>
       </div>
     </div>
   );

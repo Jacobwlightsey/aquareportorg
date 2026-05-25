@@ -4,7 +4,7 @@
    2-column grid. Footer note + Continue CTA.
    ──── */
 
-import { Check, Heart, Sparkles, Home, Wind, Banknote, Layers, Shield } from "lucide-react";
+import { Check, Heart, Sparkles, Home, Wind, Banknote, Layers, Shield, Droplets, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { playTapSound, haptic } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
@@ -44,6 +44,7 @@ const CONCERN_OPTIONS: {
   { key: "bottled_water_costs", label: "Bottled Water Costs", description: "Stop spending on bottled water", Icon: Banknote },
   { key: "stains_buildup", label: "Hard Water Scale", description: "Reduce scale and extend lifespan", Icon: Layers },
   { key: "peace_of_mind", label: "Peace of Mind", description: "Know my water is truly clean", Icon: Shield },
+  { key: "other" as any, label: "Other", description: "Something else on my mind", Icon: HelpCircle },
 ];
 
 function deriveEmphasis(selected: CustomerConcernKey[]): CustomerConcernState["emphasis"] {

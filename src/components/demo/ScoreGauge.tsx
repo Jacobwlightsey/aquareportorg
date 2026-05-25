@@ -4,7 +4,7 @@
    The center number DOMINATES. Everything else whispers.
    ──── */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { scoreColor, scoreLabel } from "@/lib/designTokens";
 
 interface Props {
@@ -33,6 +33,8 @@ export function ScoreGauge({
   const cbRef = useRef(onAnimationComplete);
   cbRef.current = onAnimationComplete;
 
+  const instanceId = useId();
+  const gradId = `gauge-grad-${instanceId}`;
   const strokeWidth = Math.max(14, size * 0.075);
   const radius = (size - strokeWidth * 2 - 8) / 2;
   const circ = 2 * Math.PI * radius;
@@ -114,7 +116,7 @@ export function ScoreGauge({
         aria-label={`AquaScore ${display} out of 100`}
       >
         <defs>
-          <linearGradient id={`gauge-grad-${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={color} stopOpacity="0.7" />
             <stop offset="60%" stopColor={color} stopOpacity="1" />
             <stop offset="100%" stopColor={color} stopOpacity="0.9" />
@@ -137,7 +139,7 @@ export function ScoreGauge({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={`url(#gauge-grad-${size})`}
+          stroke={`url(#${gradId})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${circ * arcFraction} ${circ * (1 - arcFraction)}`}

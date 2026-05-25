@@ -15,10 +15,10 @@ interface ScoreRange {
 }
 
 const SCORE_RANGES: ScoreRange[] = [
-  { min: 90, max: 100, label: "Excellent", color: colors.warning },
-  { min: 70, max: 89,  label: "Good",      color: "#94a3b8" },
-  { min: 50, max: 69,  label: "Needs Improvement", color: "#f97316" },
-  { min: 0,  max: 49,  label: "Needs Attention", color: colors.critical },
+  { min: 80, max: 100, label: "Gold",    color: colors.success },
+  { min: 60, max: 79,  label: "Silver",  color: colors.primary },
+  { min: 40, max: 59,  label: "Bronze",  color: colors.warning },
+  { min: 0,  max: 39,  label: "At Risk", color: colors.critical },
 ];
 
 interface Props {

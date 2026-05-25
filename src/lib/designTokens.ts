@@ -75,15 +75,15 @@ export function scoreColor(s: number): string {
 }
 
 export function scoreLabel(s: number): string {
-  if (s >= 80) return "EXCELLENT";
-  if (s >= 60) return "GOOD";
-  if (s >= 40) return "FAIR";
+  if (s >= 80) return "GOLD";
+  if (s >= 60) return "SILVER";
+  if (s >= 40) return "BRONZE";
   return "AT RISK";
 }
 
 export function scoreTierInfo(s: number) {
-  if (s >= 80) return { label: "Excellent", color: colors.success, desc: "Your water quality is outstanding." };
-  if (s >= 60) return { label: "Good", color: colors.primary, desc: "Your water is mostly clean with a few areas to monitor." };
-  if (s >= 40) return { label: "Fair", color: colors.warning, desc: "Some contaminants are above recommended health levels." };
+  if (s >= 80) return { label: "Gold", color: colors.success, desc: "Your water quality is outstanding." };
+  if (s >= 60) return { label: "Silver", color: colors.primary, desc: "Your water is mostly clean with a few areas to monitor." };
+  if (s >= 40) return { label: "Bronze", color: colors.warning, desc: "Some contaminants are above recommended health levels." };
   return { label: "At Risk", color: colors.critical, desc: "Significant quality concerns that should be addressed." };
 }
