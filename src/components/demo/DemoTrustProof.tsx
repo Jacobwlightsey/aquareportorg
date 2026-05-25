@@ -7,6 +7,8 @@ import { useCountUp } from "@/hooks/useCountUp";
 
 interface Props {
   company: any;
+  /** Report data — used for local area info (city, state, utilityName) */
+  report?: any;
   onNext: () => void;
   onBack: () => void;
 }
@@ -138,14 +140,17 @@ function BeforeAfterSlider({
   );
 }
 
-export function DemoTrustProof({ company, onNext, onBack }: Props) {
+export function DemoTrustProof({ company, report, onNext, onBack }: Props) {
   const trustConfig = (company as any)?.demoConfig?.trustSection;
 
   const hasCustomReviews = !!trustConfig?.reviews?.length;
   const reviews = hasCustomReviews ? trustConfig.reviews : DEFAULT_REVIEWS;
   const certs = trustConfig?.certifications?.length ? trustConfig.certifications : DEFAULT_CERTIFICATIONS;
   const installCount = trustConfig?.installCount ?? DEFAULT_INSTALL_COUNT;
-  const installArea = trustConfig?.installArea ?? company?.city ?? DEFAULT_INSTALL_AREA;
+  // Local area: prioritize trust config → report city+state → company city → fallback
+  const reportArea = report?.city && report?.state ? `${report.city}, ${report.state}` : report?.city;
+  const installArea = trustConfig?.installArea ?? reportArea ?? company?.city ?? DEFAULT_INSTALL_AREA;
+  const utilityName = report?.utilityName;
   const gallery: Array<{ before: string; after: string; caption?: string }> =
     trustConfig?.installGallery ?? [];
 
@@ -188,6 +193,21 @@ export function DemoTrustProof({ company, onNext, onBack }: Props) {
           Homes Protected in {installArea}
         </p>
       </div>
+
+      {/* Local utility info — builds trust with specificity */}
+      {utilityName && (
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 flex items-start gap-3">
+          <div className="size-9 shrink-0 rounded-xl bg-blue-500/10 flex items-center justify-center text-lg">
+            💧
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white/80">{utilityName}</p>
+            <p className="text-xs text-white/40 mt-0.5">
+              Your water provider — the report data comes directly from their testing
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Customer Reviews */}
       <div className="space-y-3">

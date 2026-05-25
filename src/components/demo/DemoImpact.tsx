@@ -1,10 +1,13 @@
 import { Droplets, Home, ShieldAlert, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { playTapSound } from "@/lib/demoSounds";
+import type { CustomerConcernKey } from "./DemoCustomerConcerns";
 
 interface Props {
   onNext: () => void;
   onBack: () => void;
+  /** Homeowner-selected concerns — used to auto-select the most relevant tab */
+  customerConcerns?: { selected: CustomerConcernKey[] } | null;
 }
 
 const IMPACT_TABS = [
@@ -75,8 +78,21 @@ const IMPACT_TABS = [
   },
 ];
 
-export function DemoImpact({ onNext, onBack }: Props) {
-  const [activeIdx, setActiveIdx] = useState(0);
+/** Map customer concerns → best starting impact tab */
+function bestStartingTab(selected?: CustomerConcernKey[]): number {
+  if (!selected?.length) return 0;
+  const s = new Set(selected);
+  // Priority order: family > skin > home > taste (default)
+  if (s.has("family_health")) return 1; // Family Safety
+  if (s.has("skin_and_hair")) return 0; // Skin & Hair
+  if (s.has("appliances_plumbing") || s.has("stains_buildup")) return 2; // Home & Appliances
+  if (s.has("taste_or_smell") || s.has("drinking_water") || s.has("bottled_water_costs")) return 3; // Taste
+  return 0;
+}
+
+export function DemoImpact({ onNext, onBack, customerConcerns }: Props) {
+  const startTab = useMemo(() => bestStartingTab(customerConcerns?.selected), [customerConcerns]);
+  const [activeIdx, setActiveIdx] = useState(startTab);
   const tab = IMPACT_TABS[activeIdx];
   const Icon = tab.icon;
 
