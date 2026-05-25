@@ -173,7 +173,7 @@ function ViewModeToggle() {
   );
 }
 
-/* ──────────────── (DemoModeSelector + PresentationToggle removed — dead code) ──────────────── */}
+/* ──────────────── (DemoModeSelector + PresentationToggle removed — dead code) ──────────────── */
 
 /* ──────────────── Mute Toggle Button (Sprint 1 addition) ──────────────── */
 function MuteToggle() {
