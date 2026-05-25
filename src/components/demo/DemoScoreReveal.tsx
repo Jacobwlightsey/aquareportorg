@@ -12,6 +12,10 @@ interface Props {
   onNext: () => void;
   onBack: () => void;
   skipScoreAnimation?: boolean;
+  /** Phase 2: When true, shows as "Verified Score" bridging initial + live test */
+  verifiedMode?: boolean;
+  /** Live test readings for verified mode comparison */
+  liveReadings?: Record<string, any>;
 }
 
 /* ──── Score tier labels (standardized across dealer + consumer platforms) ──── */
@@ -92,6 +96,8 @@ export function DemoScoreReveal({
   onNext: _onNext,
   onBack: _onBack,
   skipScoreAnimation = false,
+  verifiedMode = false,
+  liveReadings,
 }: Props) {
   const s = score ?? 0;
   const info = tierInfo(s);
@@ -100,7 +106,7 @@ export function DemoScoreReveal({
 
   // Phase state: null = pre-start, 0-2 = processing, 3 = revealed
   const [phase, setPhase] = useState<RevealPhase | null>(
-    skipScoreAnimation ? 3 : null,
+    skipScoreAnimation || verifiedMode ? 3 : null,
   );
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -277,10 +283,51 @@ export function DemoScoreReveal({
       {/* Phase 3: revealed */}
       {phase === 3 && (
         <>
+          {/* Verified mode header */}
+          {verifiedMode && (
+            <div className="text-center mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30 rounded-full px-3 py-1">
+                VERIFIED RESULTS
+              </span>
+              <h2 className="text-xl font-black mt-3 leading-tight">
+                Your Verified Water Score
+              </h2>
+              <p className="text-sm text-white/50 mt-1">
+                Here's what the local data showed. Here's what today's live test confirmed.
+              </p>
+            </div>
+          )}
+
           {/* Animated Score Gauge */}
           <div className="flex flex-col items-center pt-2">
-            <ScoreGauge score={s} size={220} animate={true} animationDuration={2000} />
+            <ScoreGauge score={s} size={220} animate={!verifiedMode} animationDuration={2000} />
           </div>
+
+          {/* Verified mode: live reading comparison */}
+          {verifiedMode && liveReadings && Object.keys(liveReadings).length > 0 && (
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">
+                Live Test Confirmed
+              </p>
+              {[
+                { key: "chlorine", label: "Chlorine", unit: "ppm", icon: "🧪" },
+                { key: "ph", label: "pH Level", unit: "", icon: "⚗️" },
+                { key: "hardness", label: "Hardness", unit: "gpg", icon: "💎" },
+                { key: "tds", label: "TDS", unit: "ppm", icon: "💧" },
+              ]
+                .filter((r) => liveReadings[r.key] != null)
+                .map((r) => (
+                  <div key={r.key} className="flex items-center justify-between">
+                    <span className="text-sm text-white/70">
+                      {r.icon} {r.label}
+                    </span>
+                    <span className="text-sm font-bold text-emerald-400">
+                      {liveReadings[r.key]} {r.unit}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
 
           {/* Tier Explanation */}
           <div
