@@ -102,6 +102,7 @@ import { useOfflineBanner } from "@/hooks/useDemoOffline";
 // Visual sprint: Orientation lock + Header
 import { DemoOrientationLock } from "@/components/demo/DemoOrientationLock";
 import { DemoHeader } from "@/components/demo/DemoHeader";
+import { DemoBackground } from "@/components/demo/DemoBackground";
 
 /* ──────────────── All possible steps — Phase 2 psychological sales flow ────
    Personalize → Diagnose → Verify → Emotionalize → Recommend → Transform → Justify → Decide
@@ -646,10 +647,13 @@ function DemoWizardInner() {
       style={{ background: "#070B14" }}
       {...swipeProps}
     >
+      {/* ─── Atmospheric Background Image ─── */}
+      <DemoBackground stepKey={stepKey} />
+
       {/* ─── Top Bar ─── */}
       {!isCustomerFacing && (
         <div
-          className={`flex shrink-0 items-center justify-between px-4 safe-area-top ${isPresentationMode ? "pt-4 pb-2" : "pt-3 pb-2"}`}
+          className={`relative z-10 flex shrink-0 items-center justify-between px-4 safe-area-top ${isPresentationMode ? "pt-4 pb-2" : "pt-3 pb-2"}`}
         >
           {/* Left: Exit */}
           <button
@@ -756,7 +760,7 @@ function DemoWizardInner() {
 
       {/* ─── Step Content (Sprint 1G: wrapped in error boundary) ─── */}
       <div
-        className={`flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
+        className={`relative z-10 flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
       >
         <DemoStepWrapper stepName={stepKey}>
           {stepKey === "intake" && (

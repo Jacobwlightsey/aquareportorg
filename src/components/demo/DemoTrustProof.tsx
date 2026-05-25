@@ -30,7 +30,7 @@ const DEFAULT_CERTIFICATIONS = [
 ];
 
 const DEFAULT_INSTALL_COUNT = 500;
-const DEFAULT_SKYLINE = "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1200&h=400&fit=crop&q=80&blend=070B14&blend-mode=multiply&blend-alpha=60";
+const DEFAULT_SKYLINE = "/assets/demo/14_trustProof.png";
 
 function StarRating({ rating }: { rating: number }) {
   return (
