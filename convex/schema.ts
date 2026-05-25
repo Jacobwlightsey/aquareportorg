@@ -518,6 +518,18 @@ const schema = defineSchema({
     .index("by_period", ["companyId", "period"])
     .index("by_status", ["companyId", "status"]),
 
+  // ─── Sprint 4A: Spouse Review Links ─────────────────────────────
+  spouseReviewLinks: defineTable({
+    reportId: v.id("reports"),
+    companyId: v.id("companies"),
+    token: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_token", ["token"])
+    .index("by_report", ["reportId"]),
+
   // ─── NEW: Training Modules ─────────────────────────────────────
   trainingModules: defineTable({
     companyId: v.id("companies"),

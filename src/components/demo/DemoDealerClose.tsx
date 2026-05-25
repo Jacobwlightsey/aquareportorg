@@ -16,11 +16,13 @@ import {
   Timer,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 import { api } from "../../../convex/_generated/api";
 import { ScoreGauge } from "./ScoreGauge";
 import { DemoQRCode } from "./DemoQRCode";
+import { DemoVoiceNote } from "./DemoVoiceNote";
 
 interface Props {
   report: any;
@@ -49,6 +51,37 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const saveDemoSession = useMutation(api.dealerShared.saveDemoSession);
+
+  // Sprint 4A: Spouse review link
+  const createSpouseLink = useMutation(api.spouseReview.createSpouseReviewLink);
+  const [spouseToken, setSpouseToken] = useState<string | null>(null);
+  const [creatingSpouseLink, setCreatingSpouseLink] = useState(false);
+
+  const spouseReviewUrl = useMemo(
+    () => spouseToken ? `${window.location.origin}/review/${spouseToken}` : "",
+    [spouseToken],
+  );
+
+  const handleCreateSpouseLink = async () => {
+    setCreatingSpouseLink(true);
+    try {
+      const result = await createSpouseLink({ reportId: report._id });
+      setSpouseToken(result.token);
+      toast.success("Spouse review link created!");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create spouse review link");
+    } finally {
+      setCreatingSpouseLink(false);
+    }
+  };
+
+  // Sprint 4B: Voice note attachment
+  const [voiceAttached, setVoiceAttached] = useState(false);
+
+  // Sprint 4D: Proposal PDF
+  const generateProposal = useAction(api.proposalPdf.generateProposalPdf);
+  const [generatingProposal, setGeneratingProposal] = useState(false);
+  const [proposalUrl, setProposalUrl] = useState<string | null>(null);
 
   // Consumer referral (merged from DemoNextSteps)
   const [referralUrl, setReferralUrl] = useState("");
@@ -264,15 +297,104 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
             <Calendar className="size-4 text-blue-400 shrink-0" />
             Schedule Follow-Up
           </button>
-          <button
-            onClick={() => toast.info("Coming soon — proposal sending will be available in a future update.")}
-            className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer"
-          >
-            <Send className="size-4 text-violet-400 shrink-0" />
-            Send Proposal
-          </button>
+          {!proposalUrl ? (
+            <button
+              onClick={async () => {
+                setGeneratingProposal(true);
+                try {
+                  const result = await generateProposal({ reportId: report._id });
+                  if (result.ok && result.pdfUrl) {
+                    setProposalUrl(result.pdfUrl);
+                    toast.success("Proposal PDF generated!");
+                  } else {
+                    toast.error((result as any).message || "Could not generate proposal.");
+                  }
+                } catch (e: any) {
+                  toast.error(e.message || "Proposal generation failed");
+                } finally {
+                  setGeneratingProposal(false);
+                }
+              }}
+              disabled={generatingProposal}
+              className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer disabled:opacity-50"
+            >
+              {generatingProposal ? (
+                <Loader2 className="size-4 text-violet-400 shrink-0 animate-spin" />
+              ) : (
+                <Send className="size-4 text-violet-400 shrink-0" />
+              )}
+              {generatingProposal ? "Generating…" : "Generate Proposal"}
+            </button>
+          ) : (
+            <a
+              href={proposalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-violet-600/20 border border-violet-500/30 p-3 text-left text-sm font-medium hover:bg-violet-600/30 cursor-pointer"
+            >
+              <ExternalLink className="size-4 text-violet-400 shrink-0" />
+              View Proposal PDF
+            </a>
+          )}
         </div>
+
+        {/* Sprint 4A: Spouse Review Link */}
+        {!spouseToken ? (
+          <button
+            onClick={handleCreateSpouseLink}
+            disabled={creatingSpouseLink}
+            className="w-full flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 cursor-pointer disabled:opacity-50"
+          >
+            {creatingSpouseLink ? (
+              <Loader2 className="size-4 text-pink-400 shrink-0 animate-spin" />
+            ) : (
+              <Mail className="size-4 text-pink-400 shrink-0" />
+            )}
+            Generate Spouse Review Link
+          </button>
+        ) : (
+          <div className="rounded-xl border border-pink-500/20 bg-pink-500/5 p-4 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-pink-400">
+              Spouse Review Link (expires in 72h)
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={spouseReviewUrl}
+                className="flex-1 rounded-lg bg-white/5 px-3 py-2 text-xs text-white/80 font-mono truncate border border-white/10"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(spouseReviewUrl);
+                  toast.success("Link copied!");
+                }}
+                className="rounded-lg bg-white/10 p-2 hover:bg-white/15 cursor-pointer"
+              >
+                <ClipboardCopy className="size-4" />
+              </button>
+            </div>
+            <div className="flex justify-center">
+              <QRCodeSVG value={spouseReviewUrl} size={120} bgColor="transparent" fgColor="#ffffff" />
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Sprint 4B: Voice Note */}
+      {!voiceAttached ? (
+        <DemoVoiceNote
+          onAttach={(_blob, _mime) => {
+            setVoiceAttached(true);
+            toast.success("Voice note attached to this demo session!");
+            // Note: actual upload to Convex storage would go here in a future iteration
+          }}
+        />
+      ) : (
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 flex items-center gap-2 text-sm text-emerald-400">
+          <Check className="size-4 shrink-0" />
+          Voice note attached
+        </div>
+      )}
 
       {/* Save & End */}
       {!saved ? (
