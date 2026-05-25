@@ -143,7 +143,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
       <div className="rounded-2xl p-5 flex items-center gap-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <ScoreGauge score={displayScore} size={100} animate={false} />
         <div className="flex-1">
-          <p className="text-[13px] mb-1" style={{ color: colors.textMuted }}>{report.customerName || "Customer"}'s AquaScore</p>
+          <p className="text-[13px] mb-1" style={{ color: colors.textMuted }}>{report.customerName || "Homeowner"}'s AquaScore</p>
           <p className="text-[32px] font-bold" style={{ color: colors.textPrimary }}>{displayScore}</p>
           <p className="text-[12px] mt-0.5" style={{ color: colors.textFaint }}>{report.totalContaminants} contaminants detected</p>
           {demoTime != null && demoTime > 0 && (

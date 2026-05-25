@@ -4,9 +4,9 @@
 
 import { useAction } from "convex/react";
 import { ArrowRight, Check, Droplets, Loader2, TrendingDown, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { playTapSound, playRevealSound } from "@/lib/demoSounds";
+import { playTapSound, playRevealSound, playPenaltySound } from "@/lib/demoSounds";
 import { computeAquaScore, readingPayload, type FieldWaterReadings } from "@/lib/waterScore";
 import { api } from "../../../convex/_generated/api";
 import { ScoreGauge } from "./ScoreGauge";
@@ -149,6 +149,15 @@ export function DemoLiveTest({ report, contaminants, liveReadings, onUpdateReadi
   });
 
   const delta = liveScore - baseScore;
+
+  /* Play descending penalty sound when score drops */
+  const prevDeltaRef = useRef(0);
+  useEffect(() => {
+    if (delta < prevDeltaRef.current && delta < 0 && hasReadings) {
+      playPenaltySound();
+    }
+    prevDeltaRef.current = delta;
+  }, [delta, hasReadings]);
 
   const handleSaveAndSync = async () => {
     setSaving(true);

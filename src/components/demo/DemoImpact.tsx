@@ -15,6 +15,8 @@ interface Props {
   onNext: () => void;
   onBack: () => void;
   customerConcerns?: { selected: CustomerConcernKey[] } | null;
+  liveReadings?: Record<string, any>;
+  report?: any;
 }
 
 /* ── Severity badge styles ── */
@@ -145,7 +147,7 @@ function bestStartingTab(selected?: CustomerConcernKey[]): number {
   return idx >= 0 ? idx : 0;
 }
 
-export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns }: Props) {
+export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns, liveReadings, report }: Props) {
   const startTab = useMemo(() => bestStartingTab(customerConcerns?.selected), [customerConcerns]);
   const [activeIdx, setActiveIdx] = useState(startTab);
   const tab = CATEGORY_TABS[activeIdx];
@@ -218,42 +220,57 @@ export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns
             ))}
           </div>
 
-          {/* Related contaminants found */}
-          {filtered.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: colors.textFaint }}>
-                FOUND IN YOUR WATER
+          {/* Personalized data callout — based on live readings and report */}
+          {liveReadings && Object.keys(liveReadings).length > 0 && (
+            <div className="rounded-2xl p-4 space-y-2" style={{ background: `${colors.warning}06`, border: `1px solid ${colors.warning}15` }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.warning}90` }}>
+                📊 YOUR LIVE READINGS
               </p>
-              {filtered.map((c, i) => {
-                const name = getContaminantName(c);
-                const sev = getSeverity(c);
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-2.5"
-                    style={{ borderBottom: `1px solid ${colors.border}` }}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="size-1.5 rounded-full" style={{ background: sev.color }} />
-                      <span className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>
-                        {name}
-                      </span>
-                    </div>
-                    <span
-                      className="shrink-0 ml-4 rounded-lg px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase"
-                      style={{ background: sev.bg, color: sev.color }}
-                    >
-                      {sev.label}
-                    </span>
-                  </div>
-                );
-              })}
+              {tab.key === "skin_and_hair" && liveReadings.chlorine != null && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                  Your chlorine tested at <strong style={{ color: colors.critical }}>{liveReadings.chlorine} ppm</strong>
+                  {parseFloat(String(liveReadings.chlorine)) > 0.2 ? " — that's above the recommended level. Every shower is exposing your skin and hair to this chemical." : "."}
+                </p>
+              )}
+              {tab.key === "skin_and_hair" && liveReadings.hardness != null && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                  Water hardness at <strong style={{ color: colors.warning }}>{liveReadings.hardness} gpg</strong>
+                  {parseFloat(String(liveReadings.hardness)) > 3.5 ? " — hard enough to dry out skin and leave hair brittle." : "."}
+                </p>
+              )}
+              {tab.key === "appliances_plumbing" && liveReadings.hardness != null && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                  At <strong style={{ color: colors.warning }}>{liveReadings.hardness} gpg hardness</strong>, scale is actively building in your pipes and water heater right now.
+                </p>
+              )}
+              {tab.key === "appliances_plumbing" && liveReadings.tds != null && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                  TDS at <strong>{liveReadings.tds} ppm</strong> means dissolved solids are flowing through every appliance.
+                </p>
+              )}
+              {tab.key === "taste_or_smell" && liveReadings.chlorine != null && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                  Chlorine at <strong style={{ color: colors.critical }}>{liveReadings.chlorine} ppm</strong> — that's what you're tasting in your water, coffee, and everything you cook.
+                </p>
+              )}
+              {tab.key === "family_health" && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                  {filtered.length > 0
+                    ? `${filtered.length} contaminant${filtered.length > 1 ? "s" : ""} found in your water above health guidelines. Your family is exposed every day through drinking, cooking, and bathing.`
+                    : "Based on your utility data and live test results."}
+                </p>
+              )}
+              {tab.key === "stains_buildup" && liveReadings.hardness != null && (
+                <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
+                  At <strong style={{ color: colors.warning }}>{liveReadings.hardness} gpg</strong>, you're likely seeing white buildup on fixtures and spots on glassware.
+                </p>
+              )}
             </div>
           )}
 
           {/* Footer */}
           <p className="text-[13px] mt-4" style={{ color: colors.textFaint }}>
-            Based on your water data and selected concerns.
+            Based on your water report{liveReadings && Object.keys(liveReadings).length > 0 ? " and live test results" : ""}.
           </p>
         </div>
       </div>

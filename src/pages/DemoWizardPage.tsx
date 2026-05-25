@@ -56,6 +56,7 @@ import { DemoContaminantWalkthrough } from "@/components/demo/DemoContaminantWal
 import { DemoImpact } from "@/components/demo/DemoImpact";
 import { DemoLiveTest } from "@/components/demo/DemoLiveTest";
 import { DemoScoreTransform } from "@/components/demo/DemoScoreTransform";
+import { DemoScoreImprovement } from "@/components/demo/DemoScoreImprovement";
 import { DemoSystemInfo } from "@/components/demo/DemoSystemInfo";
 import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
 import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
@@ -110,33 +111,34 @@ import { DemoBackground } from "@/components/demo/DemoBackground";
    ──────────────── */
 const ALL_STEPS: StepDef[] = [
   // ── Personalize ──
-  { key: "intake",            label: "Intake",          color: "#8b5cf6" },   // Dealer-only pre-demo
-  { key: "welcome",           label: "Welcome",         color: "#3b82f6" },   // Welcome / Agenda
-  { key: "customerConcerns",  label: "Priorities",      color: "#8b5cf6" },   // What Matters Most
+  { key: "intake",              label: "Intake",          color: "#8b5cf6" },   // Dealer-only pre-demo
+  { key: "welcome",             label: "Welcome",         color: "#3b82f6" },   // Welcome / Agenda
+  { key: "customerConcerns",    label: "Priorities",      color: "#8b5cf6" },   // What Matters Most
   // ── Diagnose ──
-  { key: "topConcerns",       label: "Top Concerns",    color: "#f97316" },   // Top 3 Concerns
-  { key: "contaminants",      label: "Contaminants",    color: "#f59e0b" },   // Full Contaminant Breakdown
-  { key: "score",             label: "AquaScore",       color: "#10b981" },   // Initial Water Score
-  // ── Verify ──
-  { key: "test",              label: "Live Test",       color: "#06b6d4" },   // Live Water Test
-  { key: "verifiedScore",     label: "Verified",        color: "#10b981" },   // Verified Score view
+  { key: "topConcerns",         label: "Top Concerns",    color: "#f97316" },   // Top 3 Concerns
+  { key: "contaminants",        label: "Contaminants",    color: "#f59e0b" },   // Full Contaminant Breakdown
+  { key: "score",               label: "AquaScore",       color: "#10b981" },   // Initial Water Score
+  { key: "test",                label: "Live Test",       color: "#06b6d4" },   // Live Water Test
+  { key: "verifiedScore",       label: "Verified",        color: "#10b981" },   // Verified Score view
   // ── Emotionalize ──
-  { key: "impact",            label: "Impact",          color: "#f43f5e" },   // Personalized Impact
+  { key: "impact",              label: "Impact",          color: "#f43f5e" },   // Personalized Impact
   // ── Transform ──
-  { key: "transform",         label: "Transform",       color: "#8b5cf6" },   // Score Journey
-  { key: "rooms",             label: "Rooms",           color: "#f43f5e" },   // Room-by-room
+  { key: "scoreImprovement",    label: "Improvement",     color: "#8b5cf6" },   // Score improvement reveal → 94
+  { key: "system",              label: "System",          color: "#3b82f6" },   // Filtration system product page
+  { key: "trust",               label: "Proof",           color: "#22c55e" },   // Trust proof (directly after system)
   // ── Justify ──
-  { key: "comparison",        label: "Expenses",        color: "#ec4899" },   // Cost of Inaction
-  { key: "pricing",           label: "Investment",      color: "#10b981" },   // Investment Overview
-  { key: "investmentBreakdown", label: "Breakdown",    color: "#10b981" },   // Investment Details
-  { key: "boost",             label: "Upgrade",         color: "#f59e0b" },   // RO upsell
-  // ── Convince ──
-  { key: "trust",             label: "Proof",           color: "#22c55e" },   // Trust proof
-  // ── Decide ──
-  { key: "summary",           label: "Summary",         color: "#10b981" },   // Final Summary
-  { key: "decision",          label: "Decision",        color: "#2563eb" },   // Decision Page
-  { key: "customerClose",     label: "Close",           color: "#22c55e" },   // Customer Close / QR
-  { key: "dealerClose",       label: "Wrap Up",         color: "#64748b" },   // Dealer Close
+  { key: "comparison",          label: "Expenses",        color: "#ec4899" },   // What unfiltered water costs
+  { key: "pricing",             label: "Investment",      color: "#10b981" },   // Investment overview
+  { key: "investmentBreakdown", label: "Breakdown",       color: "#10b981" },   // Investment details
+  // ── Score Journey ──
+  { key: "transform",           label: "Journey",         color: "#8b5cf6" },   // 3-stage score journey
+  // ── Upsell ──
+  { key: "boost",               label: "Upgrade",         color: "#f59e0b" },   // RO upsell
+  // ── Close ──
+  { key: "summary",             label: "Summary",         color: "#10b981" },   // Home Water Plan
+  { key: "decision",            label: "Decision",        color: "#2563eb" },   // What Makes Sense
+  { key: "customerClose",       label: "Close",           color: "#22c55e" },   // Customer handoff
+  { key: "dealerClose",         label: "Wrap Up",         color: "#64748b" },   // Dealer wrap-up
 ];
 
 /* ──────────────── Helpers ──────────────── */
@@ -202,10 +204,10 @@ function ViewModeToggle() {
           ? "bg-white/5 text-white/70 active:bg-white/10"
           : "bg-cyan-400/10 text-cyan-300 border border-cyan-400/30 active:bg-cyan-400/20"
       }`}
-      title={isRep ? "Switch to Customer View" : "Switch to Rep View"}
+      title={isRep ? "Switch to Homeowner View" : "Switch to Rep View"}
     >
       {isRep ? <User className="size-3" /> : <Home className="size-3" />}
-      <span className="hidden sm:inline">{isRep ? "Rep" : "Customer"}</span>
+      <span className="hidden sm:inline">{isRep ? "Rep" : "Homeowner"}</span>
     </button>
   );
 }
@@ -493,6 +495,16 @@ function DemoWizardInner() {
     [report?.contaminants],
   );
 
+  const reportBaseScore = useMemo(() => {
+    if (!report) return undefined;
+    return computeAquaScore(report.waterScore, contaminants, {
+      chlorine: report.chlorine,
+      hardness: report.hardness,
+      tds: report.tds,
+      ph: report.ph,
+    });
+  }, [report, contaminants]);
+
   const score = useMemo(() => {
     if (!report) return undefined;
     const readings: FieldWaterReadings = {
@@ -600,7 +612,7 @@ function DemoWizardInner() {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
         <AlertTriangle className="mb-4 size-12 text-amber-500/50" />
-        <p className="font-semibold">Customer not found</p>
+        <p className="font-semibold">Report not found</p>
         <button
           onClick={() => navigate("/customers")}
           className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium"
@@ -861,7 +873,7 @@ function DemoWizardInner() {
             />
           )}
           {stepKey === "impact" && (
-            <DemoImpact contaminants={contaminants} onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} />
+            <DemoImpact contaminants={contaminants} onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} liveReadings={liveReadings} report={report} />
           )}
           {stepKey === "rooms" && (
             <DemoRoomImpact
@@ -890,6 +902,7 @@ function DemoWizardInner() {
               skipScoreAnimation={skipScoreAnimation}
               verifiedMode
               liveReadings={liveReadings}
+              beforeScore={reportBaseScore}
             />
           )}
           {stepKey === "transform" && (
@@ -899,6 +912,13 @@ function DemoWizardInner() {
               company={company}
               contaminants={contaminants}
               liveReadings={liveReadings}
+              projectedScore={projectedScore ?? score ?? 0}
+              onNext={goNext}
+            />
+          )}
+          {stepKey === "scoreImprovement" && (
+            <DemoScoreImprovement
+              currentScore={score ?? 0}
               projectedScore={projectedScore ?? score ?? 0}
               onNext={goNext}
             />

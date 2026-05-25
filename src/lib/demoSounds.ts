@@ -119,6 +119,34 @@ export function playBoostSound() {
   } catch { /* silent */ }
 }
 
+/** Descending tone — played when live test drops the score */
+export function playPenaltySound() {
+  if (_muted) return;
+  try {
+    const c = ctx();
+    const t = c.currentTime;
+    // Descending sweep
+    const s = c.createOscillator();
+    const g = c.createGain();
+    s.connect(g); g.connect(c.destination);
+    s.type = "sawtooth";
+    s.frequency.setValueAtTime(660, t);
+    s.frequency.exponentialRampToValueAtTime(220, t + 0.5);
+    g.gain.setValueAtTime(0.08, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    s.start(t); s.stop(t + 0.6);
+    // Low thud
+    const s2 = c.createOscillator();
+    const g2 = c.createGain();
+    s2.connect(g2); g2.connect(c.destination);
+    s2.type = "sine";
+    s2.frequency.setValueAtTime(110, t + 0.3);
+    g2.gain.setValueAtTime(0.12, t + 0.3);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    s2.start(t + 0.3); s2.stop(t + 0.7);
+  } catch { /* silent */ }
+}
+
 /** Thunk / button tap */
 export function playTapSound() {
   if (_muted) return;

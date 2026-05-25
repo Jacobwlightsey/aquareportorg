@@ -3,7 +3,7 @@
    Categorized accordion. Surface cards, designTokens colors.
    ──── */
 
-import { AlertTriangle, ChevronDown, ChevronUp, FlaskConical, Shield, Skull, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, ChevronDown, ChevronUp, FlaskConical, Shield, Skull, X } from "lucide-react";
 import { useState } from "react";
 import { contaminantName } from "@/lib/supabase";
 import { playTapSound } from "@/lib/demoSounds";
@@ -80,8 +80,36 @@ function SeverityBar({ ratio }: { ratio: number }) {
   );
 }
 
+/* ── Contaminant detail info — health & home effects ── */
+interface ContaminantInfo {
+  what: string;
+  health: string;
+  home: string;
+}
+
+function getContaminantInfo(name: string): ContaminantInfo | null {
+  const n = name.toLowerCase();
+  if (n.includes("lead")) return { what: "A toxic heavy metal that leaches from old pipes, solder, and fixtures.", health: "Damages the brain and nervous system, especially in children. Linked to developmental delays, learning difficulties, and behavioral problems.", home: "Corrodes plumbing fixtures and can cause blue-green staining on sinks and tubs." };
+  if (n.includes("chlorine") || n.includes("chloramine")) return { what: "A disinfectant added to municipal water to kill bacteria.", health: "Absorbed through skin during showers. Strips natural oils, causes dry skin and hair. Linked to respiratory issues when inhaled as steam.", home: "Degrades rubber seals in appliances, fades laundry, and affects the taste of drinking water and cooking." };
+  if (n.includes("arsenic")) return { what: "A naturally occurring toxic element found in groundwater.", health: "Long-term exposure linked to skin, lung, and bladder cancer. Can cause skin lesions, numbness, and cardiovascular disease.", home: "No visible home effects, but accumulates in the body over time through drinking and cooking." };
+  if (n.includes("chromium")) return { what: "A metallic element; hexavalent chromium (Chromium-6) is a known carcinogen.", health: "Linked to stomach cancer, liver damage, and reproductive problems. The EWG guideline is far stricter than the legal limit.", home: "Can cause yellow-green staining of fixtures at high concentrations." };
+  if (n.includes("fluoride")) return { what: "A mineral added to water to prevent tooth decay.", health: "At high levels linked to dental fluorosis (white spots on teeth), skeletal problems, and thyroid disruption.", home: "No direct home damage, but builds up in the body with daily consumption." };
+  if (n.includes("nitrate") || n.includes("nitrite")) return { what: "Agricultural runoff from fertilizers and animal waste.", health: "Dangerous for infants — causes 'blue baby syndrome.' Linked to thyroid problems and increased cancer risk in adults.", home: "No visible home effects, but indicates agricultural contamination of your water source." };
+  if (n.includes("radium") || n.includes("uranium") || n.includes("gross alpha") || n.includes("gross beta")) return { what: "Naturally occurring radioactive elements dissolved from rock formations.", health: "Increases cancer risk, especially bone and kidney cancer. Even low levels accumulate over years of exposure.", home: "No visible home effects, but continuous exposure through drinking, cooking, and bathing." };
+  if (n.includes("trihalomethane") || n.includes("tthm") || n.includes("haloacetic") || n.includes("haa5") || n.includes("haa9")) return { what: "Chemical byproducts created when chlorine reacts with organic matter in water.", health: "Linked to bladder cancer, liver and kidney damage. Absorbed through skin and lungs during hot showers.", home: "Can create a chemical smell. You're exposed every time you shower, bathe, or use hot water." };
+  if (n.includes("pfas") || n.includes("pfoa") || n.includes("pfos")) return { what: "\"Forever chemicals\" — synthetic compounds that never break down in the environment.", health: "Linked to cancer, thyroid disease, immune system damage, and reproductive issues. Accumulates in the body.", home: "Present in every glass of water, every ice cube, every cooked meal. Cannot be removed by boiling." };
+  if (n.includes("copper")) return { what: "Leaches from copper plumbing, especially with acidic or soft water.", health: "High levels cause nausea, liver and kidney damage. Children are more sensitive.", home: "Causes blue-green staining on sinks, tubs, and laundry. Indicates pipe corrosion." };
+  if (n.includes("mercury")) return { what: "A highly toxic heavy metal from industrial pollution and natural deposits.", health: "Damages the nervous system, kidneys, and developing fetuses. Effects are cumulative.", home: "No visible home effects, but enters the body through drinking and cooking." };
+  if (n.includes("manganese")) return { what: "A naturally occurring mineral in groundwater.", health: "High levels linked to neurological effects in children, similar to lead exposure.", home: "Causes brown/black staining on laundry, fixtures, and dishes. Clogs pipes." };
+  if (n.includes("iron")) return { what: "A common mineral dissolved from soil and rock into groundwater.", health: "Generally not a direct health risk, but indicates other contaminants may be present.", home: "Causes rust-colored staining on everything — sinks, toilets, laundry, and appliances." };
+  if (n.includes("barium")) return { what: "A naturally occurring element found in drilling waste and industrial discharge.", health: "Can cause high blood pressure, difficulty breathing, and gastrointestinal issues.", home: "No visible home effects at typical concentrations." };
+  if (n.includes("hardness") || n.includes("calcium") || n.includes("magnesium")) return { what: "Dissolved minerals — primarily calcium and magnesium — from groundwater.", health: "Not directly harmful to drink, but causes dry skin, brittle hair, and eczema flare-ups.", home: "White scale buildup on fixtures, cloudy glassware, stiff laundry, reduced appliance lifespan, and clogged showerheads." };
+  return null;
+}
+
 function ContaminantDetail({ c, onClose }: { c: any; onClose: () => void }) {
   const ratio = c.health_guideline && c.health_guideline > 0 ? c.detected_level / c.health_guideline : c.detected_level > 0 ? 1 : 0;
+  const info = getContaminantInfo(contaminantName(c));
 
   return (
     <div className="rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-300" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
@@ -123,7 +151,32 @@ function ContaminantDetail({ c, onClose }: { c: any; onClose: () => void }) {
           </div>
         </div>
 
-        {c.effect && (
+        {/* What is this contaminant */}
+        {info && (
+          <div className="rounded-xl p-3.5 space-y-1" style={{ background: `${colors.textFaint}08` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>What Is It</p>
+            <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.what}</p>
+          </div>
+        )}
+
+        {/* Health effects */}
+        {info && (
+          <div className="rounded-xl p-3.5 space-y-1" style={{ background: `${colors.critical}06` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.critical}90` }}>❤️ Health Effects</p>
+            <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.health}</p>
+          </div>
+        )}
+
+        {/* Home effects */}
+        {info && (
+          <div className="rounded-xl p-3.5 space-y-1" style={{ background: `${colors.warning}06` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.warning}90` }}>🏠 Home Effects</p>
+            <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.home}</p>
+          </div>
+        )}
+
+        {/* Fallback to generic effect if no info available */}
+        {!info && c.effect && (
           <p className="text-[13px] leading-relaxed rounded-lg p-3" style={{ color: colors.textSecondary, background: `${colors.textFaint}08` }}>
             {c.effect}
           </p>
@@ -133,7 +186,7 @@ function ContaminantDetail({ c, onClose }: { c: any; onClose: () => void }) {
   );
 }
 
-export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBack: _onBack }: Props) {
+export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBack }: Props) {
   const [expandedDetail, setExpandedDetail] = useState<number | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -292,6 +345,18 @@ export function DemoContaminantWalkthrough({ contaminants, onNext: _onNext, onBa
           );
         })}
       </div>
+
+      {/* Next button */}
+      <button
+        onClick={onNext}
+        className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-[16px] font-bold active:scale-[0.97] transition-transform cursor-pointer"
+        style={{
+          background: `linear-gradient(135deg, ${colors.warning}, #f97316)`,
+          boxShadow: `0 4px 24px ${colors.warning}20`,
+        }}
+      >
+        Continue to Your Score <ArrowRight className="size-5" />
+      </button>
     </div>
   );
 }

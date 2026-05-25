@@ -19,6 +19,7 @@ const STEP_ASSETS: Record<string, { file: string; opacity: number }> = {
   verifiedScore:    { file: "09_verifiedScore.webp",     opacity: 0.30 },
   impact:           { file: "10_impact.webp",            opacity: 0.20 },
   rooms:            { file: "11_rooms.webp",             opacity: 0.25 },
+  scoreImprovement: { file: "13_scoreTransform.webp",    opacity: 0.30 },
   system:           { file: "12_system.webp",            opacity: 0.40 },
   transform:        { file: "13_scoreTransform.webp",    opacity: 0.35 },
   trust:            { file: "14_trustProof.webp",        opacity: 0.25 },

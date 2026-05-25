@@ -4,7 +4,7 @@
    Data source citation at bottom-left.
    ──── */
 
-import { AlertTriangle, Award, Shield, Sparkles, TrendingDown } from "lucide-react";
+import { AlertTriangle, ArrowRight, Award, Shield, Sparkles, TrendingDown } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { playRevealSound, playProcessingSound, haptic } from "@/lib/demoSounds";
 import { ScoreGauge } from "./ScoreGauge";
@@ -35,6 +35,39 @@ function readingSeverityColor(key: string, value: number): string {
   }
 }
 
+/** Severity label for live test readings */
+function getSeverityLabel(key: string, value: number): string | null {
+  switch (key) {
+    case "chlorine":
+      if (value < 0.2) return "Normal";
+      if (value <= 1) return "Elevated";
+      if (value <= 2) return "High";
+      if (value <= 4) return "Severe";
+      return "Extreme";
+    case "ph":
+      if (value >= 6.8 && value <= 7.4) return "Normal";
+      if (value >= 6.5 && value < 6.8) return "Acidic";
+      if (value < 6.5) return "Very Acidic";
+      if (value > 7.4 && value <= 8.5) return "Slightly Alk";
+      return "High Alk";
+    case "hardness":
+      if (value <= 1) return "Soft";
+      if (value <= 3.5) return "Normal";
+      if (value <= 7) return "Moderate";
+      if (value <= 10.5) return "Hard";
+      if (value <= 15) return "Very Hard";
+      return "Extreme";
+    case "tds":
+      if (value <= 50) return "Excellent";
+      if (value <= 150) return "Normal";
+      if (value <= 300) return "Elevated";
+      if (value <= 500) return "High";
+      return "Severe";
+    default:
+      return null;
+  }
+}
+
 interface Props {
   score?: number;
   contaminants: any[];
@@ -44,6 +77,8 @@ interface Props {
   skipScoreAnimation?: boolean;
   verifiedMode?: boolean;
   liveReadings?: Record<string, any>;
+  /** Report-only score (before live test), used for before→after in verified mode */
+  beforeScore?: number;
 }
 
 export function tierInfo(score: number) {
@@ -85,7 +120,7 @@ const PHASE_DURATION = 2000;
 
 export function DemoScoreReveal({
   score, contaminants, report, onNext: _onNext, onBack: _onBack,
-  skipScoreAnimation = false, verifiedMode = false, liveReadings,
+  skipScoreAnimation = false, verifiedMode = false, liveReadings, beforeScore,
 }: Props) {
   const s = score ?? 0;
   const info = tierInfo(s);
@@ -224,96 +259,131 @@ export function DemoScoreReveal({
       {/* Phase 3: revealed */}
       {phase === 3 && (
         <>
-          {/* Verified mode header */}
+          {/* ── Main layout: centered gauge with content below ── */}
+          {!verifiedMode && (
+            <div className="text-center mb-8">
+              <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight leading-tight" style={{ color: colors.textPrimary }}>
+                Your Water Score Is Ready
+              </h2>
+              <p className="text-[15px] mt-3 max-w-md mx-auto" style={{ color: colors.textMuted, lineHeight: 1.6 }}>
+                Your AquaScore is a 0–100 rating of your water quality based on contaminants found in your local utility data, compared against EPA legal limits and EWG health guidelines.
+              </p>
+            </div>
+          )}
+
           {verifiedMode && (
-            <div className="mb-10">
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.success}b0` }}>
+            <div className="mb-8">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-center" style={{ color: `${colors.success}b0` }}>
                 Verified Results
               </p>
-              <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight mt-3" style={{ color: colors.textPrimary }}>
+              <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight mt-3 text-center" style={{ color: colors.textPrimary }}>
                 Your Verified Water Score
               </h2>
-              <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
+              <p className="text-[15px] mt-2 text-center" style={{ color: colors.textMuted }}>
                 Local data confirmed with today's live test.
               </p>
             </div>
           )}
 
-          {/* ── Main layout: always side-by-side (headline left, gauge right) ── */}
-          <div className="flex flex-row items-start gap-10 mb-8" style={{ minHeight: "280px" }}>
-            {/* Left: headline */}
-            <div className="flex-1 pt-2">
-              {!verifiedMode && (
-                <>
-                  <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight leading-tight" style={{ color: colors.textPrimary }}>
-                    Your Water<br />Score Is Ready
-                  </h2>
-                  <p className="text-[15px] mt-4 max-w-sm" style={{ color: colors.textMuted, lineHeight: 1.6 }}>
-                    We analyzed your water quality and compared it to healthy water standards.
-                  </p>
-                  {/* Tier label — left-aligned */}
-                  <p className="text-[16px] font-semibold mt-6" style={{ color: info.color }}>
-                    {info.tier}
-                  </p>
-                </>
-              )}
-
-              {verifiedMode && (
-                <>
-                  {/* Live readings in success-colored card */}
-                  {liveReadings && Object.keys(liveReadings).length > 0 && (
-                    <div className="rounded-2xl p-5 space-y-3 mb-6" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
-                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.success}b0` }}>
-                        Live Test Confirmed
-                      </p>
-                      {[
-                        { key: "chlorine", label: "Chlorine", unit: "ppm" },
-                        { key: "ph", label: "pH Level", unit: "" },
-                        { key: "hardness", label: "Hardness", unit: "gpg" },
-                        { key: "tds", label: "TDS", unit: "ppm" },
-                      ]
-                        .filter((r) => liveReadings[r.key] != null)
-                        .map((r) => {
-                          const val = parseFloat(String(liveReadings[r.key]));
-                          const sevColor = Number.isFinite(val) ? readingSeverityColor(r.key, val) : colors.textSecondary;
-                          return (
-                            <div key={r.key} className="flex items-center justify-between">
-                              <span className="text-[14px]" style={{ color: colors.textSecondary }}>{r.label}</span>
-                              <span className="text-[14px] font-semibold" style={{ color: sevColor }}>
-                                {liveReadings[r.key]} {r.unit}
-                              </span>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  )}
-                  {/* Tier label */}
-                  <p className="text-[16px] font-semibold" style={{ color: info.color }}>
-                    {info.tier}
-                  </p>
-                </>
-              )}
-            </div>
-
-            {/* Right: gauge */}
-            <div className="shrink-0 flex flex-col items-center">
-              <ScoreGauge score={s} size={200} animationDuration={2800} />
-              <p className="text-[12px] font-medium uppercase tracking-wide mt-2" style={{ color: colors.textMuted }}>
-                OUT OF 100
-              </p>
+          {/* Centered gauge */}
+          <div className="flex flex-col items-center mb-8">
+            <ScoreGauge score={s} size={220} animationDuration={2800} />
+            <p className="text-[12px] font-medium uppercase tracking-wide mt-3" style={{ color: colors.textMuted }}>
+              OUT OF 100
+            </p>
+            {/* Tier badge */}
+            <div
+              className="mt-4 rounded-full px-5 py-2 flex items-center gap-2"
+              style={{ background: info.bg, border: `1px solid ${info.border}` }}
+            >
+              <info.icon className="size-4" style={{ color: info.color }} />
+              <span className="text-[14px] font-bold" style={{ color: info.color }}>
+                {info.tier} — {info.desc}
+              </span>
             </div>
           </div>
 
-          {/* Data source — bottom-left */}
-          <div className="flex items-center gap-2 mb-6">
+          {/* Verified mode: live readings + before→after comparison */}
+          {verifiedMode && liveReadings && Object.keys(liveReadings).length > 0 && (
+            <div className="max-w-lg mx-auto rounded-2xl p-5 space-y-3 mb-6" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.success}b0` }}>
+                Live Test Results
+              </p>
+              {[
+                { key: "chlorine", label: "Chlorine", unit: "ppm" },
+                { key: "ph", label: "pH Level", unit: "" },
+                { key: "hardness", label: "Hardness", unit: "gpg" },
+                { key: "tds", label: "TDS", unit: "ppm" },
+              ]
+                .filter((r) => liveReadings[r.key] != null)
+                .map((r) => {
+                  const val = parseFloat(String(liveReadings[r.key]));
+                  const sevColor = Number.isFinite(val) ? readingSeverityColor(r.key, val) : colors.textSecondary;
+                  const sevLabel = Number.isFinite(val) ? getSeverityLabel(r.key, val) : null;
+                  return (
+                    <div key={r.key} className="flex items-center justify-between">
+                      <span className="text-[14px]" style={{ color: colors.textSecondary }}>{r.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px] font-semibold" style={{ color: sevColor }}>
+                          {liveReadings[r.key]} {r.unit}
+                        </span>
+                        {sevLabel && (
+                          <span
+                            className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md"
+                            style={{ color: sevColor, background: `${sevColor}12`, border: `1px solid ${sevColor}25` }}
+                          >
+                            {sevLabel}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+
+          {/* Before → After comparison (verified mode only) */}
+          {verifiedMode && beforeScore != null && s !== beforeScore && (
+            <div className="max-w-lg mx-auto rounded-2xl p-5 mb-6" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: colors.textFaint }}>
+                SCORE COMPARISON
+              </p>
+              <div className="flex items-center justify-center gap-6">
+                <div className="text-center">
+                  <p className="text-[12px] font-medium uppercase tracking-wide" style={{ color: colors.textFaint }}>Report Only</p>
+                  <p className="text-[36px] font-black tabular-nums mt-1" style={{ color: tierInfo(beforeScore).color }}>{beforeScore}</p>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <ArrowRight className="size-6" style={{ color: colors.textFaint }} />
+                  <span className="text-[12px] font-bold" style={{ color: s < beforeScore ? colors.critical : colors.success }}>
+                    {s < beforeScore ? "" : "+"}{s - beforeScore}
+                  </span>
+                </div>
+                <div className="text-center">
+                  <p className="text-[12px] font-medium uppercase tracking-wide" style={{ color: colors.textFaint }}>With Live Test</p>
+                  <p className="text-[36px] font-black tabular-nums mt-1" style={{ color: info.color }}>{s}</p>
+                </div>
+              </div>
+              <p className="text-[13px] text-center mt-4" style={{ color: colors.textMuted }}>
+                {s < beforeScore
+                  ? "Your live test confirmed additional concerns not captured in the utility report alone."
+                  : s > beforeScore
+                    ? "Your live readings improved the overall score slightly."
+                    : "Live test confirmed the report data."}
+              </p>
+            </div>
+          )}
+
+          {/* Data source */}
+          <div className="flex items-center justify-center gap-2 mb-6">
             <div className="size-1.5 rounded-full" style={{ background: colors.textFaint }} />
             <p className="text-[13px]" style={{ color: colors.textFaint }}>
               Data from {report.utilityName}
             </p>
           </div>
 
-          {/* Score Explainer — below the fold, optional */}
-          <div className="max-w-2xl mb-6">
+          {/* Score Explainer — tier breakdown with explanations */}
+          <div className="max-w-lg mx-auto mb-6">
             <DemoScoreExplainer currentScore={s} />
           </div>
         </>

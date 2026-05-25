@@ -1,11 +1,11 @@
-/* ──── Sprint 2A: Customer Concern Intake — pre-demo questionnaire ──── */
+/* ──── Sprint 2A: Customer Intake — pre-demo household questionnaire ──── */
 
-import { ArrowRight, Check, Droplets, Heart, Minus, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { playTapSound, haptic } from "@/lib/demoSounds";
 
 export interface ConcernData {
-  /** Selected concern keys */
+  /** Selected concern keys (kept for compatibility, always empty from intake) */
   concerns: string[];
   /** Free-text for "Other" concern */
   otherText: string;
@@ -23,15 +23,6 @@ interface Props {
   onBack: () => void;
   initial?: ConcernData | null;
 }
-
-const CONCERN_OPTIONS = [
-  { key: "taste_smell", label: "Taste / Smell", icon: "💧", color: "#3b82f6" },
-  { key: "health_safety", label: "Health / Family Safety", icon: "❤️", color: "#ef4444" },
-  { key: "staining", label: "Staining / Hard Water", icon: "🟤", color: "#92400e" },
-  { key: "skin_hair", label: "Dry Skin / Hair", icon: "🧴", color: "#ec4899" },
-  { key: "appliances", label: "Appliance Damage", icon: "⚙️", color: "#f59e0b" },
-  { key: "other", label: "Other", icon: "❓", color: "#6b7280" },
-];
 
 const SOLUTIONS = [
   { key: "nothing", label: "Nothing" },
@@ -107,26 +98,16 @@ function TogglePill({
 }
 
 export function DemoConcernIntake({ onNext, onBack, initial }: Props) {
-  const [concerns, setConcerns] = useState<string[]>(initial?.concerns ?? []);
-  const [otherText, setOtherText] = useState(initial?.otherText ?? "");
   const [householdSize, setHouseholdSize] = useState(initial?.householdSize ?? 3);
   const [bathrooms, setBathrooms] = useState(initial?.bathrooms ?? 2);
   const [hasKids, setHasKids] = useState(initial?.hasKids ?? false);
   const [hasPets, setHasPets] = useState(initial?.hasPets ?? false);
   const [currentSolution, setCurrentSolution] = useState(initial?.currentSolution ?? "nothing");
 
-  const toggleConcern = (key: string) => {
-    playTapSound();
-    haptic("light");
-    setConcerns((prev) =>
-      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key],
-    );
-  };
-
   const handleContinue = () => {
     onNext({
-      concerns,
-      otherText: concerns.includes("other") ? otherText : "",
+      concerns: [],
+      otherText: "",
       householdSize,
       bathrooms,
       hasKids,
@@ -148,46 +129,6 @@ export function DemoConcernIntake({ onNext, onBack, initial }: Props) {
         <p className="text-sm text-white/50 mt-1">
           30 seconds — helps us personalize the presentation
         </p>
-      </div>
-
-      {/* Top Concerns */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
-          What Concerns You Most?
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {CONCERN_OPTIONS.map((opt) => {
-            const selected = concerns.includes(opt.key);
-            return (
-              <button
-                key={opt.key}
-                onClick={() => toggleConcern(opt.key)}
-                className={`flex items-center gap-2 rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                  selected
-                    ? "border-white/30 bg-white/10"
-                    : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
-                }`}
-              >
-                <span className="text-lg">{opt.icon}</span>
-                <span
-                  className={`text-sm font-medium leading-tight ${
-                    selected ? "text-white" : "text-white/50"
-                  }`}
-                >
-                  {opt.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {concerns.includes("other") && (
-          <input
-            value={otherText}
-            onChange={(e) => setOtherText(e.target.value)}
-            placeholder="What's on your mind?"
-            className="w-full rounded-xl bg-white/[0.06] border border-white/10 px-4 py-2.5 text-sm text-white outline-none focus:border-white/30 placeholder:text-white/20"
-          />
-        )}
       </div>
 
       {/* Household Info */}
@@ -240,15 +181,13 @@ export function DemoConcernIntake({ onNext, onBack, initial }: Props) {
       {/* Continue */}
       <button
         onClick={handleContinue}
-        disabled={concerns.length === 0}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer disabled:opacity-40 disabled:scale-100"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer"
         style={{
           background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
-          boxShadow: concerns.length > 0 ? "0 4px 24px rgba(99,102,241,0.3)" : "none",
+          boxShadow: "0 4px 24px rgba(99,102,241,0.3)",
         }}
       >
-        {concerns.length === 0 ? "Select at least one concern" : "Start Demo"}{" "}
-        <ArrowRight className="size-5" />
+        Start Demo <ArrowRight className="size-5" />
       </button>
     </div>
   );
