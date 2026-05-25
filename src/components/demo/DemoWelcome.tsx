@@ -17,14 +17,12 @@ interface Props {
 }
 
 const AGENDA = [
-  { text: "Your AquaScore water quality rating", color: "#10b981" },
-  { text: "Contaminants found in your water", color: "#f59e0b" },
-  { text: "How your water affects your home & family", color: "#f43f5e" },
-  { text: "Real-time water testing", color: "#06b6d4" },
-  { text: "See your score transform", color: "#8b5cf6" },
-  { text: "The right system for your home", color: "#6366f1" },
-  { text: "Pricing & savings", color: "#10b981" },
-  { text: "Cost comparison & next steps", color: "#ec4899" },
+  { text: "Your home's water profile", color: "#06b6d4" },
+  { text: "What's in your water", color: "#f59e0b" },
+  { text: "Live water test", color: "#06b6d4" },
+  { text: "How it affects your family", color: "#f43f5e" },
+  { text: "The solution for your home", color: "#8b5cf6" },
+  { text: "Your options", color: "#10b981" },
 ];
 
 export function DemoWelcome({ report, companyColor, onNext }: Props) {
@@ -127,11 +125,10 @@ export function DemoWelcome({ report, companyColor, onNext }: Props) {
         className="w-full rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform flex items-center justify-center gap-2 cursor-pointer"
         style={{
           background: `linear-gradient(135deg, ${companyColor}, #06b6d4)`,
-          boxShadow: `0 4px 24px ${companyColor}30`,
+          boxShadow: `0 4px 24px ${companyColor}25`,
         }}
       >
-        <TrendingUp className="size-5" />
-        Let's See Your Water Score →
+        Let's Get Started →
       </button>
     </div>
   );

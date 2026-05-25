@@ -61,22 +61,17 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
   return (
     <div className="mx-auto max-w-lg space-y-5 pt-2">
-      {/* Header */}
+      {/* Header — lead with outcome, not product */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 border border-cyan-500/30 rounded-full px-3 py-1">
-          YOUR SYSTEM
+        <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400/70">
+          THE SOLUTION
         </span>
-        {productName ? (
-          <>
-            <h2 className="text-2xl font-black mt-3 leading-tight">{productName}</h2>
-            {productDesc && <p className="text-sm text-white/50 mt-1">{productDesc}</p>}
-          </>
-        ) : (
-          <>
-            <h2 className="text-2xl font-black mt-3 leading-tight">Your Water Protection System</h2>
-            <p className="text-sm text-white/50 mt-1">Custom designed for your water. Built for your home.</p>
-          </>
-        )}
+        <h2 className="text-2xl font-black mt-3 leading-tight">
+          Clean Water From Every Tap
+        </h2>
+        <p className="text-sm text-white/40 mt-1.5">
+          {productName ? productName : "Designed specifically for your home's water"}
+        </p>
       </div>
 
       {/* Product image */}
@@ -246,14 +241,10 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
       {/* CTA */}
       <button
         onClick={onNext}
-        className="w-full rounded-2xl p-5 text-white text-left active:scale-[0.98] transition-transform cursor-pointer"
-        style={{ background: `linear-gradient(135deg, ${color}, #06b6d4)`, boxShadow: `0 4px 24px ${color}30` }}
+        className="w-full rounded-2xl py-4 text-base font-bold text-center active:scale-[0.97] transition-transform cursor-pointer"
+        style={{ background: `linear-gradient(135deg, ${color}, #06b6d4)`, boxShadow: `0 4px 24px ${color}25` }}
       >
-        <p className="font-bold text-lg">Protect your home. Protect your family.</p>
-        <div className="flex items-center gap-2 mt-1">
-          <p className="text-sm opacity-80">See your investment</p>
-          <ArrowRight className="size-4 opacity-80" />
-        </div>
+        Continue →
       </button>
     </div>
   );

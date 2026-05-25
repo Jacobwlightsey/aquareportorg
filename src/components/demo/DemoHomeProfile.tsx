@@ -146,10 +146,8 @@ export function DemoHomeProfile({
       </div>
 
       {/* Subcopy */}
-      <p className="text-sm text-white/50 text-center leading-relaxed px-2">
-        This report is based on the water provider serving your home
-        {concerns?.householdSize ? ", your household details," : ""}
-        {" "}combined with today's live in-home test.
+      <p className="text-sm text-white/40 text-center leading-relaxed px-2">
+        Based on your water provider, household info, and today's live test.
       </p>
 
       {/* Customer info card */}

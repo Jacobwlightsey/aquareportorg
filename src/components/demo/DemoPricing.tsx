@@ -119,11 +119,11 @@ export function DemoPricing({ company, onNext, onPricingChange, initialState }: 
     <div className="mx-auto max-w-lg space-y-5 pt-2">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 border border-emerald-500/30 rounded-full px-3 py-1">
-          INVESTMENT
+        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">
+          YOUR INVESTMENT
         </span>
-        <h2 className="text-2xl font-black mt-3">Your Investment</h2>
-        <p className="text-sm text-white/50 mt-1">Protection for your entire home</p>
+        <h2 className="text-2xl font-black mt-3">Whole-Home Protection</h2>
+        <p className="text-sm text-white/40 mt-1.5">One system. Every tap. Every day.</p>
       </div>
 
       {/* Phase 1: Dealer-only placeholder warning */}

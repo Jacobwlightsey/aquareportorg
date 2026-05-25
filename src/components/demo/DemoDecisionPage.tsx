@@ -79,21 +79,14 @@ export function DemoDecisionPage({
     <div className="mx-auto max-w-lg space-y-5 pt-2">
       {/* Header */}
       <div className="text-center">
-        <span
-          className="text-[10px] font-bold uppercase tracking-widest border rounded-full px-3 py-1"
-          style={{
-            color: companyColor,
-            borderColor: `${companyColor}40`,
-          }}
-        >
-          YOUR DECISION
+        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${companyColor}B3` }}>
+          NEXT STEP
         </span>
         <h2 className="text-2xl font-black mt-3 leading-tight">
-          What Makes Sense<br />
-          <span style={{ color: companyColor }}>For Your Home?</span>
+          What Makes Sense for You?
         </h2>
-        <p className="text-sm text-white/50 mt-2 leading-relaxed">
-          Choose the next step that makes the most sense for your home.
+        <p className="text-sm text-white/40 mt-1.5">
+          No pressure — just the option that fits your timeline.
         </p>
       </div>
 

@@ -84,12 +84,11 @@ export function DemoImpact({ onNext, onBack }: Props) {
     <div className="mx-auto max-w-lg space-y-4 pt-2">
       {/* Header */}
       <div>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400 border border-rose-500/30 rounded-full px-3 py-1">
-          HEALTH IMPACT
+        <span className="text-[10px] font-bold uppercase tracking-widest text-rose-400/70">
+          DAILY IMPACT
         </span>
         <h2 className="text-2xl font-black mt-3 leading-tight">
-          How Your Water<br />
-          <span className="text-rose-400">Affects Your Family</span>
+          How This Affects Your Home
         </h2>
       </div>
 

@@ -66,6 +66,7 @@ import { DemoSummaryScreen } from "@/components/demo/DemoSummaryScreen";
 import { DemoHomeProfile } from "@/components/demo/DemoHomeProfile";
 import { DemoCustomerConcerns, type CustomerConcernState } from "@/components/demo/DemoCustomerConcerns";
 import { DemoDecisionPage } from "@/components/demo/DemoDecisionPage";
+import { DemoTransitionOverlay } from "@/components/demo/DemoTransitionOverlay";
 import { DemoDealerClose } from "@/components/demo/DemoDealerClose";
 import { DemoAssistant } from "@/components/demo/DemoAssistant";
 import { EndDemoModal } from "@/components/demo/EndDemoModal";
@@ -350,6 +351,7 @@ function DemoWizardInner() {
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
   const [concerns, setConcerns] = useState<ConcernData | null>(null);
   const [customerConcerns, setCustomerConcerns] = useState<CustomerConcernState | null>(null);
+  const [transitionDone, setTransitionDone] = useState(true);
 
   // Sprint 3E: Coaching indicators
   const [stepEnteredAt, setStepEnteredAt] = useState(Date.now());
@@ -484,6 +486,11 @@ function DemoWizardInner() {
 
   // Sprint 3E: Track step timing + update coaching
   const stepKey = activeSteps[currentStep]?.key ?? "welcome";
+
+  // Phase 3: Reset transition overlay on step change
+  useEffect(() => {
+    setTransitionDone(false);
+  }, [stepKey]);
   const overLegalCount = useMemo(
     () => contaminants.filter((c: any) => c.over_legal).length,
     [contaminants],
@@ -724,6 +731,14 @@ function DemoWizardInner() {
             grouped={activeSteps.length > 6}
           />
         </div>
+      )}
+
+      {/* ─── Phase 3: Transitional narration overlay ─── */}
+      {demoStarted && (
+        <DemoTransitionOverlay
+          currentStep={stepKey}
+          onComplete={() => setTransitionDone(true)}
+        />
       )}
 
       {/* ─── Step Content (Sprint 1G: wrapped in error boundary) ─── */}
