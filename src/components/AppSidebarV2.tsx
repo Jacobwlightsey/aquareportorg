@@ -20,35 +20,12 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "./ui/sidebar";
-
-/** Custom section label — bypasses broken SidebarGroupLabel */
-function SectionLabel({ children, color }: { children: React.ReactNode; color: string }) {
-  return (
-    <div
-      style={{
-        height: "2rem",
-        display: "flex",
-        alignItems: "center",
-        paddingLeft: "0.5rem",
-        fontSize: "0.65rem",
-        fontWeight: 600,
-        letterSpacing: "0.08em",
-        color,
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
 
 // ─── Role-based navigation configuration ─────────────────────────
 
@@ -189,134 +166,57 @@ function SidebarNav() {
     return location.pathname === href || location.pathname.startsWith(href + "/");
   };
 
+  // Build flat list of sections
+  const sections: { label: string; color: string; items: typeof pipelineNav; section: string }[] = [];
+  if (hasAccess(role, "pipeline")) sections.push({ label: "PIPELINE", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
+  if (hasAccess(role, "sales")) sections.push({ label: "SALES", color: "#34d399", items: salesNav, section: "sales" });
+  if (hasAccess(role, "retention")) sections.push({ label: "RETENTION", color: "#fbbf24", items: retentionNav, section: "retention" });
+  if (hasAccess(role, "intelligence")) sections.push({ label: "INTELLIGENCE", color: "#a78bfa", items: intelligenceNav, section: "intelligence" });
+  if (hasAccess(role, "settings")) sections.push({ label: "SETTINGS", color: "#71717a", items: settingsNav, section: "settings" });
+  if (isAdmin) sections.push({ label: "PLATFORM", color: "#fb7185", items: [{ href: "/admin", label: "Admin Dashboard", icon: ShieldCheck }], section: "settings" });
+
   return (
     <SidebarContent>
-      {/* Pipeline / Core */}
-      {hasAccess(role, "pipeline") && (
-        <SidebarGroup>
-          <SectionLabel color="rgba(34,211,238,0.8)">PIPELINE</SectionLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {pipelineNav.map((item) => (
+      <div style={{ display: "flex", flexDirection: "column", padding: "0.5rem", gap: "0.125rem", overflowY: "auto", flex: 1 }}>
+        <SidebarMenu>
+          {sections.map((sec, si) => (
+            <div key={sec.label}>
+              {/* Section divider label */}
+              <li
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "1.75rem",
+                  paddingLeft: "0.5rem",
+                  marginTop: si === 0 ? 0 : "0.5rem",
+                  fontSize: "0.625rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  color: sec.color,
+                  opacity: 0.85,
+                  userSelect: "none",
+                  listStyle: "none",
+                }}
+              >
+                {sec.label}
+              </li>
+              {/* Nav items */}
+              {sec.items.map((item) => (
                 <NavLink
                   key={item.href}
                   href={item.href}
                   label={item.label}
                   icon={item.icon}
-                  isActive={isActivePath(item.href)}
+                  isActive={sec.section === "settings" ? location.pathname === item.href : isActivePath(item.href)}
                   badge={(item as any).badgeKey === "leads" ? newLeadCount ?? 0 : undefined}
                   locked={isLocked(item.href)}
                   requiredPlan={getRequiredPlan(item.href)}
                 />
               ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Sales */}
-      {hasAccess(role, "sales") && (
-        <SidebarGroup>
-          <SectionLabel color="rgba(52,211,153,0.8)">SALES</SectionLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {salesNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={isActivePath(item.href)}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Retention */}
-      {hasAccess(role, "retention") && (
-        <SidebarGroup>
-          <SectionLabel color="rgba(251,191,36,0.8)">RETENTION</SectionLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {retentionNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={isActivePath(item.href)}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Intelligence + Marketing */}
-      {hasAccess(role, "intelligence") && (
-        <SidebarGroup>
-          <SectionLabel color="rgba(167,139,250,0.8)">INTELLIGENCE</SectionLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {intelligenceNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={isActivePath(item.href)}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Settings */}
-      {hasAccess(role, "settings") && (
-        <SidebarGroup>
-          <SectionLabel color="rgba(161,161,170,0.6)">SETTINGS</SectionLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={location.pathname === item.href}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {isAdmin && (
-        <SidebarGroup>
-          <SectionLabel color="rgba(251,113,133,0.8)">PLATFORM</SectionLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <NavLink
-                href="/admin"
-                label="Admin Dashboard"
-                icon={ShieldCheck}
-                isActive={location.pathname === "/admin"}
-              />
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
+            </div>
+          ))}
+        </SidebarMenu>
+      </div>
     </SidebarContent>
   );
 }
