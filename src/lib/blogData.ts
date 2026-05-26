@@ -31,7 +31,6 @@ export const blogToPillarMap: Record<string, { slug: string; title: string; anch
   "water-quality-scoring-system": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "water quality report software" },
   "water-treatment-business-marketing": { slug: "water-treatment-dealer-software", title: "Water Treatment Dealer Software", anchor: "water treatment dealer software" },
   "roi-professional-water-quality-reports": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "professional water quality reports" },
-,
   "chromium-6-in-drinking-water": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "water quality report software" },
   "lead-in-tap-water-guide": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "water quality reports" },
   "pfas-forever-chemicals-water": { slug: "water-quality-report-software", title: "Water Quality Report Software", anchor: "professional water reports" },
