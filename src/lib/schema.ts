@@ -61,7 +61,8 @@ export const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "AquaReport",
-  url: "https://aquareport.org",
+  alternateName: ["AquaReport.org", "Aqua Report"],
+  url: "https://aquareport.org/",
   description:
     "The water quality reporting platform built for water treatment dealers.",
   publisher: { "@type": "Organization", name: "AquaReport" },
@@ -88,7 +89,7 @@ export function articleSchema({
     author: {
       "@type": "Person",
       name: "Jacob Lightsey",
-      url: "https://aquareport.org/blog",
+      url: "https://aquareport.org/about/jacob-lightsey",
     },
     publisher: {
       "@type": "Organization",
@@ -129,5 +130,59 @@ export function breadcrumbSchema(items: { name: string; url: string }[]) {
       name: item.name,
       item: item.url,
     })),
+  };
+}
+
+export function howToSchema({
+  title,
+  description,
+  steps,
+}: {
+  title: string;
+  description: string;
+  steps: { name: string; text: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: title,
+    description,
+    step: steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+    })),
+  };
+}
+
+export function profilePageSchema({
+  name,
+  description,
+  url,
+  image,
+  jobTitle,
+  worksFor,
+}: {
+  name: string;
+  description: string;
+  url: string;
+  image?: string;
+  jobTitle: string;
+  worksFor: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    mainEntity: {
+      "@type": "Person",
+      name,
+      description,
+      url,
+      image,
+      jobTitle,
+      worksFor: { "@type": "Organization", name: worksFor },
+      sameAs: [],
+    },
   };
 }

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import PillarPage from "./pages/PillarPage";
 import { AdminPage } from "./pages/AdminPage";
@@ -12,8 +13,6 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { TrialGate } from "./components/TrialGate";
 import {
   AnalyticsPage,
-  BlogPage,
-  BlogArticlePage,
   CompanySettingsPage,
   CreateCustomerPage,
   CustomerDetailPage,
@@ -51,13 +50,29 @@ import { TerritoryMapPage } from "./pages/TerritoryMapPage";
 import { MarketingPage } from "./pages/MarketingPage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { SpouseReviewPage } from "./pages/SpouseReviewPage";
+import { DemoPreviewPage } from "./pages/DemoPreviewPage";
+// Lazy-load SEO/content pages to keep the main bundle small (~950KB blogData.ts)
+const BlogPage = lazy(() => import("./pages/BlogPage").then((m) => ({ default: m.BlogPage })));
+const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage").then((m) => ({ default: m.BlogArticlePage })));
+const AuthorPage = lazy(() => import("./pages/AuthorPage").then((m) => ({ default: m.AuthorPage })));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then((m) => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import("./pages/TermsPage").then((m) => ({ default: m.TermsPage })));
+const CityWaterPage = lazy(() => import("./pages/CityWaterPage").then((m) => ({ default: m.CityWaterPage })));
+const WaterQualityIndexPage = lazy(() => import("./pages/WaterQualityIndexPage").then((m) => ({ default: m.WaterQualityIndexPage })));
+const LearnHubPage = lazy(() => import("./pages/LearnHubPage").then((m) => ({ default: m.LearnHubPage })));
+const AttributionPage = lazy(() => import("./pages/AttributionPage").then((m) => ({ default: m.AttributionPage })));
+const AudiencePage = lazy(() => import("./pages/AudiencePage").then((m) => ({ default: m.AudiencePage })));
 
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
         <Toaster />
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" /></div>}>
         <Routes>
+          {/* Demo preview — rendered inside setup wizard iframe */}
+          <Route path="/demo/preview" element={<DemoPreviewPage />} />
+
           {/* Sprint 4A: Spouse review — public, no auth */}
           <Route path="/review/:token" element={<SpouseReviewPage />} />
 
@@ -66,6 +81,20 @@ function App() {
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />
           <Route path="/r/:shareToken/print" element={<PrintReportPage />} />
           <Route path="/r/:shareToken/v2" element={<ReportV2PublicPage />} />
+
+          {/* Legal */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+
+          {/* Author / E-E-A-T */}
+          <Route path="/about/jacob-lightsey" element={<AuthorPage />} />
+
+          {/* Water Quality City Pages */}
+          <Route path="/water-quality" element={<WaterQualityIndexPage />} />
+          <Route path="/water-quality/:slug" element={<CityWaterPage />} />
+
+          {/* Learn Hub */}
+          <Route path="/learn" element={<LearnHubPage />} />
 
           {/* Blog — own layout, public */}
           <Route path="/blog" element={<BlogPage />} />
@@ -116,6 +145,8 @@ function App() {
               <Route path="/territory-map" element={<TrialGate page="territory-map"><TerritoryMapPage /></TrialGate>} />
               <Route path="/marketing" element={<TrialGate page="marketing"><MarketingPage /></TrialGate>} />
               <Route path="/training" element={<TrialGate page="training"><TrainingPage /></TrialGate>} />
+              <Route path="/attribution" element={<TrialGate page="attribution"><AttributionPage /></TrialGate>} />
+              <Route path="/audiences" element={<TrialGate page="audiences"><AudiencePage /></TrialGate>} />
 
               {/* Reports — accessible on free trial */}
               <Route path="/generate" element={<Navigate to="/customers/new" replace />} />
@@ -137,6 +168,7 @@ function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </ThemeProvider>
     </ErrorBoundary>
   );

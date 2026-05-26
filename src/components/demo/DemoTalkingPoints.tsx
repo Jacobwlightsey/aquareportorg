@@ -170,6 +170,7 @@ const CONCERN_COACHING: Record<CustomerConcernKey, { icon: string; title: string
   stains_buildup: { icon: "🪨", title: "Hard water is their pain point", tip: "Show the appliance damage and cleaning costs. This is the practical buyer — give them ROI." },
   drinking_water: { icon: "🚰", title: "Clean drinking water is priority", tip: "Focus on what's actually in every glass. Health guidelines vs actual levels." },
   peace_of_mind: { icon: "🕊️", title: "They want peace of mind", tip: "This buyer wants reassurance. Emphasize testing, verification, warranty, and ongoing monitoring." },
+  other: { icon: "💬", title: "They have a specific concern", tip: "Ask what's on their mind. Listen first, then connect it to what your system solves." },
 };
 
 export function DemoTalkingPoints({ currentStep, company: _company, customerConcerns, isOpen, onClose }: Props) {

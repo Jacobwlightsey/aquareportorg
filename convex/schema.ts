@@ -113,6 +113,16 @@ const schema = defineSchema({
     source: v.optional(v.string()),
     assignedTo: v.optional(v.id("users")),
     lastSyncedAt: v.optional(v.number()),
+    // Facebook Lead Ads fields
+    fbLeadId: v.optional(v.string()),
+    fbFormId: v.optional(v.string()),
+    fbFormName: v.optional(v.string()),
+    fbCampaignName: v.optional(v.string()),
+    fbAdSetName: v.optional(v.string()),
+    fbAdName: v.optional(v.string()),
+    rawFbFields: v.optional(v.string()), // JSON
+    consentGiven: v.optional(v.boolean()),
+    consentTimestamp: v.optional(v.number()),
     // Smart lead scoring
     aiScore: v.optional(v.number()),
     aiScoreFactors: v.optional(v.string()), // JSON
@@ -120,7 +130,8 @@ const schema = defineSchema({
     viewCount: v.optional(v.number()),
   })
     .index("by_company", ["companyId"])
-    .index("by_status", ["companyId", "status"]),
+    .index("by_status", ["companyId", "status"])
+    .index("by_fb_lead", ["companyId", "fbLeadId"]),
 
   enterpriseLeads: defineTable({
     name: v.string(),
@@ -198,6 +209,8 @@ const schema = defineSchema({
     syncReportEvents: v.optional(v.boolean()),
     lastSyncAt: v.optional(v.number()),
     lastError: v.optional(v.string()),
+    lastHealthCheck: v.optional(v.number()),
+    tokenExpiresAt: v.optional(v.number()),
     createdBy: v.id("users"),
   })
     .index("by_company", ["companyId"])
@@ -597,6 +610,75 @@ const schema = defineSchema({
     .index("by_company", ["companyId"]),
 
   // ─── NEW: Referral Rewards (expanding existing system) ─────────
+  // ─── Tracking Events (Facebook / Attribution) ──────────────────
+  trackingEvents: defineTable({
+    companyId: v.id("companies"),
+    eventName: v.string(), // "PageView" | "Lead" | "DemoStarted" | "DemoCompleted" | "DealClosed" | "Purchase" | custom
+    eventCategory: v.string(), // "page_view" | "conversion" | "custom"
+    sessionId: v.optional(v.string()),
+    sourceUrl: v.optional(v.string()),
+    referrer: v.optional(v.string()),
+    // PII fields — always SHA-256 hashed
+    emailHash: v.optional(v.string()),
+    phoneHash: v.optional(v.string()),
+    // Facebook identifiers
+    fbClickId: v.optional(v.string()), // _fbc cookie
+    fbBrowserId: v.optional(v.string()), // _fbp cookie
+    fbEventId: v.optional(v.string()), // dedup ID
+    // Attribution
+    utmSource: v.optional(v.string()),
+    utmMedium: v.optional(v.string()),
+    utmCampaign: v.optional(v.string()),
+    utmContent: v.optional(v.string()),
+    utmTerm: v.optional(v.string()),
+    // Meta
+    ipHash: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    metadata: v.optional(v.string()), // JSON
+  })
+    .index("by_company", ["companyId"])
+    .index("by_event", ["companyId", "eventName"])
+    .index("by_session", ["companyId", "sessionId"])
+    .index("by_fbEventId", ["fbEventId"]),
+
+  // ─── Consent Records (Privacy / CCPA) ──────────────────────────
+  consentRecords: defineTable({
+    companyId: v.id("companies"),
+    sessionId: v.string(),
+    consentGiven: v.boolean(),
+    consentScope: v.string(), // "tracking" | "marketing" | "all"
+    ipHash: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    revokedAt: v.optional(v.number()),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_session", ["companyId", "sessionId"]),
+
+  // ─── Audience Segments (Pro plan, schema only) ─────────────────
+  audienceSegments: defineTable({
+    companyId: v.id("companies"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    rules: v.string(), // JSON filter rules
+    estimatedSize: v.optional(v.number()),
+    lastCalculatedAt: v.optional(v.number()),
+    createdBy: v.id("users"),
+  })
+    .index("by_company", ["companyId"]),
+
+  audienceExports: defineTable({
+    companyId: v.id("companies"),
+    segmentId: v.id("audienceSegments"),
+    destination: v.string(), // "facebook" | "csv"
+    status: v.string(), // "pending" | "processing" | "completed" | "failed"
+    recordCount: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+    createdBy: v.id("users"),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_segment", ["segmentId"]),
+
   referralRewards: defineTable({
     companyId: v.id("companies"),
     referrerName: v.string(),

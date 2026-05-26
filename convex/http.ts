@@ -487,4 +487,183 @@ http.route({
   }),
 });
 
+// ─── Zapier → Facebook Lead Ads Webhook ──────────────────────────
+http.route({
+  path: "/api/zapier-facebook-lead",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const origin = siteOrigin(request);
+
+    // Verify API key
+    const authHeader = request.headers.get("Authorization");
+    const apiKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!apiKey) return json({ error: "Missing API key" }, 401, origin);
+
+    // Hash the key and look it up
+    const keyHash = Array.from(
+      new Uint8Array(
+        await crypto.subtle.digest("SHA-256", new TextEncoder().encode(apiKey)),
+      ),
+    )
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    const keyRecord = await ctx.runQuery(api.publicApi.lookupApiKey, { keyHash });
+    if (!keyRecord || keyRecord.revokedAt) {
+      return json({ error: "Invalid API key" }, 401, origin);
+    }
+
+    // Parse lead data
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: "Invalid JSON" }, 400, origin);
+    }
+
+    const { fbLeadId, fbFormId, fbFormName, fbCampaignName, fbAdSetName, fbAdName, fields } = body;
+    if (!fbLeadId) return json({ error: "Missing fbLeadId" }, 400, origin);
+
+    // Deduplicate by fbLeadId
+    const existing = await ctx.runQuery(api.publicApi.findLeadByFbId, {
+      companyId: keyRecord.companyId,
+      fbLeadId,
+    });
+    if (existing) {
+      return json({ ok: true, leadId: existing, duplicate: true }, 200, origin);
+    }
+
+    // Extract fields from Facebook form data
+    const fieldMap: Record<string, string> = {};
+    if (Array.isArray(fields)) {
+      for (const f of fields) {
+        if (f.name && f.values?.[0]) fieldMap[f.name] = f.values[0];
+      }
+    } else if (typeof fields === "object" && fields !== null) {
+      Object.assign(fieldMap, fields);
+    }
+
+    const name = fieldMap.full_name || fieldMap.first_name
+      ? `${fieldMap.first_name || ""} ${fieldMap.last_name || ""}`.trim()
+      : fieldMap.name || "Facebook Lead";
+
+    // Create the lead
+    const leadId = await ctx.runMutation(api.leads.createFacebookLead, {
+      companyId: keyRecord.companyId,
+      name,
+      email: fieldMap.email || undefined,
+      phone: fieldMap.phone_number || fieldMap.phone || undefined,
+      source: "facebook",
+      fbLeadId,
+      fbFormId: fbFormId || undefined,
+      fbFormName: fbFormName || undefined,
+      fbCampaignName: fbCampaignName || undefined,
+      fbAdSetName: fbAdSetName || undefined,
+      fbAdName: fbAdName || undefined,
+      rawFbFields: JSON.stringify(fieldMap),
+    });
+
+    return json({ ok: true, leadId }, 201, origin);
+  }),
+});
+
+http.route({
+  path: "/api/zapier-facebook-lead",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, request) => {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": siteOrigin(request),
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+    });
+  }),
+});
+
+// ─── Tracking Pixel Endpoint ─────────────────────────────────────
+http.route({
+  path: "/api/track",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const origin = siteOrigin(request);
+
+    const rate = await ctx.runMutation(api.publicApi.recordPublicRequest, {
+      key: clientKey(request),
+      event: "track.event",
+      limit: 100,
+    });
+    if (!rate.allowed) return json({ error: "Too many requests" }, 429, origin);
+
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: "Invalid JSON" }, 400, origin);
+    }
+
+    const { companyId, eventName, sessionId, sourceUrl, referrer, emailHash, phoneHash, fbClickId, fbBrowserId, fbEventId, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, metadata } = body;
+    if (!companyId || !eventName) {
+      return json({ error: "Missing companyId or eventName" }, 400, origin);
+    }
+
+    // Validate company exists to prevent data poisoning
+    const companyExists = await ctx.runQuery(api.publicApi.lookupCompanyExists, { companyId });
+    if (!companyExists) return json({ error: "Invalid company" }, 400, origin);
+
+    // Hash the IP
+    const rawIp = clientKey(request);
+    const ipHashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawIp));
+    const ipHash = Array.from(new Uint8Array(ipHashBuf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    const eventCategory = ["Lead", "DemoStarted", "DemoCompleted", "DealClosed", "Purchase"].includes(eventName)
+      ? "conversion"
+      : eventName === "PageView"
+        ? "page_view"
+        : "custom";
+
+    await ctx.runMutation(internal.tracking.recordEvent, {
+      companyId,
+      eventName,
+      eventCategory,
+      sessionId,
+      sourceUrl,
+      referrer,
+      emailHash,
+      phoneHash,
+      fbClickId,
+      fbBrowserId,
+      fbEventId,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmContent,
+      utmTerm,
+      ipHash,
+      userAgent: request.headers.get("user-agent") || undefined,
+      metadata: metadata ? JSON.stringify(metadata) : undefined,
+    });
+
+    return json({ ok: true }, 200, origin);
+  }),
+});
+
+http.route({
+  path: "/api/track",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, request) => {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": siteOrigin(request),
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }),
+});
+
 export default http;

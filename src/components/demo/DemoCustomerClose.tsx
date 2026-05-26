@@ -8,10 +8,11 @@ import { playCelebrationSound } from "@/lib/demoSounds";
 import { ScoreGauge } from "./ScoreGauge";
 import { DemoQRCode } from "./DemoQRCode";
 import { colors } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 interface Props {
   report: any;
-  company: any;
+  company: CompanyForDemo;
   finalScore: number;
   companyColor: string;
   onEndDemo: () => void;

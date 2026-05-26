@@ -7,12 +7,14 @@ import { ArrowRight, Calendar, FileText, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { playTapSound, haptic, playCelebrationSound } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 export type DecisionChoice = "move_forward" | "schedule_followup" | "send_report";
 
 interface Props {
   customerName?: string;
   companyColor?: string;
+  company?: CompanyForDemo;
   onDecision: (choice: DecisionChoice) => void;
 }
 
@@ -46,7 +48,14 @@ const OPTIONS: {
   },
 ];
 
-export function DemoDecisionPage({ customerName: _customerName, companyColor = "#2563eb", onDecision }: Props) {
+export function DemoDecisionPage({ customerName: _customerName, companyColor = "#2563eb", company, onDecision }: Props) {
+  const configOptions = company?.demoConfig?.decisionOptions;
+  const displayOptions = configOptions?.length
+    ? OPTIONS.map((opt) => {
+        const override = configOptions.find((c: any) => c.key === opt.key);
+        return override ? { ...opt, label: override.label, description: override.description } : opt;
+      })
+    : OPTIONS;
   const [selected, setSelected] = useState<DecisionChoice | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,7 +96,7 @@ export function DemoDecisionPage({ customerName: _customerName, companyColor = "
 
       {/* Options */}
       <div className="space-y-3">
-        {OPTIONS.map((opt) => {
+        {displayOptions.map((opt) => {
           const Icon = opt.icon;
           const isSelected = selected === opt.key;
           return (

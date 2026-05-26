@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /water-quality/
+Allow: /learn
+Allow: /about/
 Disallow: /dashboard
 Disallow: /customers
 Disallow: /settings
@@ -11,5 +14,18 @@ Disallow: /analytics
 Disallow: /leads
 Disallow: /platform
 Disallow: /verify
+Disallow: /pipeline
+Disallow: /appointments
+Disallow: /proposals
+Disallow: /commissions
+Disallow: /retention
+Disallow: /follow-ups
+Disallow: /reviews
+Disallow: /territory-map
+Disallow: /marketing
+Disallow: /training
+Disallow: /attribution
+Disallow: /audiences
+Disallow: /demo/preview
 
 Sitemap: https://aquareport.org/sitemap.xml

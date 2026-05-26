@@ -8,9 +8,10 @@ import { useEffect, useState } from "react";
 import { playRevealSound, playTapSound, playToggleSound, haptic } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
 import type { PricingState } from "./DemoPricing";
+import type { CompanyForDemo } from "@/lib/types";
 
 interface Props {
-  company: any;
+  company: CompanyForDemo;
   pricingState: PricingState | null;
   onPricingChange: (state: PricingState) => void;
   onNext: () => void;
