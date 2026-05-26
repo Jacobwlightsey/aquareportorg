@@ -3,6 +3,7 @@ import {
   Building2,
   Check,
   ChevronDown,
+  Copy,
   CreditCard,
   Droplets,
   ExternalLink,
@@ -133,6 +134,7 @@ export function CompanySettingsPage() {
 
         {/* ── Billing ── */}
         {isAdmin && <BillingSection />}
+        {isAdmin && <FacebookSection />}
       </div>
     </div>
   );
@@ -1140,6 +1142,85 @@ function BillingSection() {
         </Button>
       )}
     </SettingsSection>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Facebook Integration Section
+   ═══════════════════════════════════════════════════════════════════ */
+function FacebookSection() {
+  const [pixelId, setPixelId] = useState("");
+  const [zapierKey, setZapierKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const company = useQuery(api.companies.getMyCompany);
+
+  const pixelSnippet = company?._id
+    ? `<script src="https://aquareport.org/pixel.js"\n        data-company-id="${company._id}"\n        data-api="https://groovy-basilisk-939.convex.site"><\/script>`
+    : "<!-- Set up your company first -->";
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+    toast.success("Copied!");
+  };
+
+  return (
+    <>
+      <SettingsSection emoji="📊" title="Facebook & Tracking" description="Pixel tracking, lead ads, and attribution">
+        <div className="space-y-6">
+          {/* Pixel Code */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">AquaReport Tracking Pixel</Label>
+            <p className="text-xs text-muted-foreground">Add this script tag to your website to track visitors, leads, and conversions.</p>
+            <div className="relative">
+              <pre className="rounded-lg bg-muted p-3 text-xs overflow-x-auto font-mono whitespace-pre-wrap">{pixelSnippet}</pre>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-2"
+                onClick={() => handleCopy(pixelSnippet, "pixel")}
+              >
+                {copied === "pixel" ? <Check className="size-3" /> : <Copy className="size-3" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Zapier Setup */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Zapier Integration (Facebook Lead Ads)</Label>
+            <p className="text-xs text-muted-foreground">
+              Use this endpoint in your Zapier workflow to automatically import Facebook Lead Ad submissions.
+            </p>
+            <div className="rounded-lg bg-muted p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-muted-foreground">POST</span>
+                <code className="text-xs">https://groovy-basilisk-939.convex.site/api/zapier-facebook-lead</code>
+              </div>
+              <p className="text-xs text-muted-foreground">Authorization: Bearer [your-api-key]</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Generate an API key in your account settings and add it as a Bearer token in Zapier's webhook headers.
+            </p>
+          </div>
+
+          {/* Events tracking info */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Tracked Events</Label>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {["PageView", "Lead", "DemoStarted", "DemoCompleted", "DealClosed", "Purchase"].map((evt) => (
+                <div key={evt} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
+                  <div className="size-2 rounded-full bg-green-500" />
+                  <span>{evt}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SettingsSection>
+    </>
   );
 }
 

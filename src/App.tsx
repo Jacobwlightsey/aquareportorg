@@ -59,6 +59,7 @@ import { CityWaterPage } from "./pages/CityWaterPage";
 import { WaterQualityIndexPage } from "./pages/WaterQualityIndexPage";
 import { LearnHubPage } from "./pages/LearnHubPage";
 import { AttributionPage } from "./pages/AttributionPage";
+import { AudiencePage } from "./pages/AudiencePage";
 
 function App() {
   return (
@@ -142,6 +143,7 @@ function App() {
               <Route path="/marketing" element={<TrialGate page="marketing"><MarketingPage /></TrialGate>} />
               <Route path="/training" element={<TrialGate page="training"><TrainingPage /></TrialGate>} />
               <Route path="/attribution" element={<TrialGate page="attribution"><AttributionPage /></TrialGate>} />
+              <Route path="/audiences" element={<TrialGate page="audiences"><AudiencePage /></TrialGate>} />
 
               {/* Reports — accessible on free trial */}
               <Route path="/generate" element={<Navigate to="/customers/new" replace />} />
