@@ -14,7 +14,7 @@ interface Props {
   companyColor?: string;
 }
 
-export function DemoQRCode({ url, size = 180, label, companyColor = "#2563eb" }: Props) {
+export function DemoQRCode({ url, size = 180, label, companyColor: _companyColor = "#2563eb" }: Props) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {

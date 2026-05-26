@@ -46,7 +46,7 @@ const OPTIONS: {
   },
 ];
 
-export function DemoDecisionPage({ customerName, companyColor = "#2563eb", onDecision }: Props) {
+export function DemoDecisionPage({ customerName: _customerName, companyColor = "#2563eb", onDecision }: Props) {
   const [selected, setSelected] = useState<DecisionChoice | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -97,7 +97,7 @@ function TogglePill({
   );
 }
 
-export function DemoConcernIntake({ onNext, onBack, initial }: Props) {
+export function DemoConcernIntake({ onNext, onBack: _onBack, initial }: Props) {
   const [householdSize, setHouseholdSize] = useState(initial?.householdSize ?? 3);
   const [bathrooms, setBathrooms] = useState(initial?.bathrooms ?? 2);
   const [hasKids, setHasKids] = useState(initial?.hasKids ?? false);

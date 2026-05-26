@@ -120,7 +120,7 @@ export function TrialGate({
   page: string;
   children: React.ReactNode;
 }) {
-  const { loading, isFree, hasUsedTrial, isInTrialExperience, plan, effectivePlan } = useFreeTrial();
+  const { loading, isFree, hasUsedTrial, isInTrialExperience, plan, effectivePlan: _effectivePlan } = useFreeTrial();
 
   // Still loading — avoid flash
   if (loading) return null;

@@ -2,8 +2,8 @@
    Product, warranty, how it works. Surface cards, designTokens.
    ──── */
 
-import { ArrowRight, Check, Droplets, Info, Shield, Sparkles } from "lucide-react";
-import { playTapSound } from "@/lib/demoSounds";
+import { Check, Droplets, Info, Shield, Sparkles } from "lucide-react";
+
 import { colors } from "@/lib/designTokens";
 
 interface Props {
@@ -48,7 +48,6 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
   const cfg = company?.demoConfig;
 
   const productName = company?.solutionProductName || report.solutionProductName || null;
-  const productDesc = company?.solutionProductDescription || report.solutionProductDescription || null;
   const productBullets = company?.solutionProductBullets?.length ? company.solutionProductBullets : report.solutionProductBullets?.length ? report.solutionProductBullets : [];
   const productImage = company?.solutionProductImage || report.solutionProductImage;
 

@@ -1,40 +1,13 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import {
-  Activity,
-  BarChart3,
-  BookOpen,
-  Building2,
-  Calendar,
-  ChartNoAxesCombined,
-  CreditCard,
-  DollarSign,
-  FileText,
-  FolderKanban,
-  Home,
-  Lock,
-  LogOut,
-  Mail,
-  Map,
-  Megaphone,
-
-  PenTool,
-  RefreshCw,
-  Settings,
-  ShieldCheck,
-  Star,
-
-  Target,
-  Users as UsersIcon,
-  Users2,
-} from "lucide-react";
+import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, RefreshCw, Settings, ShieldCheck, Star, Users as UsersIcon, Users2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
 
 import { APP_NAME } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
-import { Badge } from "./ui/badge";
+
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -60,7 +33,6 @@ import {
 // ─── Role-based navigation configuration ─────────────────────────
 
 /** Pages accessible on free trial (not gated) */
-const FREE_TRIAL_PAGES = new Set(["/dashboard", "/customers", "/subscription", "/settings", "/company", "/team"]);
 
 const pipelineNav = [
   { href: "/dashboard", label: "Dashboard", icon: Home },

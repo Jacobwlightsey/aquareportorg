@@ -4,7 +4,7 @@
    for the customer's daily life, with relevant contaminant data.
    ──── */
 
-import { Droplets, Home, Shield, ShieldAlert, Sparkles, Heart, Banknote, Layers } from "lucide-react";
+import { Droplets, Home, Shield, ShieldAlert, Sparkles, Banknote, Layers } from "lucide-react";
 import { useMemo, useState } from "react";
 import { playTapSound } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
@@ -20,18 +20,8 @@ interface Props {
   concerns?: { householdSize?: number; bathrooms?: number; hasKids?: boolean; hasPets?: boolean; currentSolution?: string } | null;
 }
 
-/* ── Severity badge styles ── */
-const SEVERITY = {
-  HIGH: { bg: `${colors.critical}20`, color: colors.critical, label: "HIGH" },
-  ELEVATED: { bg: `${colors.warning}20`, color: colors.warning, label: "ELEVATED" },
-  MODERATE: { bg: `${colors.primary}20`, color: colors.primary, label: "MODERATE" },
-};
+/* Severity badge styles removed — unused */
 
-function getSeverity(c: any) {
-  if (c.over_legal) return SEVERITY.HIGH;
-  if (c.over_health) return SEVERITY.ELEVATED;
-  return SEVERITY.MODERATE;
-}
 
 /* ── Tab definitions ── */
 const CATEGORY_TABS = [
@@ -148,7 +138,7 @@ function bestStartingTab(selected?: CustomerConcernKey[]): number {
   return idx >= 0 ? idx : 0;
 }
 
-export function DemoImpact({ contaminants = [], onNext, onBack, customerConcerns, liveReadings, report, concerns }: Props) {
+export function DemoImpact({ contaminants = [], onNext: _onNext, onBack: _onBack, customerConcerns, liveReadings, report: _report, concerns }: Props) {
   const startTab = useMemo(() => bestStartingTab(customerConcerns?.selected), [customerConcerns]);
   const [activeIdx, setActiveIdx] = useState(startTab);
   const tab = CATEGORY_TABS[activeIdx];

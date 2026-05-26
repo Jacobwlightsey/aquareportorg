@@ -47,7 +47,7 @@ function readingRows(readings: Record<string, any>, report: any) {
     }));
 }
 
-export function DemoScoreTransform({ score, report, company, contaminants, liveReadings, projectedScore, onNext, reportBaseScore }: Props) {
+export function DemoScoreTransform({ score, report, company, contaminants: _contaminants, liveReadings, projectedScore, onNext, reportBaseScore }: Props) {
   const companyColor = company?.primaryColor || report.companyColor || colors.primary;
   const rows = readingRows(liveReadings, report);
   const [showReadings, setShowReadings] = useState(false);

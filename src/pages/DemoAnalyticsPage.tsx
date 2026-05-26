@@ -198,6 +198,14 @@ export function DemoAnalyticsPage() {
     );
   }
 
+  if (!analytics || !enhanced) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-white/40">No analytics data available yet.</div>
+      </div>
+    );
+  }
+
   const profiles =
     outcomeFilter === "all"
       ? enhanced.customerProfiles

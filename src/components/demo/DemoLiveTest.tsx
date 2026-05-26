@@ -6,7 +6,7 @@ import { useAction } from "convex/react";
 import { ArrowRight, Check, Droplets, Loader2, TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { playTapSound, playRevealSound, playPenaltySound } from "@/lib/demoSounds";
+import { playRevealSound, playPenaltySound } from "@/lib/demoSounds";
 import { computeAquaScore, readingPayload, type FieldWaterReadings } from "@/lib/waterScore";
 import { api } from "../../../convex/_generated/api";
 import { ScoreGauge } from "./ScoreGauge";

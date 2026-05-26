@@ -3,7 +3,7 @@
    The user should see the VALUE before the price drops.
    ──── */
 
-import { ArrowRight, Check, ChevronDown, ChevronUp, CreditCard, Shield, Tag, Zap } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, CreditCard, Shield, Tag, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { playRevealSound, playTapSound, playToggleSound, haptic } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
@@ -62,7 +62,7 @@ function calcMonthly(principal: number, apr: number, months: number): number {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
 }
 
-export function DemoInvestmentBreakdown({ company, pricingState, onPricingChange, onNext }: Props) {
+export function DemoInvestmentBreakdown({ company, pricingState, onPricingChange, onNext: _onNext }: Props) {
   const cfg = company?.demoConfig;
   const revealPrice = pricingState?.revealedPrice ?? cfg?.revealPrice ?? 9995;
   const programPrice = pricingState?.programPrice ?? cfg?.programPrice ?? 12995;

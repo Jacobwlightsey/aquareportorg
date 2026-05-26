@@ -41,7 +41,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function DemoTrustProof({ company, report, onNext }: Props) {
+export function DemoTrustProof({ company, report, onNext: _onNext }: Props) {
   const trustConfig = (company as any)?.demoConfig?.trustSection;
   const hasCustomReviews = !!trustConfig?.reviews?.length;
   const reviews = hasCustomReviews ? trustConfig.reviews : DEFAULT_REVIEWS;

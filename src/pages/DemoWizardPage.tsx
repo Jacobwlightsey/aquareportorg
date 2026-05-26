@@ -26,20 +26,8 @@ import {
   usePresentationModeProvider,
   usePresentationMode,
 } from "@/hooks/usePresentationMode";
-import {
-  DemoModeContext,
-  useDemoModeProvider,
-  useDemoMode,
-  DEFAULT_MODE_STEPS,
-  MODE_LABELS,
-  type DemoModeType,
-} from "@/hooks/useDemoMode";
-import {
-  ViewModeContext,
-  useViewModeProvider,
-  useViewMode,
-  type ViewModeType,
-} from "@/hooks/useViewMode";
+import { DemoModeContext, useDemoModeProvider, useDemoMode, DEFAULT_MODE_STEPS } from "@/hooks/useDemoMode";
+import { ViewModeContext, useViewModeProvider, useViewMode } from "@/hooks/useViewMode";
 
 // Sprint 1: mute hook
 import {
@@ -236,7 +224,6 @@ function useSwipeNavigation(goNext: () => void, goBack: () => void) {
   return { onTouchStart, onTouchEnd };
 }
 
-
 /* FullscreenToggle now imported from shared component */
 
 /* ═══════════════════════════════════════════════════════
@@ -310,7 +297,7 @@ function DemoWizardInner() {
   // Sprint 3E: Coaching indicators
   const [stepEnteredAt, setStepEnteredAt] = useState(Date.now());
   const [stepTimings, setStepTimings] = useState<StepTiming[]>([]);
-  const [scoreRevealSkipped, setScoreRevealSkipped] = useState(false);
+  const [scoreRevealSkipped, _setScoreRevealSkipped] = useState(false);
   const [coaching, setCoaching] = useState<CoachingState>({ level: "green", tip: "" });
   const [showCoachingTip, setShowCoachingTip] = useState(false);
 
@@ -364,7 +351,7 @@ function DemoWizardInner() {
     if (!reportId) return null;
     return {
       currentStep,
-      liveReadings,
+      liveReadings: liveReadings as DemoSaveState["liveReadings"],
       pricingState,
       boostApplied,
       concerns,
@@ -463,7 +450,6 @@ function DemoWizardInner() {
 
   // Sprint 3E: Track step timing + update coaching
   const stepKey = activeSteps[currentStep]?.key ?? "welcome";
-
 
   const overLegalCount = useMemo(
     () => contaminants.filter((c: any) => c.over_legal).length,
@@ -569,7 +555,7 @@ function DemoWizardInner() {
   const isCustomerView = viewMode === "customer";
 
   // In customer view, hide certain UI elements
-  const showTopBarChrome = !isCustomerFacing && !isCustomerView;
+
   const showStepLabel = !isCustomerFacing && !isCustomerView && !isPresentationMode;
   const showTimer = !isCustomerFacing && !isCustomerView;
   const showProgressBar = !isCustomerFacing;
@@ -695,7 +681,7 @@ function DemoWizardInner() {
         currentStep={currentStep + 1}
         totalSteps={activeSteps.length}
         companyName={report.companyName || company?.name}
-        companyLogo={company?.logo}
+        companyLogo={company?.logoUrl}
         isRepView={viewMode === "rep"}
         coachingOpen={coachingOpen}
         onToggleCoaching={() => setCoachingOpen((o: boolean) => !o)}

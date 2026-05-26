@@ -3,7 +3,7 @@
    Editable inputs with real-time total calculation.
    ──── */
 
-import { DollarSign, TrendingDown, TrendingUp } from "lucide-react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { playTapSound } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -37,7 +37,7 @@ const DEFAULT_COSTS: CostItem[] = [
   { id: "energy", label: "Energy Waste", placeholder: 15, color: colors.primary, description: "Scale reduces heater efficiency" },
 ];
 
-export function DemoCostComparison({ company, onNext, onBack, onExpensesChange, onCostBreakdownChange }: Props) {
+export function DemoCostComparison({ company, onNext: _onNext, onBack: _onBack, onExpensesChange, onCostBreakdownChange }: Props) {
   const [showYearly, setShowYearly] = useState(false);
   const costs = useMemo(() => {
     const cc = (company as any)?.demoConfig?.costComparison;

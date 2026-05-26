@@ -4,7 +4,7 @@
    2-column grid. Footer note + Continue CTA.
    ──── */
 
-import { Check, Heart, Sparkles, Home, Wind, Banknote, Layers, Shield, Droplets, HelpCircle } from "lucide-react";
+import { Check, Heart, Sparkles, Home, Wind, Banknote, Layers, Shield, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { playTapSound, haptic } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getMembership } from "./security";
-import { api, internal } from "./_generated/api";
+
 
 export const getProposals = query({
   args: {},

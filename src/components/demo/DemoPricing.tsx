@@ -73,7 +73,7 @@ function useAnimatedNum(target: number, duration = 600) {
   return val;
 }
 
-export function DemoPricing({ company, onNext, onBack, onPricingChange, initialState, monthlyExpenses = 0, concerns, costBreakdown }: Props) {
+export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPricingChange, initialState, monthlyExpenses: _monthlyExpenses = 0, concerns, costBreakdown }: Props) {
   const cfg = company?.demoConfig;
   const savedProgramPrice = cfg?.programPrice || PLACEHOLDER_PROGRAM_PRICE;
   const revealPrice = cfg?.revealPrice || PLACEHOLDER_REVEAL_PRICE;

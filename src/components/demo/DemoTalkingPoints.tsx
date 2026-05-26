@@ -172,7 +172,7 @@ const CONCERN_COACHING: Record<CustomerConcernKey, { icon: string; title: string
   peace_of_mind: { icon: "🕊️", title: "They want peace of mind", tip: "This buyer wants reassurance. Emphasize testing, verification, warranty, and ongoing monitoring." },
 };
 
-export function DemoTalkingPoints({ currentStep, company, customerConcerns, isOpen, onClose }: Props) {
+export function DemoTalkingPoints({ currentStep, company: _company, customerConcerns, isOpen, onClose }: Props) {
   const [activeSection, setActiveSection] = useState<SectionKey>("talkingPoints");
 
   const stepContent = STEP_COACHING[currentStep] || STEP_COACHING.welcome;

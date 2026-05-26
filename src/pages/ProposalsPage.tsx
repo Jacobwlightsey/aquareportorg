@@ -1,21 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import {
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Copy,
-  DollarSign,
-  Edit3,
-  Eye,
-  FileText,
-  Package,
-  Plus,
-  Save,
-  Send,
-  X,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle, ChevronDown, ChevronUp, Clock, Copy, DollarSign, Edit3, Eye, FileText, Package, Plus, Save, Send, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -31,13 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
@@ -115,7 +93,7 @@ function StatusProgress({ status }: { status: string }) {
     <div className="flex items-center gap-1 mt-2">
       {STATUS_ORDER.map((s, i) => {
         const isActive = i <= activeIdx;
-        const info = STATUS_MAP[s];
+
         return (
           <div key={s} className="flex items-center gap-1 flex-1">
             <div

@@ -41,23 +41,19 @@ const BENEFITS = [
   "Enjoy Peace of Mind",
 ];
 
-function midScore(current: number, projected: number): number {
-  const mid = Math.round(current + (projected - current) * 0.4);
-  return Math.max(current + 5, Math.min(projected - 10, mid));
-}
 
 export function DemoSummaryScreen({
-  report,
-  company,
+  report: _report,
+  company: _company,
   initialScore,
   verifiedScore,
   projectedScore,
   contaminants = [],
-  boostApplied = false,
+  boostApplied: _boostApplied = false,
   companyColor = colors.primary,
   customerConcerns,
   onNext,
-  liveReadings,
+  liveReadings: _liveReadings,
   concerns,
 }: Props) {
   const journeySteps = [
