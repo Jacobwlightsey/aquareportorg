@@ -51,6 +51,7 @@ import { TerritoryMapPage } from "./pages/TerritoryMapPage";
 import { MarketingPage } from "./pages/MarketingPage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { SpouseReviewPage } from "./pages/SpouseReviewPage";
+import { DemoPreviewPage } from "./pages/DemoPreviewPage";
 
 function App() {
   return (
@@ -58,6 +59,9 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <Toaster />
         <Routes>
+          {/* Demo preview — rendered inside setup wizard iframe */}
+          <Route path="/demo/preview" element={<DemoPreviewPage />} />
+
           {/* Sprint 4A: Spouse review — public, no auth */}
           <Route path="/review/:token" element={<SpouseReviewPage />} />
 

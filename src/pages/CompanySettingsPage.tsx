@@ -25,7 +25,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SUBSCRIPTION_PLANS_FLAT as SUBSCRIPTION_PLANS } from "@/lib/constants";
@@ -60,6 +60,11 @@ import { DemoSetupWizard } from "@/components/DemoSetupWizard";
 
 type TeamRole = "owner" | "admin" | "manager" | "sales_rep" | "viewer";
 
+/* ═══════════════════════════════════════════════════════════════════
+   Main Page — Apple Settings iOS aesthetic
+   Single scrollable page, no tabs, auto-save with debounce
+   ═══════════════════════════════════════════════════════════════════ */
+
 export function CompanySettingsPage() {
   const navigate = useNavigate();
   const company = useQuery(api.companies.getMyCompany);
@@ -71,14 +76,19 @@ export function CompanySettingsPage() {
   const revokeInvite = useMutation(api.companies.revokeInvite);
   const [showSetup, setShowSetup] = useState(false);
 
-  // If no company yet, show creation form
   if (company === null) {
     return <CreateCompanyForm onCreate={createCompany} onCreated={() => setShowSetup(true)} />;
   }
 
-  // Show setup wizard if just created OR demoConfig is empty
-  if (showSetup || (company && !(company as any).demoConfig?.demoSetupComplete)) {
-    return <DemoSetupWizard company={company} onComplete={() => { setShowSetup(false); navigate("/dashboard", { replace: true }); }} onSkip={() => { setShowSetup(false); }} />;
+  // Fix wizard trigger: only show for truly empty demoConfig (not just missing demoSetupComplete)
+  if (showSetup || (company && !company.demoConfig)) {
+    return (
+      <DemoSetupWizard
+        company={company}
+        onComplete={() => { setShowSetup(false); navigate("/dashboard", { replace: true }); }}
+        onSkip={() => { setShowSetup(false); }}
+      />
+    );
   }
 
   if (company === undefined) {
@@ -89,136 +99,175 @@ export function CompanySettingsPage() {
     );
   }
 
+  const isAdmin = company.role === "admin" || company.role === "owner";
+
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">⚙️ Company Settings</h1>
+    <div className="max-w-xl mx-auto pb-24">
+      {/* Page header */}
+      <div className="pt-6 pb-8">
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Manage your company profile, team, branding, and demo experience
+          Company, branding, demo config, team & billing
         </p>
       </div>
 
-      <CompanyProfileCard company={company} onUpdate={updateCompany} />
+      <div className="space-y-6">
+        {/* ── Company ── */}
+        <CompanySection company={company} onUpdate={updateCompany} />
 
-      <BrandingCard company={company} onUpdate={updateCompany} />
+        {/* ── Branding ── */}
+        <BrandingSection company={company} onUpdate={updateCompany} />
 
-      {(company.role === "admin" || company.role === "owner") && <DemoStepConfigCard />}
+        {/* ── Demo Config (all sections inline) ── */}
+        {isAdmin && <DemoWizardStepsSection />}
+        {isAdmin && <DemoConfigSections company={company} />}
 
-      {(company.role === "admin" || company.role === "owner") && <DemoConfigCard />}
+        {/* ── Team ── */}
+        <TeamSection
+          members={members ?? []}
+          isAdmin={isAdmin}
+          onAdd={addMember}
+          onRemove={removeMember}
+          onRevoke={revokeInvite}
+        />
 
-      <TeamCardFixed
-        members={members ?? []}
-        isAdmin={company.role === "admin" || company.role === "owner"}
-        onAdd={addMember}
-        onRemove={removeMember}
-        onRevoke={revokeInvite}
-      />
-
-      {(company.role === "admin" || company.role === "owner") && <StripeCard />}
+        {/* ── Billing ── */}
+        {isAdmin && <BillingSection />}
+      </div>
     </div>
   );
 }
 
-function CreateCompanyForm({
-  onCreate,
-  onCreated,
-}: {
-  onCreate: (args: { name: string; email?: string; phone?: string }) => Promise<unknown>;
-  onCreated: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
+/* ═══════════════════════════════════════════════════════════════════
+   SettingsSection — Reusable section wrapper (always open)
+   ═══════════════════════════════════════════════════════════════════ */
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setLoading(true);
-    try {
-      await onCreate({
-        name: name.trim(),
-        email: email.trim() || undefined,
-        phone: phone.trim() || undefined,
-      });
-      toast.success("Company created!");
-      onCreated();
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to create company"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
+function SettingsSection({ emoji, title, description, children }: { emoji: string; title: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-blue-500/10 mx-auto mb-2">
-            <Building2 className="size-7 text-blue-500" />
+    <div className="rounded-2xl border bg-card overflow-hidden">
+      <div className="px-5 pt-5 pb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-lg">{emoji}</span>
+          <div>
+            <h3 className="text-sm font-semibold">{title}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
           </div>
-          <CardTitle>Set Up Your Company</CardTitle>
-          <CardDescription>
-            Create your company profile to start generating branded reports
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Company Name *</Label>
-              <Input
-                id="name"
-                placeholder="e.g. Pure Water Solutions"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Business Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="info@yourcompany.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                placeholder="(555) 123-4567"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </div>
-            <Button type="submit" disabled={loading || !name.trim()} className="w-full">
-              {loading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Building2 className="size-4" />
-              )}
-              Create Company
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <div className="px-5 pb-5 space-y-3">
+        {children}
+      </div>
     </div>
   );
 }
 
-function CompanyProfileCard({
-  company,
-  onUpdate,
+/* ═══════════════════════════════════════════════════════════════════
+   EmojiListItem — emoji circle + label + description, hover delete
+   ═══════════════════════════════════════════════════════════════════ */
+
+function EmojiListItem({
+  emoji,
+  label,
+  description,
+  onEmojiChange,
+  onLabelChange,
+  onDescriptionChange,
+  onRemove,
 }: {
-  company: Record<string, unknown>;
-  onUpdate: (args: Record<string, string | undefined>) => Promise<unknown>;
+  emoji: string;
+  label: string;
+  description?: string;
+  onEmojiChange?: (v: string) => void;
+  onLabelChange: (v: string) => void;
+  onDescriptionChange?: (v: string) => void;
+  onRemove: () => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+  return (
+    <div className="group flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-muted/30 transition-colors">
+      {onEmojiChange ? (
+        <input
+          value={emoji}
+          onChange={(e) => onEmojiChange(e.target.value)}
+          className="size-9 rounded-full bg-muted/50 text-center text-base shrink-0 border-0 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+          style={{ lineHeight: "36px" }}
+        />
+      ) : (
+        <div className="size-9 rounded-full bg-muted/50 flex items-center justify-center text-base shrink-0">{emoji}</div>
+      )}
+      <div className="flex-1 min-w-0 space-y-1">
+        <Input
+          value={label}
+          onChange={(e) => onLabelChange(e.target.value)}
+          placeholder="Label"
+          className="h-8 text-sm font-medium border-0 bg-transparent px-0 focus-visible:ring-0 shadow-none"
+        />
+        {onDescriptionChange !== undefined && (
+          <Input
+            value={description || ""}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            placeholder="Description"
+            className="h-7 text-xs text-muted-foreground border-0 bg-transparent px-0 focus-visible:ring-0 shadow-none"
+          />
+        )}
+      </div>
+      <button
+        onClick={onRemove}
+        className="p-1.5 rounded-lg text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-red-500 transition-colors cursor-pointer shrink-0 mt-1"
+      >
+        <X className="size-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AddButton — simple "+ Add" text link
+   ═══════════════════════════════════════════════════════════════════ */
+
+function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="text-sm text-blue-500 hover:text-blue-400 font-medium cursor-pointer transition-colors flex items-center gap-1.5 pl-3">
+      <Plus className="size-3.5" /> {label}
+    </button>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Auto-save hook — 800ms debounce
+   ═══════════════════════════════════════════════════════════════════ */
+
+function useAutoSave(saveFn: () => Promise<void>, deps: any[], delay = 800) {
+  const [saved, setSaved] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    if (!mountedRef.current) { mountedRef.current = true; return; }
+    setSaved(false);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      try {
+        await saveFn();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } catch { /* silent */ }
+    }, delay);
+    return () => clearTimeout(timerRef.current);
+  }, deps);
+
+  return saved;
+}
+
+function SavedIndicator({ saved }: { saved: boolean }) {
+  if (!saved) return null;
+  return <span className="text-[11px] text-emerald-500 font-medium animate-in fade-in">✓ Saved</span>;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Company Section
+   ═══════════════════════════════════════════════════════════════════ */
+
+function CompanySection({ company, onUpdate }: { company: Record<string, unknown>; onUpdate: (args: Record<string, string | undefined>) => Promise<unknown> }) {
   const [name, setName] = useState((company.name as string) || "");
   const [email, setEmail] = useState((company.email as string) || "");
   const [phone, setPhone] = useState((company.phone as string) || "");
@@ -233,147 +282,38 @@ function CompanyProfileCard({
     setAddress((company.address as string) || "");
   }, [company]);
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await onUpdate({
-        name: name.trim(),
-        email: email.trim() || undefined,
-        phone: phone.trim() || undefined,
-        website: website.trim() || undefined,
-        address: address.trim() || undefined,
-      });
-      toast.success("Company profile updated");
-      setEditing(false);
-    } catch {
-      toast.error("Failed to update");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const saved = useAutoSave(async () => {
+    await onUpdate({
+      name: name.trim() || undefined,
+      email: email.trim() || undefined,
+      phone: phone.trim() || undefined,
+      website: website.trim() || undefined,
+      address: address.trim() || undefined,
+    });
+  }, [name, email, phone, website, address]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base">
-            🏢 Company Profile
-          </CardTitle>
-          <CardDescription>
-            Your business info — this appears on every report you generate
-          </CardDescription>
+    <SettingsSection emoji="🏢" title="Company" description="Your business info — appears on every report">
+      <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+      <div className="space-y-3">
+        <div><Label className="text-xs text-muted-foreground">Company Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label className="text-xs text-muted-foreground">Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@company.com" /></div>
+          <div><Label className="text-xs text-muted-foreground">Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" /></div>
         </div>
-        {!editing && (
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent>
-        {editing ? (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Company Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="info@company.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Website</Label>
-              <Input
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://yourcompany.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="123 Main St, City, State"
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setEditing(false)}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Check className="size-4" />
-                )}
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            <InfoRow icon={Building2} label="Company" value={company.name as string} emoji="🏢" />
-            <InfoRow icon={Mail} label="Email" value={(company.email as string) || "—"} emoji="📧" />
-            <InfoRow icon={Phone} label="Phone" value={(company.phone as string) || "—"} emoji="📱" />
-            <InfoRow icon={Globe} label="Website" value={(company.website as string) || "—"} emoji="🌐" />
-            <InfoRow icon={MapPin} label="Address" value={(company.address as string) || "—"} emoji="📍" />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <div><Label className="text-xs text-muted-foreground">Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourcompany.com" /></div>
+        <div><Label className="text-xs text-muted-foreground">Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St, City, State" /></div>
+      </div>
+    </SettingsSection>
   );
 }
 
-function InfoRow({
-  icon: _Icon,
-  label,
-  value,
-  emoji,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  emoji?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted/40 transition-colors">
-      <span className="text-base shrink-0">{emoji || "•"}</span>
-      <span className="text-sm text-muted-foreground w-20 shrink-0 font-medium">
-        {label}
-      </span>
-      <span className="text-sm font-medium">{value}</span>
-    </div>
-  );
-}
+/* ═══════════════════════════════════════════════════════════════════
+   Branding Section
+   ═══════════════════════════════════════════════════════════════════ */
 
-function BrandingCard({
-  company,
-  onUpdate,
-}: {
-  company: Record<string, unknown>;
-  onUpdate: (args: Record<string, string | string[] | undefined>) => Promise<unknown>;
-}) {
-  const [color, setColor] = useState(
-    (company.primaryColor as string) || "#2563eb"
-  );
+function BrandingSection({ company, onUpdate }: { company: Record<string, unknown>; onUpdate: (args: Record<string, string | string[] | undefined>) => Promise<unknown> }) {
+  const [color, setColor] = useState((company.primaryColor as string) || "#2563eb");
   const [logoUrl, setLogoUrl] = useState((company.logoUrl as string) || "");
   const [productName, setProductName] = useState((company.solutionProductName as string) || "Whole Home Advanced Filtration System");
   const [productImage, setProductImage] = useState((company.solutionProductImage as string) || "");
@@ -383,7 +323,6 @@ function BrandingCard({
       ? (company.solutionProductBullets as string[]).join("\n")
       : "Reduces chemicals, heavy metals, and harmful contaminants\nProtects your health and home\nImproves taste, skin, and hair\nHigh capacity, low maintenance"
   );
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setColor((company.primaryColor as string) || "#2563eb");
@@ -398,189 +337,621 @@ function BrandingCard({
     );
   }, [company]);
 
-  const readImageFile = (file: File, setter: (value: string) => void) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-    if (file.size > 15_000_000) {
-      toast.error("Please use an image under 15MB");
-      return;
-    }
+  const readImageFile = (file: File, setter: (v: string) => void) => {
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image"); return; }
+    if (file.size > 15_000_000) { toast.error("Image must be under 15MB"); return; }
     const reader = new FileReader();
     reader.onload = () => setter(String(reader.result || ""));
     reader.readAsDataURL(file);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await onUpdate({
-        primaryColor: color,
-        logoUrl: logoUrl.trim() || undefined,
-        solutionProductName: productName.trim() || undefined,
-        solutionProductImage: productImage.trim() || undefined,
-        solutionProductDescription: productDescription.trim() || undefined,
-        solutionProductBullets: productBullets
-          .split("\n")
-          .map((item) => item.trim())
-          .filter(Boolean)
-          .slice(0, 6),
-      });
-      toast.success("Branding updated");
-    } catch {
-      toast.error("Failed to update");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const saved = useAutoSave(async () => {
+    await onUpdate({
+      primaryColor: color,
+      logoUrl: logoUrl.trim() || undefined,
+      solutionProductName: productName.trim() || undefined,
+      solutionProductImage: productImage.trim() || undefined,
+      solutionProductDescription: productDescription.trim() || undefined,
+      solutionProductBullets: productBullets.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 6),
+    });
+  }, [color, logoUrl, productName, productImage, productDescription, productBullets]);
 
-  const presetColors = [
-    "#2563eb",
-    "#0891b2",
-    "#059669",
-    "#d97706",
-    "#dc2626",
-    "#7c3aed",
-    "#db2777",
-    "#1e293b",
-  ];
+  const presetColors = ["#2563eb", "#0891b2", "#059669", "#d97706", "#dc2626", "#7c3aed", "#db2777", "#1e293b"];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          🎨 Branding
-        </CardTitle>
-        <CardDescription>
-          Customize colors, logos, and the look of your reports
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SettingsSection emoji="🎨" title="Branding" description="Colors, logos, product info for reports & demos">
+      <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+
+      <div>
+        <Label className="text-xs text-muted-foreground">Primary Color</Label>
+        <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex gap-2">
+            {presetColors.map((c) => (
+              <button
+                key={c} type="button" onClick={() => setColor(c)}
+                className="size-7 rounded-full border-2 transition-all cursor-pointer"
+                style={{ backgroundColor: c, borderColor: color === c ? c : "transparent", boxShadow: color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : "none" }}
+              />
+            ))}
+          </div>
+          <Input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="size-7 p-0 border-0 cursor-pointer" />
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
         <div>
-          <Label className="mb-3 block">Primary Color</Label>
-          <div className="flex items-center gap-3">
-            <div className="flex gap-2">
-              {presetColors.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className="size-8 rounded-full border-2 transition-all"
-                  style={{
-                    backgroundColor: c,
-                    borderColor: color === c ? c : "transparent",
-                    boxShadow: color === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : "none",
-                  }}
-                />
-              ))}
-            </div>
-            <Input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="size-8 p-0 border-0 cursor-pointer"
-            />
-          </div>
+          <Label className="text-xs text-muted-foreground">Company Logo</Label>
+          <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) readImageFile(f, setLogoUrl); }} className="mt-1" />
+          {logoUrl && <img src={logoUrl} alt="" className="mt-2 max-h-10 max-w-40 object-contain" />}
         </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Product Image</Label>
+          <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) readImageFile(f, setProductImage); }} className="mt-1" />
+          {productImage && <img src={productImage} alt="" className="mt-2 max-h-10 max-w-40 object-contain" />}
+        </div>
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Company Logo</Label>
-            <Input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) readImageFile(file, setLogoUrl);
-              }}
-            />
-            <Input
-              value={logoUrl}
-              onChange={(event) => setLogoUrl(event.target.value)}
-              placeholder="or paste logo image URL"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Product Image</Label>
-            <Input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) readImageFile(file, setProductImage);
-              }}
-            />
-            <Input
-              value={productImage}
-              onChange={(event) => setProductImage(event.target.value)}
-              placeholder="or paste product image URL"
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Recommended Product Name</Label>
-            <Input value={productName} onChange={(event) => setProductName(event.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Product Description</Label>
-            <Textarea value={productDescription} onChange={(event) => setProductDescription(event.target.value)} />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Product Benefits</Label>
-          <Textarea
-            value={productBullets}
-            onChange={(event) => setProductBullets(event.target.value)}
-            placeholder="One benefit per line"
-          />
-          <p className="text-xs text-muted-foreground">One benefit per line. These appear in the report and exported PDF.</p>
-        </div>
-
-        <div className="rounded-xl overflow-hidden border">
-          <div
-            className="p-4 text-white"
-            style={{
-              background: `linear-gradient(135deg, ${color}, #06b6d4)`,
-            }}
-          >
-            <p className="text-xs opacity-80">Preview</p>
-            <p className="font-bold text-lg">
-              {(company.name as string) || "Your Company"}
-            </p>
-            <p className="text-sm opacity-90">Water Quality Report</p>
-          </div>
-          <div className="grid gap-4 p-4 md:grid-cols-[120px_1fr]">
-            <div className="rounded-lg bg-muted aspect-square overflow-hidden flex items-center justify-center">
-              {productImage ? <img src={productImage} alt="" className="h-full w-full object-contain" /> : <Droplets className="size-8 text-muted-foreground" />}
-            </div>
-            <div>
-              {logoUrl && <img src={logoUrl} alt="" className="mb-3 max-h-10 max-w-40 object-contain" />}
-              <p className="font-semibold">{productName}</p>
-              <p className="text-sm text-muted-foreground">{productDescription}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving} size="sm">
-            {saving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Check className="size-4" />
-            )}
-            Save Branding & Product
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div><Label className="text-xs text-muted-foreground">Product Name</Label><Input value={productName} onChange={(e) => setProductName(e.target.value)} /></div>
+      <div><Label className="text-xs text-muted-foreground">Product Description</Label><Textarea value={productDescription} onChange={(e) => setProductDescription(e.target.value)} rows={2} /></div>
+      <div><Label className="text-xs text-muted-foreground">Benefits (one per line)</Label><Textarea value={productBullets} onChange={(e) => setProductBullets(e.target.value)} rows={3} /></div>
+    </SettingsSection>
   );
 }
 
-function TeamCardFixed({
+/* ═══════════════════════════════════════════════════════════════════
+   Demo Wizard Steps (drag to reorder, toggle visibility)
+   ═══════════════════════════════════════════════════════════════════ */
+
+const DEMO_STEPS = [
+  { key: "intake",              label: "Intake (Rep-Only)",      color: "#8b5cf6", required: true },
+  { key: "welcome",             label: "Welcome",               color: "#3b82f6", required: true },
+  { key: "customerConcerns",    label: "What Matters Most",     color: "#8b5cf6", required: false },
+  { key: "topConcerns",         label: "Top Concerns",          color: "#f97316", required: false },
+  { key: "contaminants",        label: "Contaminant Breakdown", color: "#f59e0b", required: false },
+  { key: "score",               label: "AquaScore Reveal",      color: "#10b981", required: false },
+  { key: "test",                label: "Live Water Test",       color: "#06b6d4", required: false },
+  { key: "verifiedScore",       label: "Verified Score",        color: "#10b981", required: false },
+  { key: "impact",              label: "Personalized Impact",   color: "#f43f5e", required: false },
+  { key: "scoreImprovement",    label: "Score Improvement",     color: "#8b5cf6", required: false },
+  { key: "system",              label: "System Info",           color: "#3b82f6", required: false },
+  { key: "trust",               label: "Trust & Proof",         color: "#22c55e", required: false },
+  { key: "beforeAfter",         label: "Before & After",        color: "#8b5cf6", required: false },
+  { key: "comparison",          label: "Monthly Expenses",      color: "#ec4899", required: false },
+  { key: "pricing",             label: "Investment Overview",    color: "#10b981", required: false },
+  { key: "investmentBreakdown", label: "Investment Breakdown",   color: "#10b981", required: false },
+  { key: "transform",           label: "Score Journey",         color: "#8b5cf6", required: false },
+  { key: "boost",               label: "Score Boost (RO)",      color: "#f59e0b", required: false },
+  { key: "summary",             label: "Summary",               color: "#10b981", required: false },
+  { key: "decision",            label: "Decision",              color: "#2563eb", required: false },
+  { key: "customerClose",       label: "Customer Close",        color: "#22c55e", required: false },
+  { key: "dealerClose",         label: "Dealer Wrap-Up",        color: "#64748b", required: true },
+];
+
+const STEP_KEY_ALIASES: Record<string, string> = { solution: "transform", close: "dealerClose" };
+
+function DemoWizardStepsSection() {
+  const company = useQuery(api.companies.getMyCompany);
+  const updateStepConfig = useMutation(api.dealerShared.updateDemoStepConfig);
+  const [steps, setSteps] = useState<Array<typeof DEMO_STEPS[0] & { enabled: boolean }>>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!company) return;
+    const cfg = company.demoStepConfig as any;
+    const normalize = (k: string) => STEP_KEY_ALIASES[k] ?? k;
+    const disabled = new Set((cfg?.disabled ?? []).map(normalize));
+    const stepMap = new Map(DEMO_STEPS.map((s) => [s.key, s]));
+    let ordered: Array<typeof DEMO_STEPS[0] & { enabled: boolean }>;
+    if (cfg?.order) {
+      const seen = new Set<string>();
+      ordered = cfg.order.map(normalize).filter((k: string) => stepMap.has(k) && !seen.has(k)).map((k: string) => {
+        seen.add(k);
+        const s = stepMap.get(k)!;
+        return { ...s, enabled: !disabled.has(k) || s.required };
+      });
+      for (const s of DEMO_STEPS) {
+        if (!seen.has(s.key)) ordered.push({ ...s, enabled: !disabled.has(s.key) || s.required });
+      }
+    } else {
+      ordered = DEMO_STEPS.map((s) => ({ ...s, enabled: !disabled.has(s.key) || s.required }));
+    }
+    setSteps(ordered);
+  }, [company]);
+
+  const persist = useCallback(async (s: typeof steps) => {
+    setSaving(true);
+    try {
+      await updateStepConfig({ order: s.map((x) => x.key), disabled: s.filter((x) => !x.enabled).map((x) => x.key) });
+    } catch { /* silent */ }
+    finally { setSaving(false); }
+  }, [updateStepConfig]);
+
+  const toggle = useCallback((idx: number) => {
+    setSteps((prev) => {
+      const next = [...prev];
+      if (!next[idx].required) next[idx] = { ...next[idx], enabled: !next[idx].enabled };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const reset = useCallback(() => {
+    const fresh = DEMO_STEPS.map((s) => ({ ...s, enabled: true }));
+    setSteps(fresh);
+    persist(fresh);
+  }, [persist]);
+
+  if (!company) return null;
+
+  return (
+    <SettingsSection emoji="🧙‍♂️" title="Demo Wizard Steps" description="Drag to reorder · toggle to show/hide">
+      <div className="flex justify-end -mt-1">
+        <button onClick={reset} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer transition-colors">
+          <RotateCcw className="size-3" /> Reset
+        </button>
+      </div>
+      <div className="space-y-0.5">
+        {steps.map((step, idx) => (
+          <div
+            key={step.key}
+            draggable
+            onDragStart={() => setDragIdx(idx)}
+            onDragOver={(e) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) { setSteps((prev) => { const n = [...prev]; const [item] = n.splice(dragIdx, 1); n.splice(idx, 0, item); return n; }); setDragIdx(idx); } }}
+            onDragEnd={() => { if (dragIdx !== null) persist(steps); setDragIdx(null); }}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all cursor-grab active:cursor-grabbing ${dragIdx === idx ? "bg-muted/50 scale-[1.02] shadow-lg" : "hover:bg-muted/30"} ${step.enabled ? "" : "opacity-40"}`}
+          >
+            <GripVertical className="size-4 text-muted-foreground/30 shrink-0" />
+            <div className="size-2 rounded-full shrink-0" style={{ background: step.color }} />
+            <span className="flex-1 text-sm font-medium">
+              {step.label}
+              {step.required && <span className="ml-2 text-[10px] text-muted-foreground/50 uppercase tracking-wider">Required</span>}
+            </span>
+            <span className="text-[10px] text-muted-foreground/30 font-mono mr-1">{idx + 1}</span>
+            <button
+              onClick={() => toggle(idx)}
+              disabled={step.required}
+              className={`rounded p-1 transition-colors cursor-pointer ${step.required ? "text-muted-foreground/20 cursor-not-allowed" : step.enabled ? "text-muted-foreground/50 hover:text-foreground" : "text-muted-foreground/20 hover:text-foreground"}`}
+            >
+              {step.enabled ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+            </button>
+          </div>
+        ))}
+      </div>
+      {saving && <p className="text-[10px] text-muted-foreground text-center">Saving…</p>}
+    </SettingsSection>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   All Demo Config Sections — inline, auto-save, emoji items
+   ═══════════════════════════════════════════════════════════════════ */
+
+const DEFAULT_CLOSE_OPTIONS = ["Sold — Install Scheduled", "Follow Up Needed", "Not Interested", "No Show"];
+const COLOR_PRESETS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4", "#0ea5e9", "#84cc16"];
+const DEFAULT_REVIEWS = [
+  { name: "Sarah M.", rating: 5, quote: "Best investment we ever made for our home. The water tastes amazing!" },
+  { name: "Mike T.", rating: 5, quote: "Professional installation, great service. Wish we'd done it years ago." },
+  { name: "Jennifer R.", rating: 5, quote: "My kids' skin cleared up within weeks. Can't recommend enough." },
+];
+const DEFAULT_CERTIFICATIONS = [
+  { label: "WQA Certified", icon: "🏅" },
+  { label: "NSF Listed", icon: "✅" },
+  { label: "BBB A+", icon: "⭐" },
+  { label: "EPA Registered", icon: "🛡️" },
+];
+const DEFAULT_CONCERN_OPTIONS = [
+  { key: "drinking_water", label: "Drinking Water", description: "Clean, safe water for drinking", emoji: "💧" },
+  { key: "family_health", label: "Family Health", description: "Keep my family safe and healthy", emoji: "❤️" },
+  { key: "skin_and_hair", label: "Skin & Hair", description: "Softer skin and healthier hair", emoji: "✨" },
+  { key: "appliances_plumbing", label: "Appliances", description: "Protect my home investments", emoji: "🏠" },
+  { key: "taste_or_smell", label: "Taste & Smell", description: "Better tasting, odor-free water", emoji: "👃" },
+  { key: "stains_buildup", label: "Hard Water", description: "No more stains or buildup", emoji: "🪨" },
+  { key: "bottled_water_costs", label: "Bottled Water", description: "Stop buying bottled water", emoji: "💰" },
+  { key: "peace_of_mind", label: "Peace of Mind", description: "Know my water is safe", emoji: "🛡️" },
+];
+const DEFAULT_DECISION_OPTIONS = [
+  { key: "move_forward", label: "Move Forward Today", description: "Let's get your system scheduled and start protecting your home" },
+  { key: "schedule_followup", label: "Schedule a Follow-Up", description: "Take time to think it over — we'll check back at a time that works for you" },
+  { key: "send_report", label: "Send My Report", description: "Get your full water quality report emailed to review on your own" },
+];
+const DEFAULT_BENEFITS = ["Protect Your Family", "Improve Your Water", "Reduce Costs", "Enjoy Peace of Mind"];
+const DEFAULT_FINANCING_TERMS = [60, 84, 120];
+
+function DemoConfigSections({ company }: { company: any }) {
+  const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
+  const navigate = useNavigate();
+  const [initialized, setInitialized] = useState(false);
+  const [cfg, setCfg] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (company && !initialized) {
+      const v = (company as any).demoConfig || {};
+      setCfg({
+        accentColor: v.accentColor || "#3b82f6",
+        welcomeHeadline: v.welcomeHeadline || "",
+        welcomeSubtext: v.welcomeSubtext || "",
+        highlightCategories: v.highlightCategories || [],
+        concernOptions: v.concernOptions?.length ? v.concernOptions : DEFAULT_CONCERN_OPTIONS,
+        trustInstallCount: v.trustSection?.installCount ?? 500,
+        trustInstallArea: v.trustSection?.installArea || "",
+        trustReviews: v.trustSection?.reviews?.length ? v.trustSection.reviews : DEFAULT_REVIEWS,
+        trustCertifications: v.trustSection?.certifications?.length ? v.trustSection.certifications : DEFAULT_CERTIFICATIONS,
+        projectedScore: v.projectedScore ?? 95,
+        boostedScore: v.boostedScore ?? 99,
+        skipScoreAnimation: v.skipScoreAnimation ?? false,
+        systemIncludes: v.systemIncludes?.length ? v.systemIncludes : [
+          { title: "Carbon Filtration", description: "Reduces chlorine, chemicals, bad taste & odor" },
+          { title: "Water Softening", description: "Reduces hardness, scale & protects plumbing" },
+          { title: "Sediment Filtration", description: "Reduces dirt, rust, sand & fine particles" },
+        ],
+        warrantyTitle: v.warrantyTitle || "20 Year Unlimited Warranty",
+        warrantyBullets: v.warrantyBullets?.length ? v.warrantyBullets : [
+          "20 Year Warranty on Tanks", "20 Year Warranty on Control Valve",
+          "10 Year Warranty on Components", "5 Year Warranty on Labor",
+          "100% Parts & Labor Coverage", "No Prorating — Ever", "Lifetime Customer Support",
+        ],
+        howItWorksSteps: v.howItWorksSteps?.length ? v.howItWorksSteps : [
+          { title: "Water Analysis", description: "We test your water and review your local utility data to identify concerns." },
+          { title: "Custom Design", description: "Your system is configured specifically for the contaminants in your water." },
+          { title: "Professional Installation", description: "Certified technicians install your system — free of charge." },
+          { title: "Enjoy Better Water", description: "Cleaner, softer water from every tap in your home, starting day one." },
+        ],
+        systemCallouts: v.systemCallouts?.length ? v.systemCallouts : ["Free Professional Installation", "Free Annual Water Review", "Lifetime Support"],
+        revealPrice: v.revealPrice,
+        discountOptions: v.discountOptions?.length ? v.discountOptions : [
+          { id: "today", label: "Same-Day Decision", amount: 500, icon: "⚡" },
+          { id: "referral", label: "Referral Credit", amount: 300, icon: "👥" },
+          { id: "military", label: "Military / First Responder", amount: 250, icon: "🎖️" },
+          { id: "senior", label: "Senior Discount", amount: 200, icon: "🤝" },
+        ],
+        costItems: v.costItems?.length ? v.costItems : [
+          { label: "Bottled Water", monthlyCost: 120, enabled: true, emoji: "🚰" },
+          { label: "Appliance Repairs", monthlyCost: 40, enabled: true, emoji: "🔧" },
+          { label: "Plumbing Maintenance", monthlyCost: 30, enabled: true, emoji: "🚿" },
+        ],
+        systemCostMonthly: v.systemCostMonthly,
+        financingEnabled: v.financing?.enabled ?? true,
+        financingAprRange: v.financing?.aprRange || "0% – 9.99%",
+        financingDefaultApr: v.financing?.defaultApr ?? 4.99,
+        financingTerms: v.financing?.terms?.length ? v.financing.terms : DEFAULT_FINANCING_TERMS,
+        financingProvider: v.financing?.provider || "",
+        roSystemName: v.roSystemName || "Reverse Osmosis System",
+        roSystemDescription: v.roSystemDescription || "",
+        roSystemImage: v.roSystemImage || "",
+        closeHeadline: v.closeHeadline || "",
+        customerCloseSubtext: v.customerCloseSubtext || "",
+        closeOptions: v.closeOptions?.length ? v.closeOptions : DEFAULT_CLOSE_OPTIONS,
+        decisionOptions: v.decisionOptions?.length ? v.decisionOptions : DEFAULT_DECISION_OPTIONS,
+        summaryBenefits: v.summaryBenefits?.length ? v.summaryBenefits : DEFAULT_BENEFITS,
+        demoModes: v.demoModes || {},
+      });
+      setInitialized(true);
+    }
+  }, [company, initialized]);
+
+  const update = useCallback((patch: Record<string, any>) => {
+    setCfg((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const saved = useAutoSave(async () => {
+    if (!initialized) return;
+    const config: Record<string, any> = {};
+    for (const [k, v] of Object.entries(cfg)) {
+      if (k.startsWith("trust") || k.startsWith("financing")) continue;
+      if (Array.isArray(v)) { if (v.length > 0) config[k] = v; }
+      else if (v !== "" && v !== undefined && v !== null) config[k] = v;
+    }
+    config.trustSection = {
+      installCount: cfg.trustInstallCount ?? 500,
+      installArea: cfg.trustInstallArea || "",
+      reviews: cfg.trustReviews?.length ? cfg.trustReviews : DEFAULT_REVIEWS,
+      certifications: cfg.trustCertifications?.length ? cfg.trustCertifications : DEFAULT_CERTIFICATIONS,
+    };
+    config.financing = {
+      enabled: cfg.financingEnabled ?? true,
+      aprRange: cfg.financingAprRange || "0% – 9.99%",
+      defaultApr: cfg.financingDefaultApr ?? 4.99,
+      terms: cfg.financingTerms?.length ? cfg.financingTerms : DEFAULT_FINANCING_TERMS,
+      provider: cfg.financingProvider || "",
+    };
+    await updateDemoConfig({ config });
+  }, [JSON.stringify(cfg), initialized]);
+
+  if (!initialized) return null;
+
+  const accent = cfg.accentColor || "#3b82f6";
+
+  return (
+    <>
+      {/* ── Welcome & Concerns ── */}
+      <SettingsSection emoji="👋" title="Welcome & Concerns" description="First impression and customer concern cards">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div className="space-y-3">
+          <div><Label className="text-xs text-muted-foreground">Welcome Headline</Label><Input value={cfg.welcomeHeadline || ""} placeholder="Your Water Quality Report" onChange={(e) => update({ welcomeHeadline: e.target.value })} /></div>
+          <div><Label className="text-xs text-muted-foreground">Subtext</Label><Textarea value={cfg.welcomeSubtext || ""} placeholder="Let's look at what's in your water..." onChange={(e) => update({ welcomeSubtext: e.target.value })} rows={2} /></div>
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground font-semibold">Customer Concerns</Label>
+          <div className="space-y-1 mt-2">
+            {(cfg.concernOptions || []).map((item: any, idx: number) => (
+              <EmojiListItem
+                key={idx}
+                emoji={item.emoji || "💧"}
+                label={item.label}
+                description={item.description}
+                onEmojiChange={(v) => { const n = [...(cfg.concernOptions || [])]; n[idx] = { ...n[idx], emoji: v }; update({ concernOptions: n }); }}
+                onLabelChange={(v) => { const n = [...(cfg.concernOptions || [])]; n[idx] = { ...n[idx], label: v }; update({ concernOptions: n }); }}
+                onDescriptionChange={(v) => { const n = [...(cfg.concernOptions || [])]; n[idx] = { ...n[idx], description: v }; update({ concernOptions: n }); }}
+                onRemove={() => { const n = [...(cfg.concernOptions || [])]; n.splice(idx, 1); update({ concernOptions: n }); }}
+              />
+            ))}
+          </div>
+          <AddButton label="Add concern" onClick={() => update({ concernOptions: [...(cfg.concernOptions || []), { key: `concern_${Date.now()}`, label: "", description: "", emoji: "💧" }] })} />
+        </div>
+      </SettingsSection>
+
+      {/* ── Pricing & Investment ── */}
+      <SettingsSection emoji="💰" title="Pricing & Investment" description="System price, discounts, and financing">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div className="space-y-3">
+          <div><Label className="text-xs text-muted-foreground">Reveal Price</Label><Input type="number" value={cfg.revealPrice || ""} placeholder="e.g. 9995" onChange={(e) => update({ revealPrice: Number(e.target.value) || undefined })} /></div>
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground font-semibold">Stackable Discounts</Label>
+          <div className="space-y-1 mt-2">
+            {(cfg.discountOptions || []).map((d: any, idx: number) => (
+              <EmojiListItem
+                key={idx}
+                emoji={d.icon}
+                label={d.label}
+                description={`$${d.amount || 0} off`}
+                onEmojiChange={(v) => { const n = [...(cfg.discountOptions || [])]; n[idx] = { ...n[idx], icon: v }; update({ discountOptions: n }); }}
+                onLabelChange={(v) => { const n = [...(cfg.discountOptions || [])]; n[idx] = { ...n[idx], label: v }; update({ discountOptions: n }); }}
+                onDescriptionChange={(v) => { const amt = parseInt(v.replace(/[^0-9]/g, "")) || 0; const n = [...(cfg.discountOptions || [])]; n[idx] = { ...n[idx], amount: amt }; update({ discountOptions: n }); }}
+                onRemove={() => { const n = [...(cfg.discountOptions || [])]; n.splice(idx, 1); update({ discountOptions: n }); }}
+              />
+            ))}
+          </div>
+          <AddButton label="Add discount" onClick={() => update({ discountOptions: [...(cfg.discountOptions || []), { id: `d_${Date.now()}`, label: "", amount: 0, icon: "🏷️" }] })} />
+        </div>
+        <div className="pt-2 space-y-3">
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="finEnabled" checked={cfg.financingEnabled ?? true} onChange={(e) => update({ financingEnabled: e.target.checked })} className="cursor-pointer" />
+            <Label htmlFor="finEnabled" className="text-xs cursor-pointer">Financing enabled</Label>
+          </div>
+          {cfg.financingEnabled && (
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-xs text-muted-foreground">APR Range</Label><Input value={cfg.financingAprRange || ""} placeholder="0% – 9.99%" onChange={(e) => update({ financingAprRange: e.target.value })} /></div>
+              <div><Label className="text-xs text-muted-foreground">Default APR</Label><Input type="number" step="0.01" value={cfg.financingDefaultApr ?? 4.99} onChange={(e) => update({ financingDefaultApr: Number(e.target.value) })} /></div>
+            </div>
+          )}
+        </div>
+      </SettingsSection>
+
+      {/* ── Cost Comparison ── */}
+      <SettingsSection emoji="📊" title="Cost Comparison" description="Monthly expenses without filtration vs. your system">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div className="space-y-1">
+          {(cfg.costItems || []).map((item: any, idx: number) => (
+            <EmojiListItem
+              key={idx}
+              emoji={item.emoji || "💧"}
+              label={item.label}
+              description={`$${item.monthlyCost || 0}/mo`}
+              onEmojiChange={(v) => { const n = [...(cfg.costItems || [])]; n[idx] = { ...n[idx], emoji: v }; update({ costItems: n }); }}
+              onLabelChange={(v) => { const n = [...(cfg.costItems || [])]; n[idx] = { ...n[idx], label: v }; update({ costItems: n }); }}
+              onDescriptionChange={(v) => { const amt = parseInt(v.replace(/[^0-9]/g, "")) || 0; const n = [...(cfg.costItems || [])]; n[idx] = { ...n[idx], monthlyCost: amt }; update({ costItems: n }); }}
+              onRemove={() => { const n = [...(cfg.costItems || [])]; n.splice(idx, 1); update({ costItems: n }); }}
+            />
+          ))}
+        </div>
+        <AddButton label="Add cost item" onClick={() => update({ costItems: [...(cfg.costItems || []), { label: "", monthlyCost: 0, enabled: true, emoji: "💧" }] })} />
+        <div className="pt-2"><Label className="text-xs text-muted-foreground">Your System Monthly Cost</Label><Input type="number" value={cfg.systemCostMonthly || ""} placeholder="e.g. 49" onChange={(e) => update({ systemCostMonthly: Number(e.target.value) || undefined })} /></div>
+      </SettingsSection>
+
+      {/* ── System & Warranty ── */}
+      <SettingsSection emoji="🔧" title="System & Warranty" description="What's included, warranty details, how it works">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div>
+          <Label className="text-xs text-muted-foreground font-semibold">System Includes</Label>
+          <div className="space-y-2 mt-2">
+            {(cfg.systemIncludes || []).map((item: any, idx: number) => (
+              <div key={idx} className="group flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                <div className="size-9 rounded-full bg-muted/50 flex items-center justify-center text-base shrink-0">⚙️</div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <Input value={item.title} onChange={(e) => { const n = [...(cfg.systemIncludes || [])]; n[idx] = { ...n[idx], title: e.target.value }; update({ systemIncludes: n }); }} placeholder="Title" className="h-8 text-sm font-medium border-0 bg-transparent px-0 focus-visible:ring-0 shadow-none" />
+                  <Input value={item.description} onChange={(e) => { const n = [...(cfg.systemIncludes || [])]; n[idx] = { ...n[idx], description: e.target.value }; update({ systemIncludes: n }); }} placeholder="Description" className="h-7 text-xs text-muted-foreground border-0 bg-transparent px-0 focus-visible:ring-0 shadow-none" />
+                </div>
+                <button onClick={() => { const n = [...(cfg.systemIncludes || [])]; n.splice(idx, 1); update({ systemIncludes: n }); }} className="p-1.5 rounded-lg text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-red-500 transition-colors cursor-pointer shrink-0 mt-1"><X className="size-3.5" /></button>
+              </div>
+            ))}
+          </div>
+          <AddButton label="Add item" onClick={() => update({ systemIncludes: [...(cfg.systemIncludes || []), { title: "", description: "" }] })} />
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground">Warranty Title</Label>
+          <Input value={cfg.warrantyTitle || ""} placeholder="20 Year Unlimited Warranty" onChange={(e) => update({ warrantyTitle: e.target.value })} className="mt-1" />
+          <div className="space-y-1 mt-2">
+            {(cfg.warrantyBullets || []).map((b: string, idx: number) => (
+              <div key={idx} className="group flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted/30 transition-colors">
+                <span className="text-muted-foreground/40 text-xs">•</span>
+                <Input value={b} onChange={(e) => { const n = [...(cfg.warrantyBullets || [])]; n[idx] = e.target.value; update({ warrantyBullets: n }); }} className="flex-1 h-7 text-sm border-0 bg-transparent px-0 focus-visible:ring-0 shadow-none" />
+                <button onClick={() => { const n = [...(cfg.warrantyBullets || [])]; n.splice(idx, 1); update({ warrantyBullets: n }); }} className="p-1 rounded text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-red-500 transition-colors cursor-pointer"><X className="size-3" /></button>
+              </div>
+            ))}
+          </div>
+          <AddButton label="Add warranty point" onClick={() => update({ warrantyBullets: [...(cfg.warrantyBullets || []), ""] })} />
+        </div>
+      </SettingsSection>
+
+      {/* ── Trust & Social Proof ── */}
+      <SettingsSection emoji="🏆" title="Trust & Social Proof" description="Reviews, certifications, install stats">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label className="text-xs text-muted-foreground">Install Count</Label><Input type="number" value={cfg.trustInstallCount ?? 500} onChange={(e) => update({ trustInstallCount: Number(e.target.value) || 0 })} /></div>
+          <div><Label className="text-xs text-muted-foreground">Install Area</Label><Input value={cfg.trustInstallArea || ""} placeholder="Phoenix, AZ" onChange={(e) => update({ trustInstallArea: e.target.value })} /></div>
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground font-semibold">Customer Reviews</Label>
+          <div className="space-y-2 mt-2">
+            {(cfg.trustReviews || []).map((review: any, idx: number) => (
+              <div key={idx} className="group rounded-xl border p-3 bg-background space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Input value={review.name} placeholder="Customer name" onChange={(e) => { const n = [...(cfg.trustReviews || [])]; n[idx] = { ...n[idx], name: e.target.value }; update({ trustReviews: n }); }} className="flex-1 text-sm font-semibold" />
+                  <Select value={String(review.rating)} onValueChange={(v) => { const n = [...(cfg.trustReviews || [])]; n[idx] = { ...n[idx], rating: Number(v) }; update({ trustReviews: n }); }}>
+                    <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
+                    <SelectContent>{[5, 4, 3, 2, 1].map((num) => <SelectItem key={num} value={String(num)}>{num} ★</SelectItem>)}</SelectContent>
+                  </Select>
+                  <button onClick={() => { const n = [...(cfg.trustReviews || [])]; n.splice(idx, 1); update({ trustReviews: n }); }} className="p-1 rounded text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-red-500 transition-colors cursor-pointer"><X className="size-3.5" /></button>
+                </div>
+                <Textarea value={review.quote} placeholder="Review quote..." onChange={(e) => { const n = [...(cfg.trustReviews || [])]; n[idx] = { ...n[idx], quote: e.target.value }; update({ trustReviews: n }); }} rows={2} className="text-xs resize-none" />
+              </div>
+            ))}
+          </div>
+          <AddButton label="Add review" onClick={() => update({ trustReviews: [...(cfg.trustReviews || []), { name: "", rating: 5, quote: "" }] })} />
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground font-semibold">Certifications</Label>
+          <div className="space-y-1 mt-2">
+            {(cfg.trustCertifications || []).map((cert: any, idx: number) => (
+              <EmojiListItem
+                key={idx}
+                emoji={cert.icon}
+                label={cert.label}
+                onEmojiChange={(v) => { const n = [...(cfg.trustCertifications || [])]; n[idx] = { ...n[idx], icon: v }; update({ trustCertifications: n }); }}
+                onLabelChange={(v) => { const n = [...(cfg.trustCertifications || [])]; n[idx] = { ...n[idx], label: v }; update({ trustCertifications: n }); }}
+                onRemove={() => { const n = [...(cfg.trustCertifications || [])]; n.splice(idx, 1); update({ trustCertifications: n }); }}
+              />
+            ))}
+          </div>
+          <AddButton label="Add certification" onClick={() => update({ trustCertifications: [...(cfg.trustCertifications || []), { label: "", icon: "🏅" }] })} />
+        </div>
+      </SettingsSection>
+
+      {/* ── Score & Boost ── */}
+      <SettingsSection emoji="🚀" title="Score & Boost" description="Score settings and RO system boost">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Projected Score After Filtration</Label>
+            <div className="flex items-center gap-3 mt-1">
+              <input type="range" min={60} max={100} value={cfg.projectedScore ?? 95} onChange={(e) => update({ projectedScore: Number(e.target.value) })} className="flex-1 accent-blue-500 cursor-pointer" />
+              <div className="size-10 rounded-full flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: accent }}>{cfg.projectedScore ?? 95}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs text-muted-foreground">Boosted Score (after RO)</Label><Input type="number" value={cfg.boostedScore ?? 99} onChange={(e) => update({ boostedScore: Number(e.target.value) })} /></div>
+            <div className="flex items-end pb-2">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="skipAnim" checked={cfg.skipScoreAnimation ?? false} onChange={(e) => update({ skipScoreAnimation: e.target.checked })} className="cursor-pointer" />
+                <Label htmlFor="skipAnim" className="text-xs cursor-pointer">Skip animation</Label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="pt-2 space-y-3">
+          <div><Label className="text-xs text-muted-foreground">RO System Name</Label><Input value={cfg.roSystemName || ""} onChange={(e) => update({ roSystemName: e.target.value })} /></div>
+          <div><Label className="text-xs text-muted-foreground">RO Description</Label><Textarea value={cfg.roSystemDescription || ""} onChange={(e) => update({ roSystemDescription: e.target.value })} rows={2} /></div>
+          {cfg.roSystemImage && (
+            <div className="relative inline-block">
+              <img src={cfg.roSystemImage} alt="RO System" className="max-h-20 rounded-lg border object-contain" />
+              <button onClick={() => update({ roSystemImage: "" })} className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs cursor-pointer"><X className="size-3" /></button>
+            </div>
+          )}
+          <label className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed text-sm text-muted-foreground hover:bg-muted/30 transition-colors cursor-pointer justify-center">
+            <Upload className="size-4" /> {cfg.roSystemImage ? "Replace RO Image" : "Upload RO Image"}
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) { const reader = new FileReader(); reader.onload = () => update({ roSystemImage: reader.result as string }); reader.readAsDataURL(file); }
+              if (e.target) e.target.value = "";
+            }} />
+          </label>
+        </div>
+      </SettingsSection>
+
+      {/* ── Closing ── */}
+      <SettingsSection emoji="🤝" title="Closing" description="End screens, decision options, summary benefits">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div className="space-y-3">
+          <div><Label className="text-xs text-muted-foreground">Close Headline</Label><Input value={cfg.closeHeadline || ""} placeholder="Thank You, {firstName}!" onChange={(e) => update({ closeHeadline: e.target.value })} /></div>
+          <div><Label className="text-xs text-muted-foreground">Close Subtext</Label><Textarea value={cfg.customerCloseSubtext || ""} placeholder="We're excited to help you..." onChange={(e) => update({ customerCloseSubtext: e.target.value })} rows={2} /></div>
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground font-semibold">Decision Options</Label>
+          <div className="space-y-2 mt-2">
+            {(cfg.decisionOptions || []).map((item: any, idx: number) => (
+              <div key={idx} className="group rounded-xl border p-3 bg-background space-y-1">
+                <div className="flex items-center gap-2">
+                  <Input value={item.label} placeholder="Option label" onChange={(e) => { const n = [...(cfg.decisionOptions || [])]; n[idx] = { ...n[idx], label: e.target.value }; update({ decisionOptions: n }); }} className="flex-1 text-sm font-semibold" />
+                  <button onClick={() => { const n = [...(cfg.decisionOptions || [])]; n.splice(idx, 1); update({ decisionOptions: n }); }} className="p-1 rounded text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-red-500 transition-colors cursor-pointer"><X className="size-3.5" /></button>
+                </div>
+                <Textarea value={item.description} placeholder="Description" onChange={(e) => { const n = [...(cfg.decisionOptions || [])]; n[idx] = { ...n[idx], description: e.target.value }; update({ decisionOptions: n }); }} rows={2} className="text-xs resize-none" />
+              </div>
+            ))}
+          </div>
+          {(cfg.decisionOptions || []).length < 4 && <AddButton label="Add option" onClick={() => update({ decisionOptions: [...(cfg.decisionOptions || []), { key: `opt_${Date.now()}`, label: "", description: "" }] })} />}
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground font-semibold">Dealer Close Options</Label>
+          <div className="space-y-1 mt-2">
+            {(cfg.closeOptions || []).map((opt: string, idx: number) => (
+              <div key={idx} className="group flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted/30 transition-colors">
+                <span className="size-5 rounded-md flex items-center justify-center text-[10px] font-bold bg-muted shrink-0">{idx + 1}</span>
+                <Input value={opt} onChange={(e) => { const n = [...(cfg.closeOptions || [])]; n[idx] = e.target.value; update({ closeOptions: n }); }} className="flex-1 h-7 text-sm border-0 bg-transparent px-0 focus-visible:ring-0 shadow-none" />
+                {(cfg.closeOptions || []).length > 2 && (
+                  <button onClick={() => { const n = [...(cfg.closeOptions || [])]; n.splice(idx, 1); update({ closeOptions: n }); }} className="p-1 rounded text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-red-500 transition-colors cursor-pointer"><X className="size-3" /></button>
+                )}
+              </div>
+            ))}
+          </div>
+          <AddButton label="Add option" onClick={() => update({ closeOptions: [...(cfg.closeOptions || []), ""] })} />
+        </div>
+        <div className="pt-2">
+          <Label className="text-xs text-muted-foreground font-semibold">Summary Benefits</Label>
+          <div className="space-y-1 mt-2">
+            {(cfg.summaryBenefits || []).map((b: string, idx: number) => (
+              <div key={idx} className="group flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted/30 transition-colors">
+                <span className="text-emerald-500 shrink-0">✓</span>
+                <Input value={b} onChange={(e) => { const n = [...(cfg.summaryBenefits || [])]; n[idx] = e.target.value; update({ summaryBenefits: n }); }} className="flex-1 h-7 text-sm border-0 bg-transparent px-0 focus-visible:ring-0 shadow-none" />
+                <button onClick={() => { const n = [...(cfg.summaryBenefits || [])]; n.splice(idx, 1); update({ summaryBenefits: n }); }} className="p-1 rounded text-muted-foreground/0 group-hover:text-muted-foreground/50 hover:!text-red-500 transition-colors cursor-pointer"><X className="size-3" /></button>
+              </div>
+            ))}
+          </div>
+          {(cfg.summaryBenefits || []).length < 6 && <AddButton label="Add benefit" onClick={() => update({ summaryBenefits: [...(cfg.summaryBenefits || []), ""] })} />}
+        </div>
+      </SettingsSection>
+
+      {/* ── Advanced ── */}
+      <SettingsSection emoji="⚙️" title="Advanced" description="Demo modes, accent color, re-run setup">
+        <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Demo Accent Color</Label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {COLOR_PRESETS.map((c) => (
+              <button key={c} onClick={() => update({ accentColor: c })} className={`size-7 rounded-xl transition-all cursor-pointer ${accent === c ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : "hover:scale-105"}`} style={{ backgroundColor: c }} />
+            ))}
+            <input type="color" value={accent} onChange={(e) => update({ accentColor: e.target.value })} className="w-7 h-7 rounded-lg border cursor-pointer bg-transparent" />
+          </div>
+        </div>
+        <div className="pt-3">
+          <button
+            onClick={() => navigate("/company", { state: { rerunSetup: true } })}
+            className="text-sm text-blue-500 hover:text-blue-400 font-medium cursor-pointer transition-colors"
+          >
+            🧙‍♂️ Re-run Setup Wizard
+          </button>
+        </div>
+      </SettingsSection>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Team Section
+   ═══════════════════════════════════════════════════════════════════ */
+
+function TeamSection({
   members,
   isAdmin,
   onAdd,
@@ -620,145 +991,64 @@ function TeamCardFixed({
       await onAdd({ name: newName.trim(), email: newEmail.trim(), role: newRole });
       toast.success("Invite sent");
       setAddOpen(false);
-      setNewName("");
-      setNewEmail("");
-      setNewRole("sales_rep");
+      setNewName(""); setNewEmail(""); setNewRole("sales_rep");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send invite");
-    } finally {
-      setAdding(false);
-    }
-  };
-
-  const handleRemove = async (memberId: string) => {
-    try {
-      await onRemove({ memberId });
-      toast.success("Member removed");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove member");
-    }
-  };
-
-  const handleRevoke = async (inviteId: string) => {
-    try {
-      await onRevoke({ inviteId });
-      toast.success("Invite revoked");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to revoke invite");
-    }
+    } finally { setAdding(false); }
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <SettingsSection emoji="👥" title={`Team (${members.length})`} description="Manage members and pending invites">
+      {typeof teamLimit === "number" && (
         <div>
-          <CardTitle className="flex items-center gap-2 text-base">
-            👥 Team ({members.length})
-          </CardTitle>
-          <CardDescription>Manage members and pending invites</CardDescription>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {teamLimit ? `📊 ${teamUsed}/${teamLimit} seats used on this plan` : `${teamUsed} seats used · unlimited plan`}
-          </p>
-          {typeof teamLimit === "number" && (
-            <div className="mt-2 w-48">
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${atLimit ? "bg-amber-500" : "bg-blue-500"}`}
-                  style={{ width: `${Math.min(100, Math.round((teamUsed / teamLimit) * 100))}%` }}
-                />
+          <p className="text-xs text-muted-foreground mb-1.5">📊 {teamUsed}/{teamLimit} seats used</p>
+          <div className="h-2 rounded-full bg-muted overflow-hidden w-48">
+            <div className={`h-full rounded-full transition-all ${atLimit ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${Math.min(100, Math.round((teamUsed / teamLimit) * 100))}%` }} />
+          </div>
+        </div>
+      )}
+      {atLimit && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200 flex items-center justify-between">
+          <span>Team limit reached.</span>
+          <Link to="/subscription" className="font-semibold hover:underline ml-2 whitespace-nowrap">Upgrade →</Link>
+        </div>
+      )}
+      <div className="space-y-2">
+        {members.map((member) => (
+          <div key={member._id} className="flex items-center justify-between p-3 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-blue-500/10 flex items-center justify-center"><UserCircle className="size-5 text-blue-500" /></div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-sm">{member.name || "Unnamed"}</p>
+                  {member.kind === "invite" && <span className="text-[10px] font-medium text-amber-700 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded">Pending</span>}
+                  {(member.role === "admin" || member.role === "owner") && <span className="text-[10px] font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.5 rounded">{member.role === "owner" ? "Owner" : "Admin"}</span>}
+                </div>
+                <p className="text-xs text-muted-foreground">{member.email || "No email"} · {member.kind === "invite" ? "invite sent" : `${member.reportCount} reports`}</p>
               </div>
             </div>
-          )}
-        </div>
-        {isAdmin && (
-          <Button variant="outline" size="sm" disabled={atLimit} onClick={() => setAddOpen(true)}>
-            <Plus className="size-4" />
-            Invite Member
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {atLimit && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200 flex items-center justify-between">
-              <span>Team limit reached for this plan.</span>
-              <Link to="/subscription" className="font-semibold text-amber-900 dark:text-amber-100 hover:underline ml-2 whitespace-nowrap">
-                Upgrade Plan →
-              </Link>
-            </div>
-          )}
-          {members.map((member) => (
-            <div key={member._id} className="flex items-center justify-between p-3 rounded-lg border">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <UserCircle className="size-5 text-blue-500" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">{member.name || "Unnamed"}</p>
-                    {member.kind === "invite" && (
-                      <span className="text-[10px] font-medium text-amber-700 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded">
-                        Pending
-                      </span>
-                    )}
-                    {(member.role === "admin" || member.role === "owner") && (
-                      <span className="text-[10px] font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.5 rounded">
-                        {member.role === "owner" ? "Owner" : "Admin"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {member.email || "No email"} · {member.kind === "invite" ? "invite sent" : `${member.reportCount} reports`}
-                    {member.kind === "invite" && member.expiresAt ? ` · expires ${new Date(member.expiresAt).toLocaleDateString()}` : ""}
-                  </p>
-                </div>
-              </div>
-              {isAdmin && member.kind === "invite" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => handleRevoke(member._id)}
-                >
-                  <Trash2 className="size-3" />
-                </Button>
-              )}
-              {isAdmin && member.kind !== "invite" && member.role !== "owner" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => handleRemove(member._id)}
-                >
-                  <Trash2 className="size-3" />
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-
+            {isAdmin && member.kind === "invite" && (
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={async () => { try { await onRevoke({ inviteId: member._id }); toast.success("Invite revoked"); } catch { toast.error("Failed"); } }}><Trash2 className="size-3" /></Button>
+            )}
+            {isAdmin && member.kind !== "invite" && member.role !== "owner" && (
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={async () => { try { await onRemove({ memberId: member._id }); toast.success("Member removed"); } catch { toast.error("Failed"); } }}><Trash2 className="size-3" /></Button>
+            )}
+          </div>
+        ))}
+      </div>
+      {isAdmin && (
+        <Button variant="outline" size="sm" disabled={atLimit} onClick={() => setAddOpen(true)} className="w-full"><Plus className="size-4" /> Invite Member</Button>
+      )}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
-            <DialogDescription>Send an invite link to a new member of your sales team.</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Invite Team Member</DialogTitle><DialogDescription>Send an invite link to a new member.</DialogDescription></DialogHeader>
           <form onSubmit={handleAdd} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input placeholder="John Smith" value={newName} onChange={(event) => setNewName(event.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" placeholder="john@company.com" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} required />
-            </div>
+            <div className="space-y-2"><Label>Name</Label><Input placeholder="John Smith" value={newName} onChange={(e) => setNewName(e.target.value)} required /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" placeholder="john@company.com" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} required /></div>
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={newRole} onValueChange={(value) => setNewRole(value as TeamRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={newRole} onValueChange={(v) => setNewRole(v as TeamRole)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sales_rep">Sales Rep</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
@@ -768,1085 +1058,21 @@ function TeamCardFixed({
               </Select>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={adding || atLimit}>
-                {adding ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-                Send Invite
-              </Button>
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={adding || atLimit}>{adding ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Send Invite</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-    </Card>
+    </SettingsSection>
   );
 }
 
-function TeamCard({
-  members,
-  isAdmin,
-  onAdd,
-  onRemove,
-  onRevoke,
-}: {
-  members: Array<{
-    _id: string;
-    kind?: string;
-    name?: string;
-    email?: string;
-    role: string;
-    reportCount: number;
-    expiresAt?: number;
-  }>;
-  isAdmin: boolean;
-  onAdd: (args: { name: string; email: string; role: TeamRole }) => Promise<unknown>;
-  onRemove: (args: { memberId: any }) => Promise<unknown>;
-  onRevoke: (args: { inviteId: any }) => Promise<unknown>;
-}) {
-  const [addOpen, setAddOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newRole, setNewRole] = useState<TeamRole>("sales_rep");
-  const [adding, setAdding] = useState(false);
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName.trim() || !newEmail.trim()) return;
-    setAdding(true);
-    try {
-      await onAdd({ name: newName.trim(), email: newEmail.trim(), role: newRole });
-      toast.success("Invite sent");
-      setAddOpen(false);
-      setNewName("");
-      setNewEmail("");
-      setNewRole("sales_rep");
-    } catch {
-      toast.error("Failed to add member");
-    } finally {
-      setAdding(false);
-    }
-  };
-
-  const handleRemove = async (memberId: string) => {
-    try {
-      await onRemove({ memberId });
-      toast.success("Member removed");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to remove member");
-    }
-  };
-
-  const handleRevoke = async (inviteId: string) => {
-    try {
-      await onRevoke({ inviteId });
-      toast.success("Invite revoked");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to revoke invite");
-    }
-  };
-  void handleRevoke;
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base">
-            👥 Team ({members.length})
-          </CardTitle>
-          <CardDescription>Manage your sales team members</CardDescription>
-        </div>
-        {isAdmin && (
-          <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="size-4" />
-            Invite Member
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {members.map((m) => (
-            <div
-              key={m._id}
-              className="flex items-center justify-between p-3 rounded-lg border"
-            >
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <UserCircle className="size-5 text-blue-500" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">
-                      {m.name || "Unnamed"}
-                    </p>
-                    {m.kind === "invite" && (
-                      <span className="text-[10px] font-medium text-amber-700 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded">
-                        Pending
-                      </span>
-                    )}
-                    {(m.role === "admin" || m.role === "owner") && (
-                      <span className="text-[10px] font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.5 rounded">
-                        {m.role === "owner" ? "Owner" : "Admin"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {m.email || "No email"} · {m.reportCount} reports
-                  </p>
-                </div>
-              </div>
-              {isAdmin && m.role !== "owner" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => handleRemove(m._id)}
-                >
-                  <Trash2 className="size-3" />
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Team Member</DialogTitle>
-            <DialogDescription>
-              Add a new member to your sales team
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input
-                placeholder="John Smith"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                placeholder="john@company.com"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={newRole} onValueChange={(value) => setNewRole(value as TeamRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sales_rep">Sales Rep</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAddOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={adding}>
-                {adding ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Plus className="size-4" />
-                )}
-                Add Member
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </Card>
-  );
-}
-
-void TeamCard;
-
-
-/* ─── Demo Step Config ──────────────────────────────────────────── */
-
-const DEMO_STEPS = [
-  { key: "intake",              label: "Intake (Rep-Only)",      color: "#8b5cf6", required: true },
-  { key: "welcome",             label: "Welcome",               color: "#3b82f6", required: true },
-  { key: "customerConcerns",    label: "What Matters Most",     color: "#8b5cf6", required: false },
-  { key: "topConcerns",         label: "Top Concerns",          color: "#f97316", required: false },
-  { key: "contaminants",        label: "Contaminant Breakdown", color: "#f59e0b", required: false },
-  { key: "score",               label: "AquaScore Reveal",      color: "#10b981", required: false },
-  { key: "test",                label: "Live Water Test",       color: "#06b6d4", required: false },
-  { key: "verifiedScore",       label: "Verified Score",        color: "#10b981", required: false },
-  { key: "impact",              label: "Personalized Impact",   color: "#f43f5e", required: false },
-  { key: "scoreImprovement",    label: "Score Improvement",     color: "#8b5cf6", required: false },
-  { key: "system",              label: "System Info",           color: "#3b82f6", required: false },
-  { key: "trust",               label: "Trust & Proof",         color: "#22c55e", required: false },
-  { key: "beforeAfter",         label: "Before & After",        color: "#8b5cf6", required: false },
-  { key: "comparison",          label: "Monthly Expenses",      color: "#ec4899", required: false },
-  { key: "pricing",             label: "Investment Overview",    color: "#10b981", required: false },
-  { key: "investmentBreakdown", label: "Investment Breakdown",   color: "#10b981", required: false },
-  { key: "transform",           label: "Score Journey",         color: "#8b5cf6", required: false },
-  { key: "boost",               label: "Score Boost (RO)",      color: "#f59e0b", required: false },
-  { key: "summary",             label: "Summary",               color: "#10b981", required: false },
-  { key: "decision",            label: "Decision",              color: "#2563eb", required: false },
-  { key: "customerClose",       label: "Customer Close",        color: "#22c55e", required: false },
-  { key: "dealerClose",         label: "Dealer Wrap-Up",        color: "#64748b", required: true },
-];
-
-const STEP_KEY_ALIASES: Record<string, string> = { solution: "transform", close: "dealerClose" };
-
-function DemoStepConfigCard() {
-  const company = useQuery(api.companies.getMyCompany);
-  const updateStepConfig = useMutation(api.dealerShared.updateDemoStepConfig);
-  const [steps, setSteps] = useState<Array<typeof DEMO_STEPS[0] & { enabled: boolean }>>([]);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!company) return;
-    const cfg = company.demoStepConfig as any;
-    const normalize = (k: string) => STEP_KEY_ALIASES[k] ?? k;
-    const disabled = new Set((cfg?.disabled ?? []).map(normalize));
-    const stepMap = new Map(DEMO_STEPS.map((s) => [s.key, s]));
-
-    let ordered: Array<typeof DEMO_STEPS[0] & { enabled: boolean }>;
-    if (cfg?.order) {
-      const seen = new Set<string>();
-      ordered = cfg.order.map(normalize).filter((k: string) => stepMap.has(k) && !seen.has(k)).map((k: string) => {
-        seen.add(k);
-        const s = stepMap.get(k)!;
-        return { ...s, enabled: !disabled.has(k) || s.required };
-      });
-      for (const s of DEMO_STEPS) {
-        if (!seen.has(s.key)) ordered.push({ ...s, enabled: !disabled.has(s.key) || s.required });
-      }
-    } else {
-      ordered = DEMO_STEPS.map((s) => ({ ...s, enabled: !disabled.has(s.key) || s.required }));
-    }
-    setSteps(ordered);
-  }, [company]);
-
-  const persist = useCallback(async (s: typeof steps) => {
-    setSaving(true);
-    try {
-      await updateStepConfig({ order: s.map((x) => x.key), disabled: s.filter((x) => !x.enabled).map((x) => x.key) });
-      toast.success("Demo step order saved");
-    } catch { toast.error("Failed to save"); }
-    finally { setSaving(false); }
-  }, [updateStepConfig]);
-
-  const toggle = useCallback((idx: number) => {
-    setSteps((prev) => {
-      const next = [...prev];
-      if (!next[idx].required) next[idx] = { ...next[idx], enabled: !next[idx].enabled };
-      persist(next);
-      return next;
-    });
-  }, [persist]);
-
-  const reset = useCallback(() => {
-    const fresh = DEMO_STEPS.map((s) => ({ ...s, enabled: true }));
-    setSteps(fresh);
-    persist(fresh);
-  }, [persist]);
-
-  if (!company) return null;
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2 text-base">🧙‍♂️ Demo Wizard Steps</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">Drag to reorder · Toggle to show/hide steps</p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={reset} className="flex items-center gap-1.5 text-xs">
-          <RotateCcw className="size-3" /> Reset
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-1">
-        {steps.map((step, idx) => (
-          <div
-            key={step.key}
-            draggable
-            onDragStart={() => setDragIdx(idx)}
-            onDragOver={(e) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) { setSteps((prev) => { const n = [...prev]; const [item] = n.splice(dragIdx, 1); n.splice(idx, 0, item); return n; }); setDragIdx(idx); } }}
-            onDragEnd={() => { if (dragIdx !== null) persist(steps); setDragIdx(null); }}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all cursor-grab active:cursor-grabbing ${dragIdx === idx ? "bg-muted/50 scale-[1.02] shadow-lg" : "hover:bg-muted/30"} ${step.enabled ? "" : "opacity-40"}`}
-          >
-            <GripVertical className="size-4 text-muted-foreground/30 shrink-0" />
-            <div className="size-2.5 rounded-full shrink-0" style={{ background: step.color }} />
-            <span className="flex-1 text-sm font-medium">
-              {step.label}
-              {step.required && <span className="ml-2 text-[10px] text-muted-foreground/50 uppercase tracking-wider">Required</span>}
-            </span>
-            <span className="text-[10px] text-muted-foreground/30 font-mono mr-2">{idx + 1}</span>
-            <button
-              onClick={() => toggle(idx)}
-              disabled={step.required}
-              className={`rounded p-1 transition-colors cursor-pointer ${step.required ? "text-muted-foreground/20 cursor-not-allowed" : step.enabled ? "text-muted-foreground/50 hover:text-foreground" : "text-muted-foreground/20 hover:text-foreground"}`}
-              title={step.required ? "Required step" : step.enabled ? "Hide step" : "Show step"}
-            >
-              {step.enabled ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-            </button>
-          </div>
-        ))}
-        {saving && <p className="text-[10px] text-muted-foreground text-center pt-1">Saving…</p>}
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ─── Collapsible Section helper ─────────────────────────────────── */
-
-function ConfigSection({ title, description, children, defaultOpen }: { title: string; description: string; children: React.ReactNode; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
-  return (
-    <div className={`border rounded-xl overflow-hidden transition-shadow ${open ? "shadow-sm ring-1 ring-blue-500/10" : ""}`}>
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/30 transition-colors cursor-pointer">
-        <div>
-          <p className="text-sm font-semibold">{title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-        </div>
-        <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && <div className="px-4 pb-4 space-y-3 border-t bg-muted/5">{children}</div>}
-    </div>
-  );
-}
-
-/* ─── Editable list item helpers ──────────────────────────────────── */
-
-function EditableListItem({ value, placeholder, onChange, onRemove }: { value: string; placeholder: string; onChange: (v: string) => void; onRemove: () => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Input value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="flex-1 text-sm" />
-      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-    </div>
-  );
-}
-
-function TitledListItem({ item, onChange, onRemove }: { item: { title: string; description: string }; onChange: (v: { title: string; description: string }) => void; onRemove: () => void }) {
-  return (
-    <div className="rounded-xl border p-3 bg-background space-y-1">
-      <div className="flex items-center gap-2">
-        <Input value={item.title} placeholder="Title" onChange={(e) => onChange({ ...item, title: e.target.value })} className="flex-1 text-sm font-semibold" />
-        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-      </div>
-      <Textarea value={item.description} placeholder="Description" onChange={(e) => onChange({ ...item, description: e.target.value })} rows={2} className="text-xs resize-none" />
-    </div>
-  );
-}
-
-function DiscountItem({ d, onChange, onRemove }: { d: { id: string; label: string; amount: number; icon: string }; onChange: (v: any) => void; onRemove: () => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Input value={d.icon} className="w-12 text-center" onChange={(e) => onChange({ ...d, icon: e.target.value })} />
-      <Input value={d.label} placeholder="Discount label" onChange={(e) => onChange({ ...d, label: e.target.value })} className="flex-1" />
-      <Input type="number" value={d.amount || ""} placeholder="$" onChange={(e) => onChange({ ...d, amount: Number(e.target.value) })} className="w-24" />
-      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-    </div>
-  );
-}
-
-function CostItem({ item, onChange, onRemove }: { item: { label: string; monthlyCost: number; enabled: boolean }; onChange: (v: any) => void; onRemove: () => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Input value={item.label} placeholder="Cost label" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1" />
-      <Input type="number" value={item.monthlyCost || ""} placeholder="$/mo" onChange={(e) => onChange({ ...item, monthlyCost: Number(e.target.value) })} className="w-24" />
-      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-    </div>
-  );
-}
-
-/* ─── Tab pill button ──────────────────────────────────────────────── */
-function TabPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-        active
-          ? "bg-blue-500 text-white shadow-sm"
-          : "bg-muted/50 text-muted-foreground hover:bg-muted"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-/* ─── Review item helper ──────────────────────────────────────────── */
-function ReviewItem({ item, onChange, onRemove }: { item: { name: string; rating: number; quote: string }; onChange: (v: any) => void; onRemove: () => void }) {
-  return (
-    <div className="rounded-xl border p-3 bg-background space-y-2">
-      <div className="flex items-center gap-2">
-        <Input value={item.name} placeholder="Customer name" onChange={(e) => onChange({ ...item, name: e.target.value })} className="flex-1 text-sm font-semibold" />
-        <Select value={String(item.rating)} onValueChange={(v) => onChange({ ...item, rating: Number(v) })}>
-          <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {[5, 4, 3, 2, 1].map((n) => <SelectItem key={n} value={String(n)}>{n} ★</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-      </div>
-      <Textarea value={item.quote} placeholder="Review quote..." onChange={(e) => onChange({ ...item, quote: e.target.value })} rows={2} className="text-xs resize-none" />
-    </div>
-  );
-}
-
-/* ─── Certification item helper ───────────────────────────────────── */
-function CertItem({ item, onChange, onRemove }: { item: { label: string; icon: string }; onChange: (v: any) => void; onRemove: () => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Input value={item.icon} className="w-14 text-center" onChange={(e) => onChange({ ...item, icon: e.target.value })} />
-      <Input value={item.label} placeholder="Certification name" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1" />
-      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-    </div>
-  );
-}
-
-/* ─── Concern card item helper ────────────────────────────────────── */
-function ConcernCardItem({ item, onChange, onRemove }: { item: { key: string; label: string; description: string }; onChange: (v: any) => void; onRemove: () => void }) {
-  return (
-    <div className="rounded-xl border p-3 bg-background space-y-1">
-      <div className="flex items-center gap-2">
-        <Input value={item.label} placeholder="Label" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1 text-sm font-semibold" />
-        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-      </div>
-      <Input value={item.description} placeholder="Short description" onChange={(e) => onChange({ ...item, description: e.target.value })} className="text-xs" />
-    </div>
-  );
-}
-
-/* ─── Decision option item helper ─────────────────────────────────── */
-function DecisionOptionItem({ item, onChange, onRemove }: { item: { key: string; label: string; description: string }; onChange: (v: any) => void; onRemove: () => void }) {
-  return (
-    <div className="rounded-xl border p-3 bg-background space-y-1">
-      <div className="flex items-center gap-2">
-        <Input value={item.label} placeholder="Option label" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1 text-sm font-semibold" />
-        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-      </div>
-      <Textarea value={item.description} placeholder="Description" onChange={(e) => onChange({ ...item, description: e.target.value })} rows={2} className="text-xs resize-none" />
-    </div>
-  );
-}
-
-/* ─── Demo Config Card (Tabbed) ───────────────────────────────────── */
-
-const DEFAULT_CLOSE_OPTIONS = ["Sold — Install Scheduled", "Follow Up Needed", "Not Interested", "No Show"];
-
-const COLOR_PRESETS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4", "#0ea5e9", "#84cc16"];
-
-const DEFAULT_REVIEWS = [
-  { name: "Sarah M.", rating: 5, quote: "Best investment we ever made for our home. The water tastes amazing!" },
-  { name: "Mike T.", rating: 5, quote: "Professional installation, great service. Wish we'd done it years ago." },
-  { name: "Jennifer R.", rating: 5, quote: "My kids' skin cleared up within weeks. Can't recommend enough." },
-];
-
-const DEFAULT_CERTIFICATIONS = [
-  { label: "WQA Certified", icon: "🏅" },
-  { label: "NSF Listed", icon: "✅" },
-  { label: "BBB A+", icon: "⭐" },
-  { label: "EPA Registered", icon: "🛡️" },
-];
-
-const DEFAULT_CONCERN_OPTIONS = [
-  { key: "family_health", label: "Family Health", description: "Keep my family safe and healthy" },
-  { key: "drinking_water", label: "Drinking Water", description: "Clean, safe water for drinking" },
-  { key: "skin_and_hair", label: "Skin & Hair", description: "Softer skin and healthier hair" },
-  { key: "appliances_plumbing", label: "Appliances", description: "Protect my home investments" },
-  { key: "taste_or_smell", label: "Taste & Smell", description: "Better tasting, odor-free water" },
-  { key: "stains_buildup", label: "Hard Water", description: "No more stains or buildup" },
-  { key: "bottled_water_costs", label: "Bottled Water", description: "Stop buying bottled water" },
-  { key: "peace_of_mind", label: "Peace of Mind", description: "Know my water is safe" },
-];
-
-const DEFAULT_DECISION_OPTIONS = [
-  { key: "move_forward", label: "Move Forward Today", description: "Let's get your system scheduled and start protecting your home" },
-  { key: "schedule_followup", label: "Schedule a Follow-Up", description: "Take time to think it over — we'll check back at a time that works for you" },
-  { key: "send_report", label: "Send My Report", description: "Get your full water quality report emailed to review on your own" },
-];
-
-const DEFAULT_BENEFITS = ["Protect Your Family", "Improve Your Water", "Reduce Costs", "Enjoy Peace of Mind"];
-
-const DEFAULT_FINANCING_TERMS = [60, 84, 120];
-
-type ConfigTab = "branding" | "content" | "pricing" | "closing" | "advanced";
-
-function DemoConfigCard() {
-  const company = useQuery(api.companies.getMyCompany);
-  const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [initialized, setInitialized] = useState(false);
-  const [cfg, setCfg] = useState<Record<string, any>>({});
-  const [activeTab, setActiveTab] = useState<ConfigTab>("branding");
-
-  useEffect(() => {
-    if (company && !initialized) {
-      const v = (company as any).demoConfig || {};
-      setCfg({
-        // Branding
-        welcomeHeadline: v.welcomeHeadline || "",
-        welcomeSubtext: v.welcomeSubtext || "",
-        accentColor: v.accentColor || "#3b82f6",
-        // Content
-        highlightCategories: v.highlightCategories || [],
-        concernOptions: v.concernOptions?.length ? v.concernOptions : DEFAULT_CONCERN_OPTIONS,
-        impactCategories: v.impactCategories || [],
-        // Trust
-        trustInstallCount: v.trustSection?.installCount ?? 500,
-        trustInstallArea: v.trustSection?.installArea || "",
-        trustCitySkyline: v.trustSection?.citySkyline || "",
-        trustReviews: v.trustSection?.reviews?.length ? v.trustSection.reviews : DEFAULT_REVIEWS,
-        trustCertifications: v.trustSection?.certifications?.length ? v.trustSection.certifications : DEFAULT_CERTIFICATIONS,
-        // Score
-        projectedScore: v.projectedScore ?? 95,
-        boostedScore: v.boostedScore ?? 99,
-        skipScoreAnimation: v.skipScoreAnimation ?? false,
-        // System
-        solutionHeadline: v.solutionHeadline || "",
-        solutionProducts: v.solutionProducts || [],
-        systemIncludes: v.systemIncludes?.length ? v.systemIncludes : [
-          { title: "Carbon Filtration", description: "Reduces chlorine, chemicals, bad taste & odor" },
-          { title: "Water Softening", description: "Reduces hardness, scale & protects plumbing" },
-          { title: "Sediment Filtration", description: "Reduces dirt, rust, sand & fine particles" },
-          { title: "Digital Control Valve", description: "High efficiency metered control valve" },
-          { title: "Brine Tank with Safety Float", description: "Ensures reliable & efficient operation" },
-          { title: "Bypass Valve", description: "Built-in bypass for easy maintenance" },
-          { title: "Professional Installation", description: "Installed by certified water quality experts" },
-        ],
-        warrantyTitle: v.warrantyTitle || "20 Year Unlimited Warranty",
-        warrantyBullets: v.warrantyBullets?.length ? v.warrantyBullets : [
-          "20 Year Warranty on Tanks", "20 Year Warranty on Control Valve",
-          "10 Year Warranty on Components", "5 Year Warranty on Labor",
-          "100% Parts & Labor Coverage", "No Prorating — Ever", "Lifetime Customer Support",
-        ],
-        howItWorksSteps: v.howItWorksSteps?.length ? v.howItWorksSteps : [
-          { title: "Water Analysis", description: "We test your water and review your local utility data to identify concerns." },
-          { title: "Custom Design", description: "Your system is configured specifically for the contaminants in your water." },
-          { title: "Professional Installation", description: "Certified technicians install your system — free of charge." },
-          { title: "Enjoy Better Water", description: "Cleaner, softer water from every tap in your home, starting day one." },
-        ],
-        systemCallouts: v.systemCallouts?.length ? v.systemCallouts : ["Free Professional Installation", "Free Annual Water Review", "Lifetime Support"],
-        // Pricing
-        programPrice: v.programPrice,
-        revealPrice: v.revealPrice,
-        discountOptions: v.discountOptions?.length ? v.discountOptions : [
-          { id: "today", label: "Same-Day Decision", amount: 500, icon: "⚡" },
-          { id: "referral", label: "Referral Credit", amount: 300, icon: "👥" },
-          { id: "military", label: "Military / First Responder", amount: 250, icon: "🎖️" },
-          { id: "senior", label: "Senior Discount", amount: 200, icon: "🤝" },
-        ],
-        costItems: v.costItems?.length ? v.costItems : [
-          { label: "Bottled Water", monthlyCost: 120, enabled: true },
-          { label: "Water Delivery", monthlyCost: 60, enabled: true },
-          { label: "Pitcher Filters", monthlyCost: 25, enabled: true },
-          { label: "Appliance Repairs", monthlyCost: 40, enabled: true },
-          { label: "Skin/Hair Products", monthlyCost: 35, enabled: true },
-          { label: "Plumbing Maintenance", monthlyCost: 30, enabled: true },
-        ],
-        systemCostMonthly: v.systemCostMonthly,
-        // Financing
-        financingEnabled: v.financing?.enabled ?? true,
-        financingAprRange: v.financing?.aprRange || "0% – 9.99%",
-        financingDefaultApr: v.financing?.defaultApr ?? 4.99,
-        financingTerms: v.financing?.terms?.length ? v.financing.terms : DEFAULT_FINANCING_TERMS,
-        financingProvider: v.financing?.provider || "",
-        // RO / Boost
-        roSystemName: v.roSystemName || "Reverse Osmosis System",
-        roSystemDescription: v.roSystemDescription || "A premium under-sink reverse osmosis system that removes 99.9% of all remaining contaminants, giving you the purest water possible — included free with your whole-home system.",
-        roSystemImage: v.roSystemImage || "",
-        // Closing
-        closeHeadline: v.closeHeadline || "",
-        customerCloseSubtext: v.customerCloseSubtext || "",
-        closeOptions: v.closeOptions?.length ? v.closeOptions : DEFAULT_CLOSE_OPTIONS,
-        decisionOptions: v.decisionOptions?.length ? v.decisionOptions : DEFAULT_DECISION_OPTIONS,
-        summaryBenefits: v.summaryBenefits?.length ? v.summaryBenefits : DEFAULT_BENEFITS,
-        // Demo modes
-        demoModes: v.demoModes || {},
-      });
-      setInitialized(true);
-    }
-  }, [company, initialized]);
-
-  const update = useCallback((patch: Record<string, any>) => {
-    setCfg((prev) => ({ ...prev, ...patch }));
-    setSaved(false);
-  }, []);
-
-  if (!company) return null;
-
-  const accent = cfg.accentColor || "#3b82f6";
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const config: Record<string, any> = {};
-      for (const [k, v] of Object.entries(cfg)) {
-        // Skip nested keys we'll assemble manually
-        if (k.startsWith("trust") || k.startsWith("financing")) continue;
-        if (Array.isArray(v)) { if (v.length > 0) config[k] = v; }
-        else if (v !== "" && v !== undefined && v !== null) config[k] = v;
-      }
-      // Assemble trustSection
-      config.trustSection = {
-        installCount: cfg.trustInstallCount ?? 500,
-        installArea: cfg.trustInstallArea || "",
-        citySkyline: cfg.trustCitySkyline || "",
-        reviews: cfg.trustReviews?.length ? cfg.trustReviews : DEFAULT_REVIEWS,
-        certifications: cfg.trustCertifications?.length ? cfg.trustCertifications : DEFAULT_CERTIFICATIONS,
-      };
-      // Assemble financing
-      config.financing = {
-        enabled: cfg.financingEnabled ?? true,
-        aprRange: cfg.financingAprRange || "0% – 9.99%",
-        defaultApr: cfg.financingDefaultApr ?? 4.99,
-        terms: cfg.financingTerms?.length ? cfg.financingTerms : DEFAULT_FINANCING_TERMS,
-        provider: cfg.financingProvider || "",
-      };
-      await updateDemoConfig({ config });
-      setSaved(true);
-      toast.success("Demo settings saved!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save");
-    } finally { setSaving(false); }
-  };
-
-  const contaminantCategories = ["Heavy Metals", "Disinfection Byproducts", "Pesticides", "Radioactive", "Microorganisms", "Industrial Chemicals", "Pharmaceuticals"];
-
-  const TABS: { key: ConfigTab; label: string }[] = [
-    { key: "branding", label: "Branding" },
-    { key: "content", label: "Content" },
-    { key: "pricing", label: "Pricing" },
-    { key: "closing", label: "Closing" },
-    { key: "advanced", label: "Advanced" },
-  ];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          🎯 Demo Wizard Customization
-        </CardTitle>
-        <CardDescription>Configure every part of your demo presentation. Changes show up in every new demo you present.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Tab pills */}
-        <div className="flex flex-wrap gap-2">
-          {TABS.map((tab) => (
-            <TabPill key={tab.key} label={tab.label} active={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} />
-          ))}
-        </div>
-
-        {/* ═══════════ BRANDING TAB ═══════════ */}
-        {activeTab === "branding" && (
-          <div className="space-y-3">
-            <ConfigSection title="🎨 Brand Color" description="Colors buttons, highlights, and accents throughout the demo">
-              <div className="flex flex-wrap gap-2 pt-2">
-                {COLOR_PRESETS.map((c) => (
-                  <button key={c} onClick={() => update({ accentColor: c })} className={`size-8 rounded-xl transition-all cursor-pointer ${accent === c ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : "hover:scale-105"}`} style={{ backgroundColor: c }} />
-                ))}
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <input type="color" value={accent} onChange={(e) => update({ accentColor: e.target.value })} className="w-8 h-8 rounded-lg border cursor-pointer" />
-                <span className="text-xs text-muted-foreground">Or pick any custom color</span>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="👋 Welcome Screen" description="First thing customers see when the demo starts" defaultOpen>
-              <div className="space-y-2 pt-2">
-                <Label className="text-xs">Headline</Label>
-                <Input value={cfg.welcomeHeadline || ""} placeholder="Your Water Quality Report" onChange={(e) => update({ welcomeHeadline: e.target.value })} />
-                <Label className="text-xs">Subtext</Label>
-                <Textarea value={cfg.welcomeSubtext || ""} placeholder="Let's look at what's in your water..." onChange={(e) => update({ welcomeSubtext: e.target.value })} rows={2} />
-              </div>
-            </ConfigSection>
-          </div>
-        )}
-
-        {/* ═══════════ CONTENT TAB ═══════════ */}
-        {activeTab === "content" && (
-          <div className="space-y-3">
-            <ConfigSection title="💬 Customer Concerns" description="The concern cards homeowners tap during 'What Matters Most'">
-              <div className="space-y-2 pt-2">
-                {(cfg.concernOptions || []).map((item: any, idx: number) => (
-                  <ConcernCardItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.concernOptions || [])]; n[idx] = v; update({ concernOptions: n }); }} onRemove={() => { const n = [...(cfg.concernOptions || [])]; n.splice(idx, 1); update({ concernOptions: n }); }} />
-                ))}
-                <button onClick={() => update({ concernOptions: [...(cfg.concernOptions || []), { key: `concern_${Date.now()}`, label: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Concern</button>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="🧪 Featured Contaminants" description="Pick which contaminants to emphasize — leave empty to auto-detect">
-              <div className="flex flex-wrap gap-2 pt-2">
-                {contaminantCategories.map((cat) => (
-                  <button key={cat} onClick={() => {
-                    const list = cfg.highlightCategories || [];
-                    update({ highlightCategories: list.includes(cat) ? list.filter((c: string) => c !== cat) : [...list, cat] });
-                  }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${(cfg.highlightCategories || []).includes(cat) ? "bg-blue-500 text-white border-blue-500" : "border-muted-foreground/20 hover:bg-muted/50"}`}>{cat}</button>
-                ))}
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="⚡ Impact Page" description="Customize the concern categories and their contaminant mappings">
-              <div className="pt-2">
-                <p className="text-xs text-muted-foreground mb-2">The impact page maps customer concerns to specific contaminants. The defaults are solid — only change if you want to customize the category labels.</p>
-                <p className="text-xs text-muted-foreground italic">Impact categories are automatically derived from the Customer Concerns above. Advanced mapping is coming soon.</p>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="🏆 Trust & Proof" description="Reviews, certifications, and local install stats shown after the system page">
-              <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">Install Count</Label>
-                    <Input type="number" value={cfg.trustInstallCount ?? 500} placeholder="500" onChange={(e) => update({ trustInstallCount: Number(e.target.value) || 0 })} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Install Area</Label>
-                    <Input value={cfg.trustInstallArea || ""} placeholder="e.g. Phoenix, AZ" onChange={(e) => update({ trustInstallArea: e.target.value })} />
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-semibold">Customer Reviews</Label>
-                  <div className="space-y-2 mt-2">
-                    {(cfg.trustReviews || []).map((review: any, idx: number) => (
-                      <ReviewItem key={idx} item={review} onChange={(v) => { const n = [...(cfg.trustReviews || [])]; n[idx] = v; update({ trustReviews: n }); }} onRemove={() => { const n = [...(cfg.trustReviews || [])]; n.splice(idx, 1); update({ trustReviews: n }); }} />
-                    ))}
-                    <button onClick={() => update({ trustReviews: [...(cfg.trustReviews || []), { name: "", rating: 5, quote: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Review</button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs font-semibold">Certifications</Label>
-                  <div className="space-y-2 mt-2">
-                    {(cfg.trustCertifications || []).map((cert: any, idx: number) => (
-                      <CertItem key={idx} item={cert} onChange={(v) => { const n = [...(cfg.trustCertifications || [])]; n[idx] = v; update({ trustCertifications: n }); }} onRemove={() => { const n = [...(cfg.trustCertifications || [])]; n.splice(idx, 1); update({ trustCertifications: n }); }} />
-                    ))}
-                    <button onClick={() => update({ trustCertifications: [...(cfg.trustCertifications || []), { label: "", icon: "🏅" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Certification</button>
-                  </div>
-                </div>
-              </div>
-            </ConfigSection>
-          </div>
-        )}
-
-        {/* ═══════════ PRICING TAB ═══════════ */}
-        {activeTab === "pricing" && (
-          <div className="space-y-3">
-            <ConfigSection title="📊 Score Settings" description="Configure the projected and boosted AquaScore values" defaultOpen>
-              <div className="space-y-3 pt-2">
-                <div>
-                  <Label className="text-xs">Projected Score After Filtration</Label>
-                  <div className="flex items-center gap-3 mt-1">
-                    <input type="range" min={60} max={100} value={cfg.projectedScore ?? 95} onChange={(e) => update({ projectedScore: Number(e.target.value) })} className="flex-1 accent-blue-500 cursor-pointer" />
-                    <div className="size-10 rounded-full flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: accent }}>{cfg.projectedScore ?? 95}</div>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Boosted Score (after RO)</Label>
-                  <Input type="number" value={cfg.boostedScore ?? 99} placeholder="99" onChange={(e) => update({ boostedScore: Number(e.target.value) })} className="w-24" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="skipScoreAnim" checked={cfg.skipScoreAnimation ?? false} onChange={(e) => update({ skipScoreAnimation: e.target.checked })} className="cursor-pointer" />
-                  <Label htmlFor="skipScoreAnim" className="text-xs cursor-pointer">Skip score animation</Label>
-                </div>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="💰 Pricing" description="Program price, reveal price, stackable discounts">
-              <div className="space-y-4 pt-2">
-                <div>
-                  <Label className="text-xs">Reveal Price (actual)</Label>
-                  <Input type="number" value={cfg.revealPrice || ""} placeholder="e.g. 9995" onChange={(e) => update({ revealPrice: Number(e.target.value) || undefined })} />
-                  <p className="text-[10px] text-muted-foreground mt-1">Program price (crossed-out MSRP) is set during the pricing step of the demo.</p>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">Stackable Discounts</Label>
-                  <p className="text-xs text-muted-foreground mb-2">Sales rep can toggle these on during the demo</p>
-                  <div className="space-y-2">
-                    {(cfg.discountOptions || []).map((d: any, idx: number) => (
-                      <DiscountItem key={idx} d={d} onChange={(v) => { const n = [...(cfg.discountOptions || [])]; n[idx] = v; update({ discountOptions: n }); }} onRemove={() => { const n = [...(cfg.discountOptions || [])]; n.splice(idx, 1); update({ discountOptions: n }); }} />
-                    ))}
-                    <button onClick={() => update({ discountOptions: [...(cfg.discountOptions || []), { id: `discount_${Date.now()}`, label: "", amount: 0, icon: "🏷️" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Discount</button>
-                  </div>
-                </div>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="📊 Cost Comparison" description="Monthly expenses customers pay without filtration vs. your system">
-              <div className="space-y-3 pt-2">
-                <p className="text-xs text-muted-foreground">Set the average monthly expenses a homeowner spends without filtration.</p>
-                <div className="space-y-2">
-                  {(cfg.costItems || []).map((item: any, idx: number) => (
-                    <CostItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.costItems || [])]; n[idx] = v; update({ costItems: n }); }} onRemove={() => { const n = [...(cfg.costItems || [])]; n.splice(idx, 1); update({ costItems: n }); }} />
-                  ))}
-                  <button onClick={() => update({ costItems: [...(cfg.costItems || []), { label: "", monthlyCost: 0, enabled: true }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Cost Item</button>
-                </div>
-                <div>
-                  <Label className="text-xs">Your System Monthly Cost</Label>
-                  <Input type="number" value={cfg.systemCostMonthly || ""} placeholder="e.g. 49" onChange={(e) => update({ systemCostMonthly: Number(e.target.value) || undefined })} />
-                </div>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="💳 Financing" description="Monthly payment calculator settings on the Investment Breakdown page">
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="finEnabled" checked={cfg.financingEnabled ?? true} onChange={(e) => update({ financingEnabled: e.target.checked })} className="cursor-pointer" />
-                  <Label htmlFor="finEnabled" className="text-xs cursor-pointer">Financing enabled</Label>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">APR Range Label</Label>
-                    <Input value={cfg.financingAprRange || ""} placeholder="0% – 9.99%" onChange={(e) => update({ financingAprRange: e.target.value })} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Default APR (%)</Label>
-                    <Input type="number" step="0.01" value={cfg.financingDefaultApr ?? 4.99} placeholder="4.99" onChange={(e) => update({ financingDefaultApr: Number(e.target.value) })} />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Term Options (months)</Label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {[24, 36, 48, 60, 72, 84, 96, 120, 144, 180].map((term) => (
-                      <button key={term} onClick={() => {
-                        const terms = cfg.financingTerms || DEFAULT_FINANCING_TERMS;
-                        update({ financingTerms: terms.includes(term) ? terms.filter((t: number) => t !== term) : [...terms, term].sort((a: number, b: number) => a - b) });
-                      }}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${(cfg.financingTerms || DEFAULT_FINANCING_TERMS).includes(term) ? "bg-blue-500 text-white border-blue-500" : "border-muted-foreground/20 hover:bg-muted/50"}`}>{term}</button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Financing Provider (optional)</Label>
-                  <Input value={cfg.financingProvider || ""} placeholder="e.g. Synchrony, GreenSky" onChange={(e) => update({ financingProvider: e.target.value })} />
-                </div>
-              </div>
-            </ConfigSection>
-          </div>
-        )}
-
-        {/* ═══════════ CLOSING TAB ═══════════ */}
-        {activeTab === "closing" && (
-          <div className="space-y-3">
-            <ConfigSection title="🚀 Score Boost (RO System)" description="The free RO system popup that boosts the score to near-perfect" defaultOpen>
-              <div className="space-y-3 pt-2">
-                <div>
-                  <Label className="text-xs">RO System Name</Label>
-                  <Input value={cfg.roSystemName || ""} placeholder="Reverse Osmosis System" onChange={(e) => update({ roSystemName: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Description</Label>
-                  <Textarea value={cfg.roSystemDescription || ""} placeholder="A premium under-sink reverse osmosis system..." onChange={(e) => update({ roSystemDescription: e.target.value })} rows={3} />
-                </div>
-                <div>
-                  <Label className="text-xs">RO System Image</Label>
-                  {cfg.roSystemImage && (
-                    <div className="mb-2 relative inline-block">
-                      <img src={cfg.roSystemImage} alt="RO System" className="max-h-24 rounded-lg border border-border object-contain" />
-                      <button onClick={() => update({ roSystemImage: "" })} className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform cursor-pointer">
-                        <X className="size-3" />
-                      </button>
-                    </div>
-                  )}
-                  <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center">
-                    <Upload className="size-4" />
-                    {cfg.roSystemImage ? "Replace Image" : "Upload Image"}
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) { const reader = new FileReader(); reader.onload = () => update({ roSystemImage: reader.result as string }); reader.readAsDataURL(file); }
-                      e.target.value = "";
-                    }} />
-                  </label>
-                </div>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="🔧 System Info" description="System includes, warranty, how it works, callouts">
-              <div className="space-y-4 pt-2">
-                <div className="rounded-xl bg-muted/30 p-3 border border-dashed">
-                  <p className="text-xs text-muted-foreground">💡 System Name & Image are set in <strong>Company Settings → General</strong> (Solution Product section above).</p>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">System Includes</Label>
-                  <div className="space-y-2 mt-2">
-                    {(cfg.systemIncludes || []).map((item: any, idx: number) => (
-                      <TitledListItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.systemIncludes || [])]; n[idx] = v; update({ systemIncludes: n }); }} onRemove={() => { const n = [...(cfg.systemIncludes || [])]; n.splice(idx, 1); update({ systemIncludes: n }); }} />
-                    ))}
-                    <button onClick={() => update({ systemIncludes: [...(cfg.systemIncludes || []), { title: "", description: "" }] })} className="mt-1 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Item</button>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">Warranty</Label>
-                  <Input value={cfg.warrantyTitle || ""} placeholder="20 Year Unlimited Warranty" onChange={(e) => update({ warrantyTitle: e.target.value })} className="mt-1" />
-                  <div className="space-y-2 mt-2">
-                    {(cfg.warrantyBullets || []).map((b: string, idx: number) => (
-                      <EditableListItem key={idx} value={b} placeholder="e.g. 20 Year Warranty on Tanks" onChange={(v) => { const n = [...(cfg.warrantyBullets || [])]; n[idx] = v; update({ warrantyBullets: n }); }} onRemove={() => { const n = [...(cfg.warrantyBullets || [])]; n.splice(idx, 1); update({ warrantyBullets: n }); }} />
-                    ))}
-                    <button onClick={() => update({ warrantyBullets: [...(cfg.warrantyBullets || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Warranty Point</button>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">How It Works Steps</Label>
-                  <div className="space-y-2 mt-2">
-                    {(cfg.howItWorksSteps || []).map((step: any, idx: number) => (
-                      <TitledListItem key={idx} item={step} onChange={(v) => { const n = [...(cfg.howItWorksSteps || [])]; n[idx] = v; update({ howItWorksSteps: n }); }} onRemove={() => { const n = [...(cfg.howItWorksSteps || [])]; n.splice(idx, 1); update({ howItWorksSteps: n }); }} />
-                    ))}
-                    <button onClick={() => update({ howItWorksSteps: [...(cfg.howItWorksSteps || []), { title: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Step</button>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold">Bottom Callouts</Label>
-                  <p className="text-xs text-muted-foreground mb-2">Up to 3 short callouts</p>
-                  <div className="space-y-2">
-                    {(cfg.systemCallouts || []).map((c: string, idx: number) => (
-                      <EditableListItem key={idx} value={c} placeholder="e.g. Free Professional Installation" onChange={(v) => { const n = [...(cfg.systemCallouts || [])]; n[idx] = v; update({ systemCallouts: n }); }} onRemove={() => { const n = [...(cfg.systemCallouts || [])]; n.splice(idx, 1); update({ systemCallouts: n }); }} />
-                    ))}
-                    {(cfg.systemCallouts || []).length < 3 && (
-                      <button onClick={() => update({ systemCallouts: [...(cfg.systemCallouts || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Callout</button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="🎯 Decision Options" description="The three choices the homeowner sees on the Decision page">
-              <div className="space-y-2 pt-2">
-                {(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS).map((item: any, idx: number) => (
-                  <DecisionOptionItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS)]; n[idx] = v; update({ decisionOptions: n }); }} onRemove={() => { const n = [...(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS)]; n.splice(idx, 1); update({ decisionOptions: n }); }} />
-                ))}
-                {(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS).length < 4 && (
-                  <button onClick={() => update({ decisionOptions: [...(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS), { key: `opt_${Date.now()}`, label: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Option</button>
-                )}
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="📝 Summary Screen" description="Customize the benefit bullets on the summary page">
-              <div className="space-y-2 pt-2">
-                {(cfg.summaryBenefits || DEFAULT_BENEFITS).map((b: string, idx: number) => (
-                  <EditableListItem key={idx} value={b} placeholder="e.g. Protect Your Family" onChange={(v) => { const n = [...(cfg.summaryBenefits || DEFAULT_BENEFITS)]; n[idx] = v; update({ summaryBenefits: n }); }} onRemove={() => { const n = [...(cfg.summaryBenefits || DEFAULT_BENEFITS)]; n.splice(idx, 1); update({ summaryBenefits: n }); }} />
-                ))}
-                {(cfg.summaryBenefits || DEFAULT_BENEFITS).length < 6 && (
-                  <button onClick={() => update({ summaryBenefits: [...(cfg.summaryBenefits || DEFAULT_BENEFITS), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Benefit</button>
-                )}
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="🤝 Customer Close" description="The friendly ending screen the customer sees">
-              <div className="space-y-2 pt-2">
-                <Label className="text-xs">Headline</Label>
-                <Input value={cfg.closeHeadline || ""} placeholder="Thank You, {firstName}!" onChange={(e) => update({ closeHeadline: e.target.value })} />
-                <Label className="text-xs">Subtext</Label>
-                <Textarea value={cfg.customerCloseSubtext || ""} placeholder="We're excited to help you achieve cleaner, safer water..." onChange={(e) => update({ customerCloseSubtext: e.target.value })} rows={2} />
-              </div>
-            </ConfigSection>
-
-            <ConfigSection title="🎯 Dealer Close (Outcome Options)" description="Outcome buttons the sales rep sees after the demo">
-              <div className="space-y-2 pt-2">
-                {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).map((opt: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <span className="size-6 rounded-lg flex items-center justify-center text-[10px] font-bold bg-muted">{idx + 1}</span>
-                    <Input value={opt} onChange={(e) => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n[idx] = e.target.value; update({ closeOptions: n }); }} className="flex-1" />
-                    {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).length > 2 && (
-                      <button onClick={() => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n.splice(idx, 1); update({ closeOptions: n }); }} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
-                    )}
-                  </div>
-                ))}
-                <button onClick={() => update({ closeOptions: [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Option</button>
-              </div>
-            </ConfigSection>
-          </div>
-        )}
-
-        {/* ═══════════ ADVANCED TAB ═══════════ */}
-        {activeTab === "advanced" && (
-          <div className="space-y-3">
-            <ConfigSection title="📋 Demo Modes" description="Choose which steps appear in each presentation mode" defaultOpen>
-              <div className="pt-2 space-y-4">
-                <DemoModesEditor modes={cfg.demoModes || {}} onChange={(m) => update({ demoModes: m })} />
-              </div>
-            </ConfigSection>
-          </div>
-        )}
-
-        {/* Save Button */}
-        <div className="pt-3 flex items-center gap-3">
-          <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: accent, boxShadow: `0 4px 14px ${accent}40` }} className="text-white font-bold">
-            {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : saved ? <Check className="size-4 mr-2" /> : <Save className="size-4 mr-2" />}
-            {saving ? "Saving..." : saved ? "Saved!" : "Save All Changes"}
-          </Button>
-          {saved && <span className="text-xs text-emerald-500 font-medium">✓ Changes will appear in your next demo</span>}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ─── Demo Modes Editor (for Advanced tab) ─────────────────────────── */
-
-function DemoModesEditor({ modes, onChange }: { modes: Record<string, string[]>; onChange: (m: Record<string, string[]>) => void }) {
-  const [activeMode, setActiveMode] = useState<"quick" | "standard" | "full">("standard");
-
-  const DEFAULT_MODES: Record<string, string[]> = {
-    quick: ["welcome", "topConcerns", "score", "test", "pricing", "decision", "customerClose", "dealerClose"],
-    standard: ["intake", "welcome", "customerConcerns", "topConcerns", "contaminants", "score", "test", "verifiedScore", "impact", "scoreImprovement", "system", "trust", "comparison", "pricing", "investmentBreakdown", "transform", "boost", "summary", "decision", "customerClose", "dealerClose"],
-    full: DEMO_STEPS.map((s) => s.key),
-  };
-
-  const modeSteps = modes[activeMode]?.length ? modes[activeMode] : DEFAULT_MODES[activeMode];
-
-  const toggleStep = (key: string) => {
-    const step = DEMO_STEPS.find((s) => s.key === key);
-    if (step?.required) return;
-    const current = [...modeSteps];
-    const newSteps = current.includes(key) ? current.filter((k) => k !== key) : [...current, key];
-    onChange({ ...modes, [activeMode]: newSteps });
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        {(["quick", "standard", "full"] as const).map((m) => (
-          <TabPill key={m} label={`${m.charAt(0).toUpperCase() + m.slice(1)} ${m === "quick" ? "(~5 min)" : m === "standard" ? "(~20 min)" : "(~30 min)"}`} active={activeMode === m} onClick={() => setActiveMode(m)} />
-        ))}
-      </div>
-      <div className="space-y-1.5">
-        {DEMO_STEPS.map((step) => (
-          <label key={step.key} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-            <input
-              type="checkbox"
-              checked={modeSteps.includes(step.key)}
-              disabled={step.required}
-              onChange={() => toggleStep(step.key)}
-              className="cursor-pointer accent-blue-500"
-            />
-            <span className="size-2 rounded-full" style={{ backgroundColor: step.color }} />
-            <span className="text-sm">{step.label}</span>
-            {step.required && <span className="text-[10px] text-muted-foreground ml-auto">required</span>}
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-
-function StripeCard() {
+/* ═══════════════════════════════════════════════════════════════════
+   Billing Section
+   ═══════════════════════════════════════════════════════════════════ */
+
+function BillingSection() {
   const navigate = useNavigate();
   const subscription = useQuery(api.stripe.getSubscription);
   const createCheckout = useAction(api.stripe.createCheckoutSession);
@@ -1858,11 +1084,8 @@ function StripeCard() {
     try {
       const { url } = await createCheckout({ priceId, plan });
       if (url) window.location.href = url;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to start checkout");
-    } finally {
-      setLoading("");
-    }
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to start checkout"); }
+    finally { setLoading(""); }
   };
 
   const handleManageBilling = async () => {
@@ -1870,115 +1093,97 @@ function StripeCard() {
     try {
       const { url } = await createPortal();
       if (url) window.location.href = url;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to open billing portal");
-    } finally {
-      setLoading("");
-    }
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to open billing portal"); }
+    finally { setLoading(""); }
   };
 
   const currentPlan = subscription?.plan || "free";
   const isActive = subscription?.status === "active";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          💳 Billing & Subscription
-        </CardTitle>
-        <CardDescription>
-          Manage your subscription and payment settings
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Current plan status */}
-        <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/30">
-          <div>
-            <p className="text-sm text-muted-foreground">Current Plan</p>
-            <p className="text-lg font-bold capitalize">{currentPlan}</p>
-            {isActive && subscription?.periodEnd && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Renews {new Date(subscription.periodEnd).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" :
-            currentPlan === "free" ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" :
-            "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-          }`}>
-            {isActive ? "Active" : currentPlan === "free" ? "1 free report" : subscription?.status || "Inactive"}
-          </div>
+    <SettingsSection emoji="💳" title="Billing & Subscription" description="Manage your plan and payment settings">
+      <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/30">
+        <div>
+          <p className="text-sm text-muted-foreground">Current Plan</p>
+          <p className="text-lg font-bold capitalize">{currentPlan}</p>
+          {isActive && subscription?.periodEnd && <p className="text-xs text-muted-foreground mt-0.5">Renews {new Date(subscription.periodEnd).toLocaleDateString()}</p>}
         </div>
+        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : currentPlan === "free" ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"}`}>
+          {isActive ? "Active" : currentPlan === "free" ? "1 free report" : subscription?.status || "Inactive"}
+        </div>
+      </div>
 
-        {/* Plans grid */}
-        {(!isActive || currentPlan === "free") && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            {SUBSCRIPTION_PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                className={`rounded-xl border p-4 space-y-3 ${plan.id === "growth" ? "border-blue-500 bg-blue-500/5" : ""}`}
-              >
-                <div>
-                  <p className="font-semibold text-sm">{plan.name}</p>
-                  <p className="text-lg font-bold">{plan.price}</p>
-                </div>
-                <ul className="space-y-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <Check className="size-3 text-emerald-500 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  size="sm"
-                  variant={plan.id === "growth" ? "default" : "outline"}
-                  className="w-full"
-                  disabled={loading === plan.id}
-                  onClick={() => {
-                    if (plan.priceId) {
-                      handleSubscribe(plan.priceId, plan.id);
-                    } else {
-                      navigate("/subscription");
-                    }
-                  }}
-                >
-                  {loading === plan.id ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    plan.id === "enterprise" ? "Contact" : "Subscribe"
-                  )}
-                </Button>
+      {(!isActive || currentPlan === "free") && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {SUBSCRIPTION_PLANS.map((plan) => (
+            <div key={plan.id} className={`rounded-xl border p-4 space-y-3 ${plan.id === "growth" ? "border-blue-500 bg-blue-500/5" : ""}`}>
+              <div>
+                <p className="font-semibold text-sm">{plan.name}</p>
+                <p className="text-lg font-bold">{plan.price}</p>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Manage billing */}
-        {isActive && (
-          <Button variant="outline" onClick={handleManageBilling} disabled={loading === "portal"}>
-            {loading === "portal" ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
-            Manage Billing
-          </Button>
-        )}
-
-        {/* Setup instructions */}
-        <div className="rounded-xl border border-dashed p-4 space-y-2">
-          <p className="text-sm font-medium">Stripe Configuration</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            To enable payments, add these environment variables to your Convex dashboard:
-          </p>
-          <div className="font-mono text-xs bg-muted rounded-lg p-3 space-y-1">
-            <p><span className="text-blue-500">STRIPE_SECRET_KEY</span>=sk_live_...</p>
-            <p><span className="text-blue-500">STRIPE_WEBHOOK_SECRET</span>=whsec_...</p>
-            <p><span className="text-blue-500">SITE_URL</span>=https://yourdomain.com</p>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Webhook endpoint: <code className="bg-muted px-1 rounded">/api/stripe-webhook</code>
-          </p>
+              <ul className="space-y-1">
+                {plan.features.map((f) => (<li key={f} className="text-xs text-muted-foreground flex items-center gap-1.5"><Check className="size-3 text-emerald-500 shrink-0" />{f}</li>))}
+              </ul>
+              <Button size="sm" variant={plan.id === "growth" ? "default" : "outline"} className="w-full" disabled={loading === plan.id}
+                onClick={() => { if (plan.priceId) handleSubscribe(plan.priceId, plan.id); else navigate("/subscription"); }}>
+                {loading === plan.id ? <Loader2 className="size-4 animate-spin" /> : plan.id === "enterprise" ? "Contact" : "Subscribe"}
+              </Button>
+            </div>
+          ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {isActive && (
+        <Button variant="outline" onClick={handleManageBilling} disabled={loading === "portal"}>
+          {loading === "portal" ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
+          Manage Billing
+        </Button>
+      )}
+    </SettingsSection>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CreateCompanyForm — shown when no company exists
+   ═══════════════════════════════════════════════════════════════════ */
+
+function CreateCompanyForm({ onCreate, onCreated }: { onCreate: (args: { name: string; email?: string; phone?: string }) => Promise<unknown>; onCreated: () => void }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      await onCreate({ name: name.trim(), email: email.trim() || undefined, phone: phone.trim() || undefined });
+      toast.success("Company created!");
+      onCreated();
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to create company"); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-blue-500/10 mx-auto mb-2"><Building2 className="size-7 text-blue-500" /></div>
+          <CardTitle>Set Up Your Company</CardTitle>
+          <CardDescription>Create your company profile to start generating branded reports</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2"><Label htmlFor="name">Company Name *</Label><Input id="name" placeholder="e.g. Pure Water Solutions" value={name} onChange={(e) => setName(e.target.value)} required /></div>
+            <div className="space-y-2"><Label htmlFor="email">Business Email</Label><Input id="email" type="email" placeholder="info@yourcompany.com" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div className="space-y-2"><Label htmlFor="phone">Phone</Label><Input id="phone" placeholder="(555) 123-4567" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+            <Button type="submit" disabled={loading || !name.trim()} className="w-full">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Building2 className="size-4" />} Create Company
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
