@@ -238,7 +238,7 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 
 function useAutoSave(saveFn: () => Promise<void>, deps: any[], delay = 800) {
   const [saved, setSaved] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const mountedRef = useRef(false);
 
   useEffect(() => {
