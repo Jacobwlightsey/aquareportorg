@@ -1171,12 +1171,6 @@ function CostItem({ item, onChange, onRemove }: { item: { label: string; monthly
   );
 }
 
-/* ─── Demo Config Card ────────────────────────────────────────────── */
-
-const DEFAULT_CLOSE_OPTIONS = ["Sold — Install Scheduled", "Follow Up Needed", "Not Interested", "No Show"];
-
-const COLOR_PRESETS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4", "#0ea5e9", "#84cc16"];
-
 /* ─── Tab pill button ──────────────────────────────────────────────── */
 function TabPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
