@@ -522,9 +522,20 @@ function DemoWizardInner() {
     );
   }
 
-  // After loading guards, company is non-null (or null = no company yet).
-  // Coerce to CompanyForDemo | undefined so downstream components type-check.
-  const resolvedCompany = company ?? undefined;
+  if (!company) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
+        <AlertTriangle className="mb-4 size-12 text-amber-500/50" />
+        <p className="font-semibold">Company not found</p>
+        <button
+          onClick={() => navigate("/settings")}
+          className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium"
+        >
+          Go to Settings
+        </button>
+      </div>
+    );
+  }
 
   /* ─── Plan gate ─── */
   if (!hasPlanOverride(effectivePlan as any, "growth")) {
@@ -747,7 +758,7 @@ function DemoWizardInner() {
             <DemoCustomerConcerns
               initial={customerConcerns}
               companyColor={companyColor}
-              company={resolvedCompany}
+              company={company}
               onNext={(state) => {
                 setCustomerConcerns(state);
                 goNext();
@@ -814,7 +825,7 @@ function DemoWizardInner() {
             <DemoScoreTransform
               score={score ?? 0}
               report={report}
-              company={resolvedCompany}
+              company={company}
               contaminants={contaminants}
               liveReadings={liveReadings}
               projectedScore={projectedScore ?? score ?? 0}
@@ -830,11 +841,11 @@ function DemoWizardInner() {
             />
           )}
           {stepKey === "system" && (
-            <DemoSystemInfo company={resolvedCompany} report={report} onNext={goNext} />
+            <DemoSystemInfo company={company} report={report} onNext={goNext} />
           )}
           {stepKey === "trust" && (
             <DemoTrustProof
-              company={resolvedCompany}
+              company={company}
               report={report}
               onNext={goNext}
             />
@@ -849,7 +860,7 @@ function DemoWizardInner() {
           )}
           {stepKey === "pricing" && (
             <DemoPricing
-              company={resolvedCompany}
+              company={company}
               onNext={goNext}
               onBack={goBack}
               onPricingChange={setPricingState}
@@ -861,7 +872,7 @@ function DemoWizardInner() {
           )}
           {stepKey === "investmentBreakdown" && (
             <DemoInvestmentBreakdown
-              company={resolvedCompany}
+              company={company}
               pricingState={pricingState}
               onPricingChange={setPricingState}
               onNext={goNext}
@@ -869,7 +880,7 @@ function DemoWizardInner() {
           )}
           {stepKey === "comparison" && (
             <DemoCostComparison
-              company={resolvedCompany}
+              company={company}
               onNext={goNext}
               onBack={goBack}
               onExpensesChange={setMonthlyExpenses}
@@ -880,7 +891,7 @@ function DemoWizardInner() {
             <DemoScoreBoost
               projectedScore={projectedScore ?? score ?? 0}
               boostedScore={boostedScore}
-              company={resolvedCompany}
+              company={company}
               report={report}
               onBoostApplied={setBoostApplied}
               onNext={goNext}
@@ -889,7 +900,7 @@ function DemoWizardInner() {
           {stepKey === "summary" && (
             <DemoSummaryScreen
               report={report}
-              company={resolvedCompany}
+              company={company}
               initialScore={reportBaseScore ?? score}
               verifiedScore={score}
               projectedScore={projectedScore}
@@ -906,14 +917,14 @@ function DemoWizardInner() {
             <DemoDecisionPage
               customerName={report.customerName}
               companyColor={companyColor}
-              company={resolvedCompany}
+              company={company}
               onDecision={() => goNext()}
             />
           )}
           {stepKey === "customerClose" && (
             <DemoCustomerClose
               report={report}
-              company={resolvedCompany}
+              company={company}
               finalScore={finalScore}
               companyColor={companyColor}
               onEndDemo={() => {
@@ -947,7 +958,7 @@ function DemoWizardInner() {
       {viewMode === "rep" && demoStarted && (
         <DemoTalkingPoints
           currentStep={stepKey}
-          company={resolvedCompany}
+          company={company}
           customerConcerns={customerConcerns}
           isOpen={coachingOpen}
           onClose={() => setCoachingOpen(false)}
