@@ -74,9 +74,9 @@ function useAnimatedNum(target: number, duration = 600) {
 
 export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPricingChange, initialState, monthlyExpenses: _monthlyExpenses = 0, concerns, costBreakdown }: Props) {
   const cfg = company?.demoConfig;
-  const savedProgramPrice = cfg?.programPrice || PLACEHOLDER_PROGRAM_PRICE;
-  const revealPrice = cfg?.revealPrice || PLACEHOLDER_REVEAL_PRICE;
-  const systemCostMonthly = cfg?.systemCostMonthly || PLACEHOLDER_MONTHLY;
+  const savedProgramPrice = Number(cfg?.programPrice || PLACEHOLDER_PROGRAM_PRICE);
+  const revealPrice = Number(cfg?.revealPrice || PLACEHOLDER_REVEAL_PRICE);
+  const systemCostMonthly = Number(cfg?.systemCostMonthly || PLACEHOLDER_MONTHLY);
   const { viewMode } = useViewMode();
   const isRepView = viewMode === "rep";
 
