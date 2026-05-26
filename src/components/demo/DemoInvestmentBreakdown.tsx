@@ -65,8 +65,8 @@ function calcMonthly(principal: number, apr: number, months: number): number {
 
 export function DemoInvestmentBreakdown({ company, pricingState, onPricingChange, onNext: _onNext }: Props) {
   const cfg = company?.demoConfig;
-  const revealPrice = pricingState?.revealedPrice ?? cfg?.revealPrice ?? 9995;
-  const programPrice = pricingState?.programPrice ?? cfg?.programPrice ?? 12995;
+  const revealPrice = Number(pricingState?.revealedPrice ?? cfg?.revealPrice ?? 9995);
+  const programPrice = Number(pricingState?.programPrice ?? cfg?.programPrice ?? 12995);
   const discountOptions = cfg?.discountOptions?.length ? cfg.discountOptions : DEFAULT_DISCOUNTS;
 
   const [priceRevealed, setPriceRevealed] = useState(false);

@@ -83,7 +83,7 @@ export function CompanySettingsPage() {
 
   // Show wizard only when explicitly triggered (new company creation) —
   // don't show for existing companies that just haven't set demoConfig yet
-  if (showSetup) {
+  if (showSetup && company) {
     return (
       <DemoSetupWizard
         company={company}

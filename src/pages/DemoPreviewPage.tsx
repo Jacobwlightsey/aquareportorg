@@ -8,6 +8,7 @@ import { DemoTrustProof } from "@/components/demo/DemoTrustProof";
 import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
 import { DemoScoreBoost } from "@/components/demo/DemoScoreBoost";
 import { DemoCustomerClose } from "@/components/demo/DemoCustomerClose";
+import type { CompanyForDemo } from "@/lib/types";
 import { DemoBackground } from "@/components/demo/DemoBackground";
 
 const SAMPLE_REPORT: Record<string, any> = {
@@ -20,7 +21,7 @@ const SAMPLE_REPORT: Record<string, any> = {
   source: "Municipal",
 };
 
-const SAMPLE_COMPANY: Record<string, any> = {
+const SAMPLE_COMPANY: CompanyForDemo = {
   name: "Pure Water Solutions",
   primaryColor: "#3b82f6",
   demoConfig: {},
