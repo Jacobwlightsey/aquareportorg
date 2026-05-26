@@ -190,10 +190,18 @@ export function DemoAnalyticsPage() {
     );
   }
 
-  if (analytics === undefined || enhanced === undefined) {
+  if (analytics === undefined || enhanced === undefined || analytics === null || enhanced === null) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-pulse text-white/30">Loading analytics…</div>
+      </div>
+    );
+  }
+
+  if (!analytics || !enhanced) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-white/40">No analytics data available yet.</div>
       </div>
     );
   }

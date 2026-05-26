@@ -8,10 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface DemoSaveState {
   currentStep: number;
-  liveReadings: Record<string, number | undefined>;
+  liveReadings: Record<string, string | number | null | undefined>;
   pricingState: unknown;
   boostApplied: boolean;
   concerns: unknown;
+  customerConcerns: unknown;
   demoMode: string;
   viewMode: string;
   demoTime: number;

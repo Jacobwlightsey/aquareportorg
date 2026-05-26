@@ -7,7 +7,7 @@ import {
   Search,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
@@ -71,7 +71,7 @@ export function TerritoryMapPage() {
       if (t.reports > 0) t.avgScore = Math.round(t.avgScore / t.reports);
     }
     for (const l of leads) {
-      const zip = l.zip || "Unknown";
+      const zip = l.utilityCityState || "Unknown";
       if (map[zip]) map[zip].leads++;
     }
     return Object.values(map).sort((a, b) => b.reports - a.reports);

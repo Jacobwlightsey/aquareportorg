@@ -5,11 +5,9 @@ import {
   Building2,
   CreditCard,
   LogOut,
-  Moon,
   Settings,
   Shield,
   ShieldCheck,
-  Sun,
   Users,
   UserPlus,
   BarChart3,
@@ -166,7 +164,7 @@ function SidebarUserFooter() {
   const user = useQuery(api.auth.currentUser);
   const company = useQuery(api.companies.getMyCompany);
   const { signOut } = useAuthActions();
-  const { theme, toggleTheme, switchable } = useTheme();
+  const { theme: _theme, switchable: _switchable } = useTheme();
   const { setOpenMobile } = useSidebar();
 
   return (
@@ -208,12 +206,7 @@ function SidebarUserFooter() {
                   Company Settings
                 </Link>
               </DropdownMenuItem>
-              {switchable && (
-                <DropdownMenuItem onClick={toggleTheme}>
-                  {theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
-                  {theme === "light" ? "Dark mode" : "Light mode"}
-                </DropdownMenuItem>
-              )}
+              {/* Theme toggle hidden — dark mode only for now */}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => signOut()}

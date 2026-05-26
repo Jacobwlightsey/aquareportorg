@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
-import { getMembership, canRole } from "./security";
+import { getMembership } from "./security";
 import { api } from "./_generated/api";
 
 export const getContent = query({

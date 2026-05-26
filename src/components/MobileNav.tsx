@@ -1,4 +1,4 @@
-import { useQuery } from "convex/react";
+
 import {
   FolderKanban,
   Home,
@@ -7,7 +7,6 @@ import {
   Users,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { api } from "../../convex/_generated/api";
 
 const tabs = [
   { href: "/dashboard", icon: Home, label: "Home" },

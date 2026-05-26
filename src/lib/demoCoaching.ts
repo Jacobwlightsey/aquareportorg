@@ -20,7 +20,7 @@ export interface StepTiming {
 export function evaluateCoaching(
   currentStep: string,
   stepEnteredAt: number,
-  stepTimings: StepTiming[],
+  _stepTimings: StepTiming[],
   contaminantLegalViolations: number,
   scoreRevealSkipped: boolean,
 ): CoachingState {

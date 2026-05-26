@@ -17,12 +17,12 @@ import {
   MapPin,
   Trash2,
 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 
 /* ---------- tiny helpers ---------- */
@@ -50,7 +50,7 @@ function StatCard({
 }: {
   label: string;
   value: string | number;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string;
   sub?: string;
 }) {
@@ -66,7 +66,7 @@ function StatCard({
             {sub && <p className="mt-0.5 text-xs text-white/40">{sub}</p>}
           </div>
           <div className="rounded-lg p-2" style={{ background: color + "20" }}>
-            <Icon className="size-5" style={{ color }} />
+            <Icon className="size-5" />
           </div>
         </div>
       </CardContent>

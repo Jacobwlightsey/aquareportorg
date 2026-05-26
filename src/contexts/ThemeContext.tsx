@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect } from "react";
 
 interface ThemeContextType {
-  theme: "dark";
-  switchable: false;
+  theme: "dark" | "light";
+  switchable: boolean;
+  toggleTheme?: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({ theme: "dark", switchable: false });

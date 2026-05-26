@@ -270,6 +270,14 @@ const schema = defineSchema({
     dealValue: v.optional(v.number()),
     equipmentRecommended: v.optional(v.string()), // JSON
     pricingSnapshot: v.optional(v.string()), // JSON - captures pricing state from demo
+    // Demo Report fields
+    selectedConcerns: v.optional(v.string()), // JSON array of concern keys
+    liveReadings: v.optional(v.string()), // JSON { chlorine, ph, hardness, tds }
+    verifiedScore: v.optional(v.number()),
+    stepTimings: v.optional(v.string()), // JSON array of { stepKey, duration }
+    monthlyExpenses: v.optional(v.number()),
+    boostApplied: v.optional(v.boolean()),
+    demoMode: v.optional(v.string()), // "quick" | "standard" | "full"
   })
     .index("by_company", ["companyId"])
     .index("by_report", ["reportId"])

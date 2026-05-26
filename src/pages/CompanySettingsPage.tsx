@@ -1433,7 +1433,7 @@ function DemoConfigCard() {
                 {cfg.roSystemImage ? "Replace Image" : "Upload Image"}
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) readImageFile(file, (dataUrl) => update({ roSystemImage: dataUrl }));
+                  if (file) { const reader = new FileReader(); reader.onload = () => update({ roSystemImage: reader.result as string }); reader.readAsDataURL(file); }
                   e.target.value = "";
                 }} />
               </label>

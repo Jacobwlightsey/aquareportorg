@@ -16,11 +16,9 @@ export const DemoModeContext = createContext<DemoModeCtx>({
 export const DEFAULT_MODE_STEPS: Record<DemoModeType, string[]> = {
   quick: [
     "welcome",
-    "homeProfile",
     "topConcerns",
     "score",
     "test",
-    "system",
     "pricing",
     "decision",
     "customerClose",
@@ -29,26 +27,27 @@ export const DEFAULT_MODE_STEPS: Record<DemoModeType, string[]> = {
   standard: [
     "intake",
     "welcome",
-    "homeProfile",
     "customerConcerns",
-    "contaminants",
     "topConcerns",
+    "contaminants",
     "score",
     "test",
     "verifiedScore",
     "impact",
+    "scoreImprovement",
     "system",
-    "transform",
     "trust",
     "comparison",
     "pricing",
+    "investmentBreakdown",
+    "transform",
     "boost",
     "summary",
     "decision",
     "customerClose",
     "dealerClose",
   ],
-  full: [], // empty = all steps (includes rooms, every detail section)
+  full: [], // empty = all steps
 };
 
 export const MODE_LABELS: Record<DemoModeType, { label: string; time: string }> = {

@@ -1,9 +1,14 @@
-import { AlertTriangle, Calculator, Check, ChevronDown, ChevronUp, CreditCard, Gift, Pencil, Sparkles, Tag } from "lucide-react";
+/* ──── Pricing — Investment Overview (Page 1 of 2) ────
+   Emotional reveal moment: current spending vs new investment.
+   Interactive expense deductions — rep taps items the homeowner
+   currently spends on, and the effective monthly cost drops in real-time.
+   ──── */
+
+import { AlertTriangle, Check, ChevronDown, ChevronUp, Minus, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { playRevealSound, playTapSound, playToggleSound } from "@/lib/demoSounds";
+import { playTapSound, playToggleSound } from "@/lib/demoSounds";
 import { useViewMode } from "@/hooks/useViewMode";
+import { colors } from "@/lib/designTokens";
 
 export interface PricingState {
   programPrice: number;
@@ -16,397 +21,306 @@ export interface PricingState {
 interface Props {
   company: any;
   onNext: () => void;
+  onBack: () => void;
   onPricingChange: (state: PricingState) => void;
   initialState?: PricingState | null;
+  monthlyExpenses?: number;
+  concerns?: { householdSize?: number; bathrooms?: number; hasKids?: boolean; hasPets?: boolean; currentSolution?: string } | null;
+  costBreakdown?: Record<string, number> | null;
 }
 
-const DEFAULT_DISCOUNTS = [
-  { id: "today", label: "Same-Day Decision", amount: 500, icon: "⚡" },
-  { id: "referral", label: "Referral Credit", amount: 300, icon: "👥" },
-  { id: "military", label: "Military / First Responder", amount: 250, icon: "🎖️" },
-  { id: "senior", label: "Senior Discount", amount: 200, icon: "🤝" },
-];
-
-/* Animated dollar value */
-function AnimatedPrice({ value, className }: { value: number; className?: string }) {
-  const [display, setDisplay] = useState(value);
-  const currentRef = useRef(value);
-  const rafRef = useRef(0);
-
-  useEffect(() => {
-    const from = currentRef.current;
-    if (from === value) return;
-    let start = 0;
-    const dur = 800;
-    const tick = (ts: number) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / dur, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.round(from + (value - from) * ease));
-      if (p < 1) rafRef.current = requestAnimationFrame(tick);
-      else currentRef.current = value;
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [value]);
-
-  return <span className={className}>${display.toLocaleString()}</span>;
-}
-
-/* ──── Phase 1: Placeholder defaults for pricing ──── */
 const PLACEHOLDER_PROGRAM_PRICE = 12995;
 const PLACEHOLDER_REVEAL_PRICE = 9995;
 const PLACEHOLDER_MONTHLY = 149;
 
-export function DemoPricing({ company, onNext, onPricingChange, initialState }: Props) {
+const FEATURES = [
+  "Installed Whole Home System",
+  "Professional Installation",
+  "Premium Components",
+  "Lifetime Warranty",
+  "Ongoing Support",
+];
+
+/* ── Expense items homeowner is currently paying for ── */
+const EXPENSE_ITEMS = [
+  { id: "bottled_water", label: "Bottled Water", icon: "🧴", monthlyBase: 45, perPerson: 15 },
+  { id: "pitcher_filter", label: "Pitcher / Fridge Filters", icon: "🫗", monthlyBase: 12, perPerson: 0 },
+  { id: "plumbing", label: "Plumbing Repairs (Scale)", icon: "🔧", monthlyBase: 25, perPerson: 0 },
+  { id: "water_heater", label: "Water Heater Inefficiency", icon: "🔥", monthlyBase: 18, perPerson: 0 },
+  { id: "cleaning", label: "Hard Water Cleaning Products", icon: "🧹", monthlyBase: 15, perPerson: 0 },
+  { id: "skin_products", label: "Skin / Hair Products", icon: "🧴", monthlyBase: 20, perPerson: 5 },
+  { id: "appliance_wear", label: "Appliance Wear & Replacement", icon: "🫧", monthlyBase: 30, perPerson: 0 },
+];
+
+/* ── Animated number ── */
+function useAnimatedNum(target: number, duration = 600) {
+  const [val, setVal] = useState(target);
+  useEffect(() => {
+    const from = val;
+    if (from === target) return;
+    let start = 0;
+    let raf = 0;
+    const tick = (ts: number) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(from + (target - from) * ease));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return val;
+}
+
+export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPricingChange, initialState, monthlyExpenses: _monthlyExpenses = 0, concerns, costBreakdown }: Props) {
   const cfg = company?.demoConfig;
   const savedProgramPrice = cfg?.programPrice || PLACEHOLDER_PROGRAM_PRICE;
   const revealPrice = cfg?.revealPrice || PLACEHOLDER_REVEAL_PRICE;
   const systemCostMonthly = cfg?.systemCostMonthly || PLACEHOLDER_MONTHLY;
-  const discountOptions = cfg?.discountOptions?.length ? cfg.discountOptions : DEFAULT_DISCOUNTS;
-  const color = company?.primaryColor || "#2563eb";
-  const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
   const { viewMode } = useViewMode();
   const isRepView = viewMode === "rep";
 
-  const [programPrice, setProgramPrice] = useState(initialState?.programPrice ?? savedProgramPrice);
-  const [editingPrice, setEditingPrice] = useState(false);
-  const [priceInput, setPriceInput] = useState(programPrice.toString());
-  const [revealed, setRevealed] = useState(!!initialState);
-  const [selected, setSelected] = useState<Set<string>>(new Set(initialState?.discountsApplied ?? []));
-  const [monthly, setMonthly] = useState(initialState?.monthlyPayment?.toString() ?? systemCostMonthly.toString());
+  const isUsingPlaceholders = useMemo(() => !cfg?.programPrice && !cfg?.revealPrice, [cfg]);
 
-  /* ──── Phase 1: Pricing Guardrails ──── */
-  const totalDiscount = discountOptions.filter((d: any) => selected.has(d.id)).reduce((sum: number, d: any) => sum + d.amount, 0);
-  // Cap discounts: can never exceed the reveal price
-  const safeDiscount = Math.min(totalDiscount, revealPrice);
-  const currentPrice = Math.max(0, revealPrice - safeDiscount);
+  // Auto-populate deductions from cost breakdown entered on the Expenses step
+  // Map CostComparison IDs → Pricing EXPENSE_ITEMS IDs
+  const COST_TO_EXPENSE: Record<string, string> = {
+    bottled_water: "bottled_water",
+    appliance_repairs: "appliance_wear",
+    plumbing: "plumbing",
+    cleaning: "cleaning",
+    energy: "water_heater",
+  };
 
-  // Validate pricing state
-  const hasProgramPrice = programPrice > 0;
-  const hasRevealPrice = revealPrice > 0;
-  const hasValidPricing = hasProgramPrice && hasRevealPrice && currentPrice > 0;
-  const safeMonthly = Math.max(0, parseFloat(monthly) || systemCostMonthly);
+  // Reverse map: pricing item ID → cost comparison ID
+  const EXPENSE_TO_COST: Record<string, string> = {};
+  for (const [costId, expId] of Object.entries(COST_TO_EXPENSE)) {
+    EXPENSE_TO_COST[expId] = costId;
+  }
 
-  // Check if pricing uses placeholder values (dealer hasn't customized yet)
-  const isUsingPlaceholders = useMemo(() => {
-    const cfgPrice = cfg?.programPrice;
-    const cfgReveal = cfg?.revealPrice;
-    return !cfgPrice && !cfgReveal;
-  }, [cfg]);
+  // Compute which items should be auto-checked from costBreakdown
+  const initialDeducted = useMemo(() => {
+    const s = new Set<string>();
+    if (!costBreakdown) return s;
+    for (const [costId, val] of Object.entries(costBreakdown)) {
+      if (val > 0 && COST_TO_EXPENSE[costId]) {
+        s.add(COST_TO_EXPENSE[costId]);
+      }
+    }
+    return s;
+  }, [costBreakdown]);
 
+  const hasAutoItems = initialDeducted.size > 0;
+
+  // Expense deduction state — seed from cost breakdown
+  const [deducted, setDeducted] = useState<Set<string>>(() => {
+    // Compute inline so it's always correct on first mount
+    if (!costBreakdown) return new Set<string>();
+    const s = new Set<string>();
+    for (const [costId, val] of Object.entries(costBreakdown)) {
+      if (val > 0 && COST_TO_EXPENSE[costId]) {
+        s.add(COST_TO_EXPENSE[costId]);
+      }
+    }
+    return s;
+  });
+  const [showExpenses, setShowExpenses] = useState(hasAutoItems);
+
+  // Re-seed if costBreakdown arrives after initial mount
+  const seededRef = useRef(hasAutoItems);
   useEffect(() => {
-    onPricingChange({
-      programPrice,
-      revealedPrice: revealPrice,
-      currentPrice,
-      discountsApplied: Array.from(selected),
-      monthlyPayment: safeMonthly,
-    });
-  }, [currentPrice, selected, monthly, safeMonthly]);
+    if (initialDeducted.size > 0 && !seededRef.current) {
+      setDeducted(initialDeducted);
+      setShowExpenses(true);
+      seededRef.current = true;
+    }
+  }, [initialDeducted]);
 
-  const handleReveal = () => { setRevealed(true); playRevealSound(); };
-  const toggleDiscount = (id: string) => {
+  const householdSize = concerns?.householdSize ?? 2;
+
+  // Calculate per-item costs — use actual entered values from Expenses step when available
+  const itemCost = (item: typeof EXPENSE_ITEMS[0]) => {
+    const costId = EXPENSE_TO_COST[item.id];
+    if (costId && costBreakdown && costBreakdown[costId] > 0) {
+      return costBreakdown[costId]; // Use actual entered amount
+    }
+    return item.monthlyBase + item.perPerson * Math.max(0, householdSize - 1);
+  };
+
+  const totalDeducted = EXPENSE_ITEMS.filter(e => deducted.has(e.id)).reduce((sum, e) => sum + itemCost(e), 0);
+  const effectiveMonthly = Math.max(0, systemCostMonthly - totalDeducted);
+  const animatedEffective = useAnimatedNum(effectiveMonthly);
+  const animatedDeducted = useAnimatedNum(totalDeducted);
+
+  const toggleExpense = (id: string) => {
     playToggleSound();
-    setSelected((prev) => {
+    setDeducted(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
 
-  return (
-    <div className="mx-auto max-w-lg space-y-5 pt-2">
-      {/* Header */}
-      <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">
-          YOUR INVESTMENT
-        </span>
-        <h2 className="text-2xl font-black mt-3">Whole-Home Protection</h2>
-        <p className="text-sm text-white/40 mt-1.5">One system. Every tap. Every day.</p>
-      </div>
+  // Sync pricing state up
+  useEffect(() => {
+    onPricingChange({
+      programPrice: savedProgramPrice,
+      revealedPrice: revealPrice,
+      currentPrice: revealPrice,
+      discountsApplied: initialState?.discountsApplied ?? [],
+      monthlyPayment: systemCostMonthly,
+    });
+  }, [savedProgramPrice, revealPrice, systemCostMonthly]);
 
-      {/* Phase 1: Dealer-only placeholder warning */}
+  return (
+    <div className="mx-auto w-full max-w-5xl px-8 pt-6">
+      {/* Dealer placeholder warning */}
       {isRepView && isUsingPlaceholders && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2.5">
-          <AlertTriangle className="size-4 text-amber-400 shrink-0 mt-0.5" />
+        <div className="rounded-2xl p-4 flex items-start gap-3 mb-6" style={{ background: `${colors.warning}10`, border: `1px solid ${colors.warning}18` }}>
+          <AlertTriangle className="size-4 shrink-0 mt-0.5" style={{ color: colors.warning }} />
           <div>
-            <p className="text-xs font-bold text-amber-400">Using placeholder pricing</p>
-            <p className="text-[11px] text-amber-400/60 mt-0.5 leading-relaxed">
-              These are demo values. Set your real pricing in Settings → Demo Config to customize the program price, reveal price, and monthly payment.
-            </p>
+            <p className="text-[13px] font-semibold" style={{ color: colors.warning }}>Using placeholder pricing</p>
+            <p className="text-[12px] mt-1" style={{ color: `${colors.warning}80` }}>Set your real pricing in Settings → Demo Config.</p>
           </div>
         </div>
       )}
 
-      {/* Program price (crossed out) — editable inline */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center relative group">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Program Price</p>
-        {editingPrice ? (
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-4xl font-black text-white/80">$</span>
-            <input
-              type="number"
-              inputMode="numeric"
-              autoFocus
-              value={priceInput}
-              onChange={(e) => setPriceInput(e.target.value)}
-              onBlur={() => {
-                const val = parseInt(priceInput) || 0;
-                setProgramPrice(val);
-                setEditingPrice(false);
-                // Persist to demoConfig so it's saved for future demos
-                updateDemoConfig({ config: { ...cfg, programPrice: val } }).catch(() => {});
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-              }}
-              className="w-40 h-14 rounded-xl bg-white/[0.06] border border-white/20 text-center text-4xl font-black text-white outline-none focus:border-white/40 transition-colors"
-            />
-          </div>
-        ) : (
-          <p
-            className="text-4xl font-black text-white/80 line-through decoration-red-400/60 decoration-2 cursor-pointer"
-            onClick={() => { setPriceInput(programPrice.toString()); setEditingPrice(true); playTapSound(); }}
-          >
-            ${programPrice.toLocaleString()}
-          </p>
-        )}
-        {!editingPrice && (
-          <button
-            onClick={() => { setPriceInput(programPrice.toString()); setEditingPrice(true); playTapSound(); }}
-            className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/[0.06] border border-white/10 text-white/30 hover:text-white/60 hover:bg-white/[0.1] transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
-          >
-            <Pencil className="size-3" />
-          </button>
-        )}
+      {/* Header */}
+      <div className="text-center mb-8">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.success}b0` }}>
+          THE INVESTMENT
+        </p>
+        <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight mt-3" style={{ color: colors.textPrimary }}>
+          Cost Per Month
+        </h2>
+        <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
+          For a household of {householdSize}{concerns?.hasKids ? " with children" : ""}{concerns?.hasPets ? " & pets" : ""}.
+        </p>
       </div>
 
-      {/* Reveal price card */}
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden relative">
-        {!revealed && (
-          <div
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center backdrop-blur-xl bg-black/40 cursor-pointer active:scale-[0.98] transition-transform"
-            onClick={handleReveal}
+      {/* Hero price — updates in real-time */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-baseline">
+          <span
+            className="text-[64px] font-black leading-none tracking-tight transition-colors duration-300"
+            style={{ color: totalDeducted > 0 ? colors.success : colors.textPrimary }}
           >
-            <div
-              className="rounded-2xl px-8 py-4 flex items-center gap-3 text-white font-bold text-lg"
-              style={{ background: `linear-gradient(135deg, ${color}, #10b981)`, boxShadow: `0 4px 24px ${color}40` }}
-            >
-              <Gift className="size-5" />
-              Reveal Your Price
-            </div>
-            <p className="text-xs text-white/40 mt-3">Tap to see your exclusive offer</p>
-          </div>
-        )}
-        <div className={`p-6 text-center ${revealed ? "" : "filter blur-lg"} transition-all duration-700`}>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70 mb-2">Your Exclusive Price</p>
-          <AnimatedPrice value={currentPrice} className="text-5xl font-black text-emerald-400" />
-          {safeDiscount > 0 && programPrice > currentPrice && currentPrice > 0 && (
-            <p className="text-sm text-emerald-400/70 mt-2 font-semibold">
-              You save ${(programPrice - currentPrice).toLocaleString()}!
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Savings badge — only show when there's a real positive saving */}
-      {revealed && programPrice > currentPrice && currentPrice > 0 && (
-        <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 animate-in fade-in duration-500">
-          <Sparkles className="size-4 text-emerald-400" />
-          <span className="text-sm font-bold text-emerald-400">
-            Save ${(programPrice - currentPrice).toLocaleString()} off program price
+            ${animatedEffective}
           </span>
+          <span className="text-[22px] font-medium ml-2" style={{ color: colors.textMuted }}>/mo</span>
         </div>
-      )}
-
-      {/* Discount toggles */}
-      {revealed && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500">
-          <div className="p-4 border-b border-white/5 flex items-center gap-2">
-            <Tag className="size-4 text-pink-400" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Additional Savings</p>
+        {totalDeducted > 0 && (
+          <div className="mt-2 animate-in fade-in duration-300">
+            <span className="text-[14px] line-through mr-2" style={{ color: colors.textFaint }}>${systemCostMonthly}/mo</span>
+            <span className="text-[14px] font-bold" style={{ color: colors.success }}>
+              after ${animatedDeducted}/mo in savings
+            </span>
           </div>
-          <div className="p-3 space-y-2">
-            {discountOptions.map((d: any) => {
-              const active = selected.has(d.id);
-              return (
-                <button
-                  key={d.id}
-                  onClick={() => toggleDiscount(d.id)}
-                  className={`w-full flex items-center gap-3 rounded-xl p-3.5 border transition-all cursor-pointer active:scale-[0.98] ${
-                    active ? "border-emerald-500/30 bg-emerald-500/10" : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <span className="text-lg">{d.icon}</span>
-                  <div className="flex-1 text-left">
-                    <p className={`text-sm font-semibold ${active ? "text-emerald-400" : "text-white/70"}`}>{d.label}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-bold ${active ? "text-emerald-400" : "text-white/40"}`}>
-                      -${d.amount}
-                    </span>
-                    <div
-                      className={`size-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        active ? "border-emerald-400 bg-emerald-400" : "border-white/20"
-                      }`}
-                    >
-                      {active && <Check className="size-3 text-white" />}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Monthly payment */}
-      {revealed && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Calculator className="size-4 text-blue-400" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Monthly Payment</p>
-          </div>
-          <p className="text-xs text-white/40 mb-3">Enter the customer's average monthly cost for the system</p>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-white/30">$</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={monthly}
-              onChange={(e) => { setMonthly(e.target.value); playTapSound(); }}
-              className="w-full h-14 rounded-xl bg-white/[0.06] border border-white/10 pl-9 pr-16 text-2xl font-black text-white outline-none focus:border-white/30 transition-colors"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-white/30">/month</span>
-          </div>
-        </div>
-      )}
-
-      {/* ──── Sprint 2D: Financing Breakdown — only show with valid positive price ──── */}
-      {revealed && currentPrice > 0 && <FinancingSection company={company} currentPrice={currentPrice} />}
-
-      {/* Continue */}
-      {revealed && (
-        <button
-          onClick={onNext}
-          className="w-full rounded-2xl py-4 text-base font-bold active:scale-[0.97] transition-transform cursor-pointer"
-          style={{ background: `linear-gradient(135deg, ${color}, #06b6d4)`, boxShadow: `0 4px 24px ${color}30` }}
-        >
-          Continue →
-        </button>
-      )}
-    </div>
-  );
-}
-
-/* ──── Sprint 2D: Financing Breakdown (embedded) ──── */
-const DEFAULT_TERMS = [60, 84, 120];
-const DEFAULT_APR = 4.99;
-
-function calcMonthly(principal: number, apr: number, months: number): number {
-  if (apr === 0) return principal / months;
-  const r = apr / 100 / 12;
-  return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
-}
-
-function FinancingSection({ company, currentPrice }: { company: any; currentPrice: number }) {
-  const cfg = (company as any)?.demoConfig?.financing;
-  const enabled = cfg?.enabled !== false; // default to true if not explicitly disabled
-  const terms = cfg?.terms?.length ? cfg.terms : DEFAULT_TERMS;
-  const aprRange = cfg?.aprRange ?? "0% – 9.99%";
-  const defaultApr = cfg?.defaultApr ?? DEFAULT_APR;
-  const provider = cfg?.provider ?? "";
-
-  const [expanded, setExpanded] = useState(false);
-  const [selectedTerm, setSelectedTerm] = useState<number>(terms[0]);
-  const [customApr, setCustomApr] = useState(defaultApr.toString());
-
-  // Phase 1: Don't render financing if price is invalid
-  if (!enabled || currentPrice <= 0 || !Number.isFinite(currentPrice)) return null;
-
-  const apr = parseFloat(customApr) || defaultApr;
-  const payment = Math.max(0, calcMonthly(currentPrice, apr, selectedTerm));
-
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-500 delay-300">
-      <button
-        onClick={() => {
-          playTapSound();
-          setExpanded((e) => !e);
-        }}
-        className="w-full flex items-center justify-between p-4 cursor-pointer"
-      >
-        <div className="flex items-center gap-2">
-          <CreditCard className="size-4 text-violet-400" />
-          <p className="text-sm font-bold text-white/70">Financing Options</p>
-        </div>
-        {expanded ? (
-          <ChevronUp className="size-4 text-white/40" />
-        ) : (
-          <ChevronDown className="size-4 text-white/40" />
         )}
-      </button>
+        <p className="text-[13px] mt-2" style={{ color: colors.textMuted }}>
+          {totalDeducted === 0 ? "Remove expenses you'll no longer need ↓" : `Effectively costs $${effectiveMonthly}/mo when you stop spending on what you no longer need.`}
+        </p>
+      </div>
 
-      {expanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-3">
-          {/* APR range banner */}
-          <div className="flex items-center justify-between text-xs text-white/40">
-            <span>APR Range: <span className="text-white/60 font-medium">{aprRange}</span></span>
-            {provider && <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full">via {provider}</span>}
+      {/* Expense deduction dropdown */}
+      <div className="rounded-2xl overflow-hidden mb-6" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+        <button
+          onClick={() => { playTapSound(); setShowExpenses(!showExpenses); }}
+          className="w-full flex items-center justify-between p-4 cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <Minus className="size-4" style={{ color: colors.primary }} />
+            <p className="text-[14px] font-medium" style={{ color: colors.textSecondary }}>
+              Remove Current Expenses
+            </p>
+            {deducted.size > 0 && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${colors.success}15`, color: colors.success }}>
+                −${totalDeducted}/mo
+              </span>
+            )}
           </div>
-
-          {/* Term cards */}
-          <div className="flex gap-2">
-            {terms.map((t: number) => {
-              const mo = calcMonthly(currentPrice, apr, t);
-              const active = selectedTerm === t;
+          {showExpenses
+            ? <ChevronUp className="size-4" style={{ color: colors.textMuted }} />
+            : <ChevronDown className="size-4" style={{ color: colors.textMuted }} />
+          }
+        </button>
+        {showExpenses && (
+          <div className="px-4 pb-4 space-y-2" style={{ borderTop: `1px solid ${colors.border}` }}>
+            <p className="text-[12px] pt-3 pb-1" style={{ color: colors.textMuted }}>
+              What are you currently spending on that you won't need with the system?
+            </p>
+            {EXPENSE_ITEMS.map((item) => {
+              const active = deducted.has(item.id);
+              const cost = itemCost(item);
               return (
                 <button
-                  key={t}
-                  onClick={() => {
-                    playTapSound();
-                    setSelectedTerm(t);
+                  key={item.id}
+                  onClick={() => toggleExpense(item.id)}
+                  className="w-full flex items-center gap-3 rounded-xl p-3 transition-all cursor-pointer active:scale-[0.98]"
+                  style={{
+                    background: active ? `${colors.success}08` : "transparent",
+                    border: `1px solid ${active ? `${colors.success}20` : colors.border}`,
                   }}
-                  className={`flex-1 rounded-xl border p-3 text-center transition-all cursor-pointer ${
-                    active
-                      ? "border-violet-400/40 bg-violet-400/10"
-                      : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
-                  }`}
                 >
-                  <p className={`text-lg font-black ${active ? "text-violet-400" : "text-white/60"}`}>
-                    ${Math.round(mo)}
-                  </p>
-                  <p className="text-[10px] text-white/40">/month</p>
-                  <p className="text-[9px] text-white/30 mt-1">{t} months</p>
+                  <span className="text-lg">{item.icon}</span>
+                  <span className="flex-1 text-left text-[14px] font-medium" style={{ color: active ? colors.textPrimary : colors.textSecondary }}>
+                    {item.label}
+                  </span>
+                  <span className="text-[14px] font-semibold" style={{ color: active ? colors.success : colors.textMuted }}>
+                    −${cost}/mo
+                  </span>
+                  <div
+                    className="size-5 rounded-full flex items-center justify-center"
+                    style={{
+                      background: active ? colors.success : "transparent",
+                      border: `2px solid ${active ? colors.success : "rgba(255,255,255,0.12)"}`,
+                    }}
+                  >
+                    {active && <Check className="size-3 text-black" strokeWidth={3} />}
+                  </div>
                 </button>
               );
             })}
           </div>
+        )}
+      </div>
 
-          {/* Selected term detail */}
-          <div className="rounded-xl bg-white/[0.04] border border-white/5 p-3 text-center">
-            <p className="text-2xl font-black text-violet-400">${payment.toFixed(2)}<span className="text-sm text-white/40 font-normal">/mo</span></p>
-            <p className="text-xs text-white/40 mt-1">
-              {selectedTerm} months at {apr}% APR · Total: ${(payment * selectedTerm).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </p>
-          </div>
+      {/* Features list */}
+      <div className="rounded-2xl p-6 mb-6" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: colors.textFaint }}>
+          EVERYTHING INCLUDED
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {FEATURES.map((f) => (
+            <div key={f} className="flex items-center gap-3">
+              <div className="size-5 shrink-0 rounded-full flex items-center justify-center" style={{ background: `${colors.success}15` }}>
+                <Check className="size-3" style={{ color: colors.success }} strokeWidth={2.5} />
+              </div>
+              <span className="text-[14px]" style={{ color: colors.textSecondary }}>{f}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Custom APR input */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-white/40 shrink-0">Adjust APR:</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              value={customApr}
-              onChange={(e) => setCustomApr(e.target.value)}
-              className="w-20 rounded-lg bg-white/[0.06] border border-white/10 px-2 py-1.5 text-sm text-center text-white outline-none focus:border-white/30"
-            />
-            <span className="text-xs text-white/30">%</span>
-          </div>
+      {/* Net savings callout */}
+      {totalDeducted > 0 && totalDeducted >= systemCostMonthly && (
+        <div className="rounded-2xl p-5 text-center mb-4 animate-in fade-in duration-500" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
+          <Sparkles className="size-5 mx-auto mb-2" style={{ color: colors.success }} />
+          <p className="text-[18px] font-bold" style={{ color: colors.success }}>
+            The system pays for itself
+          </p>
+          <p className="text-[13px] mt-1" style={{ color: colors.textMuted }}>
+            You're already spending more than the system costs every month.
+          </p>
         </div>
       )}
+
+      {/* Guarantee note */}
+      <div className="flex items-center justify-center gap-2 py-4">
+        <Check className="size-4" style={{ color: colors.success }} />
+        <span className="text-[13px]" style={{ color: colors.textMuted }}>30-Day Satisfaction Guarantee</span>
+      </div>
     </div>
   );
 }

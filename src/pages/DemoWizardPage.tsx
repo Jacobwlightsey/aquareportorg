@@ -5,13 +5,12 @@ import {
   ChevronLeft,
   Droplets,
   Lock,
-  Monitor,
-  MonitorOff,
   User,
   Home,
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { FullscreenToggle } from "@/components/FullscreenToggle";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { parseContaminants } from "@/lib/pipeline";
@@ -27,20 +26,8 @@ import {
   usePresentationModeProvider,
   usePresentationMode,
 } from "@/hooks/usePresentationMode";
-import {
-  DemoModeContext,
-  useDemoModeProvider,
-  useDemoMode,
-  DEFAULT_MODE_STEPS,
-  MODE_LABELS,
-  type DemoModeType,
-} from "@/hooks/useDemoMode";
-import {
-  ViewModeContext,
-  useViewModeProvider,
-  useViewMode,
-  type ViewModeType,
-} from "@/hooks/useViewMode";
+import { DemoModeContext, useDemoModeProvider, useDemoMode, DEFAULT_MODE_STEPS } from "@/hooks/useDemoMode";
+import { ViewModeContext, useViewModeProvider, useViewMode } from "@/hooks/useViewMode";
 
 // Sprint 1: mute hook
 import {
@@ -56,17 +43,20 @@ import { DemoContaminantWalkthrough } from "@/components/demo/DemoContaminantWal
 import { DemoImpact } from "@/components/demo/DemoImpact";
 import { DemoLiveTest } from "@/components/demo/DemoLiveTest";
 import { DemoScoreTransform } from "@/components/demo/DemoScoreTransform";
+import { DemoScoreImprovement } from "@/components/demo/DemoScoreImprovement";
+import { DemoBeforeAfter } from "@/components/demo/DemoBeforeAfter";
 import { DemoSystemInfo } from "@/components/demo/DemoSystemInfo";
 import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
-import { DemoCostComparison } from "@/components/demo/DemoCostComparison";
+import { DemoCostComparison, type CostBreakdown } from "@/components/demo/DemoCostComparison";
+import { DemoInvestmentBreakdown } from "@/components/demo/DemoInvestmentBreakdown";
 import { DemoScoreBoost } from "@/components/demo/DemoScoreBoost";
 import { DemoCustomerClose } from "@/components/demo/DemoCustomerClose";
 import { DemoTopConcerns } from "@/components/demo/DemoTopConcerns";
 import { DemoSummaryScreen } from "@/components/demo/DemoSummaryScreen";
-import { DemoHomeProfile } from "@/components/demo/DemoHomeProfile";
+// DemoHomeProfile removed from flow
 import { DemoCustomerConcerns, type CustomerConcernState } from "@/components/demo/DemoCustomerConcerns";
 import { DemoDecisionPage } from "@/components/demo/DemoDecisionPage";
-import { DemoTransitionOverlay } from "@/components/demo/DemoTransitionOverlay";
+// DemoTransitionOverlay removed
 import { DemoDealerClose } from "@/components/demo/DemoDealerClose";
 import { DemoAssistant } from "@/components/demo/DemoAssistant";
 import { EndDemoModal } from "@/components/demo/EndDemoModal";
@@ -99,39 +89,45 @@ import {
 // Sprint 4E: Offline mode
 import { useOfflineBanner } from "@/hooks/useDemoOffline";
 
+// Visual sprint: Orientation lock + Header
+import { DemoOrientationLock } from "@/components/demo/DemoOrientationLock";
+import { DemoHeader } from "@/components/demo/DemoHeader";
+import { DemoBackground } from "@/components/demo/DemoBackground";
+
 /* ──────────────── All possible steps — Phase 2 psychological sales flow ────
    Personalize → Diagnose → Verify → Emotionalize → Recommend → Transform → Justify → Decide
    ──────────────── */
 const ALL_STEPS: StepDef[] = [
   // ── Personalize ──
-  { key: "intake",            label: "Intake",          color: "#8b5cf6" },   // Dealer-only pre-demo
-  { key: "welcome",           label: "Welcome",         color: "#3b82f6" },   // Welcome / Agenda
-  { key: "homeProfile",       label: "Your Home",       color: "#06b6d4" },   // Phase 2: Home Water Profile
-  { key: "customerConcerns",  label: "Priorities",      color: "#8b5cf6" },   // Phase 2: What Matters Most
+  { key: "intake",              label: "Intake",          color: "#8b5cf6" },   // Dealer-only pre-demo
+  { key: "welcome",             label: "Welcome",         color: "#3b82f6" },   // Welcome / Agenda
+  { key: "customerConcerns",    label: "Priorities",      color: "#8b5cf6" },   // What Matters Most
   // ── Diagnose ──
-  { key: "contaminants",      label: "Contaminants",    color: "#f59e0b" },   // Local Water Report
-  { key: "topConcerns",       label: "Top Concerns",    color: "#f97316" },   // Top 3 Concerns
-  { key: "score",             label: "AquaScore",       color: "#10b981" },   // Initial Water Score
-  // ── Verify ──
-  { key: "test",              label: "Live Test",       color: "#06b6d4" },   // Live Water Test (moved earlier)
-  { key: "verifiedScore",     label: "Verified",        color: "#10b981" },   // Phase 2: Verified Score view
+  { key: "topConcerns",         label: "Top Concerns",    color: "#f97316" },   // Top 3 Concerns
+  { key: "contaminants",        label: "Contaminants",    color: "#f59e0b" },   // Full Contaminant Breakdown
+  { key: "score",               label: "AquaScore",       color: "#10b981" },   // Initial Water Score
+  { key: "test",                label: "Live Test",       color: "#06b6d4" },   // Live Water Test
+  { key: "verifiedScore",       label: "Verified",        color: "#10b981" },   // Verified Score view
   // ── Emotionalize ──
-  { key: "impact",            label: "Impact",          color: "#f43f5e" },   // Family + Home Impact
-  { key: "rooms",             label: "Rooms",           color: "#f43f5e" },   // Room-by-room
-  // ── Recommend ──
-  { key: "system",            label: "System",          color: "#6366f1" },   // System Recommendation
+  { key: "impact",              label: "Impact",          color: "#f43f5e" },   // Personalized Impact
   // ── Transform ──
-  { key: "transform",         label: "Transform",       color: "#8b5cf6" },   // Score Journey
-  { key: "trust",             label: "Proof",           color: "#22c55e" },   // Trust proof
+  { key: "scoreImprovement",    label: "Improvement",     color: "#8b5cf6" },   // Score improvement reveal → 94
+  { key: "system",              label: "System",          color: "#3b82f6" },   // Filtration system product page
+  { key: "trust",               label: "Proof",           color: "#22c55e" },   // Trust proof (directly after system)
+  { key: "beforeAfter",         label: "Before & After",  color: "#8b5cf6" },   // Chemical before/after comparison
   // ── Justify ──
-  { key: "comparison",        label: "Expenses",        color: "#ec4899" },   // Cost of Inaction (moved before pricing)
-  { key: "pricing",           label: "Investment",      color: "#10b981" },   // Investment
-  { key: "boost",             label: "Upgrade",         color: "#f59e0b" },   // RO upsell
-  // ── Decide ──
-  { key: "summary",           label: "Summary",         color: "#10b981" },   // Final Summary
-  { key: "decision",          label: "Decision",        color: "#2563eb" },   // Phase 2: Decision Page
-  { key: "customerClose",     label: "Close",           color: "#22c55e" },   // Customer Close / QR
-  { key: "dealerClose",       label: "Wrap Up",         color: "#64748b" },   // Dealer Close
+  { key: "comparison",          label: "Expenses",        color: "#ec4899" },   // What unfiltered water costs
+  { key: "pricing",             label: "Investment",      color: "#10b981" },   // Investment overview
+  { key: "investmentBreakdown", label: "Breakdown",       color: "#10b981" },   // Investment details
+  // ── Score Journey ──
+  { key: "transform",           label: "Journey",         color: "#8b5cf6" },   // 3-stage score journey
+  // ── Upsell ──
+  { key: "boost",               label: "Upgrade",         color: "#f59e0b" },   // RO upsell
+  // ── Close ──
+  { key: "summary",             label: "Summary",         color: "#10b981" },   // Home Water Plan
+  { key: "decision",            label: "Decision",        color: "#2563eb" },   // What Makes Sense
+  { key: "customerClose",       label: "Close",           color: "#22c55e" },   // Customer handoff
+  { key: "dealerClose",         label: "Wrap Up",         color: "#64748b" },   // Dealer wrap-up
 ];
 
 /* ──────────────── Helpers ──────────────── */
@@ -139,45 +135,6 @@ function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-/* ──────────────── Demo Mode Selector (shown on Welcome) ──────────────── */
-function DemoModeSelector({
-  companyDemoModes,
-}: {
-  companyDemoModes?: Record<string, string[]>;
-}) {
-  const { demoMode, setDemoMode } = useDemoMode();
-
-  const modes: DemoModeType[] = ["quick", "standard", "full"];
-
-  return (
-    <div className="flex gap-2 w-full max-w-sm mx-auto">
-      {modes.map((mode) => {
-        const isActive = demoMode === mode;
-        const info = MODE_LABELS[mode];
-        return (
-          <button
-            key={mode}
-            onClick={() => {
-              playTapSound();
-              setDemoMode(mode);
-            }}
-            className={`flex-1 rounded-xl border px-3 py-2.5 text-center transition-all ${
-              isActive
-                ? "border-cyan-400/50 bg-cyan-400/10 text-white shadow-[0_0_16px_rgba(34,211,238,0.15)]"
-                : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.06]"
-            }`}
-          >
-            <p className={`text-sm font-bold ${isActive ? "text-white" : ""}`}>
-              {info.label}
-            </p>
-            <p className="text-[10px] text-white/40 mt-0.5">{info.time}</p>
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 /* ──────────────── View Mode Toggle Button ──────────────── */
@@ -196,39 +153,15 @@ function ViewModeToggle() {
           ? "bg-white/5 text-white/70 active:bg-white/10"
           : "bg-cyan-400/10 text-cyan-300 border border-cyan-400/30 active:bg-cyan-400/20"
       }`}
-      title={isRep ? "Switch to Customer View" : "Switch to Rep View"}
+      title={isRep ? "Switch to Homeowner View" : "Switch to Rep View"}
     >
       {isRep ? <User className="size-3" /> : <Home className="size-3" />}
-      <span className="hidden sm:inline">{isRep ? "Rep" : "Customer"}</span>
+      <span className="hidden sm:inline">{isRep ? "Rep" : "Homeowner"}</span>
     </button>
   );
 }
 
-/* ──────────────── Presentation Mode Toggle Button ──────────────── */
-function PresentationToggle() {
-  const { isPresentationMode, toggle } = usePresentationMode();
-
-  return (
-    <button
-      onClick={() => {
-        playTapSound();
-        toggle();
-      }}
-      className={`flex items-center justify-center rounded-lg p-1.5 transition-all ${
-        isPresentationMode
-          ? "bg-amber-400/10 text-amber-300 border border-amber-400/30"
-          : "bg-white/5 text-white/70 active:bg-white/10"
-      }`}
-      title={isPresentationMode ? "Exit Presentation Mode" : "Presentation Mode"}
-    >
-      {isPresentationMode ? (
-        <MonitorOff className="size-3.5" />
-      ) : (
-        <Monitor className="size-3.5" />
-      )}
-    </button>
-  );
-}
+/* ──────────────── (DemoModeSelector + PresentationToggle removed — dead code) ──────────────── */
 
 /* ──────────────── Mute Toggle Button (Sprint 1 addition) ──────────────── */
 function MuteToggle() {
@@ -291,6 +224,8 @@ function useSwipeNavigation(goNext: () => void, goBack: () => void) {
   return { onTouchStart, onTouchEnd };
 }
 
+/* FullscreenToggle now imported from shared component */
+
 /* ═══════════════════════════════════════════════════════
    Main Page — wraps everything in context providers
    ═══════════════════════════════════════════════════════ */
@@ -311,7 +246,9 @@ export function DemoWizardPage() {
       <PresentationModeContext.Provider value={presentationCtx}>
         <DemoModeContext.Provider value={demoModeCtx}>
           <ViewModeContext.Provider value={viewModeCtx}>
-            <DemoWizardInner />
+            <DemoOrientationLock>
+              <DemoWizardInner />
+            </DemoOrientationLock>
           </ViewModeContext.Provider>
         </DemoModeContext.Provider>
       </PresentationModeContext.Provider>
@@ -342,7 +279,9 @@ function DemoWizardInner() {
   const [showAssistant, setShowAssistant] = useState(false);
   const [demoTimer, setDemoTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [demoStarted, setDemoStarted] = useState(false);
+  const [coachingOpen, setCoachingOpen] = useState(false);
 
   // State shared across steps
   const [liveReadings, setLiveReadings] = useState<FieldWaterReadings>({});
@@ -351,12 +290,14 @@ function DemoWizardInner() {
   const [isCustomerHandOff, setIsCustomerHandOff] = useState(false);
   const [concerns, setConcerns] = useState<ConcernData | null>(null);
   const [customerConcerns, setCustomerConcerns] = useState<CustomerConcernState | null>(null);
-  const [transitionDone, setTransitionDone] = useState(true);
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
+  const [costBreakdown, setCostBreakdown] = useState<CostBreakdown | null>(null);
+  // transitionDone removed — transitions handled by DemoBackground
 
   // Sprint 3E: Coaching indicators
   const [stepEnteredAt, setStepEnteredAt] = useState(Date.now());
   const [stepTimings, setStepTimings] = useState<StepTiming[]>([]);
-  const [scoreRevealSkipped, setScoreRevealSkipped] = useState(false);
+  const [scoreRevealSkipped, _setScoreRevealSkipped] = useState(false);
   const [coaching, setCoaching] = useState<CoachingState>({ level: "green", tip: "" });
   const [showCoachingTip, setShowCoachingTip] = useState(false);
 
@@ -410,10 +351,11 @@ function DemoWizardInner() {
     if (!reportId) return null;
     return {
       currentStep,
-      liveReadings,
+      liveReadings: liveReadings as DemoSaveState["liveReadings"],
       pricingState,
       boostApplied,
       concerns,
+      customerConcerns,
       demoMode,
       viewMode,
       demoTime: demoTimer,
@@ -421,7 +363,7 @@ function DemoWizardInner() {
       stepTimings,
       timestamp: Date.now(),
     };
-  }, [currentStep, liveReadings, pricingState, boostApplied, concerns, demoMode, viewMode, demoTimer, demoStarted, stepTimings, reportId]);
+  }, [currentStep, liveReadings, pricingState, boostApplied, concerns, customerConcerns, demoMode, viewMode, demoTimer, demoStarted, stepTimings, reportId]);
 
   useDemoAutoSave(reportId, getStateForSave, currentStep, demoStarted);
 
@@ -436,6 +378,7 @@ function DemoWizardInner() {
     setPricingState(savedState.pricingState as PricingState | null);
     setBoostApplied(savedState.boostApplied);
     setConcerns(savedState.concerns as ConcernData | null);
+    setCustomerConcerns(savedState.customerConcerns as CustomerConcernState | null);
     setDemoTimer(savedState.demoTime);
     setDemoStarted(savedState.demoStarted);
     setStepTimings(savedState.stepTimings as StepTiming[]);
@@ -446,6 +389,16 @@ function DemoWizardInner() {
     () => parseContaminants(report?.contaminants),
     [report?.contaminants],
   );
+
+  const reportBaseScore = useMemo(() => {
+    if (!report) return undefined;
+    return computeAquaScore(report.waterScore, contaminants, {
+      chlorine: report.chlorine,
+      hardness: report.hardness,
+      tds: report.tds,
+      ph: report.ph,
+    });
+  }, [report, contaminants]);
 
   const score = useMemo(() => {
     if (!report) return undefined;
@@ -478,19 +431,26 @@ function DemoWizardInner() {
     setCurrentStep((s) => Math.max(s - 1, 0));
   }, []);
 
+  const goToStep = useCallback((targetKey: string) => {
+    playTapSound();
+    const idx = activeSteps.findIndex((s) => s.key === targetKey);
+    if (idx >= 0) setCurrentStep(idx);
+  }, [activeSteps]);
+
   const exitDemo = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (reportId) clearDemoState(reportId); // Sprint 4C: clear saved state on exit
     navigate(`/customers/${reportId}`);
   }, [navigate, reportId]);
 
+  // Scroll content to top on step change
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [currentStep]);
+
   // Sprint 3E: Track step timing + update coaching
   const stepKey = activeSteps[currentStep]?.key ?? "welcome";
 
-  // Phase 3: Reset transition overlay on step change
-  useEffect(() => {
-    setTransitionDone(false);
-  }, [stepKey]);
   const overLegalCount = useMemo(
     () => contaminants.filter((c: any) => c.over_legal).length,
     [contaminants],
@@ -551,7 +511,7 @@ function DemoWizardInner() {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e1a] to-[#111827] text-white">
         <AlertTriangle className="mb-4 size-12 text-amber-500/50" />
-        <p className="font-semibold">Customer not found</p>
+        <p className="font-semibold">Report not found</p>
         <button
           onClick={() => navigate("/customers")}
           className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium"
@@ -595,7 +555,7 @@ function DemoWizardInner() {
   const isCustomerView = viewMode === "customer";
 
   // In customer view, hide certain UI elements
-  const showTopBarChrome = !isCustomerFacing && !isCustomerView;
+
   const showStepLabel = !isCustomerFacing && !isCustomerView && !isPresentationMode;
   const showTimer = !isCustomerFacing && !isCustomerView;
   const showProgressBar = !isCustomerFacing;
@@ -635,30 +595,34 @@ function DemoWizardInner() {
 
   return (
     <div
-      className={`fixed inset-0 flex flex-col bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white ${isPresentationMode ? "presentation-mode" : ""}`}
+      className={`fixed inset-0 flex flex-col text-white ${isPresentationMode ? "presentation-mode" : ""}`}
+      style={{ background: "#070B14" }}
       {...swipeProps}
     >
+      {/* ─── Atmospheric Background Image ─── */}
+      <DemoBackground stepKey={stepKey} />
+
       {/* ─── Top Bar ─── */}
       {!isCustomerFacing && (
         <div
-          className={`flex shrink-0 items-center justify-between px-4 safe-area-top ${isPresentationMode ? "pt-4 pb-2" : "pt-3 pb-2"}`}
+          className={`relative z-10 flex shrink-0 items-center justify-between px-4 landscape:px-3 safe-area-top ${isPresentationMode ? "pt-4 pb-2" : "pt-3 landscape:pt-1.5 pb-2 landscape:pb-1"}`}
         >
           {/* Left: Exit */}
           <button
             onClick={() => setShowEndModal(true)}
-            className={`flex items-center gap-1.5 rounded-lg bg-white/5 text-white/70 active:bg-white/10 ${isPresentationMode ? "px-4 py-2 text-sm" : "px-3 py-1.5 text-xs"} font-medium`}
+            className={`flex items-center gap-1.5 rounded-lg bg-white/5 text-white/70 active:bg-white/10 ${isPresentationMode ? "px-4 py-2 text-sm" : "px-3 landscape:px-2 py-1.5 landscape:py-1 text-xs landscape:text-[10px]"} font-medium`}
           >
             <ChevronLeft className={isPresentationMode ? "size-4" : "size-3.5"} />
             Exit
           </button>
 
           {/* Center: controls cluster */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 landscape:gap-1">
             <MuteToggle />
-            <PresentationToggle />
+            <FullscreenToggle compact />
             <ViewModeToggle />
             {showStepLabel && (
-              <p className="text-xs font-bold tracking-wider text-white/40">
+              <p className="text-[10px] landscape:text-[8px] font-bold tracking-wider text-white/40 truncate max-w-[120px] landscape:max-w-[80px]">
                 {currentStep + 1}/{activeSteps.length} —{" "}
                 {currentStepDef?.label.toUpperCase()}
               </p>
@@ -711,6 +675,19 @@ function DemoWizardInner() {
         </div>
       )}
 
+      {/* ─── Visual Sprint: Persistent brand header bar ─── */}
+      <div className="relative z-10">
+      <DemoHeader
+        currentStep={currentStep + 1}
+        totalSteps={activeSteps.length}
+        companyName={report.companyName || company?.name}
+        companyLogo={company?.logoUrl}
+        isRepView={viewMode === "rep"}
+        coachingOpen={coachingOpen}
+        onToggleCoaching={() => setCoachingOpen((o: boolean) => !o)}
+      />
+      </div>
+
       {/* ─── Sprint 4E: Offline Banner ─── */}
       {offlineBanner.show && (
         <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-2 bg-amber-600/90 text-white text-xs font-semibold">
@@ -723,7 +700,7 @@ function DemoWizardInner() {
 
       {/* ─── Progress Bar (Sprint 1D: grouped) ─── */}
       {showProgressBar && (
-        <div className="shrink-0 px-4 pb-3">
+        <div className="relative z-10 shrink-0 px-4 pb-3">
           <DemoProgressBar
             currentStepKey={stepKey}
             steps={activeSteps}
@@ -733,33 +710,15 @@ function DemoWizardInner() {
         </div>
       )}
 
-      {/* ─── Phase 3+4A: Transitional narration overlay (concern-aware) ─── */}
-      {demoStarted && (
-        <DemoTransitionOverlay
-          currentStep={stepKey}
-          onComplete={() => setTransitionDone(true)}
-          customerConcerns={customerConcerns}
-        />
-      )}
+      {/* Transition overlay removed per user request */}
 
       {/* ─── Step Content (Sprint 1G: wrapped in error boundary) ─── */}
       <div
-        className={`flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
+        ref={contentRef}
+        className={`relative z-10 flex-1 overflow-y-auto overscroll-contain px-4 pb-28 ${isPresentationMode ? "presentation-content" : ""}`}
       >
         <DemoStepWrapper stepName={stepKey}>
           {stepKey === "intake" && (
-            <div className="space-y-5">
-              {/* Demo Mode Selector — shown on Intake step (first step) */}
-              <div className="mx-auto max-w-lg space-y-3">
-                <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
-                  Demo Length
-                </p>
-                <DemoModeSelector
-                  companyDemoModes={
-                    (company as any)?.demoConfig?.demoModes
-                  }
-                />
-              </div>
               <DemoConcernIntake
                 onNext={(data) => {
                   setConcerns(data);
@@ -768,7 +727,6 @@ function DemoWizardInner() {
                 onBack={goBack}
                 initial={concerns}
               />
-            </div>
           )}
           {stepKey === "welcome" && (
             <div className="space-y-5">
@@ -777,30 +735,10 @@ function DemoWizardInner() {
                 companyColor={companyColor}
                 onNext={goNext}
               />
-              {/* Fallback mode selector if intake step was skipped (e.g. quick mode) */}
-              {!demoStarted && !activeSteps.some((s) => s.key === "intake") && (
-                <div className="mx-auto max-w-lg space-y-3 pb-4">
-                  <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
-                    Demo Length
-                  </p>
-                  <DemoModeSelector
-                    companyDemoModes={
-                      (company as any)?.demoConfig?.demoModes
-                    }
-                  />
-                </div>
-              )}
+              {/* Demo mode selector removed — always full demo */}
             </div>
           )}
-          {stepKey === "homeProfile" && (
-            <DemoHomeProfile
-              report={report}
-              company={company}
-              concerns={concerns}
-              companyColor={companyColor}
-              onNext={goNext}
-            />
-          )}
+          {/* homeProfile step removed per flow restructure */}
           {stepKey === "customerConcerns" && (
             <DemoCustomerConcerns
               initial={customerConcerns}
@@ -831,11 +769,11 @@ function DemoWizardInner() {
           {stepKey === "topConcerns" && (
             <DemoTopConcerns
               contaminants={contaminants}
-              onViewFull={goNext}
+              onViewFull={() => goToStep("contaminants")}
             />
           )}
           {stepKey === "impact" && (
-            <DemoImpact onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} />
+            <DemoImpact contaminants={contaminants} onNext={goNext} onBack={goBack} customerConcerns={customerConcerns} liveReadings={liveReadings} report={report} concerns={concerns} />
           )}
           {stepKey === "rooms" && (
             <DemoRoomImpact
@@ -864,6 +802,7 @@ function DemoWizardInner() {
               skipScoreAnimation={skipScoreAnimation}
               verifiedMode
               liveReadings={liveReadings}
+              beforeScore={reportBaseScore}
             />
           )}
           {stepKey === "transform" && (
@@ -873,6 +812,14 @@ function DemoWizardInner() {
               company={company}
               contaminants={contaminants}
               liveReadings={liveReadings}
+              projectedScore={projectedScore ?? score ?? 0}
+              onNext={goNext}
+              reportBaseScore={reportBaseScore}
+            />
+          )}
+          {stepKey === "scoreImprovement" && (
+            <DemoScoreImprovement
+              currentScore={score ?? 0}
               projectedScore={projectedScore ?? score ?? 0}
               onNext={goNext}
             />
@@ -885,23 +832,43 @@ function DemoWizardInner() {
               company={company}
               report={report}
               onNext={goNext}
-              onBack={goBack}
+            />
+          )}
+          {stepKey === "beforeAfter" && (
+            <DemoBeforeAfter
+              score={score ?? 0}
+              projectedScore={projectedScore ?? 94}
+              contaminants={contaminants}
+              onNext={goNext}
             />
           )}
           {stepKey === "pricing" && (
             <DemoPricing
               company={company}
               onNext={goNext}
+              onBack={goBack}
               onPricingChange={setPricingState}
               initialState={pricingState}
+              monthlyExpenses={monthlyExpenses}
+              concerns={concerns}
+              costBreakdown={costBreakdown}
+            />
+          )}
+          {stepKey === "investmentBreakdown" && (
+            <DemoInvestmentBreakdown
+              company={company}
+              pricingState={pricingState}
+              onPricingChange={setPricingState}
+              onNext={goNext}
             />
           )}
           {stepKey === "comparison" && (
             <DemoCostComparison
               company={company}
-              monthlyPayment={pricingState?.monthlyPayment}
               onNext={goNext}
               onBack={goBack}
+              onExpensesChange={setMonthlyExpenses}
+              onCostBreakdownChange={setCostBreakdown}
             />
           )}
           {stepKey === "boost" && (
@@ -918,13 +885,16 @@ function DemoWizardInner() {
             <DemoSummaryScreen
               report={report}
               company={company}
-              initialScore={score}
+              initialScore={reportBaseScore ?? score}
+              verifiedScore={score}
               projectedScore={projectedScore}
               contaminants={contaminants}
               boostApplied={boostApplied}
               companyColor={companyColor}
               customerConcerns={customerConcerns}
               onNext={goNext}
+              liveReadings={liveReadings}
+              concerns={concerns}
             />
           )}
           {stepKey === "decision" && (
@@ -953,42 +923,59 @@ function DemoWizardInner() {
               companyColor={companyColor}
               demoTime={demoTimer}
               onEndDemo={exitDemo}
+              demoReportData={{
+                selectedConcerns: customerConcerns ? JSON.stringify(customerConcerns.selected) : undefined,
+                liveReadings: liveReadings ? JSON.stringify(liveReadings) : undefined,
+                verifiedScore: finalScore,
+                stepTimings: stepTimings.length ? JSON.stringify(stepTimings) : undefined,
+                monthlyExpenses: monthlyExpenses || undefined,
+                boostApplied: boostApplied || undefined,
+                pricingSnapshot: pricingState ? JSON.stringify(pricingState) : undefined,
+              }}
             />
           )}
         </DemoStepWrapper>
       </div>
 
-      {/* Sprint 3A+4A: Rep Talking Points — concern-aware (only in rep view) */}
+      {/* Rep Coaching Panel — slide-out drawer (only in rep view) */}
       {viewMode === "rep" && demoStarted && (
-        <div className="fixed inset-x-0 bottom-16 z-30">
-          <DemoTalkingPoints currentStep={stepKey} company={company} customerConcerns={customerConcerns} />
-        </div>
+        <DemoTalkingPoints
+          currentStep={stepKey}
+          company={company}
+          customerConcerns={customerConcerns}
+          isOpen={coachingOpen}
+          onClose={() => setCoachingOpen(false)}
+        />
       )}
 
       {/* ─── Bottom nav for middle steps ─── */}
       {!isCustomerFacing &&
+        !isCustomerView &&
         currentStep > 0 &&
         currentStep < activeSteps.length - 2 && (
           <div
-            className={`fixed inset-x-0 bottom-0 flex items-center justify-between gap-3 px-4 pt-3 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a] to-transparent safe-area-bottom ${isPresentationMode ? "pb-5" : "pb-4"}`}
+            className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-between px-5 py-3 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/90 to-transparent safe-area-bottom"
           >
             <button
               onClick={goBack}
               disabled={currentStep === 0}
-              className={`flex items-center gap-1 rounded-xl bg-white/5 font-semibold disabled:opacity-30 active:bg-white/10 ${isPresentationMode ? "px-6 py-4 text-base" : "px-5 py-3 text-sm"}`}
+              className="flex items-center justify-center size-10 rounded-full bg-white/5 disabled:opacity-20 active:bg-white/10 transition-all"
+              aria-label="Back"
             >
-              <ChevronLeft className={isPresentationMode ? "size-5" : "size-4"} />
-              Back
+              <ChevronLeft className="size-5 text-white/70" />
             </button>
+            <span className="text-[11px] font-medium tabular-nums" style={{ color: "rgba(255,255,255,0.3)" }}>
+              {currentStep + 1} / {activeSteps.length}
+            </span>
             <button
               onClick={goNext}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl font-bold active:scale-[0.97] transition-transform ${isPresentationMode ? "py-4 text-base" : "py-3 text-sm"}`}
+              className="flex items-center justify-center size-10 rounded-full active:scale-[0.93] transition-transform"
               style={{
-                background: `linear-gradient(135deg, ${currentStepDef?.color ?? "#3b82f6"}, ${activeSteps[Math.min(currentStep + 1, activeSteps.length - 1)]?.color ?? "#3b82f6"})`,
+                background: currentStepDef?.color ?? "#3b82f6",
               }}
+              aria-label="Next"
             >
-              Next{" "}
-              <ArrowRight className={isPresentationMode ? "size-5" : "size-4"} />
+              <ArrowRight className="size-5" />
             </button>
           </div>
         )}

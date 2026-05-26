@@ -1,5 +1,10 @@
-import { ArrowRight, Check, Droplets, Info, Shield, Sparkles } from "lucide-react";
-import { playTapSound } from "@/lib/demoSounds";
+/* ──── System Info — "Clean Water From Every Tap" ────
+   Product, warranty, how it works. Surface cards, designTokens.
+   ──── */
+
+import { Check, Droplets, Info, Shield, Sparkles } from "lucide-react";
+
+import { colors } from "@/lib/designTokens";
 
 interface Props {
   company: any;
@@ -36,17 +41,14 @@ const DEFAULT_HOW_IT_WORKS = [
 
 const DEFAULT_CALLOUTS = ["Free Professional Installation", "Free Annual Water Review", "Lifetime Support"];
 
+const STEP_COLORS = ["#3b82f6", colors.success, "#8b5cf6", colors.warning, colors.primary];
+
 export function DemoSystemInfo({ company, report, onNext }: Props) {
   const color = company?.primaryColor || report.companyColor || "#2563eb";
   const cfg = company?.demoConfig;
 
   const productName = company?.solutionProductName || report.solutionProductName || null;
-  const productDesc = company?.solutionProductDescription || report.solutionProductDescription || null;
-  const productBullets = company?.solutionProductBullets?.length
-    ? company.solutionProductBullets
-    : report.solutionProductBullets?.length
-      ? report.solutionProductBullets
-      : [];
+  const productBullets = company?.solutionProductBullets?.length ? company.solutionProductBullets : report.solutionProductBullets?.length ? report.solutionProductBullets : [];
   const productImage = company?.solutionProductImage || report.solutionProductImage;
 
   const systemIncludes = cfg?.systemIncludes?.length ? cfg.systemIncludes : DEFAULT_SYSTEM_INCLUDES;
@@ -57,53 +59,48 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
   const additionalProducts = company?.additionalProducts || report.additionalProducts || [];
 
   const hasContent = productName || productBullets.length || productImage || systemIncludes.length;
-  const stepColors = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#06b6d4"];
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-2">
-      {/* Header — lead with outcome, not product */}
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
+      {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400/70">
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.primary}b0` }}>
           THE SOLUTION
-        </span>
-        <h2 className="text-2xl font-black mt-3 leading-tight">
+        </p>
+        <h2 className="text-[28px] font-bold mt-3 leading-tight tracking-tight">
           Clean Water From Every Tap
         </h2>
-        <p className="text-sm text-white/40 mt-1.5">
-          {productName ? productName : "Designed specifically for your home's water"}
+        <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
+          {productName || "Designed specifically for your home's water"}
         </p>
       </div>
 
       {/* Product image */}
       {productImage ? (
-        <div className="rounded-2xl border border-white/10 bg-white overflow-hidden shadow-2xl shadow-cyan-950/30">
+        <div className="rounded-2xl bg-white overflow-hidden shadow-2xl" style={{ boxShadow: `0 8px 32px ${colors.primary}10` }}>
           <img src={productImage} alt={productName || "System"} className="w-full h-64 object-contain p-4" />
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 h-48 flex flex-col items-center justify-center">
-          <Shield className="size-16 text-cyan-500/30" />
-          <p className="text-sm text-white/30 mt-3">Add a system image in settings</p>
+        <div className="rounded-2xl h-48 flex flex-col items-center justify-center" style={{ background: `${colors.primary}06` }}>
+          <Shield className="size-16" style={{ color: `${colors.primary}30` }} />
+          <p className="text-[13px] mt-3" style={{ color: colors.textFaint }}>Add a system image in settings</p>
         </div>
       )}
 
       {/* Key features */}
       {productBullets.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center gap-2">
-            <Sparkles className="size-4 text-amber-400" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Key Features</p>
+        <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+          <div className="p-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${colors.border}` }}>
+            <Sparkles className="size-4" style={{ color: colors.warning }} />
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>Key Features</p>
           </div>
           <div className="p-4 space-y-3">
             {productBullets.slice(0, 8).map((b: string, i: number) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 animate-in fade-in slide-in-from-left-2"
-                style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
-              >
-                <div className="size-6 shrink-0 rounded-full flex items-center justify-center mt-0.5" style={{ background: `${color}15` }}>
+              <div key={i} className="flex items-start gap-3 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}>
+                <div className="size-6 shrink-0 rounded-full flex items-center justify-center mt-0.5" style={{ background: `${color}12` }}>
                   <Check className="size-3.5" style={{ color }} />
                 </div>
-                <span className="text-sm text-white/80 leading-relaxed">{b}</span>
+                <span className="text-[14px]" style={{ color: colors.textSecondary }}>{b}</span>
               </div>
             ))}
           </div>
@@ -112,25 +109,20 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* System includes */}
       {systemIncludes.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center gap-2">
-            <Droplets className="size-4 text-blue-400" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">System Includes</p>
+        <div className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+          <div className="p-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${colors.border}` }}>
+            <Droplets className="size-4" style={{ color: colors.primary }} />
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>System Includes</p>
           </div>
           <div className="p-4 space-y-3">
             {systemIncludes.map((item: any, i: number) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 animate-in fade-in slide-in-from-left-2 cursor-pointer"
-                style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
-                onClick={() => playTapSound()}
-              >
-                <div className="size-6 shrink-0 rounded-full bg-blue-500/10 flex items-center justify-center mt-0.5">
-                  <Check className="size-3.5 text-blue-400" />
+              <div key={i} className="flex items-start gap-3">
+                <div className="size-6 shrink-0 rounded-full flex items-center justify-center mt-0.5" style={{ background: `${colors.primary}10` }}>
+                  <Check className="size-3.5" style={{ color: colors.primary }} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white/90">{item.title}</p>
-                  {item.description && <p className="text-xs text-white/40 mt-0.5">{item.description}</p>}
+                  <p className="text-[14px] font-semibold" style={{ color: colors.textPrimary }}>{item.title}</p>
+                  {item.description && <p className="text-[12px] mt-0.5" style={{ color: colors.textFaint }}>{item.description}</p>}
                 </div>
               </div>
             ))}
@@ -139,17 +131,17 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
       )}
 
       {/* Warranty */}
-      <div className="rounded-2xl border overflow-hidden" style={{ borderColor: `${color}30`, background: `${color}08` }}>
-        <div className="p-4 border-b flex items-center justify-center gap-3" style={{ borderColor: `${color}15` }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
+        <div className="p-4 flex items-center justify-center gap-3" style={{ borderBottom: `1px solid ${color}12` }}>
           <Shield className="size-5" style={{ color }} />
-          <p className="text-base font-black" style={{ color }}>{warrantyTitle}</p>
+          <p className="text-[16px] font-bold" style={{ color }}>{warrantyTitle}</p>
         </div>
         {warrantyBullets.length > 0 && (
           <div className="p-4 space-y-2">
             {warrantyBullets.map((b: string, i: number) => (
               <div key={i} className="flex items-center gap-2.5">
                 <Check className="size-3.5 shrink-0" style={{ color }} />
-                <span className="text-sm text-white/70">{b}</span>
+                <span className="text-[14px]" style={{ color: colors.textSecondary }}>{b}</span>
               </div>
             ))}
           </div>
@@ -158,30 +150,22 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* How it works */}
       {howItWorks.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="rounded-2xl p-5" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="flex items-center gap-2 mb-4">
-            <Info className="size-4 text-violet-400" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">How It Works</p>
+            <Info className="size-4" style={{ color: "#8b5cf6" }} />
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>How It Works</p>
           </div>
           <div className="space-y-4">
             {howItWorks.map((step: any, i: number) => {
-              const c = stepColors[i % stepColors.length];
+              const c = STEP_COLORS[i % STEP_COLORS.length];
               return (
-                <div
-                  key={i}
-                  className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 cursor-pointer"
-                  style={{ animationDelay: `${200 + i * 120}ms`, animationFillMode: "both" }}
-                  onClick={() => playTapSound()}
-                >
-                  <div
-                    className="flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-black"
-                    style={{ background: `${c}25`, color: c }}
-                  >
+                <div key={i} className="flex gap-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[14px] font-bold" style={{ background: `${c}12`, color: c }}>
                     {i + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{step.title}</p>
-                    <p className="text-xs text-white/50 mt-0.5 leading-relaxed">{step.description}</p>
+                    <p className="text-[14px] font-semibold" style={{ color: colors.textPrimary }}>{step.title}</p>
+                    <p className="text-[12px] mt-0.5 leading-relaxed" style={{ color: colors.textMuted }}>{step.description}</p>
                   </div>
                 </div>
               );
@@ -192,21 +176,21 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* Additional products */}
       {additionalProducts?.map((prod: any, i: number) => (
-        <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+        <div key={i} className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="p-5">
             {prod.image && (
-              <div className="rounded-xl border border-white/10 bg-white overflow-hidden mb-3 flex items-center justify-center h-32">
+              <div className="rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center h-32">
                 <img src={prod.image} alt={prod.name} className="h-full w-full object-contain p-2" />
               </div>
             )}
-            <h4 className="font-bold text-base">{prod.name}</h4>
-            <p className="text-xs text-white/50 mt-1">{prod.description}</p>
+            <h4 className="font-bold text-[16px]" style={{ color: colors.textPrimary }}>{prod.name}</h4>
+            <p className="text-[12px] mt-1" style={{ color: colors.textMuted }}>{prod.description}</p>
             {prod.bullets?.length > 0 && (
               <div className="mt-3 space-y-1.5">
                 {prod.bullets.map((b: string, j: number) => (
                   <div key={j} className="flex items-start gap-2">
-                    <Check className="size-3.5 mt-0.5 shrink-0 text-emerald-400" />
-                    <span className="text-xs text-white/60">{b}</span>
+                    <Check className="size-3.5 mt-0.5 shrink-0" style={{ color: colors.success }} />
+                    <span className="text-[12px]" style={{ color: colors.textSecondary }}>{b}</span>
                   </div>
                 ))}
               </div>
@@ -219,9 +203,9 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
       {callouts.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {callouts.slice(0, 3).map((c: string, i: number) => (
-            <div key={i} className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+            <div key={i} className="rounded-xl p-3 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
               <Sparkles className="size-4 mx-auto mb-1.5" style={{ color }} />
-              <p className="text-[10px] font-bold text-white/60 leading-tight">{c}</p>
+              <p className="text-[10px] font-bold leading-tight" style={{ color: colors.textSecondary }}>{c}</p>
             </div>
           ))}
         </div>
@@ -229,20 +213,18 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* Empty state */}
       {!hasContent && (
-        <div className="rounded-2xl border border-dashed border-white/20 bg-white/[0.02] p-8 text-center">
-          <Shield className="size-10 text-white/15 mx-auto mb-3" />
-          <p className="text-sm text-white/40 font-medium">No system info configured yet</p>
-          <p className="text-xs text-white/25 mt-1">
-            Add your system name, image, features, and warranty in Company Settings → Demo Customization
-          </p>
+        <div className="rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: colors.border }}>
+          <Shield className="size-10 mx-auto mb-3" style={{ color: colors.textFaint }} />
+          <p className="text-[14px] font-medium" style={{ color: colors.textMuted }}>No system info configured yet</p>
+          <p className="text-[12px] mt-1" style={{ color: colors.textFaint }}>Add your system name, image, features, and warranty in Company Settings → Demo Customization</p>
         </div>
       )}
 
       {/* CTA */}
       <button
         onClick={onNext}
-        className="w-full rounded-2xl py-4 text-base font-bold text-center active:scale-[0.97] transition-transform cursor-pointer"
-        style={{ background: `linear-gradient(135deg, ${color}, #06b6d4)`, boxShadow: `0 4px 24px ${color}25` }}
+        className="w-full rounded-2xl py-4 text-[16px] font-bold text-center active:scale-[0.97] transition-transform cursor-pointer"
+        style={{ background: `linear-gradient(135deg, ${color}, ${colors.primary})`, boxShadow: `0 4px 24px ${color}20` }}
       >
         Continue →
       </button>

@@ -1,40 +1,13 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import {
-  Activity,
-  BarChart3,
-  BookOpen,
-  Building2,
-  Calendar,
-  ChartNoAxesCombined,
-  CreditCard,
-  DollarSign,
-  FileText,
-  FolderKanban,
-  Home,
-  Lock,
-  LogOut,
-  Mail,
-  Map,
-  Megaphone,
-
-  PenTool,
-  RefreshCw,
-  Settings,
-  ShieldCheck,
-  Star,
-
-  Target,
-  Users as UsersIcon,
-  Users2,
-} from "lucide-react";
+import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, RefreshCw, Settings, ShieldCheck, Star, Users as UsersIcon, Users2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
 
 import { APP_NAME } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
-import { Badge } from "./ui/badge";
+
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -47,9 +20,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -60,7 +30,6 @@ import {
 // ─── Role-based navigation configuration ─────────────────────────
 
 /** Pages accessible on free trial (not gated) */
-const FREE_TRIAL_PAGES = new Set(["/dashboard", "/customers", "/subscription", "/settings", "/company", "/team"]);
 
 const pipelineNav = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -197,146 +166,57 @@ function SidebarNav() {
     return location.pathname === href || location.pathname.startsWith(href + "/");
   };
 
+  // Build flat list of sections
+  const sections: { label: string; color: string; items: typeof pipelineNav; section: string }[] = [];
+  if (hasAccess(role, "pipeline")) sections.push({ label: "PIPELINE", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
+  if (hasAccess(role, "sales")) sections.push({ label: "SALES", color: "#34d399", items: salesNav, section: "sales" });
+  if (hasAccess(role, "retention")) sections.push({ label: "RETENTION", color: "#fbbf24", items: retentionNav, section: "retention" });
+  if (hasAccess(role, "intelligence")) sections.push({ label: "INTELLIGENCE", color: "#a78bfa", items: intelligenceNav, section: "intelligence" });
+  if (hasAccess(role, "settings")) sections.push({ label: "SETTINGS", color: "#71717a", items: settingsNav, section: "settings" });
+  if (isAdmin) sections.push({ label: "PLATFORM", color: "#fb7185", items: [{ href: "/admin", label: "Admin Dashboard", icon: ShieldCheck }], section: "settings" });
+
   return (
     <SidebarContent>
-      {/* Pipeline / Core */}
-      {hasAccess(role, "pipeline") && (
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-cyan-400/80">
-            PIPELINE
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {pipelineNav.map((item) => (
+      <div style={{ display: "flex", flexDirection: "column", padding: "0.5rem", gap: "0.125rem", overflowY: "auto", flex: 1 }}>
+        <SidebarMenu>
+          {sections.map((sec, si) => (
+            <div key={sec.label}>
+              {/* Section divider label */}
+              <li
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "1.75rem",
+                  paddingLeft: "0.5rem",
+                  marginTop: si === 0 ? 0 : "0.5rem",
+                  fontSize: "0.625rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  color: sec.color,
+                  opacity: 0.85,
+                  userSelect: "none",
+                  listStyle: "none",
+                }}
+              >
+                {sec.label}
+              </li>
+              {/* Nav items */}
+              {sec.items.map((item) => (
                 <NavLink
                   key={item.href}
                   href={item.href}
                   label={item.label}
                   icon={item.icon}
-                  isActive={isActivePath(item.href)}
+                  isActive={sec.section === "settings" ? location.pathname === item.href : isActivePath(item.href)}
                   badge={(item as any).badgeKey === "leads" ? newLeadCount ?? 0 : undefined}
                   locked={isLocked(item.href)}
                   requiredPlan={getRequiredPlan(item.href)}
                 />
               ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Sales */}
-      {hasAccess(role, "sales") && (
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-emerald-400/80">
-            SALES
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {salesNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={isActivePath(item.href)}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Retention */}
-      {hasAccess(role, "retention") && (
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-amber-400/80">
-            RETENTION
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {retentionNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={isActivePath(item.href)}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Intelligence + Marketing */}
-      {hasAccess(role, "intelligence") && (
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-violet-400/80">
-            INTELLIGENCE
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {intelligenceNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={isActivePath(item.href)}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {/* Settings */}
-      {hasAccess(role, "settings") && (
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-muted-foreground/60">
-            SETTINGS
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsNav.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={location.pathname === item.href}
-                  locked={isLocked(item.href)}
-                  requiredPlan={getRequiredPlan(item.href)}
-                />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
-
-      {isAdmin && (
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-rose-400/80">
-            PLATFORM
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <NavLink
-                href="/admin"
-                label="Admin Dashboard"
-                icon={ShieldCheck}
-                isActive={location.pathname === "/admin"}
-              />
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      )}
+            </div>
+          ))}
+        </SidebarMenu>
+      </div>
     </SidebarContent>
   );
 }

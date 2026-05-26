@@ -1,14 +1,5 @@
 import { useAction, useMutation, useQuery } from "convex/react";
-import {
-  Copy,
-  FileText,
-  Loader2,
-  Megaphone,
-  Plus,
-  Sparkles,
-  Swords,
-  Trash2,
-} from "lucide-react";
+import { Copy, FileText, Loader2, Megaphone, Sparkles, Swords, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";

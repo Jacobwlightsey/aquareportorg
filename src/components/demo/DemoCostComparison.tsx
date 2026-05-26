@@ -1,232 +1,185 @@
-import { DollarSign } from "lucide-react";
-import { useState } from "react";
-import { playToggleSound } from "@/lib/demoSounds";
+/* ──── Cost Comparison — "The Numbers" ────
+   Expenses start at $0. Rep enters actual spending per category.
+   Editable inputs with real-time total calculation.
+   ──── */
+
+import { TrendingDown, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { playTapSound } from "@/lib/demoSounds";
+import { useCountUp } from "@/hooks/useCountUp";
+import { colors } from "@/lib/designTokens";
+
+export interface CostBreakdown {
+  [id: string]: number;
+}
 
 interface Props {
-  company?: any;
-  monthlyPayment?: number;
+  company: any;
   onNext: () => void;
   onBack: () => void;
+  onExpensesChange?: (monthly: number) => void;
+  onCostBreakdownChange?: (breakdown: CostBreakdown) => void;
 }
 
-interface ExpenseItem {
-  name: string;
-  monthly: number;
-  icon: string;
+interface CostItem {
+  id: string;
+  label: string;
+  placeholder: number;
   color: string;
-  enabled?: boolean;
+  description: string;
 }
 
-const DEFAULT_ICONS = ["🧴", "🚰", "🫗", "🔧", "🧴", "🔩", "💧", "🏠"];
-const DEFAULT_COLORS = ["#3b82f6", "#06b6d4", "#8b5cf6", "#f59e0b", "#ec4899", "#ef4444", "#10b981", "#6366f1"];
-
-const FALLBACK_EXPENSES: ExpenseItem[] = [
-  { name: "Bottled Water", monthly: 120, icon: "🧴", color: "#3b82f6" },
-  { name: "Water Delivery", monthly: 60, icon: "🚰", color: "#06b6d4" },
-  { name: "Pitcher Filters", monthly: 25, icon: "🫗", color: "#8b5cf6" },
-  { name: "Appliance Repairs", monthly: 40, icon: "🔧", color: "#f59e0b" },
-  { name: "Skin/Hair Products", monthly: 35, icon: "🧴", color: "#ec4899" },
-  { name: "Plumbing Maintenance", monthly: 30, icon: "🔩", color: "#ef4444" },
+const DEFAULT_COSTS: CostItem[] = [
+  { id: "bottled_water", label: "Bottled Water", placeholder: 60, color: colors.critical, description: "Average family of 4" },
+  { id: "appliance_repairs", label: "Appliance Repairs", placeholder: 45, color: colors.warning, description: "Hard water damage to appliances" },
+  { id: "plumbing", label: "Plumbing", placeholder: 25, color: "#f97316", description: "Scale buildup, pipe corrosion" },
+  { id: "cleaning", label: "Cleaning Products", placeholder: 20, color: "#8b5cf6", description: "Extra products for hard water" },
+  { id: "energy", label: "Energy Waste", placeholder: 15, color: colors.primary, description: "Scale reduces heater efficiency" },
 ];
 
-export function DemoCostComparison({ company, monthlyPayment, onNext: _onNext, onBack: _onBack }: Props) {
-  const cfg = company?.demoConfig;
+export function DemoCostComparison({ company, onNext: _onNext, onBack: _onBack, onExpensesChange, onCostBreakdownChange }: Props) {
+  const [showYearly, setShowYearly] = useState(false);
+  const costs = useMemo(() => {
+    const cc = (company as any)?.demoConfig?.costComparison;
+    if (cc?.items?.length) return cc.items as CostItem[];
+    return DEFAULT_COSTS;
+  }, [company]);
 
-  // Pull cost items from company settings, falling back to hardcoded defaults
-  const configCostItems: ExpenseItem[] = cfg?.costItems?.length
-    ? cfg.costItems
-        .filter((c: any) => c.label && c.monthlyCost > 0)
-        .map((c: any, i: number) => ({
-          name: c.label,
-          monthly: c.monthlyCost ?? 0,
-          icon: DEFAULT_ICONS[i % DEFAULT_ICONS.length],
-          color: DEFAULT_COLORS[i % DEFAULT_COLORS.length],
-          enabled: c.enabled !== false,
-        }))
-    : FALLBACK_EXPENSES;
+  // All costs start at $0 — rep enters actual spending
+  const [values, setValues] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    costs.forEach(c => { init[c.id] = 0; });
+    return init;
+  });
 
-  // Filtration monthly: from pricing step → company settings → fallback
-  const filtrationMonthly = monthlyPayment ?? cfg?.systemCostMonthly ?? 39;
-
-  const [expenses, setExpenses] = useState(
-    configCostItems.map((e) => ({ ...e, enabled: e.enabled !== false }))
-  );
-
-  const totalMonthly = expenses
-    .filter((e) => e.enabled)
-    .reduce((sum, e) => sum + e.monthly, 0);
-  const totalYearly = totalMonthly * 12;
-  const savingsMonthly = Math.max(0, totalMonthly - filtrationMonthly);
-  const savingsYearly = savingsMonthly * 12;
-
-  const maxBar = Math.max(totalMonthly, filtrationMonthly, 1);
-
-  const updateExpense = (idx: number, monthly: number) => {
-    const next = [...expenses];
-    next[idx] = { ...next[idx], monthly };
-    setExpenses(next);
+  const updateCost = (id: string, val: string) => {
+    const num = Math.max(0, parseInt(val) || 0);
+    setValues(prev => ({ ...prev, [id]: num }));
   };
 
-  const toggleExpense = (idx: number) => {
-    playToggleSound();
-    const next = [...expenses];
-    next[idx] = { ...next[idx], enabled: !next[idx].enabled };
-    setExpenses(next);
-  };
+  const monthlyTotal = Object.values(values).reduce((s, v) => s + v, 0);
+
+  // Report expenses up to parent
+  useEffect(() => { onExpensesChange?.(monthlyTotal); }, [monthlyTotal, onExpensesChange]);
+  useEffect(() => { onCostBreakdownChange?.(values); }, [values, onCostBreakdownChange]);
+  const yearlyTotal = monthlyTotal * 12;
+  const displayTotal = showYearly ? yearlyTotal : monthlyTotal;
+
+  const animatedTotal = useCountUp(displayTotal, 800, 100);
+
+  // Bar chart max
+  const maxCost = Math.max(1, ...costs.map((c) => (showYearly ? (values[c.id] || 0) * 12 : (values[c.id] || 0))));
 
   return (
-    <div className="mx-auto max-w-lg space-y-5 pt-4">
+    <div className="mx-auto w-full max-w-5xl px-8 space-y-5 pt-4">
       {/* Header */}
       <div className="text-center">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400/70">
-          CURRENT EXPENSES
-        </span>
-        <h2 className="text-2xl font-black mt-3">What You're Spending Now</h2>
-        <p className="text-sm text-white/40 mt-1.5">
-          Most families don't realize the true cost of unfiltered water
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.critical}b0` }}>
+          THE REAL COST
+        </p>
+        <h2 className="text-[28px] font-bold mt-3 leading-tight tracking-tight">
+          What Unfiltered Water<br />
+          <span style={{ color: colors.critical }}>Actually Costs You</span>
+        </h2>
+        <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
+          Enter the customer's actual monthly spending
         </p>
       </div>
 
-      {/* Visual Comparison Bars */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
-        {/* Current Spending */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-white/60">Current Monthly Cost</span>
-            <span className="text-lg font-black text-red-400">${totalMonthly}</span>
-          </div>
-          <div className="h-8 w-full rounded-lg bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full rounded-lg bg-gradient-to-r from-red-500 to-rose-400 transition-all duration-500 flex items-center px-3"
-              style={{ width: `${Math.max(5, (totalMonthly / maxBar) * 100)}%` }}
-            >
-              <span className="text-[10px] font-bold">${totalMonthly}/mo</span>
-            </div>
-          </div>
+      {/* Toggle */}
+      <div className="flex justify-center">
+        <div className="flex gap-1 rounded-xl p-1" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+          <button
+            onClick={() => { playTapSound(); setShowYearly(false); }}
+            className="px-4 py-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer"
+            style={{
+              background: !showYearly ? colors.elevated : "transparent",
+              color: !showYearly ? colors.textPrimary : colors.textFaint,
+            }}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => { playTapSound(); setShowYearly(true); }}
+            className="px-4 py-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer"
+            style={{
+              background: showYearly ? colors.elevated : "transparent",
+              color: showYearly ? colors.textPrimary : colors.textFaint,
+            }}
+          >
+            Yearly
+          </button>
         </div>
-
-        {/* Filtration Cost */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-white/60">Whole-Home Filtration</span>
-            <span className="text-lg font-black text-emerald-400">${filtrationMonthly}</span>
-          </div>
-          <div className="h-8 w-full rounded-lg bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 flex items-center px-3"
-              style={{
-                width: `${Math.max(5, (filtrationMonthly / maxBar) * 100)}%`,
-              }}
-            >
-              <span className="text-[10px] font-bold">${filtrationMonthly}/mo</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Savings */}
-        {savingsMonthly > 0 && (
-          <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3">
-            <span className="text-sm font-bold text-emerald-400">
-              Save ${savingsMonthly}/month · ${savingsYearly}/year
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Expense Breakdown */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
-        <div className="p-4 border-b border-white/5">
-          <p className="text-xs font-bold uppercase tracking-wider text-white/40">
-            Your Monthly Expenses
-          </p>
-          <p className="text-[11px] text-white/30 mt-0.5">
-            Tap to toggle · adjust amounts to match your household
-          </p>
-        </div>
-        <div className="divide-y divide-white/5">
-          {expenses.map((e, i) => (
-            <div
-              key={e.name}
-              className={`flex items-center gap-3 p-4 transition-opacity ${
-                !e.enabled ? "opacity-40" : ""
-              }`}
-            >
-              <button
-                onClick={() => toggleExpense(i)}
-                className="shrink-0 text-lg"
-              >
-                {e.icon}
-              </button>
-              <div className="flex-1 min-w-0">
-                <p
-                  className={`text-sm font-medium ${!e.enabled ? "line-through" : ""}`}
-                >
-                  {e.name}
-                </p>
+      {/* Total */}
+      <div className="rounded-2xl p-6 text-center" style={{ background: `${colors.critical}08`, border: `1px solid ${colors.critical}18` }}>
+        <TrendingDown className="size-6 mx-auto mb-2" style={{ color: monthlyTotal > 0 ? colors.critical : colors.textFaint }} />
+        <p className="text-[40px] font-bold" style={{ color: monthlyTotal > 0 ? colors.critical : colors.textFaint }}>
+          ${animatedTotal.toLocaleString()}
+        </p>
+        <p className="text-[14px]" style={{ color: colors.textMuted }}>
+          {monthlyTotal > 0
+            ? `wasted ${showYearly ? "every year" : "every month"} on unfiltered water`
+            : "enter spending below to calculate"
+          }
+        </p>
+      </div>
+
+      {/* Cost breakdown — editable inputs */}
+      <div className="rounded-2xl p-5 space-y-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>
+          COST BREAKDOWN
+        </p>
+        {costs.map((cost) => {
+          const value = values[cost.id] || 0;
+          const displayValue = showYearly ? value * 12 : value;
+          const barWidth = maxCost > 0 ? (displayValue / maxCost) * 100 : 0;
+          return (
+            <div key={cost.id} className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[14px] font-medium" style={{ color: colors.textPrimary }}>{cost.label}</span>
+                  <span className="text-[12px] ml-2" style={{ color: colors.textFaint }}>{cost.description}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[14px]" style={{ color: colors.textFaint }}>$</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    value={value || ""}
+                    placeholder={String(cost.placeholder)}
+                    onChange={(e) => updateCost(cost.id, e.target.value)}
+                    className="w-16 rounded-lg px-2 py-1 text-[15px] font-bold text-right text-white outline-none tabular-nums"
+                    style={{ background: colors.elevated, border: `1px solid ${colors.border}` }}
+                  />
+                  <span className="text-[11px]" style={{ color: colors.textFaint }}>/mo</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-white/30 text-sm">$</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={e.monthly}
-                  onChange={(ev) =>
-                    updateExpense(i, Math.max(0, parseInt(ev.target.value) || 0))
-                  }
-                  disabled={!e.enabled}
-                  className="w-14 h-8 rounded-lg bg-white/[0.06] border border-white/10 text-center text-sm font-bold text-white outline-none focus:border-white/30 disabled:opacity-40"
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: `${colors.textFaint}10` }}>
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${barWidth}%`, background: cost.color }}
                 />
-                <span className="text-[10px] text-white/30">/mo</span>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      {/* Yearly Projection */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-red-400/70">
-            Current Yearly
+      {/* Comparison message */}
+      {monthlyTotal > 0 && (
+        <div className="rounded-2xl p-5 text-center space-y-2" style={{ background: `${colors.success}08`, border: `1px solid ${colors.success}18` }}>
+          <TrendingUp className="size-5 mx-auto" style={{ color: colors.success }} />
+          <p className="text-[15px] font-semibold" style={{ color: colors.success }}>
+            A whole-home system pays for itself
           </p>
-          <p className="text-2xl font-black text-red-400 mt-1">
-            ${totalYearly.toLocaleString()}
-          </p>
-        </div>
-        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/70">
-            Filtration Yearly
-          </p>
-          <p className="text-2xl font-black text-emerald-400 mt-1">
-            ${(filtrationMonthly * 12).toLocaleString()}
+          <p className="text-[13px]" style={{ color: colors.textMuted }}>
+            ${yearlyTotal.toLocaleString()}/year in hidden costs vs. a fixed monthly payment for clean, protected water everywhere.
           </p>
         </div>
-      </div>
-
-      {/* Hidden costs */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">
-          Hidden Costs of Unfiltered Water
-        </p>
-        <div className="space-y-2.5 text-sm text-white/60">
-          <p>
-            💰 <strong>Water heater lifespan</strong> — Hard water can reduce
-            it by 25-40%, costing $800-2,000 to replace early
-          </p>
-          <p>
-            🔧 <strong>Appliance damage</strong> — Scale buildup affects
-            dishwashers, washing machines, and ice makers
-          </p>
-          <p>
-            🧼 <strong>Soap & detergent</strong> — Hard water requires 50-75%
-            more soap to clean effectively
-          </p>
-          <p>
-            👕 <strong>Clothing wear</strong> — Hard water minerals break down
-            fabric fibers faster
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

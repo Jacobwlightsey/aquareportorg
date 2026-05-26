@@ -1,23 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import {
-  Calendar,
-  CheckCircle2,
-  DollarSign,
-  Edit3,
-  FileText,
-  FolderKanban,
-  Mail,
-  MoreHorizontal,
-  Phone,
-  Plus,
-  Save,
-  Search,
-  Thermometer,
-  Trophy,
-  User,
-  X,
-  XCircle,
-} from "lucide-react";
+import { Calendar, CheckCircle2, Edit3, FileText, FolderKanban, Mail, MoreHorizontal, Phone, Plus, Save, Search, Thermometer, Trophy, User, X, XCircle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
