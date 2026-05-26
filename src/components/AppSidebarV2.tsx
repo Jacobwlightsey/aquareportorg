@@ -22,13 +22,33 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "./ui/sidebar";
+
+/** Custom section label — bypasses broken SidebarGroupLabel */
+function SectionLabel({ children, color }: { children: React.ReactNode; color: string }) {
+  return (
+    <div
+      style={{
+        height: "2rem",
+        display: "flex",
+        alignItems: "center",
+        paddingLeft: "0.5rem",
+        fontSize: "0.65rem",
+        fontWeight: 600,
+        letterSpacing: "0.08em",
+        color,
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 // ─── Role-based navigation configuration ─────────────────────────
 
@@ -174,9 +194,7 @@ function SidebarNav() {
       {/* Pipeline / Core */}
       {hasAccess(role, "pipeline") && (
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-cyan-400/80">
-            PIPELINE
-          </SidebarGroupLabel>
+          <SectionLabel color="rgba(34,211,238,0.8)">PIPELINE</SectionLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {pipelineNav.map((item) => (
@@ -199,9 +217,7 @@ function SidebarNav() {
       {/* Sales */}
       {hasAccess(role, "sales") && (
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-emerald-400/80">
-            SALES
-          </SidebarGroupLabel>
+          <SectionLabel color="rgba(52,211,153,0.8)">SALES</SectionLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {salesNav.map((item) => (
@@ -223,9 +239,7 @@ function SidebarNav() {
       {/* Retention */}
       {hasAccess(role, "retention") && (
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-amber-400/80">
-            RETENTION
-          </SidebarGroupLabel>
+          <SectionLabel color="rgba(251,191,36,0.8)">RETENTION</SectionLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {retentionNav.map((item) => (
@@ -247,9 +261,7 @@ function SidebarNav() {
       {/* Intelligence + Marketing */}
       {hasAccess(role, "intelligence") && (
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-violet-400/80">
-            INTELLIGENCE
-          </SidebarGroupLabel>
+          <SectionLabel color="rgba(167,139,250,0.8)">INTELLIGENCE</SectionLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {intelligenceNav.map((item) => (
@@ -271,9 +283,7 @@ function SidebarNav() {
       {/* Settings */}
       {hasAccess(role, "settings") && (
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-muted-foreground/60">
-            SETTINGS
-          </SidebarGroupLabel>
+          <SectionLabel color="rgba(161,161,170,0.6)">SETTINGS</SectionLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {settingsNav.map((item) => (
@@ -294,9 +304,7 @@ function SidebarNav() {
 
       {isAdmin && (
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-rose-400/80">
-            PLATFORM
-          </SidebarGroupLabel>
+          <SectionLabel color="rgba(251,113,133,0.8)">PLATFORM</SectionLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <NavLink
