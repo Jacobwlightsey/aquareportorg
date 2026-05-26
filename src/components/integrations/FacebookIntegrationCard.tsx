@@ -9,7 +9,6 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
-
 export function FacebookIntegrationCard() {
   const apiKeys = useQuery(api.apiKeys.listApiKeys) ?? [];
   const generateKey = useMutation(api.apiKeys.generateApiKey);
@@ -21,7 +20,7 @@ export function FacebookIntegrationCard() {
   const [generating, setGenerating] = useState(false);
 
   const activeKeys = apiKeys.filter((k) => !k.revokedAt);
-  const revokedKeys = apiKeys.filter((k) => k.revokedAt);
+  const revokedKeys = apiKeys.filter((k) => !!k.revokedAt);
 
   async function handleGenerate() {
     if (!newKeyName.trim()) return;

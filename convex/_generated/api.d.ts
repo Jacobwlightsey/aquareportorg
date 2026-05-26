@@ -10,6 +10,7 @@
 
 import type * as AquaReportEmail from "../AquaReportEmail.js";
 import type * as admin from "../admin.js";
+import type * as apiKeys from "../apiKeys.js";
 import type * as adminCleanup from "../adminCleanup.js";
 import type * as ai from "../ai.js";
 import type * as appointments from "../appointments.js";
@@ -56,6 +57,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   AquaReportEmail: typeof AquaReportEmail;
   admin: typeof admin;
+  apiKeys: typeof apiKeys;
   adminCleanup: typeof adminCleanup;
   ai: typeof ai;
   appointments: typeof appointments;
