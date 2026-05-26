@@ -1,4 +1,5 @@
 export interface FieldWaterReadings {
+  [key: string]: string | number | null | undefined;
   chlorine?: string | number | null;
   hardness?: string | number | null;
   tds?: string | number | null;

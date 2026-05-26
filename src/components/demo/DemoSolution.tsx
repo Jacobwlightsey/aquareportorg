@@ -4,7 +4,7 @@
    ──── */
 
 import { ArrowRight, Check, Shield, Sparkles, Star } from "lucide-react";
-import { colors, scoreTierInfo } from "@/lib/designTokens";
+import { colors, scoreTierInfo as getScoreTier } from "@/lib/designTokens";
 
 interface Props {
   score?: number;
@@ -53,7 +53,7 @@ const STEP_COLORS = ["#3b82f6", colors.success, "#8b5cf6"];
 
 export function DemoSolution({ score, company, report: _report, onNext: _onNext, onBack: _onBack }: Props) {
   const currentScore = score ?? 0;
-  const tier = scoreTierInfo(currentScore);
+  const tier = getScoreTier(currentScore);
   const hasCustomProduct = company?.solutionProductName;
 
   return (

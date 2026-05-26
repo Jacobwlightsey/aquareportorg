@@ -50,7 +50,7 @@ function StatCard({
 }: {
   label: string;
   value: string | number;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string;
   sub?: string;
 }) {

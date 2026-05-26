@@ -1,5 +1,30 @@
 import { useAction, useMutation, useQuery } from "convex/react";
-import { Building2, Check, ChevronDown, Droplets, ExternalLink, GripVertical, Loader2, Mail, MapPin, Phone, Globe, Plus, Trash2, UserCircle, Eye, EyeOff, RotateCcw, Save, Upload, X } from "lucide-react";
+import {
+  Building2,
+  Check,
+  ChevronDown,
+  CreditCard,
+  Droplets,
+  ExternalLink,
+  GripVertical,
+  Loader2,
+  Mail,
+  MapPin,
+  Palette,
+  Phone,
+  Globe,
+  Plus,
+  Settings,
+  Trash2,
+  Users,
+  UserCircle,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  Save,
+  Upload,
+  X,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -946,6 +971,7 @@ function TeamCard({
 
 void TeamCard;
 
+
 /* ─── Demo Step Config ──────────────────────────────────────────── */
 
 const DEMO_STEPS = [
@@ -1407,11 +1433,7 @@ function DemoConfigCard() {
                 {cfg.roSystemImage ? "Replace Image" : "Upload Image"}
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => { const dataUrl = ev.target?.result as string; if (dataUrl) update({ roSystemImage: dataUrl }); };
-                    reader.readAsDataURL(file);
-                  }
+                  if (file) { const reader = new FileReader(); reader.onload = () => update({ roSystemImage: reader.result as string }); reader.readAsDataURL(file); }
                   e.target.value = "";
                 }} />
               </label>
@@ -1462,6 +1484,7 @@ function DemoConfigCard() {
     </Card>
   );
 }
+
 
 function StripeCard() {
   const navigate = useNavigate();

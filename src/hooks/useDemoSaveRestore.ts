@@ -4,11 +4,11 @@
  * Auto-saves demo state to localStorage on every step change.
  * On mount, checks for saved state < 2 hours old and offers resume.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface DemoSaveState {
   currentStep: number;
-  liveReadings: { chlorine?: string | number | null; hardness?: string | number | null; tds?: string | number | null; ph?: string | number | null; [k: string]: string | number | null | undefined };
+  liveReadings: Record<string, string | number | null | undefined>;
   pricingState: unknown;
   boostApplied: boolean;
   concerns: unknown;
