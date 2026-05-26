@@ -89,15 +89,18 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
 
   const householdSize = concerns?.householdSize ?? 2;
 
-  // Use actual entered values from the Expenses step, fall back to defaults
+  // Use actual entered values from the Expenses step (exact match, including $0)
   const itemCost = (item: typeof EXPENSE_ITEMS[0]) => {
-    if (costBreakdown && costBreakdown[item.id] > 0) {
+    if (costBreakdown && item.id in costBreakdown) {
       return costBreakdown[item.id];
     }
     return item.fallback;
   };
 
-  const totalDeducted = EXPENSE_ITEMS.filter(e => deducted.has(e.id)).reduce((sum, e) => sum + itemCost(e), 0);
+  // Only show expense items that have an actual cost > 0
+  const visibleExpenseItems = EXPENSE_ITEMS.filter((item) => itemCost(item) > 0);
+
+  const totalDeducted = visibleExpenseItems.filter(e => deducted.has(e.id)).reduce((sum, e) => sum + itemCost(e), 0);
   const effectiveMonthly = Math.max(0, systemCostMonthly - totalDeducted);
   const animatedEffective = useAnimatedNum(effectiveMonthly);
   const animatedDeducted = useAnimatedNum(totalDeducted);
@@ -172,7 +175,8 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
         </p>
       </div>
 
-      {/* Expense deduction dropdown */}
+      {/* Expense deduction dropdown — only shown when expenses were entered */}
+      {visibleExpenseItems.length > 0 && (
       <div className="rounded-2xl overflow-hidden mb-6" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
         <button
           onClick={() => { playTapSound(); setShowExpenses(!showExpenses); }}
@@ -199,7 +203,7 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
             <p className="text-[12px] pt-3 pb-1" style={{ color: colors.textMuted }}>
               What are you currently spending on that you won't need with the system?
             </p>
-            {EXPENSE_ITEMS.map((item) => {
+            {visibleExpenseItems.map((item) => {
               const active = deducted.has(item.id);
               const cost = itemCost(item);
               return (
@@ -234,6 +238,7 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
           </div>
         )}
       </div>
+      )}
 
       {/* Features list */}
       <div className="rounded-2xl p-6 mb-6" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>

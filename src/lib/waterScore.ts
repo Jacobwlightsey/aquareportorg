@@ -36,6 +36,10 @@ export function readingPayload(readings: FieldWaterReadings) {
 }
 
 /**
+ * Field-reading adjustment — matches backend logic (convex/reports.ts).
+ * Good readings earn bonus points, bad readings are penalized.
+ * Result is averaged across factors then scaled ×3 for meaningful impact.
+ *
  * Chlorine (ppm): 0-0.2 good | 0.2-1 elevated | 1-2 high | 2-4 severe | 4+ extreme
  * pH:             6.8-7.4 normal | 6.5-6.8 acidic | <6.5 very acidic | 7.5-8.5 slightly alk | 8.5+ high alk
  * Hardness (gpg): 0-1 soft | 1-3.5 slightly hard | 3.5-7 moderately hard | 7-10.5 hard | 10.5-15 very hard | 15+ severe
@@ -47,46 +51,52 @@ export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {})
   const tds = readingNumber(readings.tds);
   const ph = readingNumber(readings.ph);
 
-  let penalty = 0;
+  let adjustment = 0;
+  let factors = 0;
 
-  // Chlorine (ppm) — good = no change, bad = penalty up to -6
+  // Chlorine (ppm)
   if (chlorine !== undefined) {
-    if (chlorine < 0.2) penalty += 0;             // good — no change
-    else if (chlorine <= 1) penalty -= 1;          // elevated
-    else if (chlorine <= 2) penalty -= 2;          // high
-    else if (chlorine <= 4) penalty -= 4;          // severe
-    else penalty -= 6;                             // extreme — max cap
+    factors++;
+    if (chlorine < 0.2) adjustment += 3;          // good
+    else if (chlorine <= 1) adjustment += 1;       // elevated
+    else if (chlorine <= 2) adjustment -= 1;       // high
+    else if (chlorine <= 4) adjustment -= 3;       // severe
+    else adjustment -= 5;                          // extreme
   }
 
-  // Hardness (gpg) — soft = no change, hard = penalty up to -6
+  // Hardness (gpg)
   if (hardness !== undefined) {
-    if (hardness <= 1) penalty += 0;               // soft — no change
-    else if (hardness <= 3.5) penalty -= 1;        // slightly hard
-    else if (hardness <= 7) penalty -= 2;          // moderately hard
-    else if (hardness <= 10.5) penalty -= 3;       // hard
-    else if (hardness <= 15) penalty -= 5;         // very hard
-    else penalty -= 6;                             // severe — max cap
+    factors++;
+    if (hardness <= 1) adjustment += 3;            // soft
+    else if (hardness <= 3.5) adjustment += 1;     // slightly hard
+    else if (hardness <= 7) adjustment -= 1;       // moderately hard
+    else if (hardness <= 10.5) adjustment -= 2;    // hard
+    else if (hardness <= 15) adjustment -= 4;      // very hard
+    else adjustment -= 6;                          // severe
   }
 
-  // TDS (ppm) — good = no change, high = penalty up to -6
+  // TDS (ppm)
   if (tds !== undefined) {
-    if (tds <= 150) penalty += 0;                  // excellent-good — no change
-    else if (tds <= 300) penalty -= 1;             // elevated
-    else if (tds <= 500) penalty -= 2;             // acceptable
-    else if (tds <= 1000) penalty -= 4;            // high
-    else penalty -= 6;                             // severe — max cap
+    factors++;
+    if (tds <= 50) adjustment += 3;                // excellent
+    else if (tds <= 150) adjustment += 2;          // good
+    else if (tds <= 300) adjustment += 0;          // elevated
+    else if (tds <= 500) adjustment -= 1;          // acceptable
+    else if (tds <= 1000) adjustment -= 3;         // high
+    else adjustment -= 6;                          // severe
   }
 
-  // pH — normal = no change, extreme = penalty up to -6
+  // pH
   if (ph !== undefined) {
-    if (ph >= 6.8 && ph <= 7.4) penalty += 0;     // normal — no change
-    else if (ph >= 6.5 && ph < 6.8) penalty -= 1; // mildly acidic
-    else if (ph < 6.5) penalty -= 4;              // very acidic
-    else if (ph > 7.4 && ph <= 8.5) penalty -= 1; // slightly alkaline
-    else penalty -= 4;                             // high alkaline
+    factors++;
+    if (ph >= 6.8 && ph <= 7.4) adjustment += 3;  // normal
+    else if (ph >= 6.5 && ph < 6.8) adjustment += 0; // mildly acidic
+    else if (ph < 6.5) adjustment -= 3;            // very acidic
+    else if (ph > 7.4 && ph <= 8.5) adjustment += 0; // slightly alkaline
+    else adjustment -= 3;                          // high alkaline
   }
 
-  return penalty; // always 0 or negative, NO averaging
+  return factors > 0 ? Math.round((adjustment / factors) * 3) : 0;
 }
 
 export function computeFieldReadingPenalty(readings: FieldWaterReadings = {}): number {

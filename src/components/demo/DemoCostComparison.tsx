@@ -20,6 +20,7 @@ interface Props {
   onBack: () => void;
   onExpensesChange?: (monthly: number) => void;
   onCostBreakdownChange?: (breakdown: CostBreakdown) => void;
+  initialBreakdown?: CostBreakdown | null;
 }
 
 interface CostItem {
@@ -38,7 +39,7 @@ const DEFAULT_COSTS: CostItem[] = [
   { id: "energy", label: "Energy Waste", placeholder: 15, color: colors.primary, description: "Scale reduces heater efficiency" },
 ];
 
-export function DemoCostComparison({ company, onNext: _onNext, onBack: _onBack, onExpensesChange, onCostBreakdownChange }: Props) {
+export function DemoCostComparison({ company, onNext: _onNext, onBack: _onBack, onExpensesChange, onCostBreakdownChange, initialBreakdown }: Props) {
   const [showYearly, setShowYearly] = useState(false);
   const costs = useMemo(() => {
     const cc = company?.demoConfig?.costComparison;
@@ -52,10 +53,10 @@ export function DemoCostComparison({ company, onNext: _onNext, onBack: _onBack, 
     return DEFAULT_COSTS;
   }, [company]);
 
-  // All costs start at $0 — rep enters actual spending
+  // Restore previously entered values when navigating back, otherwise start at $0
   const [values, setValues] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
-    costs.forEach(c => { init[c.id] = 0; });
+    costs.forEach(c => { init[c.id] = initialBreakdown?.[c.id] ?? 0; });
     return init;
   });
 

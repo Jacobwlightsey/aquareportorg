@@ -17,6 +17,7 @@ import { parseContaminants } from "@/lib/pipeline";
 import { hasPlanOverride, upgradeMessage } from "@/lib/planGate";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { computeAquaScore, type FieldWaterReadings } from "@/lib/waterScore";
+import type { CompanyForDemo } from "@/lib/types";
 import { playTapSound, setGlobalMute } from "@/lib/demoSounds";
 import { api } from "../../convex/_generated/api";
 
@@ -537,6 +538,10 @@ function DemoWizardInner() {
     );
   }
 
+  // After null guards above, company is guaranteed non-null.
+  // Explicit cast ensures Convex codegen type changes don't break downstream props.
+  const resolvedCompany = company as CompanyForDemo;
+
   /* ─── Plan gate ─── */
   if (!hasPlanOverride(effectivePlan as any, "growth")) {
     return (
@@ -695,8 +700,8 @@ function DemoWizardInner() {
       <DemoHeader
         currentStep={currentStep + 1}
         totalSteps={activeSteps.length}
-        companyName={report.companyName || company?.name}
-        companyLogo={company?.logoUrl}
+        companyName={report.companyName || resolvedCompany?.name}
+        companyLogo={resolvedCompany?.logoUrl}
         isRepView={viewMode === "rep"}
         coachingOpen={coachingOpen}
         onToggleCoaching={() => setCoachingOpen((o: boolean) => !o)}
@@ -758,7 +763,7 @@ function DemoWizardInner() {
             <DemoCustomerConcerns
               initial={customerConcerns}
               companyColor={companyColor}
-              company={company}
+              company={resolvedCompany}
               onNext={(state) => {
                 setCustomerConcerns(state);
                 goNext();
@@ -825,7 +830,7 @@ function DemoWizardInner() {
             <DemoScoreTransform
               score={score ?? 0}
               report={report}
-              company={company}
+              company={resolvedCompany}
               contaminants={contaminants}
               liveReadings={liveReadings}
               projectedScore={projectedScore ?? score ?? 0}
@@ -841,11 +846,11 @@ function DemoWizardInner() {
             />
           )}
           {stepKey === "system" && (
-            <DemoSystemInfo company={company} report={report} onNext={goNext} />
+            <DemoSystemInfo company={resolvedCompany} report={report} onNext={goNext} />
           )}
           {stepKey === "trust" && (
             <DemoTrustProof
-              company={company}
+              company={resolvedCompany}
               report={report}
               onNext={goNext}
             />
@@ -860,7 +865,7 @@ function DemoWizardInner() {
           )}
           {stepKey === "pricing" && (
             <DemoPricing
-              company={company}
+              company={resolvedCompany}
               onNext={goNext}
               onBack={goBack}
               onPricingChange={setPricingState}
@@ -872,7 +877,7 @@ function DemoWizardInner() {
           )}
           {stepKey === "investmentBreakdown" && (
             <DemoInvestmentBreakdown
-              company={company}
+              company={resolvedCompany}
               pricingState={pricingState}
               onPricingChange={setPricingState}
               onNext={goNext}
@@ -880,18 +885,19 @@ function DemoWizardInner() {
           )}
           {stepKey === "comparison" && (
             <DemoCostComparison
-              company={company}
+              company={resolvedCompany}
               onNext={goNext}
               onBack={goBack}
               onExpensesChange={setMonthlyExpenses}
               onCostBreakdownChange={setCostBreakdown}
+              initialBreakdown={costBreakdown}
             />
           )}
           {stepKey === "boost" && (
             <DemoScoreBoost
               projectedScore={projectedScore ?? score ?? 0}
               boostedScore={boostedScore}
-              company={company}
+              company={resolvedCompany}
               report={report}
               onBoostApplied={setBoostApplied}
               onNext={goNext}
@@ -900,10 +906,10 @@ function DemoWizardInner() {
           {stepKey === "summary" && (
             <DemoSummaryScreen
               report={report}
-              company={company}
+              company={resolvedCompany}
               initialScore={reportBaseScore ?? score}
               verifiedScore={score}
-              projectedScore={projectedScore}
+              projectedScore={finalScore}
               contaminants={contaminants}
               boostApplied={boostApplied}
               companyColor={companyColor}
@@ -917,14 +923,14 @@ function DemoWizardInner() {
             <DemoDecisionPage
               customerName={report.customerName}
               companyColor={companyColor}
-              company={company}
+              company={resolvedCompany}
               onDecision={() => goNext()}
             />
           )}
           {stepKey === "customerClose" && (
             <DemoCustomerClose
               report={report}
-              company={company}
+              company={resolvedCompany}
               finalScore={finalScore}
               companyColor={companyColor}
               onEndDemo={() => {
@@ -958,7 +964,7 @@ function DemoWizardInner() {
       {viewMode === "rep" && demoStarted && (
         <DemoTalkingPoints
           currentStep={stepKey}
-          company={company}
+          company={resolvedCompany}
           customerConcerns={customerConcerns}
           isOpen={coachingOpen}
           onClose={() => setCoachingOpen(false)}
