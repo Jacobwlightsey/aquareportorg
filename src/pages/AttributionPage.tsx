@@ -102,7 +102,7 @@ export function AttributionPage() {
           <h2 className="mb-4 text-lg font-bold text-white">Lead Sources</h2>
           {sources && sources.length > 0 ? (
             <div className="space-y-2">
-              {sources.map((s) => (
+              {sources.map((s: { source: string; count: number }) => (
                 <div key={s.source} className="flex items-center justify-between rounded-lg border border-slate-800/40 bg-slate-950/40 px-4 py-3">
                   <span className="font-medium text-white capitalize">{s.source}</span>
                   <span className="text-sm font-bold text-cyan-400">{s.count} leads</span>

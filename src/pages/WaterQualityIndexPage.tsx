@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { MapPin, ArrowRight, Search, Droplets } from "lucide-react";
-import { cityWaterData, CityWaterData } from "@/lib/cityData";
+import { cityWaterData } from "@/lib/cityData";
+import type { CityWaterData } from "@/lib/cityData";
 import { SEO } from "@/components/SEO";
 import { breadcrumbSchema } from "@/lib/schema";
 import { useState, useMemo } from "react";

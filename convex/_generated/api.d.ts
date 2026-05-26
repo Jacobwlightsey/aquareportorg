@@ -16,7 +16,9 @@ import type * as appointments from "../appointments.js";
 import type * as auth from "../auth.js";
 import type * as commissions from "../commissions.js";
 import type * as companies from "../companies.js";
+import type * as consent from "../consent.js";
 import type * as constants from "../constants.js";
+import type * as crons from "../crons.js";
 import type * as contracts from "../contracts.js";
 import type * as dealerShared from "../dealerShared.js";
 import type * as deals from "../deals.js";
@@ -41,6 +43,7 @@ import type * as security from "../security.js";
 import type * as spouseReview from "../spouseReview.js";
 import type * as stripe from "../stripe.js";
 import type * as supabase from "../supabase.js";
+import type * as tracking from "../tracking.js";
 import type * as training from "../training.js";
 import type * as users from "../users.js";
 
@@ -59,7 +62,9 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   commissions: typeof commissions;
   companies: typeof companies;
+  consent: typeof consent;
   constants: typeof constants;
+  crons: typeof crons;
   contracts: typeof contracts;
   dealerShared: typeof dealerShared;
   deals: typeof deals;
@@ -84,6 +89,7 @@ declare const fullApi: ApiFromModules<{
   spouseReview: typeof spouseReview;
   stripe: typeof stripe;
   supabase: typeof supabase;
+  tracking: typeof tracking;
   training: typeof training;
   users: typeof users;
 }>;

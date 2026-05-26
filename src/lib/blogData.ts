@@ -1907,7 +1907,6 @@ The risk of trying AquaReport is one month of subscription ($199). The risk of n
 - Every month of delay is lost revenue from deals you would have closed with professional reports
 - Start with the free report to prove the concept, then upgrade when you see the difference`,
   },
-,
 
   // ── New SEO Content Articles ──────────────────────────────────────
 
