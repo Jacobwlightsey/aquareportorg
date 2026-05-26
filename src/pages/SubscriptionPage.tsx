@@ -84,10 +84,20 @@ export function SubscriptionPage() {
   const currentPlan = subscription?.plan || "free";
   const isActive = subscription?.status === "active";
 
+  // Promo code config — mirrors PROMO_CODES in convex/stripe.ts
+  const activePromo = promoCode.trim().toLowerCase() === "excalibur" ? "excalibur" : null;
+  const promoDiscount: Record<string, { planId: string; cycle: "monthly"; off: number }> = {
+    excalibur: { planId: "growth", cycle: "monthly", off: 149 },
+  };
+
   const openCheckout = async (priceId: string, plan: string) => {
     setLoading(plan);
     try {
-      const { url } = await createCheckout({ priceId, plan });
+      const { url } = await createCheckout({
+        priceId,
+        plan,
+        promoCode: promoCode.trim() || undefined,
+      });
       window.location.href = url;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not open checkout");
@@ -242,16 +252,50 @@ export function SubscriptionPage() {
         </div>
       </div>
 
+      {/* Promo Code — above plan cards so discount shows on cards */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Gift className="size-5 text-violet-500" />
+            Have a promo code?
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-2">
+              <Input
+                id="promo-inline"
+                placeholder="Enter code"
+                value={promoCode}
+                onChange={(event) => setPromoCode(event.target.value)}
+                className="uppercase tracking-wider"
+              />
+            </div>
+            {activePromo && (
+              <Badge variant="outline" className="border-violet-500/40 text-violet-300 whitespace-nowrap">
+                ✓ {promoCode.toUpperCase()} applied — select a plan below
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Plan Cards */}
       <div className="grid gap-5 md:grid-cols-3">
         {SUBSCRIPTION_PLANS.map((plan) => {
           const isCurrent = currentPlan === plan.id && isActive;
-          const displayPrice =
+          const basePrice =
             billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
           const priceId =
             billingCycle === "monthly" ? plan.monthlyPriceId : plan.annualPriceId;
           const savings = savingsPercent(plan.monthlyPrice, plan.annualPrice);
           const effectiveMonthly = Math.round(plan.annualPrice / 12);
+
+          // Check if promo applies to this card
+          const pd = activePromo ? promoDiscount[activePromo] : null;
+          const promoApplies =
+            pd && pd.planId === plan.id && billingCycle === pd.cycle;
+          const displayPrice = promoApplies ? basePrice - pd.off : basePrice;
 
           return (
             <Card
@@ -302,6 +346,11 @@ export function SubscriptionPage() {
                 </CardDescription>
                 <div className="mt-3">
                   <div className="flex items-baseline gap-1.5">
+                    {promoApplies && (
+                      <span className="text-lg text-muted-foreground line-through mr-1">
+                        ${(basePrice ?? 0).toLocaleString()}
+                      </span>
+                    )}
                     <span className="text-4xl font-black tracking-tight">
                       ${(displayPrice ?? 0).toLocaleString()}
                     </span>
@@ -309,7 +358,15 @@ export function SubscriptionPage() {
                       /{billingCycle === "monthly" ? "mo" : "yr"}
                     </span>
                   </div>
-                  {billingCycle === "annual" && (
+                  {promoApplies && pd && (
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/20 border border-violet-500/30 px-2 py-0.5 text-[11px] font-bold text-violet-300">
+                        <Gift className="size-3" />
+                        EXCALIBUR — ${pd.off}/mo off
+                      </span>
+                    </div>
+                  )}
+                  {billingCycle === "annual" && !promoApplies && (
                     <div className="mt-1.5 flex items-center gap-2">
                       <span className="text-sm text-muted-foreground line-through">
                         ${(plan.monthlyPrice * 12).toLocaleString()}/yr
@@ -320,7 +377,7 @@ export function SubscriptionPage() {
                       </span>
                     </div>
                   )}
-                  {billingCycle === "annual" && (
+                  {billingCycle === "annual" && !promoApplies && (
                     <p className="text-xs text-muted-foreground mt-1">
                       That's just ${effectiveMonthly}/mo
                     </p>
@@ -442,14 +499,14 @@ export function SubscriptionPage() {
         </CardHeader>
       </Card>
 
-      {/* Promo Code */}
+      {/* Internal QA Promo Code */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gift className="size-5 text-violet-500" />
-            Promo Code
+            <ShieldCheck className="size-5 text-slate-500" />
+            Internal Access Code
           </CardTitle>
-          <CardDescription>Use test access codes for demos and internal QA.</CardDescription>
+          <CardDescription>For demos and internal QA only.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -457,7 +514,7 @@ export function SubscriptionPage() {
               <Label htmlFor="promo">Code</Label>
               <Input
                 id="promo"
-                placeholder="Enter promo code"
+                placeholder="Enter access code"
                 value={promoCode}
                 onChange={(event) => setPromoCode(event.target.value)}
               />
@@ -468,7 +525,7 @@ export function SubscriptionPage() {
               ) : (
                 <ShieldCheck className="size-4" />
               )}
-              Apply Code
+              Activate
             </Button>
           </div>
         </CardContent>
