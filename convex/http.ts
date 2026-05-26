@@ -608,6 +608,10 @@ http.route({
       return json({ error: "Missing companyId or eventName" }, 400, origin);
     }
 
+    // Validate company exists to prevent data poisoning
+    const companyExists = await ctx.runQuery(api.publicApi.lookupCompanyExists, { companyId });
+    if (!companyExists) return json({ error: "Invalid company" }, 400, origin);
+
     // Hash the IP
     const rawIp = clientKey(request);
     const ipHashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawIp));
@@ -621,7 +625,7 @@ http.route({
         ? "page_view"
         : "custom";
 
-    await ctx.runMutation(api.tracking.recordEvent, {
+    await ctx.runMutation(internal.tracking.recordEvent, {
       companyId,
       eventName,
       eventCategory,

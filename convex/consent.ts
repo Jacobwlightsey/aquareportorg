@@ -66,7 +66,7 @@ export const cleanupOldConsent = internalMutation({
     const old = await ctx.db
       .query("consentRecords")
       .filter((q) => q.lt(q.field("_creationTime"), twoYearsAgo))
-      .take(500);
+      .take(5000);
 
     for (const r of old) {
       await ctx.db.delete(r._id);

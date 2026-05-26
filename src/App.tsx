@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import PillarPage from "./pages/PillarPage";
 import { AdminPage } from "./pages/AdminPage";
@@ -12,8 +13,6 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { TrialGate } from "./components/TrialGate";
 import {
   AnalyticsPage,
-  BlogPage,
-  BlogArticlePage,
   CompanySettingsPage,
   CreateCustomerPage,
   CustomerDetailPage,
@@ -52,20 +51,24 @@ import { MarketingPage } from "./pages/MarketingPage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { SpouseReviewPage } from "./pages/SpouseReviewPage";
 import { DemoPreviewPage } from "./pages/DemoPreviewPage";
-import { AuthorPage } from "./pages/AuthorPage";
-import { PrivacyPage } from "./pages/PrivacyPage";
-import { TermsPage } from "./pages/TermsPage";
-import { CityWaterPage } from "./pages/CityWaterPage";
-import { WaterQualityIndexPage } from "./pages/WaterQualityIndexPage";
-import { LearnHubPage } from "./pages/LearnHubPage";
-import { AttributionPage } from "./pages/AttributionPage";
-import { AudiencePage } from "./pages/AudiencePage";
+// Lazy-load SEO/content pages to keep the main bundle small (~950KB blogData.ts)
+const BlogPage = lazy(() => import("./pages/BlogPage").then((m) => ({ default: m.BlogPage })));
+const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage").then((m) => ({ default: m.BlogArticlePage })));
+const AuthorPage = lazy(() => import("./pages/AuthorPage").then((m) => ({ default: m.AuthorPage })));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then((m) => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import("./pages/TermsPage").then((m) => ({ default: m.TermsPage })));
+const CityWaterPage = lazy(() => import("./pages/CityWaterPage").then((m) => ({ default: m.CityWaterPage })));
+const WaterQualityIndexPage = lazy(() => import("./pages/WaterQualityIndexPage").then((m) => ({ default: m.WaterQualityIndexPage })));
+const LearnHubPage = lazy(() => import("./pages/LearnHubPage").then((m) => ({ default: m.LearnHubPage })));
+const AttributionPage = lazy(() => import("./pages/AttributionPage").then((m) => ({ default: m.AttributionPage })));
+const AudiencePage = lazy(() => import("./pages/AudiencePage").then((m) => ({ default: m.AudiencePage })));
 
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
         <Toaster />
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" /></div>}>
         <Routes>
           {/* Demo preview — rendered inside setup wizard iframe */}
           <Route path="/demo/preview" element={<DemoPreviewPage />} />
@@ -165,6 +168,7 @@ function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </ThemeProvider>
     </ErrorBoundary>
   );

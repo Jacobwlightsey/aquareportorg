@@ -130,7 +130,8 @@ const schema = defineSchema({
     viewCount: v.optional(v.number()),
   })
     .index("by_company", ["companyId"])
-    .index("by_status", ["companyId", "status"]),
+    .index("by_status", ["companyId", "status"])
+    .index("by_fb_lead", ["companyId", "fbLeadId"]),
 
   enterpriseLeads: defineTable({
     name: v.string(),

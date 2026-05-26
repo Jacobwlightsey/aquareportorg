@@ -312,8 +312,9 @@ export const createFacebookLead = mutation({
       fbAdSetName: args.fbAdSetName,
       fbAdName: args.fbAdName,
       rawFbFields: args.rawFbFields,
-      consentGiven: true,
-      consentTimestamp: Date.now(),
+      // Consent implied by Facebook Lead Ad submission — not explicit opt-in
+      consentGiven: undefined,
+      consentTimestamp: undefined,
     });
   },
 });

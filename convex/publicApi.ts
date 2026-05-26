@@ -54,9 +54,19 @@ export const findLeadByFbId = query({
   handler: async (ctx, { companyId, fbLeadId }) => {
     const lead = await ctx.db
       .query("leads")
-      .withIndex("by_company", (q) => q.eq("companyId", companyId))
-      .filter((q) => q.eq(q.field("fbLeadId"), fbLeadId))
+      .withIndex("by_fb_lead", (q) =>
+        q.eq("companyId", companyId).eq("fbLeadId", fbLeadId),
+      )
       .first();
     return lead?._id || null;
+  },
+});
+
+// ─── Validate a company ID exists (for pixel endpoint) ────────────
+export const lookupCompanyExists = query({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const company = await ctx.db.get(companyId);
+    return !!company;
   },
 });

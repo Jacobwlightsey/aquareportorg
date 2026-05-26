@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { query, internalMutation } from "./_generated/server";
 
-// ─── Record a tracking event ──────────────────────────────────────
-export const recordEvent = mutation({
+// ─── Record a tracking event (internal only — called from HTTP handler) ──
+export const recordEvent = internalMutation({
   args: {
     companyId: v.id("companies"),
     eventName: v.string(),
@@ -54,25 +54,32 @@ export const getEventsByCompany = query({
   },
 });
 
-// ─── Get conversion funnel counts ─────────────────────────────────
+// ─── Get conversion funnel counts (indexed per event type) ────────
 export const getConversionFunnel = query({
   args: { companyId: v.id("companies") },
   handler: async (ctx, { companyId }) => {
     const now = Date.now();
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
 
-    const events = await ctx.db
-      .query("trackingEvents")
-      .withIndex("by_company", (q) => q.eq("companyId", companyId))
-      .collect();
+    // Count per event type using the by_event index (bounded to 10k each)
+    const countByEvent = async (eventName: string) => {
+      const events = await ctx.db
+        .query("trackingEvents")
+        .withIndex("by_event", (q) =>
+          q.eq("companyId", companyId).eq("eventName", eventName),
+        )
+        .filter((q) => q.gte(q.field("_creationTime"), thirtyDaysAgo))
+        .take(10000);
+      return events.length;
+    };
 
-    const recent = events.filter((e) => e._creationTime > thirtyDaysAgo);
-
-    const pageViews = recent.filter((e) => e.eventName === "PageView").length;
-    const leads = recent.filter((e) => e.eventName === "Lead").length;
-    const demos = recent.filter((e) => e.eventName === "DemoStarted").length;
-    const completed = recent.filter((e) => e.eventName === "DemoCompleted").length;
-    const closed = recent.filter((e) => e.eventName === "DealClosed").length;
+    const [pageViews, leads, demos, completed, closed] = await Promise.all([
+      countByEvent("PageView"),
+      countByEvent("Lead"),
+      countByEvent("DemoStarted"),
+      countByEvent("DemoCompleted"),
+      countByEvent("DealClosed"),
+    ]);
 
     return { pageViews, leads, demos, completed, closed };
   },
@@ -118,7 +125,7 @@ export const cleanupOldEvents = internalMutation({
           q.lt(q.field("_creationTime"), ninetyDays),
         ),
       )
-      .take(500);
+      .take(5000);
 
     for (const ev of oldPageViews) {
       await ctx.db.delete(ev._id);
@@ -133,7 +140,7 @@ export const cleanupOldEvents = internalMutation({
           q.lt(q.field("_creationTime"), oneYear),
         ),
       )
-      .take(500);
+      .take(5000);
 
     for (const ev of oldConversions) {
       await ctx.db.delete(ev._id);

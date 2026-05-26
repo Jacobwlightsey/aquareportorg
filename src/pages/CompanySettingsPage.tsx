@@ -81,8 +81,9 @@ export function CompanySettingsPage() {
     return <CreateCompanyForm onCreate={createCompany} onCreated={() => setShowSetup(true)} />;
   }
 
-  // Fix wizard trigger: only show for truly empty demoConfig (not just missing demoSetupComplete)
-  if (showSetup || (company && !company.demoConfig)) {
+  // Show wizard only when explicitly triggered (new company creation) —
+  // don't show for existing companies that just haven't set demoConfig yet
+  if (showSetup) {
     return (
       <DemoSetupWizard
         company={company}
