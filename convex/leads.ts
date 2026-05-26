@@ -280,3 +280,40 @@ export const getNewLeadCount = query({
     return newLeads.length;
   },
 });
+
+// ─── Create a lead from Facebook Lead Ads (Zapier webhook) ────────
+export const createFacebookLead = mutation({
+  args: {
+    companyId: v.id("companies"),
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    source: v.string(),
+    fbLeadId: v.string(),
+    fbFormId: v.optional(v.string()),
+    fbFormName: v.optional(v.string()),
+    fbCampaignName: v.optional(v.string()),
+    fbAdSetName: v.optional(v.string()),
+    fbAdName: v.optional(v.string()),
+    rawFbFields: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("leads", {
+      companyId: args.companyId,
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+      source: args.source,
+      status: "new",
+      fbLeadId: args.fbLeadId,
+      fbFormId: args.fbFormId,
+      fbFormName: args.fbFormName,
+      fbCampaignName: args.fbCampaignName,
+      fbAdSetName: args.fbAdSetName,
+      fbAdName: args.fbAdName,
+      rawFbFields: args.rawFbFields,
+      consentGiven: true,
+      consentTimestamp: Date.now(),
+    });
+  },
+});

@@ -52,6 +52,13 @@ import { MarketingPage } from "./pages/MarketingPage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { SpouseReviewPage } from "./pages/SpouseReviewPage";
 import { DemoPreviewPage } from "./pages/DemoPreviewPage";
+import { AuthorPage } from "./pages/AuthorPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
+import { TermsPage } from "./pages/TermsPage";
+import { CityWaterPage } from "./pages/CityWaterPage";
+import { WaterQualityIndexPage } from "./pages/WaterQualityIndexPage";
+import { LearnHubPage } from "./pages/LearnHubPage";
+import { AttributionPage } from "./pages/AttributionPage";
 
 function App() {
   return (
@@ -70,6 +77,20 @@ function App() {
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />
           <Route path="/r/:shareToken/print" element={<PrintReportPage />} />
           <Route path="/r/:shareToken/v2" element={<ReportV2PublicPage />} />
+
+          {/* Legal */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+
+          {/* Author / E-E-A-T */}
+          <Route path="/about/jacob-lightsey" element={<AuthorPage />} />
+
+          {/* Water Quality City Pages */}
+          <Route path="/water-quality" element={<WaterQualityIndexPage />} />
+          <Route path="/water-quality/:slug" element={<CityWaterPage />} />
+
+          {/* Learn Hub */}
+          <Route path="/learn" element={<LearnHubPage />} />
 
           {/* Blog — own layout, public */}
           <Route path="/blog" element={<BlogPage />} />
@@ -120,6 +141,7 @@ function App() {
               <Route path="/territory-map" element={<TrialGate page="territory-map"><TerritoryMapPage /></TrialGate>} />
               <Route path="/marketing" element={<TrialGate page="marketing"><MarketingPage /></TrialGate>} />
               <Route path="/training" element={<TrialGate page="training"><TrainingPage /></TrialGate>} />
+              <Route path="/attribution" element={<TrialGate page="attribution"><AttributionPage /></TrialGate>} />
 
               {/* Reports — accessible on free trial */}
               <Route path="/generate" element={<Navigate to="/customers/new" replace />} />

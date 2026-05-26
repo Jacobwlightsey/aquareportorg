@@ -73,20 +73,45 @@ function renderMarkdown(md: string) {
   }
 
   function inlineFormat(text: string): React.ReactNode {
-    // Bold
+    // Process inline markdown: bold, links, inline code, images
     const parts: React.ReactNode[] = [];
-    const boldRegex = /\*\*(.+?)\*\*/g;
+    // Combined regex: images, links, bold, inline code
+    const inlineRegex = /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|`([^`]+)`/g;
     let lastIdx = 0;
     let match: RegExpExecArray | null;
-    while ((match = boldRegex.exec(text)) !== null) {
+    let keyIdx = 0;
+    while ((match = inlineRegex.exec(text)) !== null) {
       if (match.index > lastIdx) {
         parts.push(text.slice(lastIdx, match.index));
       }
-      parts.push(
-        <strong key={match.index} className="font-semibold text-white">
-          {match[1]}
-        </strong>
-      );
+      if (match[1] !== undefined || (match[0].startsWith("![") )) {
+        // Image: ![alt](src)
+        parts.push(
+          <img key={`img-${keyIdx++}`} src={match[2]} alt={match[1] || ""} className="my-4 rounded-lg max-w-full h-auto" loading="lazy" />
+        );
+      } else if (match[3] !== undefined) {
+        // Link: [text](url)
+        const isExternal = match[4].startsWith("http");
+        parts.push(
+          <a key={`a-${keyIdx++}`} href={match[4]} className="text-cyan-400 underline decoration-cyan-400/30 underline-offset-2 hover:text-cyan-300" {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+            {match[3]}
+          </a>
+        );
+      } else if (match[5] !== undefined) {
+        // Bold: **text**
+        parts.push(
+          <strong key={`b-${keyIdx++}`} className="font-semibold text-white">
+            {match[5]}
+          </strong>
+        );
+      } else if (match[6] !== undefined) {
+        // Inline code: `code`
+        parts.push(
+          <code key={`c-${keyIdx++}`} className="rounded bg-slate-800 px-1.5 py-0.5 text-sm text-cyan-300 font-mono">
+            {match[6]}
+          </code>
+        );
+      }
       lastIdx = match.index + match[0].length;
     }
     if (lastIdx < text.length) parts.push(text.slice(lastIdx));
@@ -161,6 +186,26 @@ function renderMarkdown(md: string) {
       continue;
     }
 
+    // Blockquotes
+    if (trimmed.startsWith("> ")) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith("> ")) {
+        quoteLines.push(lines[i].trim().slice(2));
+        i++;
+      }
+      elements.push(
+        <blockquote
+          key={`bq-${i}`}
+          className="my-6 border-l-4 border-cyan-500/40 bg-cyan-950/20 py-3 pl-5 pr-4 rounded-r-lg text-slate-300"
+        >
+          {quoteLines.map((ql, qi) => (
+            <p key={qi} className="my-1 leading-relaxed">{inlineFormat(ql)}</p>
+          ))}
+        </blockquote>
+      );
+      continue;
+    }
+
     // Headings
     if (trimmed.startsWith("### ")) {
       elements.push(
@@ -213,6 +258,11 @@ export function BlogArticlePage() {
         title={post.title}
         description={post.description}
         canonical={`https://aquareport.org/blog/${post.slug}`}
+        ogType="article"
+        ogImage={post.headerImage ? `https://aquareport.org${post.headerImage}` : undefined}
+        author="Jacob Lightsey"
+        datePublished={post.datePublished}
+        dateModified={post.dateModified}
         schema={[
           articleSchema({
             title: post.title,
@@ -313,7 +363,7 @@ export function BlogArticlePage() {
               <Clock className="h-4 w-4" />
               {post.readTime} min read
             </span>
-            <span>By Jacob Lightsey, Founder</span>
+            <Link to="/about/jacob-lightsey" className="text-slate-400 hover:text-cyan-300 transition-colors">By Jacob Lightsey, Founder</Link>
           </div>
 
           {/* Content */}

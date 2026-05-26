@@ -41,7 +41,7 @@ export const blogPosts: BlogPost[] = [
     description:
       "Everything water treatment dealers need to know about water quality report software. Compare features, pricing, and find the right platform for your business.",
     primaryKeyword: "water quality report software",
-    datePublished: "2025-06-01",
+    datePublished: "2026-01-15",
     dateModified: "2026-05-22",
     readTime: 12,
     category: "Software Guide",
@@ -174,7 +174,7 @@ The fastest path to professional water quality reports:
     description:
       "Learn step-by-step how water treatment dealers create professional water test reports that impress homeowners and increase close rates by up to 40%.",
     primaryKeyword: "how to create professional water test reports",
-    datePublished: "2025-06-01",
+    datePublished: "2026-01-22",
     dateModified: "2026-05-22",
     readTime: 10,
     category: "Sales",
@@ -313,7 +313,7 @@ If you hand over paper results and never follow up, you'll lose most of your lea
     description:
       "Compare the top water testing software options for small water treatment dealers. Features, pricing, and what to look for in a reporting platform.",
     primaryKeyword: "best water testing software for small business",
-    datePublished: "2025-06-01",
+    datePublished: "2026-02-03",
     dateModified: "2026-05-22",
     readTime: 11,
     category: "Software Guide",
@@ -424,7 +424,7 @@ When you grow from 1 to 5 team members, upgrade to the Growth plan and everyone'
     description:
       "Learn how white label water quality reports let water treatment dealers present professional, company-branded reports to customers.",
     primaryKeyword: "white label water testing reports",
-    datePublished: "2025-06-01",
+    datePublished: "2026-02-14",
     dateModified: "2026-05-22",
     readTime: 8,
     category: "Features",
@@ -531,7 +531,7 @@ For 99% of dealers, white labeling existing software is dramatically more cost-e
     description:
       "Practical strategies for water treatment dealers to grow revenue, close more sales, and scale operations using digital water quality reports.",
     primaryKeyword: "how to grow a water treatment business",
-    datePublished: "2025-06-01",
+    datePublished: "2026-02-28",
     dateModified: "2026-05-22",
     readTime: 14,
     category: "Business Growth",
@@ -658,7 +658,7 @@ Track these numbers monthly:
     description:
       "The complete guide to software tools water treatment dealers need to manage reports, leads, demos, and customer relationships at scale.",
     primaryKeyword: "water treatment dealer software",
-    datePublished: "2025-06-01",
+    datePublished: "2026-03-07",
     dateModified: "2026-05-22",
     readTime: 13,
     category: "Software Guide",
@@ -785,7 +785,7 @@ Added up, the cost of not using software far exceeds any subscription fee.
     description:
       "Learn how water treatment dealers use data-driven water quality reports to sell more water softeners and increase close rates.",
     primaryKeyword: "how to sell more water softeners",
-    datePublished: "2025-06-01",
+    datePublished: "2026-03-18",
     dateModified: "2026-05-22",
     readTime: 10,
     category: "Sales",
@@ -903,7 +903,7 @@ Send the digital report: "I'm sending you the full report to myaquareport.com â€
     description:
       "Compare digital and paper water test reports. See why top water treatment dealers are switching to digital reporting platforms like AquaReport.",
     primaryKeyword: "digital water test reports",
-    datePublished: "2025-06-01",
+    datePublished: "2026-03-29",
     dateModified: "2026-05-22",
     readTime: 9,
     category: "Industry",
@@ -1005,7 +1005,7 @@ Most dealers who make the switch say they wish they'd done it sooner. The time s
     description:
       "Lead generation strategies for water treatment dealers. Learn how to convert water tests into qualified leads and sales using digital tools.",
     primaryKeyword: "water testing lead generation tool",
-    datePublished: "2025-06-01",
+    datePublished: "2026-04-05",
     dateModified: "2026-05-22",
     readTime: 11,
     category: "Business Growth",
@@ -1119,7 +1119,7 @@ AquaReport's built-in lead management helps you track every prospect:
     description:
       "Step-by-step guide for water treatment dealers on presenting water test results to homeowners in a way that builds trust and closes sales.",
     primaryKeyword: "how to present water test results to customers",
-    datePublished: "2025-06-01",
+    datePublished: "2026-04-14",
     dateModified: "2026-05-22",
     readTime: 12,
     category: "Sales",
@@ -1237,7 +1237,7 @@ The moment their score goes from Bronze to Gold is the emotional peak of the pre
     description:
       "How water treatment dealers use CRM software to manage leads, track customers, and grow their business. Features to look for and top options.",
     primaryKeyword: "water treatment CRM software",
-    datePublished: "2025-06-01",
+    datePublished: "2026-04-22",
     dateModified: "2026-05-22",
     readTime: 10,
     category: "Software Guide",
@@ -1338,7 +1338,7 @@ In these cases, consider pairing AquaReport with a general CRM like HubSpot, Job
     description:
       "How automated water test report software eliminates manual work for water dealers. Enter results once, get a professional report instantly.",
     primaryKeyword: "automated water test reports",
-    datePublished: "2025-06-01",
+    datePublished: "2026-05-01",
     dateModified: "2026-05-22",
     readTime: 8,
     category: "Features",
@@ -1454,7 +1454,7 @@ To get the most out of automated reporting:
     description:
       "How water quality scoring systems work, why they help dealers sell, and how AquaReport's AquaScore algorithm grades residential water.",
     primaryKeyword: "water quality scoring system for dealers",
-    datePublished: "2025-06-01",
+    datePublished: "2026-05-08",
     dateModified: "2026-05-22",
     readTime: 11,
     category: "Features",
@@ -1559,7 +1559,7 @@ The score doesn't replace the detailed breakdown â€” it introduces it. Lead with
     description:
       "Complete digital marketing guide for water treatment dealers. SEO, local marketing, social media, and content strategies to get more leads.",
     primaryKeyword: "water dealer digital marketing",
-    datePublished: "2025-06-01",
+    datePublished: "2026-05-15",
     dateModified: "2026-05-22",
     readTime: 15,
     category: "Business Growth",
@@ -1714,7 +1714,7 @@ Track these metrics monthly:
     description:
       "Calculate the return on investment of professional water quality reporting software. See how AquaReport pays for itself in one extra sale per month.",
     primaryKeyword: "water testing business software ROI",
-    datePublished: "2025-06-01",
+    datePublished: "2026-05-22",
     dateModified: "2026-05-22",
     readTime: 9,
     category: "Business Growth",

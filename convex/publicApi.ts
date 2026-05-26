@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 function periodMinute() {
   const d = new Date();
@@ -34,5 +34,29 @@ export const recordPublicRequest = mutation({
       publicKey: args.key,
     });
     return { allowed: true };
+  },
+});
+
+// ─── API Key Lookup (for Zapier webhook) ──────────────────────────
+export const lookupApiKey = query({
+  args: { keyHash: v.string() },
+  handler: async (ctx, { keyHash }) => {
+    return await ctx.db
+      .query("apiKeys")
+      .withIndex("by_keyHash", (q) => q.eq("keyHash", keyHash))
+      .first();
+  },
+});
+
+// ─── Find Lead by Facebook Lead ID ────────────────────────────────
+export const findLeadByFbId = query({
+  args: { companyId: v.id("companies"), fbLeadId: v.string() },
+  handler: async (ctx, { companyId, fbLeadId }) => {
+    const lead = await ctx.db
+      .query("leads")
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
+      .filter((q) => q.eq(q.field("fbLeadId"), fbLeadId))
+      .first();
+    return lead?._id || null;
   },
 });

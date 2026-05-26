@@ -11,7 +11,8 @@ const providerValidator = v.union(
   v.literal("salesforce"),
   v.literal("zapier"),
   v.literal("twilio"),
-  v.literal("mailchimp")
+  v.literal("mailchimp"),
+  v.literal("facebook")
 );
 
 const providerEnv: Record<string, string[][]> = {
