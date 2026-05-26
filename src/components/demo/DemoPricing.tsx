@@ -93,9 +93,16 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
     energy: "water_heater",
   };
 
-  const autoDeducted = useMemo(() => {
-    if (!costBreakdown) return new Set<string>();
+  // Reverse map: pricing item ID → cost comparison ID
+  const EXPENSE_TO_COST: Record<string, string> = {};
+  for (const [costId, expId] of Object.entries(COST_TO_EXPENSE)) {
+    EXPENSE_TO_COST[expId] = costId;
+  }
+
+  // Compute which items should be auto-checked from costBreakdown
+  const initialDeducted = useMemo(() => {
     const s = new Set<string>();
+    if (!costBreakdown) return s;
     for (const [costId, val] of Object.entries(costBreakdown)) {
       if (val > 0 && COST_TO_EXPENSE[costId]) {
         s.add(COST_TO_EXPENSE[costId]);
@@ -104,24 +111,42 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
     return s;
   }, [costBreakdown]);
 
-  // Expense deduction state — seed from auto-populated on first render
-  const [deducted, setDeducted] = useState<Set<string>>(autoDeducted);
-  const [showExpenses, setShowExpenses] = useState(false);
+  const hasAutoItems = initialDeducted.size > 0;
 
-  // Re-seed when costBreakdown first arrives (navigating forward from Expenses)
-  const seededRef = useRef(false);
+  // Expense deduction state — seed from cost breakdown
+  const [deducted, setDeducted] = useState<Set<string>>(() => {
+    // Compute inline so it's always correct on first mount
+    if (!costBreakdown) return new Set<string>();
+    const s = new Set<string>();
+    for (const [costId, val] of Object.entries(costBreakdown)) {
+      if (val > 0 && COST_TO_EXPENSE[costId]) {
+        s.add(COST_TO_EXPENSE[costId]);
+      }
+    }
+    return s;
+  });
+  const [showExpenses, setShowExpenses] = useState(hasAutoItems);
+
+  // Re-seed if costBreakdown arrives after initial mount
+  const seededRef = useRef(hasAutoItems);
   useEffect(() => {
-    if (autoDeducted.size > 0 && !seededRef.current) {
-      setDeducted(autoDeducted);
+    if (initialDeducted.size > 0 && !seededRef.current) {
+      setDeducted(initialDeducted);
       setShowExpenses(true);
       seededRef.current = true;
     }
-  }, [autoDeducted]);
+  }, [initialDeducted]);
 
   const householdSize = concerns?.householdSize ?? 2;
 
-  // Calculate per-item costs based on household size
-  const itemCost = (item: typeof EXPENSE_ITEMS[0]) => item.monthlyBase + item.perPerson * Math.max(0, householdSize - 1);
+  // Calculate per-item costs — use actual entered values from Expenses step when available
+  const itemCost = (item: typeof EXPENSE_ITEMS[0]) => {
+    const costId = EXPENSE_TO_COST[item.id];
+    if (costId && costBreakdown && costBreakdown[costId] > 0) {
+      return costBreakdown[costId]; // Use actual entered amount
+    }
+    return item.monthlyBase + item.perPerson * Math.max(0, householdSize - 1);
+  };
 
   const totalDeducted = EXPENSE_ITEMS.filter(e => deducted.has(e.id)).reduce((sum, e) => sum + itemCost(e), 0);
   const effectiveMonthly = Math.max(0, systemCostMonthly - totalDeducted);
