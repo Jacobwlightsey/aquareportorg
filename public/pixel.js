@@ -1,6 +1,6 @@
 /**
- * AquaReport Tracking Pixel v1.0
- * Lightweight (<3KB) consent-aware event tracker.
+ * AquaReport Tracking Pixel v1.1
+ * Lightweight consent-aware event tracker with built-in consent banner.
  *
  * Usage:
  *   <script src="https://aquareport.org/pixel.js"
@@ -8,16 +8,22 @@
  *           data-api="https://groovy-basilisk-939.convex.site"></script>
  *
  *   window.AquaReport.track("Lead", { email: "user@example.com" });
+ *
+ * Options (data attributes on the script tag):
+ *   data-no-banner="true"  — Disable the built-in consent banner
+ *                             (use AquaReport.grantConsent() manually)
  */
 (function () {
   "use strict";
   var STORAGE_KEY = "aq_sid";
   var CONSENT_KEY = "aq_consent";
+  var BANNER_DISMISSED_KEY = "aq_banner_dismissed";
   var script = document.currentScript;
   if (!script) return;
 
   var companyId = script.getAttribute("data-company-id");
   var apiBase = (script.getAttribute("data-api") || "").replace(/\/$/, "");
+  var noBanner = script.getAttribute("data-no-banner") === "true";
   if (!companyId || !apiBase) return;
 
   // Session ID (localStorage, not cookies)
@@ -124,17 +130,68 @@
     });
   }
 
+  // ─── Consent Banner ──────────────────────────────────────────
+  function showConsentBanner() {
+    // Don't show if: no-banner mode, already consented, or already dismissed
+    if (noBanner) return;
+    if (hasConsent()) return;
+    if (localStorage.getItem(BANNER_DISMISSED_KEY) === "1") return;
+
+    // Wait for DOM ready
+    function inject() {
+      var banner = document.createElement("div");
+      banner.id = "aq-consent-banner";
+      banner.setAttribute("role", "dialog");
+      banner.setAttribute("aria-label", "Cookie consent");
+      banner.innerHTML =
+        '<div style="position:fixed;bottom:0;left:0;right:0;z-index:999999;padding:16px;background:#1e293b;border-top:1px solid #334155;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap">' +
+          '<p style="margin:0;color:#cbd5e1;font-size:14px;max-width:600px">' +
+            'We use cookies and tracking to improve your experience and measure marketing performance. ' +
+            '<a href="/privacy" style="color:#22d3ee;text-decoration:underline" target="_blank">Privacy Policy</a>' +
+          '</p>' +
+          '<div style="display:flex;gap:8px;flex-shrink:0">' +
+            '<button id="aq-consent-accept" style="padding:8px 20px;background:#22d3ee;color:#0f172a;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Accept</button>' +
+            '<button id="aq-consent-decline" style="padding:8px 20px;background:transparent;color:#94a3b8;border:1px solid #475569;border-radius:6px;font-size:13px;cursor:pointer">Decline</button>' +
+          '</div>' +
+        '</div>';
+
+      document.body.appendChild(banner);
+
+      document.getElementById("aq-consent-accept").addEventListener("click", function () {
+        localStorage.setItem(CONSENT_KEY, "1");
+        banner.remove();
+        // Fire initial PageView on consent
+        sendEvent("PageView");
+      });
+
+      document.getElementById("aq-consent-decline").addEventListener("click", function () {
+        localStorage.setItem(BANNER_DISMISSED_KEY, "1");
+        banner.remove();
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", inject);
+    } else {
+      inject();
+    }
+  }
+
   // Public API
   window.AquaReport = {
     track: sendEvent,
     grantConsent: function () {
       localStorage.setItem(CONSENT_KEY, "1");
+      // Remove banner if it exists
+      var banner = document.getElementById("aq-consent-banner");
+      if (banner) banner.remove();
       // Auto-fire initial PageView on consent grant
       sendEvent("PageView");
     },
     revokeConsent: function () {
       localStorage.removeItem(CONSENT_KEY);
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(BANNER_DISMISSED_KEY);
     },
     hasConsent: hasConsent,
   };
@@ -142,5 +199,8 @@
   // Auto-track PageView if consent already granted (returning visitor)
   if (hasConsent()) {
     sendEvent("PageView");
+  } else {
+    // Show consent banner for new visitors
+    showConsentBanner();
   }
 })();

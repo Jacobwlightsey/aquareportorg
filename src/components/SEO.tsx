@@ -57,6 +57,9 @@ export function SEO({
         <meta property="article:author" content="https://aquareport.org/about/jacob-lightsey" />
       )}
 
+      {/* RSS Discovery */}
+      <link rel="alternate" type="application/rss+xml" title="AquaReport Blog" href="https://aquareport.org/rss.xml" />
+
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />

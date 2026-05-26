@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action, internalAction, mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import {
   activePlan,
   audit,
@@ -930,6 +930,22 @@ export const saveDemoSession = mutation({
       boostApplied: args.boostApplied,
       pricingSnapshot: args.pricingSnapshot,
       demoMode: args.demoMode,
+    });
+
+    // Fire attribution tracking events for demo sessions
+    const eventName = args.outcome === "completed" || args.outcome === "sold"
+      ? "DemoCompleted"
+      : "DemoStarted";
+    await ctx.runMutation(internal.tracking.recordEvent, {
+      companyId: member.companyId,
+      eventName,
+      eventCategory: "conversion",
+      metadata: JSON.stringify({
+        sessionId: String(sessionId),
+        outcome: args.outcome,
+        customerName,
+        durationSeconds: args.durationSeconds,
+      }),
     });
 
     return sessionId;

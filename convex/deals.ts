@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getMembership } from "./security";
 
 export const getDeals = query({
@@ -86,6 +87,20 @@ export const updateDealStage = mutation({
     }
     if (args.lostReason) update.lostReason = args.lostReason;
     await ctx.db.patch(args.dealId, update);
+
+    // Fire attribution tracking event for deal stage changes
+    if (args.stage === "closed_won") {
+      await ctx.runMutation(internal.tracking.recordEvent, {
+        companyId: deal.companyId,
+        eventName: "DealClosed",
+        eventCategory: "conversion",
+        metadata: JSON.stringify({
+          dealId: String(args.dealId),
+          stage: args.stage,
+          dealValue: deal.dealValue,
+        }),
+      });
+    }
   },
 });
 

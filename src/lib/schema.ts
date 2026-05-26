@@ -40,7 +40,7 @@ export const softwareAppSchema = {
     "@type": "AggregateOffer",
     priceCurrency: "USD",
     lowPrice: "0",
-    highPrice: "499",
+    highPrice: "599",
     offerCount: "4",
   },
   featureList: [
@@ -66,6 +66,14 @@ export const websiteSchema = {
   description:
     "The water quality reporting platform built for water treatment dealers.",
   publisher: { "@type": "Organization", name: "AquaReport" },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://aquareport.org/blog?q={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
 };
 
 export function articleSchema({

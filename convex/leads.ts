@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { api, internal } from "./_generated/api";
 import { audit, getMembership, requireRole, trackUsage } from "./security";
 
 export const submitLead = mutation({
@@ -45,6 +45,14 @@ export const submitLead = mutation({
       entityType: "lead",
       entityId: String(leadId),
       metadata: { source: "customer_report" },
+    });
+
+    // Fire attribution tracking event
+    await ctx.runMutation(internal.tracking.recordEvent, {
+      companyId: report.companyId,
+      eventName: "Lead",
+      eventCategory: "conversion",
+      metadata: JSON.stringify({ source: "customer_report", leadId: String(leadId) }),
     });
 
     const members = await ctx.db
@@ -282,7 +290,7 @@ export const getNewLeadCount = query({
 });
 
 // ─── Create a lead from Facebook Lead Ads (Zapier webhook) ────────
-export const createFacebookLead = mutation({
+export const createFacebookLead = internalMutation({
   args: {
     companyId: v.id("companies"),
     name: v.string(),
@@ -298,7 +306,7 @@ export const createFacebookLead = mutation({
     rawFbFields: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("leads", {
+    const leadId = await ctx.db.insert("leads", {
       companyId: args.companyId,
       name: args.name,
       email: args.email,
@@ -316,5 +324,24 @@ export const createFacebookLead = mutation({
       consentGiven: undefined,
       consentTimestamp: undefined,
     });
+
+    // Fire attribution tracking event for Facebook leads
+    // (direct insert since internalMutation can't call ctx.runMutation)
+    await ctx.db.insert("trackingEvents", {
+      companyId: args.companyId,
+      eventName: "Lead",
+      eventCategory: "conversion",
+      utmSource: "facebook",
+      utmMedium: "paid",
+      utmCampaign: args.fbCampaignName || undefined,
+      metadata: JSON.stringify({
+        source: "facebook",
+        leadId: String(leadId),
+        fbLeadId: args.fbLeadId,
+        fbFormName: args.fbFormName,
+      }),
+    });
+
+    return leadId;
   },
 });

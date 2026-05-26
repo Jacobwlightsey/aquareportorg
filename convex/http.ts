@@ -548,7 +548,7 @@ http.route({
       : fieldMap.name || "Facebook Lead";
 
     // Create the lead
-    const leadId = await ctx.runMutation(api.leads.createFacebookLead, {
+    const leadId = await ctx.runMutation(internal.leads.createFacebookLead, {
       companyId: keyRecord.companyId,
       name,
       email: fieldMap.email || undefined,

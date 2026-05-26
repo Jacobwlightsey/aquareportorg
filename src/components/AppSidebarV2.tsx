@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, RefreshCw, Settings, ShieldCheck, Star, Users as UsersIcon, Users2 } from "lucide-react";
+import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Users as UsersIcon, Users2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
@@ -55,6 +55,8 @@ const retentionNav = [
 const intelligenceNav = [
   { href: "/territory-map", label: "Territory Map", icon: Map },
   { href: "/marketing", label: "Marketing", icon: Megaphone },
+  { href: "/attribution", label: "Attribution", icon: MousePointerClick },
+  { href: "/audiences", label: "Audiences", icon: Users2 },
   { href: "/training", label: "Training", icon: BookOpen },
 ];
 
