@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build --configLoader runner",
+    "build": "tsc -b && vite build --configLoader runner && node scripts/postbuild-seo.mjs",
     "preview": "vite preview --configLoader runner",
     "check": "biome check .",
     "format": "biome check --write .",
