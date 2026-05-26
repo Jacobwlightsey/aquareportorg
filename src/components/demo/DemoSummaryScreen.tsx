@@ -57,9 +57,9 @@ export function DemoSummaryScreen({
   concerns,
 }: Props) {
   const journeySteps = [
-    initialScore != null ? { label: "TODAY", score: initialScore, size: 60 } : null,
-    verifiedScore != null && verifiedScore !== initialScore ? { label: "VERIFIED", score: verifiedScore, size: 60 } : null,
-    projectedScore != null ? { label: "WITH SYSTEM", score: projectedScore, size: 70 } : null,
+    initialScore != null ? { label: "TODAY", score: initialScore, size: 44 } : null,
+    verifiedScore != null && verifiedScore !== initialScore ? { label: "VERIFIED", score: verifiedScore, size: 44 } : null,
+    projectedScore != null ? { label: "WITH SYSTEM", score: projectedScore, size: 52 } : null,
   ].filter(Boolean) as { label: string; score: number; size: number }[];
 
   const totalContaminants = contaminants.length;
@@ -130,11 +130,11 @@ export function DemoSummaryScreen({
               <p className="text-[10px] font-bold tracking-widest uppercase mb-4" style={{ color: colors.textMuted }}>
                 Your Score Journey
               </p>
-              <div className="flex items-end justify-center gap-6">
+              <div className="flex items-end justify-center gap-5">
                 {journeySteps.map((step, i) => (
-                  <div key={step.label} className="flex flex-col items-center min-w-[80px]">
+                  <div key={step.label} className="flex flex-col items-center min-w-[70px]">
                     <ScoreGauge score={step.score} size={step.size} animationDuration={1200 + i * 400} />
-                    <p className="text-[22px] font-bold mt-1 tabular-nums" style={{ color: scoreColor(step.score) }}>
+                    <p className="text-[18px] font-bold mt-1 tabular-nums" style={{ color: scoreColor(step.score) }}>
                       {step.score}
                     </p>
                     <p className="text-[8px] font-bold tracking-wider uppercase text-center" style={{ color: colors.textFaint }}>

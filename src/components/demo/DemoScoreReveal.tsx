@@ -181,8 +181,8 @@ export function DemoScoreReveal({
     <div className="mx-auto w-full max-w-5xl px-8 pt-8" onClick={skipToReveal}>
       {/* Pre-start */}
       {phase === null && (
-        <div className="flex flex-col items-center justify-center text-center space-y-5">
-          <div className="space-y-3">
+        <div className="flex flex-col items-center text-center">
+          <div className="space-y-3 mb-5">
             <Sparkles className="mx-auto size-8 animate-pulse" style={{ color: colors.warning }} />
             <h2 className="text-[32px] font-bold tracking-tight" style={{ color: colors.textPrimary }}>
               Your AquaScore
@@ -218,7 +218,7 @@ export function DemoScoreReveal({
 
           <button
             onClick={(e) => { e.stopPropagation(); handleStart(); }}
-            className="flex items-center gap-2 rounded-2xl px-10 py-5 text-[18px] font-bold active:scale-[0.97] transition-transform cursor-pointer mt-2"
+            className="flex items-center gap-2 rounded-2xl px-10 py-5 text-[18px] font-bold active:scale-[0.97] transition-transform cursor-pointer mt-6"
             style={{
               background: `linear-gradient(135deg, ${info.color}, ${info.color}cc)`,
               boxShadow: `0 4px 24px ${info.color}30`,
