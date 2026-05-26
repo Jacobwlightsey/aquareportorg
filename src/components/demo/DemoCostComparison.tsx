@@ -43,7 +43,7 @@ export function DemoCostComparison({ company, onNext: _onNext, onBack: _onBack, 
   const [showYearly, setShowYearly] = useState(false);
   const costs = useMemo(() => {
     const cc = company?.demoConfig?.costComparison;
-    if (cc?.items?.length) return (cc.items as Array<Record<string, unknown>>).map((item, i) => ({
+    if (cc?.items?.length) return (cc.items as unknown as Array<Record<string, unknown>>).map((item, i) => ({
       id: String(item.id ?? `custom_${i}`),
       label: String(item.label ?? "Item"),
       placeholder: Number(item.monthlyCost ?? item.placeholder ?? 0),

@@ -539,8 +539,8 @@ function DemoWizardInner() {
   }
 
   // After null guards above, company is guaranteed non-null.
-  // Explicit cast ensures Convex codegen type changes don't break downstream props.
-  const resolvedCompany = company as CompanyForDemo;
+  // Double cast needed because Convex codegen return types don't overlap with CompanyForDemo.
+  const resolvedCompany = company as unknown as CompanyForDemo;
 
   /* ─── Plan gate ─── */
   if (!hasPlanOverride(effectivePlan as any, "growth")) {
