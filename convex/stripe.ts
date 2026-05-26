@@ -39,10 +39,83 @@ export const getSubscription = query({
 
 // ============ ACTIONS (call Stripe API) ============
 
+// ---- Promo code definitions ----
+// Each entry maps a code (lowercase) to its Stripe coupon config and plan restrictions.
+const PROMO_CODES: Record<
+  string,
+  {
+    stripeCouponId: string; // stable ID we pass to Stripe (created if missing)
+    amountOff: number; // cents
+    currency: string;
+    duration: "forever" | "once" | "repeating";
+    durationInMonths?: number;
+    name: string; // display name in Stripe
+    allowedPlans?: string[]; // restrict to these plan IDs (monthly only)
+    allowedPriceIds?: string[]; // restrict to these Stripe price IDs
+  }
+> = {
+  excalibur: {
+    stripeCouponId: "EXCALIBUR_149_OFF",
+    amountOff: 14900, // $149 in cents
+    currency: "usd",
+    duration: "forever", // discount applies every month
+    name: "EXCALIBUR — $149 off Growth monthly",
+    allowedPlans: ["growth"],
+    allowedPriceIds: ["price_1TaoiDRjbFWooo6zz7pS6LVU"], // Growth monthly price ID
+  },
+};
+
+/**
+ * Ensures the Stripe coupon exists. Creates it if not found.
+ * Returns the coupon ID to attach to the checkout session.
+ */
+async function ensureStripeCoupon(
+  stripeKey: string,
+  config: (typeof PROMO_CODES)[string]
+): Promise<string> {
+  // Try to retrieve existing coupon
+  const getResp = await fetch(
+    `https://api.stripe.com/v1/coupons/${encodeURIComponent(config.stripeCouponId)}`,
+    {
+      headers: { Authorization: `Bearer ${stripeKey}` },
+    }
+  );
+  if (getResp.ok) return config.stripeCouponId;
+
+  // Coupon doesn't exist yet — create it
+  const createParams = new URLSearchParams({
+    id: config.stripeCouponId,
+    amount_off: String(config.amountOff),
+    currency: config.currency,
+    duration: config.duration,
+    name: config.name,
+  });
+  if (config.duration === "repeating" && config.durationInMonths) {
+    createParams.set("duration_in_months", String(config.durationInMonths));
+  }
+
+  const createResp = await fetch("https://api.stripe.com/v1/coupons", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${stripeKey}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: createParams.toString(),
+  });
+
+  if (!createResp.ok) {
+    const err: any = await createResp.json();
+    throw new Error(err.error?.message || "Failed to create Stripe coupon");
+  }
+
+  return config.stripeCouponId;
+}
+
 export const createCheckoutSession = action({
   args: {
     priceId: v.string(),
     plan: v.string(),
+    promoCode: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ url: string }> => {
     const user: any = await ctx.runQuery(api.auth.currentUser);
@@ -67,6 +140,31 @@ export const createCheckoutSession = action({
 
     if (user.email) {
       params.set("customer_email", user.email);
+    }
+
+    // Apply promo code if provided
+    if (args.promoCode) {
+      const code = args.promoCode.trim().toLowerCase();
+      const promo = PROMO_CODES[code];
+      if (promo) {
+        // Validate plan restriction
+        if (promo.allowedPriceIds && !promo.allowedPriceIds.includes(args.priceId)) {
+          throw new Error(
+            `Promo code ${args.promoCode.toUpperCase()} is only valid for Growth monthly.`
+          );
+        }
+        if (promo.allowedPlans && !promo.allowedPlans.includes(args.plan)) {
+          throw new Error(
+            `Promo code ${args.promoCode.toUpperCase()} is only valid for the Growth plan.`
+          );
+        }
+        // Ensure coupon exists in Stripe and attach it
+        const couponId = await ensureStripeCoupon(stripeKey, promo);
+        params.set("discounts[0][coupon]", couponId);
+        params.set("metadata[promoCode]", args.promoCode.toUpperCase());
+      } else {
+        throw new Error("Invalid promo code.");
+      }
     }
 
     const resp: Response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -128,26 +226,37 @@ export const applyPromoCode = mutation({
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "owner");
     const code = args.code.trim().toLowerCase();
-    if (code !== "testtest") {
-      throw new Error("Invalid promo code");
+
+    // ---- Test / QA code (gives Pro for 1 year) ----
+    if (code === "testtest") {
+      const periodEnd = Date.now() + 365 * 24 * 60 * 60 * 1000;
+      await ctx.db.patch(membership.companyId, {
+        stripePlan: "pro",
+        stripeStatus: "active",
+        stripePeriodEnd: periodEnd,
+        reportLimitOverride: 150,
+      });
+      await audit(ctx, {
+        companyId: membership.companyId,
+        actorId: userId,
+        action: "billing.promo_applied",
+        entityType: "company",
+        entityId: String(membership.companyId),
+        metadata: { code, plan: "pro", periodEnd },
+      });
+      return { plan: "pro", status: "active", periodEnd };
     }
 
-    const periodEnd = Date.now() + 365 * 24 * 60 * 60 * 1000;
-    await ctx.db.patch(membership.companyId, {
-      stripePlan: "pro",
-      stripeStatus: "active",
-      stripePeriodEnd: periodEnd,
-      reportLimitOverride: 150,
-    });
-    await audit(ctx, {
-      companyId: membership.companyId,
-      actorId: userId,
-      action: "billing.promo_applied",
-      entityType: "company",
-      entityId: String(membership.companyId),
-      metadata: { code, plan: "pro", periodEnd },
-    });
-    return { plan: "pro", status: "active", periodEnd };
+    // ---- EXCALIBUR — $149 off Growth monthly ----
+    // This promo is applied at Stripe checkout (real billing).
+    // If someone enters it here instead of at checkout, tell them how to use it.
+    if (code === "excalibur") {
+      throw new Error(
+        'EXCALIBUR is a checkout discount — choose the Growth monthly plan, enter "EXCALIBUR" in the promo field, then click "Choose Growth". The $149/mo discount will be applied at checkout.'
+      );
+    }
+
+    throw new Error("Invalid promo code");
   },
 });
 
