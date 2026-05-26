@@ -58,8 +58,7 @@ import {
 import { api } from "../../convex/_generated/api";
 import { Link, useNavigate } from "react-router-dom";
 import { DemoSetupWizard } from "@/components/DemoSetupWizard";
-import { FacebookIntegrationCard } from "@/components/integrations/FacebookIntegrationCard";
-import { PixelCodeCard } from "@/components/integrations/PixelCodeCard";
+
 
 type TeamRole = "owner" | "admin" | "manager" | "sales_rep" | "viewer";
 
@@ -137,7 +136,7 @@ export function CompanySettingsPage() {
 
         {/* ── Billing ── */}
         {isAdmin && <BillingSection />}
-        {isAdmin && <FacebookSection />}
+
       </div>
     </div>
   );
@@ -1149,34 +1148,7 @@ function BillingSection() {
 }
 
 
-/* ═══════════════════════════════════════════════════════════════════
-   Facebook Integration Section
-   ═══════════════════════════════════════════════════════════════════ */
-function FacebookSection() {
-  return (
-    <>
-      <SettingsSection emoji="📊" title="Facebook & Tracking" description="Pixel tracking, lead ads, and attribution">
-        <div className="space-y-6">
-          <PixelCodeCard />
-          <FacebookIntegrationCard />
 
-          {/* Tracked Events Legend */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">Tracked Events</Label>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {["PageView", "Lead", "DemoStarted", "DemoCompleted", "DealClosed", "Purchase"].map((evt) => (
-                <div key={evt} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
-                  <div className="size-2 rounded-full bg-green-500" />
-                  <span>{evt}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </SettingsSection>
-    </>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════════════════
    CreateCompanyForm — shown when no company exists

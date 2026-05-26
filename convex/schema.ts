@@ -679,6 +679,12 @@ const schema = defineSchema({
     .index("by_company", ["companyId"])
     .index("by_segment", ["segmentId"]),
 
+  platformAdmins: defineTable({
+    email: v.string(),
+    addedBy: v.optional(v.string()), // userId of who added them
+    addedAt: v.number(),
+  }).index("by_email", ["email"]),
+
   referralRewards: defineTable({
     companyId: v.id("companies"),
     referrerName: v.string(),

@@ -4,11 +4,19 @@ import { internalMutation, mutation, query } from "./_generated/server";
 
 declare const process: { env: Record<string, string | undefined> };
 
-// ─── Helper: resolve admin emails ──────────────────────────────────────────
-function getAdminEmails(): string[] {
+// ─── Helper: resolve admin emails (env var — always included) ──────────────
+function getEnvAdminEmails(): string[] {
   return (process.env.PLATFORM_ADMIN_EMAILS ?? "jacobwlightsey@gmail.com,clearflowwaterco@gmail.com")
     .split(",")
     .map((e: string) => e.trim().toLowerCase());
+}
+
+// ─── Helper: resolve ALL admin emails (env + DB) ───────────────────────────
+async function getAllAdminEmails(ctx: any): Promise<string[]> {
+  const envEmails = getEnvAdminEmails();
+  const dbAdmins = await ctx.db.query("platformAdmins").collect();
+  const dbEmails = dbAdmins.map((a: any) => a.email.toLowerCase());
+  return [...new Set([...envEmails, ...dbEmails])];
 }
 
 // ─── Helper: require platform admin ────────────────────────────────────────
@@ -17,7 +25,8 @@ async function requirePlatformAdmin(ctx: any): Promise<string> {
   if (!userId) throw new Error("Not authenticated");
   const user = await ctx.db.get(userId);
   if (!user?.email) throw new Error("No email on account");
-  if (!getAdminEmails().includes(user.email.toLowerCase())) {
+  const adminEmails = await getAllAdminEmails(ctx);
+  if (!adminEmails.includes(user.email.toLowerCase())) {
     throw new Error("Platform admin access required");
   }
   return userId;
@@ -118,7 +127,8 @@ export const isPlatformAdmin = query({
     if (!userId) return false;
     const user = await ctx.db.get(userId);
     if (!user?.email) return false;
-    return getAdminEmails().includes(user.email.toLowerCase());
+    const adminEmails = await getAllAdminEmails(ctx);
+    return adminEmails.includes(user.email.toLowerCase());
   },
 });
 
@@ -320,6 +330,70 @@ export const adminDeleteReport = mutation({
   handler: async (ctx, { reportId }) => {
     await requirePlatformAdmin(ctx);
     await ctx.db.delete(reportId);
+    return { success: true };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Platform admin management
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const listPlatformAdmins = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePlatformAdmin(ctx);
+    const envEmails = getEnvAdminEmails();
+    const dbAdmins = await ctx.db.query("platformAdmins").collect();
+    // Return all: env admins (marked as built-in) + DB admins
+    const result: { email: string; source: "builtin" | "added"; _id?: any; addedAt?: number }[] = [];
+    for (const email of envEmails) {
+      result.push({ email, source: "builtin" });
+    }
+    for (const a of dbAdmins) {
+      if (!envEmails.includes(a.email.toLowerCase())) {
+        result.push({ email: a.email, source: "added", _id: a._id, addedAt: a.addedAt });
+      }
+    }
+    return result;
+  },
+});
+
+export const addPlatformAdmin = mutation({
+  args: { email: v.string() },
+  handler: async (ctx, { email }) => {
+    const userId = await requirePlatformAdmin(ctx);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      throw new Error("Invalid email address");
+    }
+    // Check if already exists in env
+    if (getEnvAdminEmails().includes(normalizedEmail)) {
+      throw new Error("Already a built-in admin");
+    }
+    // Check if already in DB
+    const existing = await ctx.db
+      .query("platformAdmins")
+      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .first();
+    if (existing) {
+      throw new Error("Already an admin");
+    }
+    await ctx.db.insert("platformAdmins", {
+      email: normalizedEmail,
+      addedBy: userId,
+      addedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export const removePlatformAdmin = mutation({
+  args: { adminId: v.id("platformAdmins") },
+  handler: async (ctx, { adminId }) => {
+    await requirePlatformAdmin(ctx);
+    const admin = await ctx.db.get(adminId);
+    if (!admin) throw new Error("Admin not found");
+    await ctx.db.delete(adminId);
     return { success: true };
   },
 });

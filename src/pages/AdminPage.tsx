@@ -16,14 +16,18 @@ import {
   Globe,
   MapPin,
   Trash2,
+  Plus,
+  Code,
+  BarChart3,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
+import { FacebookIntegrationCard } from "@/components/integrations/FacebookIntegrationCard";
+import { PixelCodeCard } from "@/components/integrations/PixelCodeCard";
 
 /* ---------- tiny helpers ---------- */
 function PlanBadge({ plan }: { plan: string }) {
@@ -442,6 +446,115 @@ function CompanyDetailModal({
   );
 }
 
+/* ---------- Admin Management Section ---------- */
+function AdminManagementSection() {
+  const admins = useQuery(api.admin.listPlatformAdmins) ?? [];
+  const addAdmin = useMutation(api.admin.addPlatformAdmin);
+  const removeAdmin = useMutation(api.admin.removePlatformAdmin);
+  const [newEmail, setNewEmail] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  async function handleAdd() {
+    if (!newEmail.trim()) return;
+    setAdding(true);
+    try {
+      await addAdmin({ email: newEmail.trim() });
+      toast.success("Admin added");
+      setNewEmail("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add admin");
+    }
+    setAdding(false);
+  }
+
+  async function handleRemove(adminId: Id<"platformAdmins">) {
+    if (!confirm("Remove this admin?")) return;
+    try {
+      await removeAdmin({ adminId });
+      toast.success("Admin removed");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove admin");
+    }
+  }
+
+  return (
+    <div className="border rounded-2xl p-6 space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg p-2 bg-purple-500/10">
+          <ShieldCheck className="size-5 text-purple-400" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold">Platform Admins</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage who has access to this admin dashboard
+          </p>
+        </div>
+      </div>
+
+      {/* Current Admins */}
+      <div className="space-y-2">
+        {admins.map((admin) => (
+          <div
+            key={admin.email}
+            className="flex items-center justify-between rounded-lg bg-muted/30 px-4 py-3"
+          >
+            <div className="flex items-center gap-3">
+              <Mail className="size-4 text-muted-foreground" />
+              <div>
+                <span className="text-sm font-medium">{admin.email}</span>
+                {admin.source === "builtin" && (
+                  <span className="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full font-semibold">
+                    Built-in
+                  </span>
+                )}
+                {admin.addedAt && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    Added {new Date(admin.addedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+            {admin.source === "added" && admin._id && (
+              <button
+                onClick={() => handleRemove(admin._id)}
+                className="rounded-lg p-2 text-muted-foreground hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
+                title="Remove admin"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add New Admin */}
+      <div className="flex gap-2">
+        <input
+          type="email"
+          placeholder="Email address"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          className="flex-1 rounded-xl border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+        />
+        <Button
+          onClick={handleAdd}
+          disabled={adding || !newEmail.trim()}
+          className="gap-1.5"
+          size="sm"
+        >
+          {adding ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Plus className="size-4" />
+          )}
+          Add Admin
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Main Admin Page ---------- */
 export function AdminPage() {
   const isAdmin = useQuery(api.admin.isPlatformAdmin);
@@ -687,6 +800,37 @@ export function AdminPage() {
           {filtered.length} of {companies?.length || 0} companies
         </div>
       </div>
+
+      {/* ─── Facebook & Tracking Section ─── */}
+      <div className="border rounded-2xl p-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg p-2 bg-blue-500/10">
+            <BarChart3 className="size-5 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Facebook & Tracking</h2>
+            <p className="text-sm text-muted-foreground">Pixel tracking, lead ads, and attribution</p>
+          </div>
+        </div>
+        <div className="space-y-6">
+          <PixelCodeCard />
+          <FacebookIntegrationCard />
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">Tracked Events</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              {["PageView", "Lead", "DemoStarted", "DemoCompleted", "DealClosed", "Purchase"].map((evt) => (
+                <div key={evt} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
+                  <div className="size-2 rounded-full bg-green-500" />
+                  <span>{evt}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Platform Admin Management ─── */}
+      <AdminManagementSection />
 
       {/* Company Detail Modal */}
       {selectedCompany && (
