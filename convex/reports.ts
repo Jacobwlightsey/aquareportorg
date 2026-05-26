@@ -16,7 +16,7 @@ function generateShareToken(): string {
 function normalizeAquaScore(score: number | undefined, scoreMode: string | undefined) {
   if (score === undefined) return undefined;
   const aquaScore = scoreMode === "risk_v1" ? 100 - score : score;
-  return Math.max(0, Math.min(100, Math.round(aquaScore)));
+  return Math.max(15, Math.min(100, Math.round(aquaScore)));
 }
 
 function finiteNumber(value: unknown, fallback = 0) {
@@ -75,7 +75,7 @@ function calculateAquaScoreFromContaminants(contaminants: any[]): number | undef
     }
   }
 
-  return Math.max(0, Math.min(100, Math.round(score)));
+  return Math.max(15, Math.min(100, Math.round(score)));
 }
 
 function computeFieldReadingAdjustment(report: any): number {
@@ -129,7 +129,7 @@ function withNormalizedAquaScore<T extends { waterScore?: number; scoreMode?: st
   const contaminantScore = calculateAquaScoreFromContaminants(parseReportContaminants(report.contaminants));
   const fieldAdj = computeFieldReadingAdjustment(report);
   const baseScore = contaminantScore ?? normalizeAquaScore(report.waterScore, report.scoreMode);
-  const finalScore = baseScore !== undefined ? Math.max(0, Math.min(100, Math.round(baseScore + fieldAdj))) : undefined;
+  const finalScore = baseScore !== undefined ? Math.max(15, Math.min(100, Math.round(baseScore + fieldAdj))) : undefined;
   return {
     ...report,
     rawWaterScore: report.waterScore,
@@ -373,7 +373,7 @@ export const getPublicReport = query({
     const contaminantScore = calculateAquaScoreFromContaminants(parseReportContaminants(report.contaminants));
     const fieldAdj = computeFieldReadingAdjustment(report);
     const baseScore = contaminantScore ?? normalizeAquaScore(report.waterScore, report.scoreMode);
-    const finalScore = baseScore !== undefined ? Math.max(0, Math.min(100, Math.round(baseScore + fieldAdj))) : undefined;
+    const finalScore = baseScore !== undefined ? Math.max(15, Math.min(100, Math.round(baseScore + fieldAdj))) : undefined;
 
     return {
       utilityName: report.utilityName,

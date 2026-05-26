@@ -17,7 +17,7 @@ export interface ScoreContaminant {
 }
 
 function clampScore(score: number): number {
-  return Math.max(0, Math.min(100, Math.round(score)));
+  return Math.max(15, Math.min(100, Math.round(score)));
 }
 
 export function readingNumber(value: string | number | null | undefined): number | undefined {
