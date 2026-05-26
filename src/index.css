@@ -248,10 +248,16 @@ input:focus, textarea:focus, select:focus,
 
 /* ── Ensure sidebar section labels never overlap nav items ── */
 [data-sidebar="group-label"] {
-  min-height: 2rem;
+  min-height: 2rem !important;
+  height: 2rem !important;
   margin-top: 0 !important;
-  display: flex;
+  margin-bottom: 0.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
   position: relative;
+  overflow: visible;
+  box-sizing: border-box;
 }
 
 /* ── Compact sidebar in landscape mode (tablet only) ── */
