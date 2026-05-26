@@ -94,7 +94,7 @@ export const getSourceBreakdown = query({
       .withIndex("by_event", (q) =>
         q.eq("companyId", companyId).eq("eventName", "Lead"),
       )
-      .collect();
+      .take(10000);
 
     const sources: Record<string, number> = {};
     for (const e of events) {

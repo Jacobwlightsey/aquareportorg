@@ -2,6 +2,7 @@ import { Link, useParams, Navigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, AlertTriangle, Shield, Droplets, MapPin, Users, FlaskConical, ExternalLink } from "lucide-react";
 import { getCityBySlug, cityWaterData } from "@/lib/cityData";
 import { SEO } from "@/components/SEO";
+import { PublicHeader } from "@/components/PublicHeader";
 import { breadcrumbSchema } from "@/lib/schema";
 
 /* ── Score ring ────────────────────────────────────────────────── */
@@ -65,6 +66,7 @@ export function CityWaterPage() {
         title={`${city.city}, ${city.stateAbbr} Water Quality Report — AquaScore ${city.aquaScore}/100`}
         description={`${city.city} tap water quality report: AquaScore ${city.aquaScore}/100 (${city.scoreTier}). ${city.contaminantsDetected} contaminants detected, ${city.exceedingGuidelines} exceeding health guidelines. See what's in ${city.city}'s water.`}
         canonical={`https://aquareport.org/water-quality/${city.slug}`}
+        ogImage="https://aquareport.org/og-water-quality.png"
         author="Jacob Lightsey"
         schema={[
           {
@@ -88,19 +90,7 @@ export function CityWaterPage() {
 
       <div className="min-h-screen bg-[#020617]">
         {/* Nav */}
-        <header className="border-b border-slate-800/60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
-            </Link>
-            <nav className="flex items-center gap-6">
-              <Link to="/water-quality" className="hidden text-sm text-slate-400 hover:text-white md:block">Water Quality</Link>
-              <Link to="/blog" className="hidden text-sm text-slate-400 hover:text-white md:block">Blog</Link>
-              <Link to="/learn" className="hidden text-sm text-slate-400 hover:text-white md:block">Learn</Link>
-              <Link to="/login" className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-400">Sign In</Link>
-            </nav>
-          </div>
-        </header>
+        <PublicHeader />
 
         <div className="mx-auto max-w-4xl px-6 pb-16 pt-8">
           <Link to="/water-quality" className="mb-6 flex items-center gap-1 text-sm text-slate-500 hover:text-slate-300">
@@ -303,8 +293,20 @@ export function CityWaterPage() {
           </section>
         </div>
 
+        {/* Data Sources Disclaimer */}
+        <div className="mx-auto max-w-4xl px-6">
+          <div className="mt-12 rounded-xl border border-slate-800/40 bg-slate-900/20 p-4 text-xs text-slate-500">
+            <p>
+              <strong className="text-slate-400">Data Sources:</strong> Water quality data is compiled from the Environmental Working Group (EWG) Tap Water Database
+              and EPA public records. AquaScores are calculated by AquaReport and may not reflect real-time conditions.
+              For the most current data, contact your local water utility or request a professional water test.
+            </p>
+            <p className="mt-1">Last updated: May 2026</p>
+          </div>
+        </div>
+
         {/* Footer */}
-        <footer className="border-t border-slate-800/60 bg-slate-950 py-8">
+        <footer className="border-t border-slate-800/60 bg-slate-950 py-8 mt-12">
           <div className="mx-auto max-w-6xl px-6 text-center text-sm text-slate-500">
             © {new Date().getFullYear()} AquaReport. Water quality report software for dealers. ·{" "}
             <Link to="/privacy" className="hover:text-slate-300">Privacy</Link> ·{" "}

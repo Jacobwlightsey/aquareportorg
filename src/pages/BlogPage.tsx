@@ -11,6 +11,7 @@ export function BlogPage() {
         title="Blog — Water Treatment Dealer Resources"
         description="Expert guides, tips, and strategies for water treatment dealers. Learn how to create better reports, close more sales, and grow your business with AquaReport."
         canonical="https://aquareport.org/blog"
+        ogImage="https://aquareport.org/og-blog.png"
         schema={breadcrumbSchema([
           { name: "Home", url: "https://aquareport.org" },
           { name: "Blog", url: "https://aquareport.org/blog" },

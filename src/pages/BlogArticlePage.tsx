@@ -244,6 +244,22 @@ function renderMarkdown(md: string) {
   return elements;
 }
 
+const CATEGORY_OG_MAP: Record<string, string> = {
+  "Contaminant Guides": "og-blog-contaminants.png",
+  "Filtration Guides": "og-blog-filtration.png",
+  "Homeowner Education": "og-blog-homeowner.png",
+  "Dealer Business": "og-blog-dealer.png",
+  "Business Growth": "og-blog-dealer.png",
+  "Sales": "og-blog-dealer.png",
+  "Comparisons": "og-blog-comparisons.png",
+  "Software Guide": "og-blog.png",
+  "Features": "og-blog.png",
+};
+
+function categoryOgImage(category: string): string {
+  return CATEGORY_OG_MAP[category] || "og-blog.png";
+}
+
 export function BlogArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const post = slug ? getBlogPost(slug) : undefined;
@@ -259,7 +275,7 @@ export function BlogArticlePage() {
         description={post.description}
         canonical={`https://aquareport.org/blog/${post.slug}`}
         ogType="article"
-        ogImage={post.headerImage ? `https://aquareport.org${post.headerImage}` : undefined}
+        ogImage={post.headerImage ? `https://aquareport.org${post.headerImage}` : `https://aquareport.org/${categoryOgImage(post.category)}`}
         author="Jacob Lightsey"
         datePublished={post.datePublished}
         dateModified={post.dateModified}

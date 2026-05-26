@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { PublicHeader } from "@/components/PublicHeader";
 
 export function PrivacyPage() {
   return (
@@ -8,20 +8,11 @@ export function PrivacyPage() {
         title="Privacy Policy"
         description="AquaReport privacy policy — how we collect, use, and protect your data. Learn about our tracking practices, data sharing, and your rights."
         canonical="https://aquareport.org/privacy"
+        ogImage="https://aquareport.org/og-legal.png"
       />
 
       <div className="min-h-screen bg-[#020617]">
-        <header className="border-b border-slate-800/60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
-            </Link>
-            <nav className="flex items-center gap-6">
-              <Link to="/" className="hidden text-sm text-slate-400 hover:text-white md:block">Home</Link>
-              <Link to="/login" className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-400">Sign In</Link>
-            </nav>
-          </div>
-        </header>
+        <PublicHeader navLinks={[{ label: "Home", to: "/" }]} />
 
         <article className="mx-auto max-w-3xl px-6 pb-16 pt-12 prose-invert">
           <h1 className="text-3xl font-bold text-white mb-2">Privacy Policy</h1>

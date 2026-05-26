@@ -8,9 +8,10 @@ import { useRef } from "react";
 import { playTapSound } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
 import { colors } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 interface Props {
-  company: any;
+  company: CompanyForDemo;
   report?: any;
   onNext: () => void;
 }
@@ -42,7 +43,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export function DemoTrustProof({ company, report, onNext: _onNext }: Props) {
-  const trustConfig = (company as any)?.demoConfig?.trustSection;
+  const trustConfig = company?.demoConfig?.trustSection;
   const hasCustomReviews = !!trustConfig?.reviews?.length;
   const reviews = hasCustomReviews ? trustConfig.reviews : DEFAULT_REVIEWS;
   const certs = trustConfig?.certifications?.length ? trustConfig.certifications : DEFAULT_CERTIFICATIONS;

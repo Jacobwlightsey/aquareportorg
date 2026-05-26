@@ -4195,8 +4195,8 @@ Coliform bacteria in well water doesn't have to be complicated. The first step i
     title: "Copper in Drinking Water: Causes, Health Effects & Solutions",
     description: "Blue-green stains and metallic taste often mean elevated copper. Learn what causes it, safe levels, health effects, and how to solve copper contamination.",
     primaryKeyword: "copper in drinking water",
-    datePublished: "2026-05-27",
-    dateModified: "2026-05-27",
+    datePublished: "2026-05-25",
+    dateModified: "2026-05-25",
     readTime: 9,
     category: "Contaminant Guides",
     faqs: [
@@ -9895,8 +9895,8 @@ Water treatment pricing strategy doesn't have to be complicated. The first step 
     title: "Customer Retention for Water Treatment Dealers: The Recurring Revenue Playbook",
     description: "Service agreements, filter subscriptions, and referral programs. Build predictable recurring revenue from your existing customer base.",
     primaryKeyword: "water treatment customer retention",
-    datePublished: "2026-05-27",
-    dateModified: "2026-05-27",
+    datePublished: "2026-05-25",
+    dateModified: "2026-05-25",
     readTime: 11,
     category: "Dealer Business",
     faqs: [

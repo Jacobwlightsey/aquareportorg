@@ -8,9 +8,10 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { ChevronRight, ChevronLeft, Sparkles, Upload, X } from "lucide-react";
+import type { CompanyForDemo } from "@/lib/types";
 
 interface Props {
-  company: any;
+  company: CompanyForDemo;
   onComplete: () => void;
   onSkip: () => void;
 }
@@ -45,10 +46,10 @@ export function DemoSetupWizard({ company, onComplete, onSkip }: Props) {
   const [saving, setSaving] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  const existingConfig = (company as any)?.demoConfig || {};
+  const existingConfig = company?.demoConfig || {};
   const [cfg, setCfg] = useState<Record<string, any>>({
     accentColor: existingConfig.accentColor || "#3b82f6",
-    logoUrl: existingConfig.logoUrl || (company as any)?.logoUrl || "",
+    logoUrl: existingConfig.logoUrl || company?.logoUrl || "",
     welcomeHeadline: existingConfig.welcomeHeadline || "",
     welcomeSubtext: existingConfig.welcomeSubtext || "",
     systemIncludes: existingConfig.systemIncludes || [

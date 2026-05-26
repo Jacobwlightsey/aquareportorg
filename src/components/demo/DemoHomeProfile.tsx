@@ -8,6 +8,7 @@ import { Droplets, Home, MapPin, Thermometer, Users } from "lucide-react";
 import { playTapSound } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
 import type { ConcernData } from "./DemoConcernIntake";
+import type { CompanyForDemo } from "@/lib/types";
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY || "";
 const FALLBACK_HOUSE =
@@ -20,7 +21,7 @@ function streetViewUrl(address: string, city: string, state: string, zip: string
 
 interface Props {
   report: any;
-  company?: any;
+  company?: CompanyForDemo;
   concerns?: ConcernData | null;
   companyColor?: string;
   onNext: () => void;

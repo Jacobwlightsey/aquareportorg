@@ -8,6 +8,7 @@ import { useState } from "react";
 import { playTapSound, haptic } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
 import type { LucideIcon } from "lucide-react";
+import type { CompanyForDemo } from "@/lib/types";
 
 export type CustomerConcernKey =
   | "drinking_water"
@@ -28,7 +29,7 @@ export interface CustomerConcernState {
 interface Props {
   initial?: CustomerConcernState | null;
   companyColor?: string;
-  company?: any;
+  company?: CompanyForDemo;
   onNext: (state: CustomerConcernState) => void;
 }
 

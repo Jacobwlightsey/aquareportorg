@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { playTapSound, playToggleSound } from "@/lib/demoSounds";
 import { useViewMode } from "@/hooks/useViewMode";
 import { colors } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 export interface PricingState {
   programPrice: number;
@@ -19,7 +20,7 @@ export interface PricingState {
 }
 
 interface Props {
-  company: any;
+  company: CompanyForDemo;
   onNext: () => void;
   onBack: () => void;
   onPricingChange: (state: PricingState) => void;

@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, Droplets, FlaskConical, Shield, Building2, Scale 
 import { blogPosts } from "@/lib/blogData";
 import { pillarPages } from "@/lib/pillarData";
 import { cityWaterData } from "@/lib/cityData";
+import { PublicHeader } from "@/components/PublicHeader";
 import { SEO } from "@/components/SEO";
 import { breadcrumbSchema } from "@/lib/schema";
 
@@ -64,6 +65,7 @@ export function LearnHubPage() {
         title="Learn — Water Treatment Guides, Reports & Industry Knowledge"
         description="Your hub for water treatment industry knowledge. Guides on water quality, dealer software, sales strategies, and creating professional water quality reports."
         canonical="https://aquareport.org/learn"
+        ogImage="https://aquareport.org/og-learn.png"
         schema={[
           breadcrumbSchema([
             { name: "Home", url: "https://aquareport.org" },
@@ -73,18 +75,7 @@ export function LearnHubPage() {
       />
 
       <div className="min-h-screen bg-[#020617]">
-        <header className="border-b border-slate-800/60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
-            </Link>
-            <nav className="flex items-center gap-6">
-              <Link to="/water-quality" className="hidden text-sm text-slate-400 hover:text-white md:block">Water Quality</Link>
-              <Link to="/blog" className="hidden text-sm text-slate-400 hover:text-white md:block">Blog</Link>
-              <Link to="/login" className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-400">Sign In</Link>
-            </nav>
-          </div>
-        </header>
+        <PublicHeader />
 
         <div className="mx-auto max-w-6xl px-6 pb-16 pt-12">
           {/* Hero */}

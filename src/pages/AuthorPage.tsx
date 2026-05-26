@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { PublicHeader } from "@/components/PublicHeader";
 import { profilePageSchema, breadcrumbSchema } from "@/lib/schema";
 import { blogPosts } from "@/lib/blogData";
 import { ArrowLeft, ExternalLink } from "lucide-react";
@@ -15,6 +16,7 @@ export function AuthorPage() {
         title="Jacob Lightsey — Founder of AquaReport"
         description="Jacob Lightsey is the founder of AquaReport, the water quality reporting platform for water treatment dealers. Learn about his mission to make water quality data accessible."
         canonical="https://aquareport.org/about/jacob-lightsey"
+        ogImage="https://aquareport.org/og-author-jacob.png"
         author="Jacob Lightsey"
         schema={[
           profilePageSchema({
@@ -32,20 +34,7 @@ export function AuthorPage() {
       />
 
       <div className="min-h-screen bg-[#020617]">
-        {/* Header */}
-        <header className="border-b border-slate-800/60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
-            </Link>
-            <nav className="flex items-center gap-6">
-              <Link to="/" className="hidden text-sm text-slate-400 transition-colors hover:text-white md:block">Home</Link>
-              <Link to="/blog" className="hidden text-sm text-slate-400 transition-colors hover:text-white md:block">Blog</Link>
-              <Link to="/learn" className="hidden text-sm text-slate-400 transition-colors hover:text-white md:block">Learn</Link>
-              <Link to="/login" className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-400">Sign In</Link>
-            </nav>
-          </div>
-        </header>
+        <PublicHeader navLinks={[{ label: "Home", to: "/" }, { label: "Blog", to: "/blog" }, { label: "Learn", to: "/learn" }]} />
 
         <div className="mx-auto max-w-3xl px-6 pb-16 pt-12">
           <Link to="/blog" className="mb-8 flex items-center gap-1 text-sm text-slate-500 hover:text-slate-300">

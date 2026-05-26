@@ -8,13 +8,14 @@ import { useEffect, useMemo, useState } from "react";
 import { playTapSound } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
 import { colors } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 export interface CostBreakdown {
   [id: string]: number;
 }
 
 interface Props {
-  company: any;
+  company: CompanyForDemo;
   onNext: () => void;
   onBack: () => void;
   onExpensesChange?: (monthly: number) => void;
@@ -40,7 +41,7 @@ const DEFAULT_COSTS: CostItem[] = [
 export function DemoCostComparison({ company, onNext: _onNext, onBack: _onBack, onExpensesChange, onCostBreakdownChange }: Props) {
   const [showYearly, setShowYearly] = useState(false);
   const costs = useMemo(() => {
-    const cc = (company as any)?.demoConfig?.costComparison;
+    const cc = company?.demoConfig?.costComparison;
     if (cc?.items?.length) return cc.items as CostItem[];
     return DEFAULT_COSTS;
   }, [company]);

@@ -9,11 +9,12 @@ import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { ScoreGauge } from "./ScoreGauge";
 import { colors, scoreColor } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 interface Props {
   score: number;
   report: any;
-  company: any;
+  company: CompanyForDemo;
   contaminants: any[];
   liveReadings: Record<string, any>;
   projectedScore: number;

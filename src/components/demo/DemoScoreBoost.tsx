@@ -9,11 +9,12 @@ import { useState } from "react";
 import { playTapSound, playBoostSound } from "@/lib/demoSounds";
 import { ScoreGauge } from "./ScoreGauge";
 import { colors } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 interface Props {
   projectedScore: number;
   boostedScore: number;
-  company: any;
+  company: CompanyForDemo;
   report: any;
   onBoostApplied: (applied: boolean) => void;
   onNext: () => void;

@@ -3,6 +3,7 @@ import { MapPin, ArrowRight, Search, Droplets } from "lucide-react";
 import { cityWaterData } from "@/lib/cityData";
 import type { CityWaterData } from "@/lib/cityData";
 import { SEO } from "@/components/SEO";
+import { PublicHeader } from "@/components/PublicHeader";
 import { breadcrumbSchema } from "@/lib/schema";
 import { useState, useMemo } from "react";
 
@@ -48,6 +49,7 @@ export function WaterQualityIndexPage() {
         title="Water Quality by City — US Tap Water Reports"
         description={`Check water quality reports for ${cityWaterData.length} major US cities. See AquaScore™ ratings, contaminants detected, and what's really in your city's tap water.`}
         canonical="https://aquareport.org/water-quality"
+        ogImage="https://aquareport.org/og-water-quality.png"
         schema={[
           breadcrumbSchema([
             { name: "Home", url: "https://aquareport.org" },
@@ -57,18 +59,7 @@ export function WaterQualityIndexPage() {
       />
 
       <div className="min-h-screen bg-[#020617]">
-        <header className="border-b border-slate-800/60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
-            </Link>
-            <nav className="flex items-center gap-6">
-              <Link to="/blog" className="hidden text-sm text-slate-400 hover:text-white md:block">Blog</Link>
-              <Link to="/learn" className="hidden text-sm text-slate-400 hover:text-white md:block">Learn</Link>
-              <Link to="/login" className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-400">Sign In</Link>
-            </nav>
-          </div>
-        </header>
+        <PublicHeader />
 
         <div className="mx-auto max-w-6xl px-6 pb-16 pt-12">
           {/* Hero */}

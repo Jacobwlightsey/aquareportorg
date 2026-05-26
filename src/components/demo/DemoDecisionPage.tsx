@@ -7,13 +7,14 @@ import { ArrowRight, Calendar, FileText, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { playTapSound, haptic, playCelebrationSound } from "@/lib/demoSounds";
 import { colors } from "@/lib/designTokens";
+import type { CompanyForDemo } from "@/lib/types";
 
 export type DecisionChoice = "move_forward" | "schedule_followup" | "send_report";
 
 interface Props {
   customerName?: string;
   companyColor?: string;
-  company?: any;
+  company?: CompanyForDemo;
   onDecision: (choice: DecisionChoice) => void;
 }
 
