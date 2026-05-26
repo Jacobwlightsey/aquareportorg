@@ -44,7 +44,7 @@ const BENEFITS = [
 
 export function DemoSummaryScreen({
   report: _report,
-  company: _company,
+  company,
   initialScore,
   verifiedScore,
   projectedScore,
@@ -113,7 +113,7 @@ export function DemoSummaryScreen({
                 </span>
               </div>
             )}
-            {BENEFITS.map((b) => (
+            {(company?.demoConfig?.summaryBenefits?.length ? company.demoConfig.summaryBenefits : BENEFITS).map((b: string) => (
               <div key={b} className="flex items-start gap-3">
                 <span className="text-[14px] shrink-0 mt-0.5">✅</span>
                 <span className="text-[14px]" style={{ color: colors.textSecondary }}>{b}</span>

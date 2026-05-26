@@ -28,6 +28,7 @@ export interface CustomerConcernState {
 interface Props {
   initial?: CustomerConcernState | null;
   companyColor?: string;
+  company?: any;
   onNext: (state: CustomerConcernState) => void;
 }
 
@@ -56,7 +57,15 @@ function deriveEmphasis(selected: CustomerConcernKey[]): CustomerConcernState["e
   return "general";
 }
 
-export function DemoCustomerConcerns({ initial, companyColor = colors.primary, onNext }: Props) {
+export function DemoCustomerConcerns({ initial, companyColor = colors.primary, company, onNext }: Props) {
+  // Use company config concern options if available, fall back to hardcoded defaults
+  const configConcerns = company?.demoConfig?.concernOptions;
+  const displayOptions = configConcerns?.length
+    ? CONCERN_OPTIONS.map((opt) => {
+        const override = configConcerns.find((c: any) => c.key === opt.key);
+        return override ? { ...opt, label: override.label, description: override.description } : opt;
+      })
+    : CONCERN_OPTIONS;
   const [selected, setSelected] = useState<CustomerConcernKey[]>(initial?.selected ?? []);
 
   const toggle = (key: CustomerConcernKey) => {
@@ -86,7 +95,7 @@ export function DemoCustomerConcerns({ initial, companyColor = colors.primary, o
 
       {/* 4-column grid — Apple onboarding style */}
       <div className="grid grid-cols-4 gap-3 mb-6">
-        {CONCERN_OPTIONS.map((opt) => {
+        {displayOptions.map((opt) => {
           const isSelected = selected.includes(opt.key);
           const OptIcon = opt.Icon;
           return (

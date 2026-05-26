@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "../../convex/_generated/api";
 import { Link, useNavigate } from "react-router-dom";
+import { DemoSetupWizard } from "@/components/DemoSetupWizard";
 
 type TeamRole = "owner" | "admin" | "manager" | "sales_rep" | "viewer";
 
@@ -68,10 +69,16 @@ export function CompanySettingsPage() {
   const addMember = useMutation(api.companies.addTeamMember);
   const removeMember = useMutation(api.companies.removeTeamMember);
   const revokeInvite = useMutation(api.companies.revokeInvite);
+  const [showSetup, setShowSetup] = useState(false);
 
   // If no company yet, show creation form
   if (company === null) {
-    return <CreateCompanyForm onCreate={createCompany} onCreated={() => navigate("/dashboard", { replace: true })} />;
+    return <CreateCompanyForm onCreate={createCompany} onCreated={() => setShowSetup(true)} />;
+  }
+
+  // Show setup wizard if just created OR demoConfig is empty
+  if (showSetup || (company && !(company as any).demoConfig?.demoSetupComplete)) {
+    return <DemoSetupWizard company={company} onComplete={() => { setShowSetup(false); navigate("/dashboard", { replace: true }); }} onSkip={() => { setShowSetup(false); }} />;
   }
 
   if (company === undefined) {
@@ -975,18 +982,28 @@ void TeamCard;
 /* ─── Demo Step Config ──────────────────────────────────────────── */
 
 const DEMO_STEPS = [
-  { key: "welcome", label: "Welcome", color: "#3b82f6", required: true },
-  { key: "score", label: "AquaScore Reveal", color: "#10b981", required: false },
-  { key: "contaminants", label: "What\'s In Your Water", color: "#f59e0b", required: false },
-  { key: "impact", label: "Impact On Your Life", color: "#f43f5e", required: false },
-  { key: "test", label: "Live Water Test", color: "#06b6d4", required: false },
-  { key: "transform", label: "Score Transform", color: "#8b5cf6", required: false },
-  { key: "system", label: "System Info", color: "#6366f1", required: false },
-  { key: "pricing", label: "Pricing", color: "#10b981", required: false },
-  { key: "comparison", label: "Cost Comparison", color: "#ec4899", required: false },
-  { key: "boost", label: "Score Boost", color: "#f59e0b", required: false },
-  { key: "customerClose", label: "Customer Close", color: "#22c55e", required: false },
-  { key: "dealerClose", label: "Dealer Close", color: "#6b7280", required: true },
+  { key: "intake",              label: "Intake (Rep-Only)",      color: "#8b5cf6", required: true },
+  { key: "welcome",             label: "Welcome",               color: "#3b82f6", required: true },
+  { key: "customerConcerns",    label: "What Matters Most",     color: "#8b5cf6", required: false },
+  { key: "topConcerns",         label: "Top Concerns",          color: "#f97316", required: false },
+  { key: "contaminants",        label: "Contaminant Breakdown", color: "#f59e0b", required: false },
+  { key: "score",               label: "AquaScore Reveal",      color: "#10b981", required: false },
+  { key: "test",                label: "Live Water Test",       color: "#06b6d4", required: false },
+  { key: "verifiedScore",       label: "Verified Score",        color: "#10b981", required: false },
+  { key: "impact",              label: "Personalized Impact",   color: "#f43f5e", required: false },
+  { key: "scoreImprovement",    label: "Score Improvement",     color: "#8b5cf6", required: false },
+  { key: "system",              label: "System Info",           color: "#3b82f6", required: false },
+  { key: "trust",               label: "Trust & Proof",         color: "#22c55e", required: false },
+  { key: "beforeAfter",         label: "Before & After",        color: "#8b5cf6", required: false },
+  { key: "comparison",          label: "Monthly Expenses",      color: "#ec4899", required: false },
+  { key: "pricing",             label: "Investment Overview",    color: "#10b981", required: false },
+  { key: "investmentBreakdown", label: "Investment Breakdown",   color: "#10b981", required: false },
+  { key: "transform",           label: "Score Journey",         color: "#8b5cf6", required: false },
+  { key: "boost",               label: "Score Boost (RO)",      color: "#f59e0b", required: false },
+  { key: "summary",             label: "Summary",               color: "#10b981", required: false },
+  { key: "decision",            label: "Decision",              color: "#2563eb", required: false },
+  { key: "customerClose",       label: "Customer Close",        color: "#22c55e", required: false },
+  { key: "dealerClose",         label: "Dealer Wrap-Up",        color: "#64748b", required: true },
 ];
 
 const STEP_KEY_ALIASES: Record<string, string> = { solution: "transform", close: "dealerClose" };
@@ -1160,6 +1177,120 @@ const DEFAULT_CLOSE_OPTIONS = ["Sold — Install Scheduled", "Follow Up Needed",
 
 const COLOR_PRESETS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4", "#0ea5e9", "#84cc16"];
 
+/* ─── Tab pill button ──────────────────────────────────────────────── */
+function TabPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+        active
+          ? "bg-blue-500 text-white shadow-sm"
+          : "bg-muted/50 text-muted-foreground hover:bg-muted"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ─── Review item helper ──────────────────────────────────────────── */
+function ReviewItem({ item, onChange, onRemove }: { item: { name: string; rating: number; quote: string }; onChange: (v: any) => void; onRemove: () => void }) {
+  return (
+    <div className="rounded-xl border p-3 bg-background space-y-2">
+      <div className="flex items-center gap-2">
+        <Input value={item.name} placeholder="Customer name" onChange={(e) => onChange({ ...item, name: e.target.value })} className="flex-1 text-sm font-semibold" />
+        <Select value={String(item.rating)} onValueChange={(v) => onChange({ ...item, rating: Number(v) })}>
+          <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {[5, 4, 3, 2, 1].map((n) => <SelectItem key={n} value={String(n)}>{n} ★</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+      </div>
+      <Textarea value={item.quote} placeholder="Review quote..." onChange={(e) => onChange({ ...item, quote: e.target.value })} rows={2} className="text-xs resize-none" />
+    </div>
+  );
+}
+
+/* ─── Certification item helper ───────────────────────────────────── */
+function CertItem({ item, onChange, onRemove }: { item: { label: string; icon: string }; onChange: (v: any) => void; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Input value={item.icon} className="w-14 text-center" onChange={(e) => onChange({ ...item, icon: e.target.value })} />
+      <Input value={item.label} placeholder="Certification name" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1" />
+      <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+    </div>
+  );
+}
+
+/* ─── Concern card item helper ────────────────────────────────────── */
+function ConcernCardItem({ item, onChange, onRemove }: { item: { key: string; label: string; description: string }; onChange: (v: any) => void; onRemove: () => void }) {
+  return (
+    <div className="rounded-xl border p-3 bg-background space-y-1">
+      <div className="flex items-center gap-2">
+        <Input value={item.label} placeholder="Label" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1 text-sm font-semibold" />
+        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+      </div>
+      <Input value={item.description} placeholder="Short description" onChange={(e) => onChange({ ...item, description: e.target.value })} className="text-xs" />
+    </div>
+  );
+}
+
+/* ─── Decision option item helper ─────────────────────────────────── */
+function DecisionOptionItem({ item, onChange, onRemove }: { item: { key: string; label: string; description: string }; onChange: (v: any) => void; onRemove: () => void }) {
+  return (
+    <div className="rounded-xl border p-3 bg-background space-y-1">
+      <div className="flex items-center gap-2">
+        <Input value={item.label} placeholder="Option label" onChange={(e) => onChange({ ...item, label: e.target.value })} className="flex-1 text-sm font-semibold" />
+        <button onClick={onRemove} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+      </div>
+      <Textarea value={item.description} placeholder="Description" onChange={(e) => onChange({ ...item, description: e.target.value })} rows={2} className="text-xs resize-none" />
+    </div>
+  );
+}
+
+/* ─── Demo Config Card (Tabbed) ───────────────────────────────────── */
+
+const DEFAULT_CLOSE_OPTIONS = ["Sold — Install Scheduled", "Follow Up Needed", "Not Interested", "No Show"];
+
+const COLOR_PRESETS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4", "#0ea5e9", "#84cc16"];
+
+const DEFAULT_REVIEWS = [
+  { name: "Sarah M.", rating: 5, quote: "Best investment we ever made for our home. The water tastes amazing!" },
+  { name: "Mike T.", rating: 5, quote: "Professional installation, great service. Wish we'd done it years ago." },
+  { name: "Jennifer R.", rating: 5, quote: "My kids' skin cleared up within weeks. Can't recommend enough." },
+];
+
+const DEFAULT_CERTIFICATIONS = [
+  { label: "WQA Certified", icon: "🏅" },
+  { label: "NSF Listed", icon: "✅" },
+  { label: "BBB A+", icon: "⭐" },
+  { label: "EPA Registered", icon: "🛡️" },
+];
+
+const DEFAULT_CONCERN_OPTIONS = [
+  { key: "family_health", label: "Family Health", description: "Keep my family safe and healthy" },
+  { key: "drinking_water", label: "Drinking Water", description: "Clean, safe water for drinking" },
+  { key: "skin_and_hair", label: "Skin & Hair", description: "Softer skin and healthier hair" },
+  { key: "appliances_plumbing", label: "Appliances", description: "Protect my home investments" },
+  { key: "taste_or_smell", label: "Taste & Smell", description: "Better tasting, odor-free water" },
+  { key: "stains_buildup", label: "Hard Water", description: "No more stains or buildup" },
+  { key: "bottled_water_costs", label: "Bottled Water", description: "Stop buying bottled water" },
+  { key: "peace_of_mind", label: "Peace of Mind", description: "Know my water is safe" },
+];
+
+const DEFAULT_DECISION_OPTIONS = [
+  { key: "move_forward", label: "Move Forward Today", description: "Let's get your system scheduled and start protecting your home" },
+  { key: "schedule_followup", label: "Schedule a Follow-Up", description: "Take time to think it over — we'll check back at a time that works for you" },
+  { key: "send_report", label: "Send My Report", description: "Get your full water quality report emailed to review on your own" },
+];
+
+const DEFAULT_BENEFITS = ["Protect Your Family", "Improve Your Water", "Reduce Costs", "Enjoy Peace of Mind"];
+
+const DEFAULT_FINANCING_TERMS = [60, 84, 120];
+
+type ConfigTab = "branding" | "content" | "pricing" | "closing" | "advanced";
+
 function DemoConfigCard() {
   const company = useQuery(api.companies.getMyCompany);
   const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
@@ -1167,16 +1298,31 @@ function DemoConfigCard() {
   const [saved, setSaved] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [cfg, setCfg] = useState<Record<string, any>>({});
+  const [activeTab, setActiveTab] = useState<ConfigTab>("branding");
 
   useEffect(() => {
     if (company && !initialized) {
       const v = (company as any).demoConfig || {};
       setCfg({
+        // Branding
         welcomeHeadline: v.welcomeHeadline || "",
         welcomeSubtext: v.welcomeSubtext || "",
         accentColor: v.accentColor || "#3b82f6",
+        // Content
         highlightCategories: v.highlightCategories || [],
+        concernOptions: v.concernOptions?.length ? v.concernOptions : DEFAULT_CONCERN_OPTIONS,
+        impactCategories: v.impactCategories || [],
+        // Trust
+        trustInstallCount: v.trustSection?.installCount ?? 500,
+        trustInstallArea: v.trustSection?.installArea || "",
+        trustCitySkyline: v.trustSection?.citySkyline || "",
+        trustReviews: v.trustSection?.reviews?.length ? v.trustSection.reviews : DEFAULT_REVIEWS,
+        trustCertifications: v.trustSection?.certifications?.length ? v.trustSection.certifications : DEFAULT_CERTIFICATIONS,
+        // Score
         projectedScore: v.projectedScore ?? 95,
+        boostedScore: v.boostedScore ?? 99,
+        skipScoreAnimation: v.skipScoreAnimation ?? false,
+        // System
         solutionHeadline: v.solutionHeadline || "",
         solutionProducts: v.solutionProducts || [],
         systemIncludes: v.systemIncludes?.length ? v.systemIncludes : [
@@ -1201,6 +1347,7 @@ function DemoConfigCard() {
           { title: "Enjoy Better Water", description: "Cleaner, softer water from every tap in your home, starting day one." },
         ],
         systemCallouts: v.systemCallouts?.length ? v.systemCallouts : ["Free Professional Installation", "Free Annual Water Review", "Lifetime Support"],
+        // Pricing
         programPrice: v.programPrice,
         revealPrice: v.revealPrice,
         discountOptions: v.discountOptions?.length ? v.discountOptions : [
@@ -1218,13 +1365,24 @@ function DemoConfigCard() {
           { label: "Plumbing Maintenance", monthlyCost: 30, enabled: true },
         ],
         systemCostMonthly: v.systemCostMonthly,
+        // Financing
+        financingEnabled: v.financing?.enabled ?? true,
+        financingAprRange: v.financing?.aprRange || "0% – 9.99%",
+        financingDefaultApr: v.financing?.defaultApr ?? 4.99,
+        financingTerms: v.financing?.terms?.length ? v.financing.terms : DEFAULT_FINANCING_TERMS,
+        financingProvider: v.financing?.provider || "",
+        // RO / Boost
         roSystemName: v.roSystemName || "Reverse Osmosis System",
         roSystemDescription: v.roSystemDescription || "A premium under-sink reverse osmosis system that removes 99.9% of all remaining contaminants, giving you the purest water possible — included free with your whole-home system.",
         roSystemImage: v.roSystemImage || "",
-        boostedScore: v.boostedScore ?? 99,
+        // Closing
         closeHeadline: v.closeHeadline || "",
         customerCloseSubtext: v.customerCloseSubtext || "",
         closeOptions: v.closeOptions?.length ? v.closeOptions : DEFAULT_CLOSE_OPTIONS,
+        decisionOptions: v.decisionOptions?.length ? v.decisionOptions : DEFAULT_DECISION_OPTIONS,
+        summaryBenefits: v.summaryBenefits?.length ? v.summaryBenefits : DEFAULT_BENEFITS,
+        // Demo modes
+        demoModes: v.demoModes || {},
       });
       setInitialized(true);
     }
@@ -1242,12 +1400,29 @@ function DemoConfigCard() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Build config object, sending undefined for empty values
       const config: Record<string, any> = {};
       for (const [k, v] of Object.entries(cfg)) {
+        // Skip nested keys we'll assemble manually
+        if (k.startsWith("trust") || k.startsWith("financing")) continue;
         if (Array.isArray(v)) { if (v.length > 0) config[k] = v; }
         else if (v !== "" && v !== undefined && v !== null) config[k] = v;
       }
+      // Assemble trustSection
+      config.trustSection = {
+        installCount: cfg.trustInstallCount ?? 500,
+        installArea: cfg.trustInstallArea || "",
+        citySkyline: cfg.trustCitySkyline || "",
+        reviews: cfg.trustReviews?.length ? cfg.trustReviews : DEFAULT_REVIEWS,
+        certifications: cfg.trustCertifications?.length ? cfg.trustCertifications : DEFAULT_CERTIFICATIONS,
+      };
+      // Assemble financing
+      config.financing = {
+        enabled: cfg.financingEnabled ?? true,
+        aprRange: cfg.financingAprRange || "0% – 9.99%",
+        defaultApr: cfg.financingDefaultApr ?? 4.99,
+        terms: cfg.financingTerms?.length ? cfg.financingTerms : DEFAULT_FINANCING_TERMS,
+        provider: cfg.financingProvider || "",
+      };
       await updateDemoConfig({ config });
       setSaved(true);
       toast.success("Demo settings saved!");
@@ -1258,6 +1433,14 @@ function DemoConfigCard() {
 
   const contaminantCategories = ["Heavy Metals", "Disinfection Byproducts", "Pesticides", "Radioactive", "Microorganisms", "Industrial Chemicals", "Pharmaceuticals"];
 
+  const TABS: { key: ConfigTab; label: string }[] = [
+    { key: "branding", label: "Branding" },
+    { key: "content", label: "Content" },
+    { key: "pricing", label: "Pricing" },
+    { key: "closing", label: "Closing" },
+    { key: "advanced", label: "Advanced" },
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -1266,211 +1449,346 @@ function DemoConfigCard() {
         </CardTitle>
         <CardDescription>Configure every part of your demo presentation. Changes show up in every new demo you present.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Brand Color */}
-        <ConfigSection title="🎨 Brand Color" description="Colors buttons, highlights, and accents throughout the demo">
-          <div className="flex flex-wrap gap-2 pt-2">
-            {COLOR_PRESETS.map((c) => (
-              <button key={c} onClick={() => update({ accentColor: c })} className={`size-8 rounded-xl transition-all cursor-pointer ${accent === c ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : "hover:scale-105"}`} style={{ backgroundColor: c }} />
-            ))}
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <input type="color" value={accent} onChange={(e) => update({ accentColor: e.target.value })} className="w-8 h-8 rounded-lg border cursor-pointer" />
-            <span className="text-xs text-muted-foreground">Or pick any custom color</span>
-          </div>
-        </ConfigSection>
+      <CardContent className="space-y-4">
+        {/* Tab pills */}
+        <div className="flex flex-wrap gap-2">
+          {TABS.map((tab) => (
+            <TabPill key={tab.key} label={tab.label} active={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} />
+          ))}
+        </div>
 
-        {/* Welcome Screen */}
-        <ConfigSection title="👋 Welcome Screen" description="First thing customers see when the demo starts" defaultOpen>
-          <div className="space-y-2 pt-2">
-            <Label className="text-xs">Headline</Label>
-            <Input value={cfg.welcomeHeadline || ""} placeholder="Your Water Quality Report" onChange={(e) => update({ welcomeHeadline: e.target.value })} />
-            <Label className="text-xs">Subtext</Label>
-            <Textarea value={cfg.welcomeSubtext || ""} placeholder="Let\'s look at what\'s in your water..." onChange={(e) => update({ welcomeSubtext: e.target.value })} rows={2} />
-          </div>
-        </ConfigSection>
-
-        {/* Featured Contaminants */}
-        <ConfigSection title="🧪 Featured Contaminants" description="Pick which contaminants to emphasize — leave empty to auto-detect">
-          <div className="flex flex-wrap gap-2 pt-2">
-            {contaminantCategories.map((cat) => (
-              <button key={cat} onClick={() => {
-                const list = cfg.highlightCategories || [];
-                update({ highlightCategories: list.includes(cat) ? list.filter((c: string) => c !== cat) : [...list, cat] });
-              }}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${(cfg.highlightCategories || []).includes(cat) ? "bg-blue-500 text-white border-blue-500" : "border-muted-foreground/20 hover:bg-muted/50"}`}>{cat}</button>
-            ))}
-          </div>
-        </ConfigSection>
-
-        {/* Score Transform */}
-        <ConfigSection title="✨ Score Transform" description="Projected score after filtration — the \'before → after\' reveal">
-          <div className="pt-2">
-            <Label className="text-xs">Projected Score After Filtration</Label>
-            <div className="flex items-center gap-3 mt-1">
-              <input type="range" min={60} max={100} value={cfg.projectedScore ?? 95} onChange={(e) => update({ projectedScore: Number(e.target.value) })} className="flex-1 accent-blue-500 cursor-pointer" />
-              <div className="size-10 rounded-full flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: accent }}>{cfg.projectedScore ?? 95}</div>
-            </div>
-          </div>
-        </ConfigSection>
-
-        {/* System Info */}
-        <ConfigSection title="🔧 System Info" description="System includes, warranty, how it works, callouts">
-          <div className="space-y-4 pt-2">
-            <div className="rounded-xl bg-muted/30 p-3 border border-dashed">
-              <p className="text-xs text-muted-foreground">💡 System Name & Image are set in <strong>Company Settings → General</strong> (Solution Product section above).</p>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">System Includes</Label>
-              <div className="space-y-2 mt-2">
-                {(cfg.systemIncludes || []).map((item: any, idx: number) => (
-                  <TitledListItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.systemIncludes || [])]; n[idx] = v; update({ systemIncludes: n }); }} onRemove={() => { const n = [...(cfg.systemIncludes || [])]; n.splice(idx, 1); update({ systemIncludes: n }); }} />
+        {/* ═══════════ BRANDING TAB ═══════════ */}
+        {activeTab === "branding" && (
+          <div className="space-y-3">
+            <ConfigSection title="🎨 Brand Color" description="Colors buttons, highlights, and accents throughout the demo">
+              <div className="flex flex-wrap gap-2 pt-2">
+                {COLOR_PRESETS.map((c) => (
+                  <button key={c} onClick={() => update({ accentColor: c })} className={`size-8 rounded-xl transition-all cursor-pointer ${accent === c ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : "hover:scale-105"}`} style={{ backgroundColor: c }} />
                 ))}
-                <button onClick={() => update({ systemIncludes: [...(cfg.systemIncludes || []), { title: "", description: "" }] })} className="mt-1 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Item</button>
               </div>
-            </div>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={accent} onChange={(e) => update({ accentColor: e.target.value })} className="w-8 h-8 rounded-lg border cursor-pointer" />
+                <span className="text-xs text-muted-foreground">Or pick any custom color</span>
+              </div>
+            </ConfigSection>
 
-            <div>
-              <Label className="text-xs font-semibold">Warranty</Label>
-              <Input value={cfg.warrantyTitle || ""} placeholder="20 Year Unlimited Warranty" onChange={(e) => update({ warrantyTitle: e.target.value })} className="mt-1" />
-              <div className="space-y-2 mt-2">
-                {(cfg.warrantyBullets || []).map((b: string, idx: number) => (
-                  <EditableListItem key={idx} value={b} placeholder="e.g. 20 Year Warranty on Tanks" onChange={(v) => { const n = [...(cfg.warrantyBullets || [])]; n[idx] = v; update({ warrantyBullets: n }); }} onRemove={() => { const n = [...(cfg.warrantyBullets || [])]; n.splice(idx, 1); update({ warrantyBullets: n }); }} />
-                ))}
-                <button onClick={() => update({ warrantyBullets: [...(cfg.warrantyBullets || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Warranty Point</button>
+            <ConfigSection title="👋 Welcome Screen" description="First thing customers see when the demo starts" defaultOpen>
+              <div className="space-y-2 pt-2">
+                <Label className="text-xs">Headline</Label>
+                <Input value={cfg.welcomeHeadline || ""} placeholder="Your Water Quality Report" onChange={(e) => update({ welcomeHeadline: e.target.value })} />
+                <Label className="text-xs">Subtext</Label>
+                <Textarea value={cfg.welcomeSubtext || ""} placeholder="Let's look at what's in your water..." onChange={(e) => update({ welcomeSubtext: e.target.value })} rows={2} />
               </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">How It Works Steps</Label>
-              <div className="space-y-2 mt-2">
-                {(cfg.howItWorksSteps || []).map((step: any, idx: number) => (
-                  <TitledListItem key={idx} item={step} onChange={(v) => { const n = [...(cfg.howItWorksSteps || [])]; n[idx] = v; update({ howItWorksSteps: n }); }} onRemove={() => { const n = [...(cfg.howItWorksSteps || [])]; n.splice(idx, 1); update({ howItWorksSteps: n }); }} />
-                ))}
-                <button onClick={() => update({ howItWorksSteps: [...(cfg.howItWorksSteps || []), { title: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Step</button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Bottom Callouts</Label>
-              <p className="text-xs text-muted-foreground mb-2">Up to 3 short callouts</p>
-              <div className="space-y-2">
-                {(cfg.systemCallouts || []).map((c: string, idx: number) => (
-                  <EditableListItem key={idx} value={c} placeholder="e.g. Free Professional Installation" onChange={(v) => { const n = [...(cfg.systemCallouts || [])]; n[idx] = v; update({ systemCallouts: n }); }} onRemove={() => { const n = [...(cfg.systemCallouts || [])]; n.splice(idx, 1); update({ systemCallouts: n }); }} />
-                ))}
-                {(cfg.systemCallouts || []).length < 3 && (
-                  <button onClick={() => update({ systemCallouts: [...(cfg.systemCallouts || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Callout</button>
-                )}
-              </div>
-            </div>
+            </ConfigSection>
           </div>
-        </ConfigSection>
+        )}
 
-        {/* Pricing */}
-        <ConfigSection title="💰 Pricing" description="Program price, reveal price, stackable discounts">
-          <div className="space-y-4 pt-2">
-            <div>
-              <Label className="text-xs">Reveal Price (actual)</Label>
-              <Input type="number" value={cfg.revealPrice || ""} placeholder="e.g. 9995" onChange={(e) => update({ revealPrice: Number(e.target.value) || undefined })} />
-              <p className="text-[10px] text-muted-foreground mt-1">Program price (crossed-out MSRP) is set during the pricing step of the demo.</p>
-            </div>
-
-            <div>
-              <Label className="text-xs font-semibold">Stackable Discounts</Label>
-              <p className="text-xs text-muted-foreground mb-2">Sales rep can toggle these on during the demo</p>
-              <div className="space-y-2">
-                {(cfg.discountOptions || []).map((d: any, idx: number) => (
-                  <DiscountItem key={idx} d={d} onChange={(v) => { const n = [...(cfg.discountOptions || [])]; n[idx] = v; update({ discountOptions: n }); }} onRemove={() => { const n = [...(cfg.discountOptions || [])]; n.splice(idx, 1); update({ discountOptions: n }); }} />
+        {/* ═══════════ CONTENT TAB ═══════════ */}
+        {activeTab === "content" && (
+          <div className="space-y-3">
+            <ConfigSection title="💬 Customer Concerns" description="The concern cards homeowners tap during 'What Matters Most'">
+              <div className="space-y-2 pt-2">
+                {(cfg.concernOptions || []).map((item: any, idx: number) => (
+                  <ConcernCardItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.concernOptions || [])]; n[idx] = v; update({ concernOptions: n }); }} onRemove={() => { const n = [...(cfg.concernOptions || [])]; n.splice(idx, 1); update({ concernOptions: n }); }} />
                 ))}
-                <button onClick={() => update({ discountOptions: [...(cfg.discountOptions || []), { id: `discount_${Date.now()}`, label: "", amount: 0, icon: "🏷️" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Discount</button>
+                <button onClick={() => update({ concernOptions: [...(cfg.concernOptions || []), { key: `concern_${Date.now()}`, label: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Concern</button>
               </div>
-            </div>
-          </div>
-        </ConfigSection>
+            </ConfigSection>
 
-        {/* Cost Comparison */}
-        <ConfigSection title="📊 Cost Comparison" description="Monthly expenses customers pay without filtration vs. your system">
-          <div className="space-y-3 pt-2">
-            <p className="text-xs text-muted-foreground">Set the average monthly expenses a homeowner spends without filtration.</p>
-            <div className="space-y-2">
-              {(cfg.costItems || []).map((item: any, idx: number) => (
-                <CostItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.costItems || [])]; n[idx] = v; update({ costItems: n }); }} onRemove={() => { const n = [...(cfg.costItems || [])]; n.splice(idx, 1); update({ costItems: n }); }} />
-              ))}
-              <button onClick={() => update({ costItems: [...(cfg.costItems || []), { label: "", monthlyCost: 0, enabled: true }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Cost Item</button>
-            </div>
-            <div>
-              <Label className="text-xs">Your System Monthly Cost</Label>
-              <Input type="number" value={cfg.systemCostMonthly || ""} placeholder="e.g. 49" onChange={(e) => update({ systemCostMonthly: Number(e.target.value) || undefined })} />
-              <p className="text-[10px] text-muted-foreground mt-1">What customers pay instead. Can also be entered live during the pricing step.</p>
-            </div>
-          </div>
-        </ConfigSection>
+            <ConfigSection title="🧪 Featured Contaminants" description="Pick which contaminants to emphasize — leave empty to auto-detect">
+              <div className="flex flex-wrap gap-2 pt-2">
+                {contaminantCategories.map((cat) => (
+                  <button key={cat} onClick={() => {
+                    const list = cfg.highlightCategories || [];
+                    update({ highlightCategories: list.includes(cat) ? list.filter((c: string) => c !== cat) : [...list, cat] });
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${(cfg.highlightCategories || []).includes(cat) ? "bg-blue-500 text-white border-blue-500" : "border-muted-foreground/20 hover:bg-muted/50"}`}>{cat}</button>
+                ))}
+              </div>
+            </ConfigSection>
 
-        {/* RO System / Score Boost */}
-        <ConfigSection title="🚀 Score Boost (RO System)" description="The free RO system popup that boosts the score to near-perfect">
-          <div className="space-y-3 pt-2">
-            <div>
-              <Label className="text-xs">RO System Name</Label>
-              <Input value={cfg.roSystemName || ""} placeholder="Reverse Osmosis System" onChange={(e) => update({ roSystemName: e.target.value })} />
-            </div>
-            <div>
-              <Label className="text-xs">Description</Label>
-              <Textarea value={cfg.roSystemDescription || ""} placeholder="A premium under-sink reverse osmosis system..." onChange={(e) => update({ roSystemDescription: e.target.value })} rows={3} />
-            </div>
-            <div>
-              <Label className="text-xs">RO System Image</Label>
-              {cfg.roSystemImage && (
-                <div className="mb-2 relative inline-block">
-                  <img src={cfg.roSystemImage} alt="RO System" className="max-h-24 rounded-lg border border-border object-contain" />
-                  <button onClick={() => update({ roSystemImage: "" })} className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform cursor-pointer">
-                    <X className="size-3" />
-                  </button>
+            <ConfigSection title="⚡ Impact Page" description="Customize the concern categories and their contaminant mappings">
+              <div className="pt-2">
+                <p className="text-xs text-muted-foreground mb-2">The impact page maps customer concerns to specific contaminants. The defaults are solid — only change if you want to customize the category labels.</p>
+                <p className="text-xs text-muted-foreground italic">Impact categories are automatically derived from the Customer Concerns above. Advanced mapping is coming soon.</p>
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="🏆 Trust & Proof" description="Reviews, certifications, and local install stats shown after the system page">
+              <div className="space-y-4 pt-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Install Count</Label>
+                    <Input type="number" value={cfg.trustInstallCount ?? 500} placeholder="500" onChange={(e) => update({ trustInstallCount: Number(e.target.value) || 0 })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Install Area</Label>
+                    <Input value={cfg.trustInstallArea || ""} placeholder="e.g. Phoenix, AZ" onChange={(e) => update({ trustInstallArea: e.target.value })} />
+                  </div>
                 </div>
-              )}
-              <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center">
-                <Upload className="size-4" />
-                {cfg.roSystemImage ? "Replace Image" : "Upload Image"}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) { const reader = new FileReader(); reader.onload = () => update({ roSystemImage: reader.result as string }); reader.readAsDataURL(file); }
-                  e.target.value = "";
-                }} />
-              </label>
-            </div>
-            <div>
-              <Label className="text-xs">Boosted Score</Label>
-              <Input type="number" value={cfg.boostedScore ?? 99} placeholder="99" onChange={(e) => update({ boostedScore: Number(e.target.value) })} className="w-24" />
-              <p className="text-[10px] text-muted-foreground mt-1">The score to show after the RO system is added. Default: 99</p>
-            </div>
-          </div>
-        </ConfigSection>
 
-        {/* Customer Close */}
-        <ConfigSection title="🤝 Customer Close" description="The friendly ending screen the customer sees">
-          <div className="space-y-2 pt-2">
-            <Label className="text-xs">Headline</Label>
-            <Input value={cfg.closeHeadline || ""} placeholder="Thank You, {firstName}!" onChange={(e) => update({ closeHeadline: e.target.value })} />
-            <Label className="text-xs">Subtext</Label>
-            <Textarea value={cfg.customerCloseSubtext || ""} placeholder="We\'re excited to help you achieve cleaner, safer water..." onChange={(e) => update({ customerCloseSubtext: e.target.value })} rows={2} />
-          </div>
-        </ConfigSection>
+                <div>
+                  <Label className="text-xs font-semibold">Customer Reviews</Label>
+                  <div className="space-y-2 mt-2">
+                    {(cfg.trustReviews || []).map((review: any, idx: number) => (
+                      <ReviewItem key={idx} item={review} onChange={(v) => { const n = [...(cfg.trustReviews || [])]; n[idx] = v; update({ trustReviews: n }); }} onRemove={() => { const n = [...(cfg.trustReviews || [])]; n.splice(idx, 1); update({ trustReviews: n }); }} />
+                    ))}
+                    <button onClick={() => update({ trustReviews: [...(cfg.trustReviews || []), { name: "", rating: 5, quote: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Review</button>
+                  </div>
+                </div>
 
-        {/* Dealer Close Options */}
-        <ConfigSection title="🎯 Dealer Close (Outcome Options)" description="Outcome buttons the sales rep sees after the demo">
-          <div className="space-y-2 pt-2">
-            {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).map((opt: string, idx: number) => (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="size-6 rounded-lg flex items-center justify-center text-[10px] font-bold bg-muted">{idx + 1}</span>
-                <Input value={opt} onChange={(e) => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n[idx] = e.target.value; update({ closeOptions: n }); }} className="flex-1" />
-                {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).length > 2 && (
-                  <button onClick={() => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n.splice(idx, 1); update({ closeOptions: n }); }} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+                <div>
+                  <Label className="text-xs font-semibold">Certifications</Label>
+                  <div className="space-y-2 mt-2">
+                    {(cfg.trustCertifications || []).map((cert: any, idx: number) => (
+                      <CertItem key={idx} item={cert} onChange={(v) => { const n = [...(cfg.trustCertifications || [])]; n[idx] = v; update({ trustCertifications: n }); }} onRemove={() => { const n = [...(cfg.trustCertifications || [])]; n.splice(idx, 1); update({ trustCertifications: n }); }} />
+                    ))}
+                    <button onClick={() => update({ trustCertifications: [...(cfg.trustCertifications || []), { label: "", icon: "🏅" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Certification</button>
+                  </div>
+                </div>
+              </div>
+            </ConfigSection>
+          </div>
+        )}
+
+        {/* ═══════════ PRICING TAB ═══════════ */}
+        {activeTab === "pricing" && (
+          <div className="space-y-3">
+            <ConfigSection title="📊 Score Settings" description="Configure the projected and boosted AquaScore values" defaultOpen>
+              <div className="space-y-3 pt-2">
+                <div>
+                  <Label className="text-xs">Projected Score After Filtration</Label>
+                  <div className="flex items-center gap-3 mt-1">
+                    <input type="range" min={60} max={100} value={cfg.projectedScore ?? 95} onChange={(e) => update({ projectedScore: Number(e.target.value) })} className="flex-1 accent-blue-500 cursor-pointer" />
+                    <div className="size-10 rounded-full flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: accent }}>{cfg.projectedScore ?? 95}</div>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Boosted Score (after RO)</Label>
+                  <Input type="number" value={cfg.boostedScore ?? 99} placeholder="99" onChange={(e) => update({ boostedScore: Number(e.target.value) })} className="w-24" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="skipScoreAnim" checked={cfg.skipScoreAnimation ?? false} onChange={(e) => update({ skipScoreAnimation: e.target.checked })} className="cursor-pointer" />
+                  <Label htmlFor="skipScoreAnim" className="text-xs cursor-pointer">Skip score animation</Label>
+                </div>
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="💰 Pricing" description="Program price, reveal price, stackable discounts">
+              <div className="space-y-4 pt-2">
+                <div>
+                  <Label className="text-xs">Reveal Price (actual)</Label>
+                  <Input type="number" value={cfg.revealPrice || ""} placeholder="e.g. 9995" onChange={(e) => update({ revealPrice: Number(e.target.value) || undefined })} />
+                  <p className="text-[10px] text-muted-foreground mt-1">Program price (crossed-out MSRP) is set during the pricing step of the demo.</p>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Stackable Discounts</Label>
+                  <p className="text-xs text-muted-foreground mb-2">Sales rep can toggle these on during the demo</p>
+                  <div className="space-y-2">
+                    {(cfg.discountOptions || []).map((d: any, idx: number) => (
+                      <DiscountItem key={idx} d={d} onChange={(v) => { const n = [...(cfg.discountOptions || [])]; n[idx] = v; update({ discountOptions: n }); }} onRemove={() => { const n = [...(cfg.discountOptions || [])]; n.splice(idx, 1); update({ discountOptions: n }); }} />
+                    ))}
+                    <button onClick={() => update({ discountOptions: [...(cfg.discountOptions || []), { id: `discount_${Date.now()}`, label: "", amount: 0, icon: "🏷️" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Discount</button>
+                  </div>
+                </div>
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="📊 Cost Comparison" description="Monthly expenses customers pay without filtration vs. your system">
+              <div className="space-y-3 pt-2">
+                <p className="text-xs text-muted-foreground">Set the average monthly expenses a homeowner spends without filtration.</p>
+                <div className="space-y-2">
+                  {(cfg.costItems || []).map((item: any, idx: number) => (
+                    <CostItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.costItems || [])]; n[idx] = v; update({ costItems: n }); }} onRemove={() => { const n = [...(cfg.costItems || [])]; n.splice(idx, 1); update({ costItems: n }); }} />
+                  ))}
+                  <button onClick={() => update({ costItems: [...(cfg.costItems || []), { label: "", monthlyCost: 0, enabled: true }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Cost Item</button>
+                </div>
+                <div>
+                  <Label className="text-xs">Your System Monthly Cost</Label>
+                  <Input type="number" value={cfg.systemCostMonthly || ""} placeholder="e.g. 49" onChange={(e) => update({ systemCostMonthly: Number(e.target.value) || undefined })} />
+                </div>
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="💳 Financing" description="Monthly payment calculator settings on the Investment Breakdown page">
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="finEnabled" checked={cfg.financingEnabled ?? true} onChange={(e) => update({ financingEnabled: e.target.checked })} className="cursor-pointer" />
+                  <Label htmlFor="finEnabled" className="text-xs cursor-pointer">Financing enabled</Label>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">APR Range Label</Label>
+                    <Input value={cfg.financingAprRange || ""} placeholder="0% – 9.99%" onChange={(e) => update({ financingAprRange: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Default APR (%)</Label>
+                    <Input type="number" step="0.01" value={cfg.financingDefaultApr ?? 4.99} placeholder="4.99" onChange={(e) => update({ financingDefaultApr: Number(e.target.value) })} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Term Options (months)</Label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {[24, 36, 48, 60, 72, 84, 96, 120, 144, 180].map((term) => (
+                      <button key={term} onClick={() => {
+                        const terms = cfg.financingTerms || DEFAULT_FINANCING_TERMS;
+                        update({ financingTerms: terms.includes(term) ? terms.filter((t: number) => t !== term) : [...terms, term].sort((a: number, b: number) => a - b) });
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${(cfg.financingTerms || DEFAULT_FINANCING_TERMS).includes(term) ? "bg-blue-500 text-white border-blue-500" : "border-muted-foreground/20 hover:bg-muted/50"}`}>{term}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Financing Provider (optional)</Label>
+                  <Input value={cfg.financingProvider || ""} placeholder="e.g. Synchrony, GreenSky" onChange={(e) => update({ financingProvider: e.target.value })} />
+                </div>
+              </div>
+            </ConfigSection>
+          </div>
+        )}
+
+        {/* ═══════════ CLOSING TAB ═══════════ */}
+        {activeTab === "closing" && (
+          <div className="space-y-3">
+            <ConfigSection title="🚀 Score Boost (RO System)" description="The free RO system popup that boosts the score to near-perfect" defaultOpen>
+              <div className="space-y-3 pt-2">
+                <div>
+                  <Label className="text-xs">RO System Name</Label>
+                  <Input value={cfg.roSystemName || ""} placeholder="Reverse Osmosis System" onChange={(e) => update({ roSystemName: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">Description</Label>
+                  <Textarea value={cfg.roSystemDescription || ""} placeholder="A premium under-sink reverse osmosis system..." onChange={(e) => update({ roSystemDescription: e.target.value })} rows={3} />
+                </div>
+                <div>
+                  <Label className="text-xs">RO System Image</Label>
+                  {cfg.roSystemImage && (
+                    <div className="mb-2 relative inline-block">
+                      <img src={cfg.roSystemImage} alt="RO System" className="max-h-24 rounded-lg border border-border object-contain" />
+                      <button onClick={() => update({ roSystemImage: "" })} className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs hover:scale-110 transition-transform cursor-pointer">
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center">
+                    <Upload className="size-4" />
+                    {cfg.roSystemImage ? "Replace Image" : "Upload Image"}
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) { const reader = new FileReader(); reader.onload = () => update({ roSystemImage: reader.result as string }); reader.readAsDataURL(file); }
+                      e.target.value = "";
+                    }} />
+                  </label>
+                </div>
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="🔧 System Info" description="System includes, warranty, how it works, callouts">
+              <div className="space-y-4 pt-2">
+                <div className="rounded-xl bg-muted/30 p-3 border border-dashed">
+                  <p className="text-xs text-muted-foreground">💡 System Name & Image are set in <strong>Company Settings → General</strong> (Solution Product section above).</p>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">System Includes</Label>
+                  <div className="space-y-2 mt-2">
+                    {(cfg.systemIncludes || []).map((item: any, idx: number) => (
+                      <TitledListItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.systemIncludes || [])]; n[idx] = v; update({ systemIncludes: n }); }} onRemove={() => { const n = [...(cfg.systemIncludes || [])]; n.splice(idx, 1); update({ systemIncludes: n }); }} />
+                    ))}
+                    <button onClick={() => update({ systemIncludes: [...(cfg.systemIncludes || []), { title: "", description: "" }] })} className="mt-1 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Item</button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Warranty</Label>
+                  <Input value={cfg.warrantyTitle || ""} placeholder="20 Year Unlimited Warranty" onChange={(e) => update({ warrantyTitle: e.target.value })} className="mt-1" />
+                  <div className="space-y-2 mt-2">
+                    {(cfg.warrantyBullets || []).map((b: string, idx: number) => (
+                      <EditableListItem key={idx} value={b} placeholder="e.g. 20 Year Warranty on Tanks" onChange={(v) => { const n = [...(cfg.warrantyBullets || [])]; n[idx] = v; update({ warrantyBullets: n }); }} onRemove={() => { const n = [...(cfg.warrantyBullets || [])]; n.splice(idx, 1); update({ warrantyBullets: n }); }} />
+                    ))}
+                    <button onClick={() => update({ warrantyBullets: [...(cfg.warrantyBullets || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Warranty Point</button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">How It Works Steps</Label>
+                  <div className="space-y-2 mt-2">
+                    {(cfg.howItWorksSteps || []).map((step: any, idx: number) => (
+                      <TitledListItem key={idx} item={step} onChange={(v) => { const n = [...(cfg.howItWorksSteps || [])]; n[idx] = v; update({ howItWorksSteps: n }); }} onRemove={() => { const n = [...(cfg.howItWorksSteps || [])]; n.splice(idx, 1); update({ howItWorksSteps: n }); }} />
+                    ))}
+                    <button onClick={() => update({ howItWorksSteps: [...(cfg.howItWorksSteps || []), { title: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Step</button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Bottom Callouts</Label>
+                  <p className="text-xs text-muted-foreground mb-2">Up to 3 short callouts</p>
+                  <div className="space-y-2">
+                    {(cfg.systemCallouts || []).map((c: string, idx: number) => (
+                      <EditableListItem key={idx} value={c} placeholder="e.g. Free Professional Installation" onChange={(v) => { const n = [...(cfg.systemCallouts || [])]; n[idx] = v; update({ systemCallouts: n }); }} onRemove={() => { const n = [...(cfg.systemCallouts || [])]; n.splice(idx, 1); update({ systemCallouts: n }); }} />
+                    ))}
+                    {(cfg.systemCallouts || []).length < 3 && (
+                      <button onClick={() => update({ systemCallouts: [...(cfg.systemCallouts || []), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Callout</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="🎯 Decision Options" description="The three choices the homeowner sees on the Decision page">
+              <div className="space-y-2 pt-2">
+                {(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS).map((item: any, idx: number) => (
+                  <DecisionOptionItem key={idx} item={item} onChange={(v) => { const n = [...(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS)]; n[idx] = v; update({ decisionOptions: n }); }} onRemove={() => { const n = [...(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS)]; n.splice(idx, 1); update({ decisionOptions: n }); }} />
+                ))}
+                {(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS).length < 4 && (
+                  <button onClick={() => update({ decisionOptions: [...(cfg.decisionOptions || DEFAULT_DECISION_OPTIONS), { key: `opt_${Date.now()}`, label: "", description: "" }] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Option</button>
                 )}
               </div>
-            ))}
-            <button onClick={() => update({ closeOptions: [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Option</button>
+            </ConfigSection>
+
+            <ConfigSection title="📝 Summary Screen" description="Customize the benefit bullets on the summary page">
+              <div className="space-y-2 pt-2">
+                {(cfg.summaryBenefits || DEFAULT_BENEFITS).map((b: string, idx: number) => (
+                  <EditableListItem key={idx} value={b} placeholder="e.g. Protect Your Family" onChange={(v) => { const n = [...(cfg.summaryBenefits || DEFAULT_BENEFITS)]; n[idx] = v; update({ summaryBenefits: n }); }} onRemove={() => { const n = [...(cfg.summaryBenefits || DEFAULT_BENEFITS)]; n.splice(idx, 1); update({ summaryBenefits: n }); }} />
+                ))}
+                {(cfg.summaryBenefits || DEFAULT_BENEFITS).length < 6 && (
+                  <button onClick={() => update({ summaryBenefits: [...(cfg.summaryBenefits || DEFAULT_BENEFITS), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Benefit</button>
+                )}
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="🤝 Customer Close" description="The friendly ending screen the customer sees">
+              <div className="space-y-2 pt-2">
+                <Label className="text-xs">Headline</Label>
+                <Input value={cfg.closeHeadline || ""} placeholder="Thank You, {firstName}!" onChange={(e) => update({ closeHeadline: e.target.value })} />
+                <Label className="text-xs">Subtext</Label>
+                <Textarea value={cfg.customerCloseSubtext || ""} placeholder="We're excited to help you achieve cleaner, safer water..." onChange={(e) => update({ customerCloseSubtext: e.target.value })} rows={2} />
+              </div>
+            </ConfigSection>
+
+            <ConfigSection title="🎯 Dealer Close (Outcome Options)" description="Outcome buttons the sales rep sees after the demo">
+              <div className="space-y-2 pt-2">
+                {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).map((opt: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="size-6 rounded-lg flex items-center justify-center text-[10px] font-bold bg-muted">{idx + 1}</span>
+                    <Input value={opt} onChange={(e) => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n[idx] = e.target.value; update({ closeOptions: n }); }} className="flex-1" />
+                    {(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS).length > 2 && (
+                      <button onClick={() => { const n = [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS)]; n.splice(idx, 1); update({ closeOptions: n }); }} className="p-1 rounded text-muted-foreground hover:text-red-500 cursor-pointer"><X className="size-3.5" /></button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={() => update({ closeOptions: [...(cfg.closeOptions || DEFAULT_CLOSE_OPTIONS), ""] })} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-blue-300 text-blue-500 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer w-full justify-center"><Plus className="size-4" /> Add Option</button>
+              </div>
+            </ConfigSection>
           </div>
-        </ConfigSection>
+        )}
+
+        {/* ═══════════ ADVANCED TAB ═══════════ */}
+        {activeTab === "advanced" && (
+          <div className="space-y-3">
+            <ConfigSection title="📋 Demo Modes" description="Choose which steps appear in each presentation mode" defaultOpen>
+              <div className="pt-2 space-y-4">
+                <DemoModesEditor modes={cfg.demoModes || {}} onChange={(m) => update({ demoModes: m })} />
+              </div>
+            </ConfigSection>
+          </div>
+        )}
 
         {/* Save Button */}
         <div className="pt-3 flex items-center gap-3">
@@ -1482,6 +1800,54 @@ function DemoConfigCard() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/* ─── Demo Modes Editor (for Advanced tab) ─────────────────────────── */
+
+function DemoModesEditor({ modes, onChange }: { modes: Record<string, string[]>; onChange: (m: Record<string, string[]>) => void }) {
+  const [activeMode, setActiveMode] = useState<"quick" | "standard" | "full">("standard");
+
+  const DEFAULT_MODES: Record<string, string[]> = {
+    quick: ["welcome", "topConcerns", "score", "test", "pricing", "decision", "customerClose", "dealerClose"],
+    standard: ["intake", "welcome", "customerConcerns", "topConcerns", "contaminants", "score", "test", "verifiedScore", "impact", "scoreImprovement", "system", "trust", "comparison", "pricing", "investmentBreakdown", "transform", "boost", "summary", "decision", "customerClose", "dealerClose"],
+    full: DEMO_STEPS.map((s) => s.key),
+  };
+
+  const modeSteps = modes[activeMode]?.length ? modes[activeMode] : DEFAULT_MODES[activeMode];
+
+  const toggleStep = (key: string) => {
+    const step = DEMO_STEPS.find((s) => s.key === key);
+    if (step?.required) return;
+    const current = [...modeSteps];
+    const newSteps = current.includes(key) ? current.filter((k) => k !== key) : [...current, key];
+    onChange({ ...modes, [activeMode]: newSteps });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        {(["quick", "standard", "full"] as const).map((m) => (
+          <TabPill key={m} label={`${m.charAt(0).toUpperCase() + m.slice(1)} ${m === "quick" ? "(~5 min)" : m === "standard" ? "(~20 min)" : "(~30 min)"}`} active={activeMode === m} onClick={() => setActiveMode(m)} />
+        ))}
+      </div>
+      <div className="space-y-1.5">
+        {DEMO_STEPS.map((step) => (
+          <label key={step.key} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+            <input
+              type="checkbox"
+              checked={modeSteps.includes(step.key)}
+              disabled={step.required}
+              onChange={() => toggleStep(step.key)}
+              className="cursor-pointer accent-blue-500"
+            />
+            <span className="size-2 rounded-full" style={{ backgroundColor: step.color }} />
+            <span className="text-sm">{step.label}</span>
+            {step.required && <span className="text-[10px] text-muted-foreground ml-auto">required</span>}
+          </label>
+        ))}
+      </div>
+    </div>
   );
 }
 

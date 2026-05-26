@@ -743,6 +743,7 @@ function DemoWizardInner() {
             <DemoCustomerConcerns
               initial={customerConcerns}
               companyColor={companyColor}
+              company={company}
               onNext={(state) => {
                 setCustomerConcerns(state);
                 goNext();
@@ -901,6 +902,7 @@ function DemoWizardInner() {
             <DemoDecisionPage
               customerName={report.customerName}
               companyColor={companyColor}
+              company={company}
               onDecision={() => goNext()}
             />
           )}
