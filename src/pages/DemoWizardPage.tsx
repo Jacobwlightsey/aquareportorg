@@ -539,9 +539,8 @@ function DemoWizardInner() {
   }
 
   // After null guards above, company is guaranteed non-null.
-  // Non-null assertion + double cast needed because Convex codegen
-  // return types don't overlap with CompanyForDemo.
-  const resolvedCompany: CompanyForDemo = company! as unknown as CompanyForDemo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resolvedCompany: CompanyForDemo = company as any;
 
   /* ─── Plan gate ─── */
   if (!hasPlanOverride(effectivePlan as any, "growth")) {
