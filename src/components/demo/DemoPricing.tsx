@@ -5,7 +5,7 @@
    ──── */
 
 import { AlertTriangle, Check, ChevronDown, ChevronUp, Minus, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { playTapSound, playToggleSound } from "@/lib/demoSounds";
 import { useViewMode } from "@/hooks/useViewMode";
 import { colors } from "@/lib/designTokens";
@@ -41,15 +41,13 @@ const FEATURES = [
   "Ongoing Support",
 ];
 
-/* ── Expense items homeowner is currently paying for ── */
+/* ── Expense items — matches the Expenses step exactly ── */
 const EXPENSE_ITEMS = [
-  { id: "bottled_water", label: "Bottled Water", icon: "🧴", monthlyBase: 45, perPerson: 15 },
-  { id: "pitcher_filter", label: "Pitcher / Fridge Filters", icon: "🫗", monthlyBase: 12, perPerson: 0 },
-  { id: "plumbing", label: "Plumbing Repairs (Scale)", icon: "🔧", monthlyBase: 25, perPerson: 0 },
-  { id: "water_heater", label: "Water Heater Inefficiency", icon: "🔥", monthlyBase: 18, perPerson: 0 },
-  { id: "cleaning", label: "Hard Water Cleaning Products", icon: "🧹", monthlyBase: 15, perPerson: 0 },
-  { id: "skin_products", label: "Skin / Hair Products", icon: "🧴", monthlyBase: 20, perPerson: 5 },
-  { id: "appliance_wear", label: "Appliance Wear & Replacement", icon: "🫧", monthlyBase: 30, perPerson: 0 },
+  { id: "bottled_water", label: "Bottled Water", icon: "🧴", fallback: 60 },
+  { id: "appliance_repairs", label: "Appliance Repairs", icon: "🫧", fallback: 45 },
+  { id: "plumbing", label: "Plumbing", icon: "🔧", fallback: 25 },
+  { id: "cleaning", label: "Cleaning Products", icon: "🧹", fallback: 20 },
+  { id: "energy", label: "Energy Waste", icon: "🔥", fallback: 15 },
 ];
 
 /* ── Animated number ── */
@@ -83,69 +81,19 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
 
   const isUsingPlaceholders = useMemo(() => !cfg?.programPrice && !cfg?.revealPrice, [cfg]);
 
-  // Auto-populate deductions from cost breakdown entered on the Expenses step
-  // Map CostComparison IDs → Pricing EXPENSE_ITEMS IDs
-  const COST_TO_EXPENSE: Record<string, string> = {
-    bottled_water: "bottled_water",
-    appliance_repairs: "appliance_wear",
-    plumbing: "plumbing",
-    cleaning: "cleaning",
-    energy: "water_heater",
-  };
-
-  // Reverse map: pricing item ID → cost comparison ID
-  const EXPENSE_TO_COST: Record<string, string> = {};
-  for (const [costId, expId] of Object.entries(COST_TO_EXPENSE)) {
-    EXPENSE_TO_COST[expId] = costId;
-  }
-
-  // Compute which items should be auto-checked from costBreakdown
-  const initialDeducted = useMemo(() => {
-    const s = new Set<string>();
-    if (!costBreakdown) return s;
-    for (const [costId, val] of Object.entries(costBreakdown)) {
-      if (val > 0 && COST_TO_EXPENSE[costId]) {
-        s.add(COST_TO_EXPENSE[costId]);
-      }
-    }
-    return s;
-  }, [costBreakdown]);
-
-  const hasAutoItems = initialDeducted.size > 0;
-
-  // Expense deduction state — seed from cost breakdown
-  const [deducted, setDeducted] = useState<Set<string>>(() => {
-    // Compute inline so it's always correct on first mount
-    if (!costBreakdown) return new Set<string>();
-    const s = new Set<string>();
-    for (const [costId, val] of Object.entries(costBreakdown)) {
-      if (val > 0 && COST_TO_EXPENSE[costId]) {
-        s.add(COST_TO_EXPENSE[costId]);
-      }
-    }
-    return s;
-  });
-  const [showExpenses, setShowExpenses] = useState(hasAutoItems);
-
-  // Re-seed if costBreakdown arrives after initial mount
-  const seededRef = useRef(hasAutoItems);
-  useEffect(() => {
-    if (initialDeducted.size > 0 && !seededRef.current) {
-      setDeducted(initialDeducted);
-      setShowExpenses(true);
-      seededRef.current = true;
-    }
-  }, [initialDeducted]);
+  // All items start unchecked — rep clicks through each one so customer
+  // watches the monthly price drop in real time (sales psychology)
+  const [deducted, setDeducted] = useState<Set<string>>(new Set());
+  const [showExpenses, setShowExpenses] = useState(false);
 
   const householdSize = concerns?.householdSize ?? 2;
 
-  // Calculate per-item costs — use actual entered values from Expenses step when available
+  // Use actual entered values from the Expenses step, fall back to defaults
   const itemCost = (item: typeof EXPENSE_ITEMS[0]) => {
-    const costId = EXPENSE_TO_COST[item.id];
-    if (costId && costBreakdown && costBreakdown[costId] > 0) {
-      return costBreakdown[costId]; // Use actual entered amount
+    if (costBreakdown && costBreakdown[item.id] > 0) {
+      return costBreakdown[item.id];
     }
-    return item.monthlyBase + item.perPerson * Math.max(0, householdSize - 1);
+    return item.fallback;
   };
 
   const totalDeducted = EXPENSE_ITEMS.filter(e => deducted.has(e.id)).reduce((sum, e) => sum + itemCost(e), 0);
