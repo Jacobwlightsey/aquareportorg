@@ -20,12 +20,18 @@ async function supabaseRpc(fn: string, body: Record<string, unknown>) {
   return res.json();
 }
 
+/** Returns true when the code looks like a Canadian postal code (starts with a letter). */
+function isCanadianCode(code: string): boolean {
+  return /^[A-Za-z]/.test(code.trim());
+}
+
 function unwrapReportRow(row: any) {
   if (!row || typeof row !== "object") return row;
   if (row.utility_info?.utility_name) return row;
   if (row.aquareport_build_report_from_legacy?.utility_info) return row.aquareport_build_report_from_legacy;
   if (row.get_water_report?.utility_info) return row.get_water_report;
   if (row.zip_water_report?.utility_info) return row.zip_water_report;
+  if (row.ca_water_report?.utility_info) return row.ca_water_report;
   const values = Object.values(row);
   const jsonValue = values.find((value: any) => value?.utility_info?.utility_name);
   return jsonValue || row;
@@ -36,19 +42,34 @@ function normalizeReportData(data: any) {
   return unwrapReportRow(data);
 }
 
-// Lookup all utilities for a ZIP
+// Lookup all utilities for a ZIP or Postal Code
 export const lookupByZip = action({
   args: { zip: v.string() },
   handler: async (_ctx, { zip }) => {
+    if (isCanadianCode(zip)) {
+      const data = await supabaseRpc("lookup_by_postal", { p_postal: zip });
+      // lookup_by_postal returns a JSONB array directly
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      return Array.isArray(parsed) ? parsed : [];
+    }
     const data = await supabaseRpc("lookup_by_zip", { p_zip: zip });
     return Array.isArray(data) ? data : [];
   },
 });
 
-// Get water report for a specific ZIP (returns the primary/largest utility)
+// Get water report for a specific ZIP or Postal Code (returns the primary/largest utility)
 export const zipWaterReport = action({
   args: { zip: v.string() },
   handler: async (_ctx, { zip }) => {
+    if (isCanadianCode(zip)) {
+      const data = await supabaseRpc("ca_water_report", { p_postal: zip });
+      const report = normalizeReportData(data);
+      if (report?.utility_info?.utility_name) return report;
+      if (Array.isArray(report) && report.length > 0 && report[0]?.utility_info?.utility_name) {
+        return report[0];
+      }
+      return null;
+    }
     const data = await supabaseRpc("zip_water_report", { p_zip: zip });
     const reports = normalizeReportData(data);
     if (Array.isArray(reports) && reports.length > 0 && reports[0]?.utility_info?.utility_name) {
@@ -62,6 +83,16 @@ export const zipWaterReport = action({
 export const getWaterReport = action({
   args: { pwsid: v.string() },
   handler: async (_ctx, { pwsid }) => {
+    // Canadian PWSIDs start with "CA-" (e.g. "CA-ON-TORONTO")
+    if (pwsid.startsWith("CA-")) {
+      const data = await supabaseRpc("ca_get_water_report", { p_pwsid: pwsid });
+      const report = normalizeReportData(data);
+      if (report?.utility_info?.utility_name) return report;
+      if (Array.isArray(report) && report.length > 0 && report[0]?.utility_info?.utility_name) {
+        return report[0];
+      }
+      return null;
+    }
     const data = await supabaseRpc("get_water_report", { p_pwsid: pwsid });
     const reports = normalizeReportData(data);
     if (Array.isArray(reports) && reports.length > 0 && reports[0]?.utility_info?.utility_name) {

@@ -305,14 +305,19 @@ http.route({
       return json({ error: "Water data service is not configured" }, 503, origin);
     }
 
-    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/zip_water_report`, {
+    // Route Canadian postal codes to CA RPC, US ZIPs to existing RPC
+    const isCanadian = /^[A-Za-z]/.test(zip);
+    const rpcName = isCanadian ? "ca_water_report" : "zip_water_report";
+    const rpcBody = isCanadian ? { p_postal: zip } : { p_zip: zip };
+
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${rpcName}`, {
       method: "POST",
       headers: {
         apikey: supabaseKey,
         Authorization: `Bearer ${supabaseKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ p_zip: zip }),
+      body: JSON.stringify(rpcBody),
     });
 
     const data = await res.json();
