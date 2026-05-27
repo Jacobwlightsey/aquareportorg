@@ -56,6 +56,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "../../convex/_generated/api";
+import { getCountryText } from "@/lib/i18n";
 import { Link, useNavigate } from "react-router-dom";
 import { DemoSetupWizard } from "@/components/DemoSetupWizard";
 
@@ -70,6 +71,7 @@ type TeamRole = "owner" | "admin" | "manager" | "sales_rep" | "viewer";
 export function CompanySettingsPage() {
   const navigate = useNavigate();
   const company = useQuery(api.companies.getMyCompany);
+  const t = getCountryText(company?.country);
   const members = useQuery(api.companies.getTeamMembers);
   const createCompany = useMutation(api.companies.createCompany);
   const updateCompany = useMutation(api.companies.updateCompany);
@@ -306,7 +308,7 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
           <div><Label className="text-xs text-muted-foreground">Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" /></div>
         </div>
         <div><Label className="text-xs text-muted-foreground">Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourcompany.com" /></div>
-        <div><Label className="text-xs text-muted-foreground">Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St, City, State" /></div>
+        <div><Label className="text-xs text-muted-foreground">Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.addressPlaceholder} /></div>
       </div>
     </SettingsSection>
   );
