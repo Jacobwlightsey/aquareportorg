@@ -274,7 +274,8 @@ function SavedIndicator({ saved }: { saved: boolean }) {
    ═══════════════════════════════════════════════════════════════════ */
 
 function CompanySection({ company, onUpdate }: { company: Record<string, unknown>; onUpdate: (args: Record<string, string | undefined>) => Promise<unknown> }) {
-  const t = getCountryText(company?.country as string | undefined);
+  const [country, setCountry] = useState((company.country as string) || "US");
+  const t = getCountryText(country);
   const [name, setName] = useState((company.name as string) || "");
   const [email, setEmail] = useState((company.email as string) || "");
   const [phone, setPhone] = useState((company.phone as string) || "");
@@ -282,6 +283,7 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
   const [address, setAddress] = useState((company.address as string) || "");
 
   useEffect(() => {
+    setCountry((company.country as string) || "US");
     setName((company.name as string) || "");
     setEmail((company.email as string) || "");
     setPhone((company.phone as string) || "");
@@ -291,18 +293,38 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
 
   const saved = useAutoSave(async () => {
     await onUpdate({
+      country: country || "US",
       name: name.trim() || undefined,
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
       website: website.trim() || undefined,
       address: address.trim() || undefined,
     });
-  }, [name, email, phone, website, address]);
+  }, [country, name, email, phone, website, address]);
 
   return (
     <SettingsSection emoji="🏢" title="Company" description="Your business info — appears on every report">
       <div className="flex items-center justify-end -mt-1 mb-1"><SavedIndicator saved={saved} /></div>
       <div className="space-y-3">
+        <div>
+          <Label className="text-xs text-muted-foreground">Country / Region</Label>
+          <Select value={country} onValueChange={setCountry}>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="US">
+                <span className="flex items-center gap-2">🇺🇸 United States</span>
+              </SelectItem>
+              <SelectItem value="CA">
+                <span className="flex items-center gap-2">🇨🇦 Canada</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Sets your data source ({country === "CA" ? "Health Canada" : "EPA & EWG"}), labels ({t.zipLabel}, {t.stateLabel}), and regulatory standards across reports.
+          </p>
+        </div>
         <div><Label className="text-xs text-muted-foreground">Company Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
         <div className="grid grid-cols-2 gap-3">
           <div><Label className="text-xs text-muted-foreground">Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@company.com" /></div>
