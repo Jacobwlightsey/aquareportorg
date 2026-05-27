@@ -1,4 +1,5 @@
 import { useAction, useQuery } from "convex/react";
+import { getCountryText } from "@/lib/i18n";
 import {
   AlertTriangle,
   Check,
@@ -295,6 +296,7 @@ export function CustomerDetailPage() {
 
   const overHealth = contaminants.filter((c: any) => c.over_health);
   const overLegal = contaminants.filter((c: any) => c.over_legal);
+  const t = getCountryText(company?.country as string | undefined);
   const shareUrl = report?.shareToken
     ? `${window.location.origin}/r/${report.shareToken}`
     : null;
@@ -606,14 +608,14 @@ export function CustomerDetailPage() {
             <StatCard
               label="LEGAL VIOLATIONS"
               value={overLegal.length}
-              description="Above EPA maximum contaminant levels"
+              description={`Above ${t.agency} ${t.guidelineFull.toLowerCase()}s`}
               barColor="bg-red-500"
               barPercent={overLegal.length > 0 ? Math.min((overLegal.length / contaminants.length) * 100, 100) : 0}
             />
             <StatCard
               label="HEALTH GUIDELINES"
               value={overHealth.length}
-              description="Above EWG health guidelines"
+              description={`Above ${t.healthGuideline}`}
               barColor="bg-amber-500"
               barPercent={overHealth.length > 0 ? Math.min((overHealth.length / contaminants.length) * 100, 100) : 0}
             />

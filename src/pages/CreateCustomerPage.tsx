@@ -517,7 +517,7 @@ export function CreateCustomerPage() {
                       )}
                       {c.times_above_ewg && c.times_above_ewg > 1 && (
                         <span className="text-[10px] text-muted-foreground">
-                          {c.times_above_ewg}× EWG
+                          {c.times_above_ewg}× {t.healthSource}
                         </span>
                       )}
                     </div>
