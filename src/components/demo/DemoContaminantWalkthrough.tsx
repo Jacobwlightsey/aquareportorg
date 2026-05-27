@@ -163,7 +163,7 @@ function ContaminantDetailModal({ c, onClose, agency, healthSource }: { c: any; 
               <div className="flex gap-2 mt-1">
                 <SeverityBadge c={c} />
                 {c.times_above_ewg != null && c.times_above_ewg > 1 && (
-                  <span className="text-[11px] font-semibold" style={{ color: `${colors.warning}b0` }}>{c.times_above_ewg}× {t.healthSource} guideline</span>
+                  <span className="text-[11px] font-semibold" style={{ color: `${colors.warning}b0` }}>{c.times_above_ewg}× {healthSource ?? "EWG"} guideline</span>
                 )}
               </div>
             </div>

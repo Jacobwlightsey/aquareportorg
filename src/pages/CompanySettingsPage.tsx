@@ -274,6 +274,7 @@ function SavedIndicator({ saved }: { saved: boolean }) {
    ═══════════════════════════════════════════════════════════════════ */
 
 function CompanySection({ company, onUpdate }: { company: Record<string, unknown>; onUpdate: (args: Record<string, string | undefined>) => Promise<unknown> }) {
+  const t = getCountryText(company?.country as string | undefined);
   const [name, setName] = useState((company.name as string) || "");
   const [email, setEmail] = useState((company.email as string) || "");
   const [phone, setPhone] = useState((company.phone as string) || "");

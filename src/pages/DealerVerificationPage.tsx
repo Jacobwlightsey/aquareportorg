@@ -314,7 +314,7 @@ export function DealerVerificationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <CustomerFields values={testForm} onChange={updateTest} requireEmail />
+              <CustomerFields values={testForm} onChange={updateTest} requireEmail country={(context as any)?.company?.country} />
               <div>
                 <h3 className="mb-3 text-sm font-semibold">Test Readings</h3>
                 <div className="grid gap-4 md:grid-cols-4">
@@ -354,7 +354,7 @@ export function DealerVerificationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <CustomerFields values={filtrationForm} onChange={updateFiltration} />
+              <CustomerFields values={filtrationForm} onChange={updateFiltration} country={(context as any)?.company?.country} />
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>System Name</Label>
@@ -416,11 +416,14 @@ function CustomerFields({
   values,
   onChange,
   requireEmail = false,
+  country,
 }: {
   values: CustomerForm;
   onChange: (field: any, value: string) => void;
   requireEmail?: boolean;
+  country?: string;
 }) {
+  const t = getCountryText(country);
   return (
     <div>
       <h3 className="mb-3 text-sm font-semibold">Customer</h3>
@@ -439,7 +442,7 @@ function CustomerFields({
         </div>
         <div className="space-y-2">
           <Label>Customer {t.zipLabel}</Label>
-          <Input maxLength={t.zipMaxLength} value={values.customerZip} onChange={(event) => onChange("customerZip", (context as any)?.company?.country === "CA" ? event.target.value.toUpperCase().slice(0, t.zipMaxLength) : event.target.value.replace(/\D/g, "").slice(0, t.zipMaxLength))} />
+          <Input maxLength={t.zipMaxLength} value={values.customerZip} onChange={(event) => onChange("customerZip", country === "CA" ? event.target.value.toUpperCase().slice(0, t.zipMaxLength) : event.target.value.replace(/\D/g, "").slice(0, t.zipMaxLength))} />
         </div>
         <div className="space-y-2">
           <Label>Customer Phone</Label>
