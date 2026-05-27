@@ -6,6 +6,7 @@ import { Bot, MessageSquare, Send, Shield, X } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { ConcernData } from "./DemoConcernIntake";
+import { getCountryText } from "@/lib/i18n";
 
 interface Props {
   show: boolean;
@@ -16,6 +17,7 @@ interface Props {
   concerns?: ConcernData | null;
   score?: number;
   pricingState?: any;
+  country?: string;
 }
 
 interface Message {
@@ -134,7 +136,7 @@ const OBJECTION_CARDS: ObjectionCard[] = [
     points: [
       "Point to their specific violations — X contaminants above legal limits",
       "Explain that many contaminants are invisible/tasteless",
-      "EPA legal limits haven't been updated in decades — health guidelines are stricter",
+      "Legal limits haven't been updated in decades — health guidelines are stricter",
       "Show the specific contaminants that affect their stated concerns",
     ],
     personalizable: true,
@@ -186,7 +188,9 @@ export function DemoAssistant({
   concerns,
   score,
   pricingState,
+  country,
 }: Props) {
+  const _t = getCountryText(country);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -521,7 +525,7 @@ function generateLocalResponse(
     return `Great question. Right now the customer is likely spending $100-300/month on bottled water, pitcher filters, and early appliance replacements from hard water. A whole-home system typically runs $30-50/month — so it actually saves money while protecting their family's health.`;
   }
   if (q.includes("necessary") || q.includes("really need")) {
-    return `Their water has ${contaminants.length} detected contaminants — ${overLegal} above legal limits and ${overHealth} above health guidelines. The EPA sets legal limits, but those haven't been updated in decades. It's about giving their family the cleanest water possible.`;
+    return `Their water has ${contaminants.length} detected contaminants — ${overLegal} above legal limits and ${overHealth} above health guidelines. Legal limits haven't been updated in decades — health guidelines are stricter. It's about giving their family the cleanest water possible.`;
   }
   if (q.includes("maintenance")) {
     return `Most whole-home systems need minimal maintenance — a filter change every 6-12 months ($50-100) and salt refill for softeners every few months. Compare that to constantly buying bottled water or replacing pitcher filters.`;

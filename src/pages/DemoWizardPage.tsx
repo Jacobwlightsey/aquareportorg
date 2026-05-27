@@ -778,6 +778,7 @@ function DemoWizardInner() {
               onNext={goNext}
               onBack={goBack}
               skipScoreAnimation={skipScoreAnimation}
+              country={company?.country}
             />
           )}
           {stepKey === "contaminants" && (
@@ -785,6 +786,7 @@ function DemoWizardInner() {
               contaminants={contaminants}
               onNext={goNext}
               onBack={goBack}
+              country={company?.country}
             />
           )}
           {stepKey === "topConcerns" && (
@@ -824,6 +826,7 @@ function DemoWizardInner() {
               verifiedMode
               liveReadings={liveReadings}
               beforeScore={reportBaseScore}
+              country={company?.country}
             />
           )}
           {stepKey === "transform" && (
@@ -853,6 +856,7 @@ function DemoWizardInner() {
               company={resolvedCompany}
               report={report}
               onNext={goNext}
+              country={company?.country}
             />
           )}
           {stepKey === "beforeAfter" && (
@@ -968,6 +972,7 @@ function DemoWizardInner() {
           customerConcerns={customerConcerns}
           isOpen={coachingOpen}
           onClose={() => setCoachingOpen(false)}
+          country={company?.country}
         />
       )}
 
@@ -1014,6 +1019,7 @@ function DemoWizardInner() {
           concerns={concerns}
           score={score}
           pricingState={pricingState}
+          country={company?.country}
         />
       )}
 

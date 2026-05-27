@@ -294,8 +294,9 @@ http.route({
     if (!rate.allowed) return json({ error: "Too many requests" }, 429, origin);
 
     const { zip } = await request.json().catch(() => ({ zip: "" }));
-    if (!zip || !/^\d{5}$/.test(zip)) {
-      return json({ error: "Invalid ZIP code" }, 400, origin);
+    const isValidZipOrPostal = /^\d{5}$/.test(zip) || /^[A-Za-z]\d[A-Za-z](\s?\d[A-Za-z]\d)?$/.test(zip);
+    if (!zip || !isValidZipOrPostal) {
+      return json({ error: "Invalid ZIP / postal code" }, 400, origin);
     }
 
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -457,8 +458,9 @@ http.route({
     }
 
     const { zip } = await request.json().catch(() => ({ zip: "" }));
-    if (!zip || !/^\d{5}$/.test(zip)) {
-      return json({ error: "Invalid ZIP code" }, 400, origin);
+    const isValidZipOrPostal = /^\d{5}$/.test(zip) || /^[A-Za-z]\d[A-Za-z](\s?\d[A-Za-z]\d)?$/.test(zip);
+    if (!zip || !isValidZipOrPostal) {
+      return json({ error: "Invalid ZIP / postal code" }, 400, origin);
     }
 
     const results = await triggerZipRescore(ctx, zip);

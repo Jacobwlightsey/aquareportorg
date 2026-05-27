@@ -59,6 +59,7 @@ export const createCompany = mutation({
     address: v.optional(v.string()),
     primaryColor: v.optional(v.string()),
     disclaimer: v.optional(v.string()),
+    country: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -78,6 +79,7 @@ export const createCompany = mutation({
       address: args.address,
       primaryColor: args.primaryColor || "#2563eb",
       disclaimer: args.disclaimer,
+      country: args.country || "US",
       brandMode: "standard",
       createdBy: userId,
       stripePlan: "free",
@@ -137,6 +139,7 @@ export const updateCompany = mutation({
     }))),
     customDomain: v.optional(v.string()),
     brandMode: v.optional(v.string()),
+    country: v.optional(v.string()),
     reportLimitOverride: v.optional(v.number()),
   },
   handler: async (ctx, args) => {

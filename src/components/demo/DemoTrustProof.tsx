@@ -9,11 +9,13 @@ import { playTapSound } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
 import { colors } from "@/lib/designTokens";
 import type { CompanyForDemo } from "@/lib/types";
+import { getCountryText } from "@/lib/i18n";
 
 interface Props {
   company: CompanyForDemo;
   report?: any;
   onNext: () => void;
+  country?: string;
 }
 
 const DEFAULT_REVIEWS = [
@@ -22,12 +24,15 @@ const DEFAULT_REVIEWS = [
   { name: "The Johnson Family", rating: 4, quote: "Worth every penny for our kids' health. Wish we had done this sooner." },
 ];
 
-const DEFAULT_CERTIFICATIONS = [
-  { label: "WQA Certified", icon: "🏅" },
-  { label: "NSF Listed", icon: "✅" },
-  { label: "BBB A+", icon: "⭐" },
-  { label: "EPA Registered", icon: "🛡️" },
-];
+function getDefaultCertifications(country?: string) {
+  const t = getCountryText(country);
+  return [
+    { label: "WQA Certified", icon: "🏅" },
+    { label: "NSF Listed", icon: "✅" },
+    { label: "BBB A+", icon: "⭐" },
+    { label: t.trustBadge, icon: "🛡️" },
+  ];
+}
 
 const DEFAULT_INSTALL_COUNT = 500;
 const DEFAULT_SKYLINE = "/assets/demo/14_trustProof.png";
@@ -42,11 +47,11 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function DemoTrustProof({ company, report, onNext: _onNext }: Props) {
+export function DemoTrustProof({ company, report, onNext: _onNext, country }: Props) {
   const trustConfig = company?.demoConfig?.trustSection;
   const hasCustomReviews = !!trustConfig?.reviews?.length;
   const reviews = hasCustomReviews ? trustConfig.reviews : DEFAULT_REVIEWS;
-  const certs = trustConfig?.certifications?.length ? trustConfig.certifications : DEFAULT_CERTIFICATIONS;
+  const certs = trustConfig?.certifications?.length ? trustConfig.certifications : getDefaultCertifications(country);
   const installCount = trustConfig?.installCount ?? DEFAULT_INSTALL_COUNT;
   const skylineUrl = trustConfig?.citySkyline ?? DEFAULT_SKYLINE;
 

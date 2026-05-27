@@ -27,6 +27,7 @@ import {
   type FieldWaterReadings,
 } from "@/lib/waterScore";
 import { api } from "../../convex/_generated/api";
+import { getCountryText, isValidCode, isCodeReadyForLookup } from "@/lib/i18n";
 
 interface LeadInfo {
   name: string;
@@ -75,6 +76,7 @@ export function GenerateReportPage() {
   const [error, setError] = useState("");
   const [savedReportUrl, setSavedReportUrl] = useState("");
   const company = useQuery(api.companies.getMyCompany);
+  const t = getCountryText(company?.country);
   const saveReport = useMutation(api.reports.saveReport);
   const lookupByZip = useAction(api.supabase.lookupByZip);
   const getWaterReport = useAction(api.supabase.getWaterReport);
@@ -123,8 +125,8 @@ export function GenerateReportPage() {
       setError("Customer name is required");
       return;
     }
-    if (!lead.zip || !/^\d{5}$/.test(lead.zip)) {
-      setError("Valid 5-digit ZIP code is required");
+    if (!lead.zip || !isValidCode(lead.zip, company?.country)) {
+      setError(t.zipError);
       return;
     }
     setError("");
@@ -136,7 +138,7 @@ export function GenerateReportPage() {
     try {
       const data = await lookupByZip({ zip: lead.zip });
       if (!data || data.length === 0) {
-        setError("No water systems found for that ZIP code.");
+        setError(`No water systems found for that ${t.zipLabel.toLowerCase()}.`);
         setLoading(false);
         return;
       }
@@ -328,30 +330,32 @@ export function GenerateReportPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="lead-state" className="text-sm font-medium mb-1.5 block">State</label>
+                  <label htmlFor="lead-state" className="text-sm font-medium mb-1.5 block">{t.stateLabel}</label>
                   <Input
                     id="lead-state"
-                    placeholder="SC"
+                    placeholder={company?.country === "CA" ? "ON" : "SC"}
                     value={lead.state}
                     onChange={(e) =>
-                      handleLeadChange("state", e.target.value.toUpperCase().slice(0, 2))
+                      handleLeadChange("state", e.target.value.toUpperCase().slice(0, t.stateMaxLength))
                     }
-                    maxLength={2}
+                    maxLength={t.stateMaxLength}
                     className="h-11"
                   />
                 </div>
                 <div>
                   <label htmlFor="lead-zip" className="text-sm font-medium mb-1.5 block">
-                    ZIP Code <span className="text-red-500">*</span>
+                    {t.zipLabel} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     id="lead-zip"
-                    placeholder="29601"
+                    placeholder={t.zipPlaceholder}
                     value={lead.zip}
                     onChange={(e) =>
-                      handleLeadChange("zip", e.target.value.replace(/\D/g, "").slice(0, 5))
+                      handleLeadChange("zip", company?.country === "CA"
+                        ? e.target.value.toUpperCase().slice(0, t.zipMaxLength)
+                        : e.target.value.replace(/\D/g, "").slice(0, t.zipMaxLength))
                     }
-                    maxLength={5}
+                    maxLength={t.zipMaxLength}
                     className="h-11"
                   />
                 </div>
@@ -411,7 +415,7 @@ export function GenerateReportPage() {
                 </span>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                ZIP {lead.zip} is served by multiple water systems. Select the one that
+                {t.zipLabel} {lead.zip} is served by multiple water systems. Select the one that
                 serves the customer's home.
               </p>
 
@@ -463,7 +467,7 @@ export function GenerateReportPage() {
               <CardContent className="py-16 flex flex-col items-center gap-4">
                 <Loader2 className="size-10 animate-spin text-blue-500" />
                 <p className="text-muted-foreground">
-                  Fetching water data for {selectedUtility?.utility_name || `ZIP ${lead.zip}`}...
+                  Fetching water data for {selectedUtility?.utility_name || `${t.zipLabel} ${lead.zip}`}...
                 </p>
               </CardContent>
             </Card>

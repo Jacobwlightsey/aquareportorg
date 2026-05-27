@@ -17,6 +17,7 @@ interface Props {
   customerConcerns?: { selected: CustomerConcernKey[]; emphasis: string } | null;
   isOpen: boolean;
   onClose: () => void;
+  country?: string;
 }
 
 /* ── Section definitions ── */
@@ -58,7 +59,7 @@ const STEP_COACHING: Record<string, Record<SectionKey, string>> = {
   },
   score: {
     talkingPoints: "Pause here. Let the score sink in before speaking. Ask: \"What do you think about that?\" Let them react first.",
-    objections: "\"How is this score calculated?\" → Based on EPA guidelines, health standards, and the contaminants in your local water.",
+    objections: "\"How is this score calculated?\" → Based on federal guidelines, health standards, and the contaminants in your local water.",
     nextStep: "Don't rush. Let them process. Then: \"Let me show you exactly what's in your water.\"",
     highlight: "The reveal moment is emotional. Silence is your friend. Let the number do the talking.",
   },

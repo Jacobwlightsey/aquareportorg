@@ -27,8 +27,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { api } from "../../convex/_generated/api";
+import { getCountryText } from "@/lib/i18n";
 
 export function ReviewsPage() {
+  const company = useQuery(api.companies.getMyCompany);
+  const t = getCountryText(company?.country);
   const reviewRequests = useQuery(api.retention.getReviewRequests) ?? [];
   const testimonials = useQuery(api.retention.getTestimonials, {}) ?? [];
   const createReviewRequest = useMutation(api.retention.createReviewRequest);
@@ -349,14 +352,14 @@ export function ReviewsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>City</Label>
+                <Label>{t.cityLabel}</Label>
                 <Input
                   value={testForm.city}
                   onChange={(e) => setTestForm({ ...testForm, city: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>State</Label>
+                <Label>{t.stateLabel}</Label>
                 <Input
                   value={testForm.state}
                   onChange={(e) => setTestForm({ ...testForm, state: e.target.value })}

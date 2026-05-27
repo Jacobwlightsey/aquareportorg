@@ -27,8 +27,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { api } from "../../convex/_generated/api";
+import { getCountryText } from "@/lib/i18n";
 
 export function MarketingPage() {
+  const company = useQuery(api.companies.getMyCompany);
+  const t = getCountryText(company?.country);
   const content = useQuery(api.marketing.getContent, {}) ?? [];
   const competitors = useQuery(api.marketing.getCompetitorTemplates) ?? [];
   const createContent = useMutation(api.marketing.createContent);
@@ -399,12 +402,12 @@ export function MarketingPage() {
           <DialogHeader>
             <DialogTitle>Generate Door Hanger</DialogTitle>
             <DialogDescription>
-              Create localized marketing content for a ZIP code.
+              Create localized marketing content for a {t.zipLabel.toLowerCase()}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>ZIP Code *</Label>
+              <Label>{t.zipLabel} *</Label>
               <Input
                 value={doorHangerForm.zip}
                 onChange={(e) =>

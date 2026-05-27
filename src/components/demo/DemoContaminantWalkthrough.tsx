@@ -8,12 +8,14 @@ import { useState } from "react";
 import { contaminantName } from "@/lib/supabase";
 import { playTapSound } from "@/lib/demoSounds";
 import { useCountUp } from "@/hooks/useCountUp";
+import { getCountryText } from "@/lib/i18n";
 import { colors } from "@/lib/designTokens";
 
 interface Props {
   contaminants: any[];
   onNext: () => void;
   onBack: () => void;
+  country?: string;
 }
 
 function guessCategory(name: string): string {
@@ -92,7 +94,7 @@ function getContaminantInfo(name: string): ContaminantInfo | null {
   if (n.includes("lead")) return { what: "A toxic heavy metal that leaches from old pipes, solder, and fixtures.", health: "Damages the brain and nervous system, especially in children. Linked to developmental delays, learning difficulties, and behavioral problems.", home: "Corrodes plumbing fixtures and can cause blue-green staining on sinks and tubs." };
   if (n.includes("chlorine") || n.includes("chloramine")) return { what: "A disinfectant added to municipal water to kill bacteria.", health: "Absorbed through skin during showers. Strips natural oils, causes dry skin and hair. Linked to respiratory issues when inhaled as steam.", home: "Degrades rubber seals in appliances, fades laundry, and affects the taste of drinking water and cooking." };
   if (n.includes("arsenic")) return { what: "A naturally occurring toxic element found in groundwater.", health: "Long-term exposure linked to skin, lung, and bladder cancer. Can cause skin lesions, numbness, and cardiovascular disease.", home: "No visible home effects, but accumulates in the body over time through drinking and cooking." };
-  if (n.includes("chromium")) return { what: "A metallic element; hexavalent chromium (Chromium-6) is a known carcinogen.", health: "Linked to stomach cancer, liver damage, and reproductive problems. The EWG guideline is far stricter than the legal limit.", home: "Can cause yellow-green staining of fixtures at high concentrations." };
+  if (n.includes("chromium")) return { what: "A metallic element; hexavalent chromium (Chromium-6) is a known carcinogen.", health: "Linked to stomach cancer, liver damage, and reproductive problems. The health guideline is far stricter than the legal limit.", home: "Can cause yellow-green staining of fixtures at high concentrations." };
   if (n.includes("fluoride")) return { what: "A mineral added to water to prevent tooth decay.", health: "At high levels linked to dental fluorosis (white spots on teeth), skeletal problems, and thyroid disruption.", home: "No direct home damage, but builds up in the body with daily consumption." };
   if (n.includes("nitrate") || n.includes("nitrite")) return { what: "Agricultural runoff from fertilizers and animal waste.", health: "Dangerous for infants — causes 'blue baby syndrome.' Linked to thyroid problems and increased cancer risk in adults.", home: "No visible home effects, but indicates agricultural contamination of your water source." };
   if (n.includes("radium") || n.includes("uranium") || n.includes("gross alpha") || n.includes("gross beta")) return { what: "Naturally occurring radioactive elements dissolved from rock formations.", health: "Increases cancer risk, especially bone and kidney cancer. Even low levels accumulate over years of exposure.", home: "No visible home effects, but continuous exposure through drinking, cooking, and bathing." };
@@ -108,18 +110,18 @@ function getContaminantInfo(name: string): ContaminantInfo | null {
 }
 
 /** Generate fallback info for contaminants without specific data */
-function getFallbackInfo(c: any): ContaminantInfo {
+function getFallbackInfo(c: any, agency = "EPA", healthSource = "EWG"): ContaminantInfo {
   const name = contaminantName(c);
   if (c.over_legal) {
     return {
-      what: `${name} was detected in your water above EPA legal limits.`,
+      what: `${name} was detected in your water above ${agency} legal limits.`,
       health: "Exceeding the legal limit means your water utility is in violation. Prolonged exposure to levels this high may pose health risks including organ damage and increased cancer risk.",
       home: "At these concentrations, contaminants can affect your plumbing, appliances, and everyday water use.",
     };
   }
   if (c.over_health) {
     return {
-      what: `${name} was detected in your water above health guidelines set by the EWG.`,
+      what: `${name} was detected in your water above health guidelines set by ${healthSource}.`,
       health: "While technically within legal limits, health guidelines are based on the latest science and are often much stricter. Long-term exposure at these levels may still pose health risks.",
       home: "Even at legal levels, some contaminants contribute to buildup, taste issues, or equipment wear over time.",
     };
@@ -131,9 +133,9 @@ function getFallbackInfo(c: any): ContaminantInfo {
   };
 }
 
-function ContaminantDetailModal({ c, onClose }: { c: any; onClose: () => void }) {
+function ContaminantDetailModal({ c, onClose, agency, healthSource }: { c: any; onClose: () => void; agency?: string; healthSource?: string }) {
   const ratio = c.health_guideline && c.health_guideline > 0 ? c.detected_level / c.health_guideline : c.detected_level > 0 ? 1 : 0;
-  const info = getContaminantInfo(contaminantName(c)) ?? getFallbackInfo(c);
+  const info = getContaminantInfo(contaminantName(c)) ?? getFallbackInfo(c, agency, healthSource);
 
   return (
     /* ── Modal overlay ── */
@@ -161,7 +163,7 @@ function ContaminantDetailModal({ c, onClose }: { c: any; onClose: () => void })
               <div className="flex gap-2 mt-1">
                 <SeverityBadge c={c} />
                 {c.times_above_ewg != null && c.times_above_ewg > 1 && (
-                  <span className="text-[11px] font-semibold" style={{ color: `${colors.warning}b0` }}>{c.times_above_ewg}× EWG guideline</span>
+                  <span className="text-[11px] font-semibold" style={{ color: `${colors.warning}b0` }}>{c.times_above_ewg}× {t.healthSource} guideline</span>
                 )}
               </div>
             </div>
@@ -210,7 +212,8 @@ function ContaminantDetailModal({ c, onClose }: { c: any; onClose: () => void })
   );
 }
 
-export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBack }: Props) {
+export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBack, country }: Props) {
+  const t = getCountryText(country);
   const [expandedDetail, setExpandedDetail] = useState<number | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -295,7 +298,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBa
 
       {/* Detail modal */}
       {expandedDetail !== null && sorted[expandedDetail] && (
-        <ContaminantDetailModal c={sorted[expandedDetail]} onClose={() => setExpandedDetail(null)} />
+        <ContaminantDetailModal c={sorted[expandedDetail]} onClose={() => setExpandedDetail(null)} agency={t.agency} healthSource={t.healthSource} />
       )}
 
       {/* Categorized list */}

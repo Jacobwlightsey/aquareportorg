@@ -10,6 +10,7 @@ import { playRevealSound, playProcessingSound, haptic } from "@/lib/demoSounds";
 import { ScoreGauge } from "./ScoreGauge";
 import { DemoScoreExplainer } from "./DemoScoreExplainer";
 import { colors } from "@/lib/designTokens";
+import { getCountryText } from "@/lib/i18n";
 
 /** Per-reading severity color for verified score display */
 function readingSeverityColor(key: string, value: number): string {
@@ -79,6 +80,7 @@ interface Props {
   liveReadings?: Record<string, any>;
   /** Report-only score (before live test), used for before→after in verified mode */
   beforeScore?: number;
+  country?: string;
 }
 
 export function tierInfo(score: number) {
@@ -109,19 +111,22 @@ export function tierInfo(score: number) {
 
 type RevealPhase = 0 | 1 | 2 | 3;
 
-const PHASE_DATA = [
-  { label: "Analyzing your water data…", icon: "🔬" },
-  { label: "Checking EPA & health guidelines…", icon: "✅" },
-  { label: "Calculating your AquaScore…", icon: "🧮" },
-  { label: "", icon: "" },
-];
+function getPhaseData(agency: string) {
+  return [
+    { label: "Analyzing your water data…", icon: "🔬" },
+    { label: `Checking ${agency} & health guidelines…`, icon: "✅" },
+    { label: "Calculating your AquaScore…", icon: "🧮" },
+    { label: "", icon: "" },
+  ];
+}
 
 const PHASE_DURATION = 2000;
 
 export function DemoScoreReveal({
   score, contaminants, report, onNext: _onNext, onBack: _onBack,
-  skipScoreAnimation = false, verifiedMode = false, liveReadings, beforeScore,
+  skipScoreAnimation = false, verifiedMode = false, liveReadings, beforeScore, country,
 }: Props) {
+  const t = getCountryText(country);
   const s = score ?? 0;
   const info = tierInfo(s);
 
@@ -198,7 +203,7 @@ export function DemoScoreReveal({
               WHAT IS AN AQUASCORE?
             </p>
             <p className="text-[14px] leading-relaxed" style={{ color: colors.textSecondary }}>
-              Your AquaScore is a <strong style={{ color: colors.textPrimary }}>0–100 rating</strong> of your home's water quality. It's calculated by comparing contaminants found in your local water supply against EPA legal limits and EWG health guidelines.
+              Your AquaScore is a <strong style={{ color: colors.textPrimary }}>0–100 rating</strong> of your home's water quality. It's calculated by comparing contaminants found in your local water supply against {t.agencyAndHealth}.
             </p>
             <div className="grid grid-cols-4 gap-2 pt-1">
               {[
@@ -233,10 +238,10 @@ export function DemoScoreReveal({
       {/* Phases 0-2: processing */}
       {phase !== null && phase < 3 && (
         <div className="flex flex-col items-center justify-center min-h-[40vh] text-center space-y-10">
-          <div className="text-5xl animate-bounce">{PHASE_DATA[phase].icon}</div>
+          <div className="text-5xl animate-bounce">{getPhaseData(t.agency)[phase].icon}</div>
           <div>
             <p className="text-[20px] font-semibold animate-pulse" style={{ color: colors.textPrimary }}>
-              {PHASE_DATA[phase].label}
+              {getPhaseData(t.agency)[phase].label}
             </p>
             <p className="text-[13px] mt-3 sr-only" style={{ color: colors.textFaint }}>Tap anywhere to skip</p>
           </div>
@@ -286,7 +291,7 @@ export function DemoScoreReveal({
                 Your Water Score Is Ready
               </h2>
               <p className="text-[15px] mt-3 max-w-md mx-auto" style={{ color: colors.textMuted, lineHeight: 1.6 }}>
-                Your AquaScore is a 0–100 rating of your water quality based on contaminants found in your local utility data, compared against EPA legal limits and EWG health guidelines.
+                Your AquaScore is a 0–100 rating of your water quality based on contaminants found in your local utility data, compared against {t.agencyAndHealth}.
               </p>
             </div>
           )}

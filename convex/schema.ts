@@ -22,6 +22,7 @@ const schema = defineSchema({
     }))),
     customDomain: v.optional(v.string()),
     brandMode: v.optional(v.string()),
+    country: v.optional(v.string()), // "US" | "CA" — set during onboarding, drives i18n
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
     website: v.optional(v.string()),

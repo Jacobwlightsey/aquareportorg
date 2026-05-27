@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "../../convex/_generated/api";
+import { getCountryText } from "@/lib/i18n";
 
 const SYSTEMS = [
   "Excalibur Chlor-A-Soft",
@@ -148,6 +149,7 @@ function ReferralResult({ url }: { url: string }) {
 
 export function DealerVerificationPage() {
   const context = useQuery(api.dealerShared.getDealerContext);
+  const t = getCountryText((context as any)?.company?.country);
   const convex = useConvex();
   const generateUploadUrl = useMutation(api.dealerShared.generateUploadUrl);
   const createInHomeTest = useAction(api.dealerShared.createInHomeTest);
@@ -213,7 +215,7 @@ export function DealerVerificationPage() {
 
   const submitInHomeTest = async () => {
     if (!testForm.customerName || !testForm.customerAddress || !testForm.customerZip || !testForm.customerEmail) {
-      toast.error("Customer name, address, ZIP, and email are required.");
+      toast.error(`Customer name, address, ${t.zipLabel.toLowerCase()}, and email are required.`);
       return;
     }
     setSaving(true);
@@ -250,7 +252,7 @@ export function DealerVerificationPage() {
 
   const submitFiltration = async () => {
     if (!filtrationForm.customerName || !filtrationForm.customerAddress || !filtrationForm.customerZip) {
-      toast.error("Customer name, address, and ZIP are required.");
+      toast.error(`Customer name, address, and ${t.zipLabel.toLowerCase()} are required.`);
       return;
     }
     setSaving(true);
@@ -436,8 +438,8 @@ function CustomerFields({
           <Input value={values.customerAddress} onChange={(event) => onChange("customerAddress", event.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>Customer ZIP</Label>
-          <Input maxLength={5} value={values.customerZip} onChange={(event) => onChange("customerZip", event.target.value.replace(/\D/g, "").slice(0, 5))} />
+          <Label>Customer {t.zipLabel}</Label>
+          <Input maxLength={t.zipMaxLength} value={values.customerZip} onChange={(event) => onChange("customerZip", (context as any)?.company?.country === "CA" ? event.target.value.toUpperCase().slice(0, t.zipMaxLength) : event.target.value.replace(/\D/g, "").slice(0, t.zipMaxLength))} />
         </div>
         <div className="space-y-2">
           <Label>Customer Phone</Label>

@@ -29,7 +29,7 @@ const CONCERN_DEFS: ConcernDef[] = [
   {
     id: "legal_violations",
     title: "Legal Limit Violations",
-    description: "Contaminants exceeding federal legal limits — above what the EPA considers safe for any level of exposure.",
+    description: "Contaminants exceeding federal legal limits — above what regulators consider safe for any level of exposure.",
     icon: Skull,
     color: colors.critical,
     match: (_name, c) => !!c.over_legal,

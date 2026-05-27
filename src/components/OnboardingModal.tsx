@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { Building2, Loader2, Mail, Phone } from "lucide-react";
+import { Building2, Globe, Loader2, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "../../convex/_generated/api";
+import type { Country } from "@/lib/i18n";
 
 export function OnboardingModal() {
   const company = useQuery(api.companies.getMyCompany);
@@ -20,6 +21,7 @@ export function OnboardingModal() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState<Country>("US");
   const [loading, setLoading] = useState(false);
 
   // Only show when company is explicitly null (loaded but doesn't exist)
@@ -34,6 +36,7 @@ export function OnboardingModal() {
         name: name.trim(),
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
+        country,
       });
       toast.success("Company created! You're all set.");
     } catch (err) {
@@ -76,6 +79,36 @@ export function OnboardingModal() {
               autoFocus
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="onboard-country" className="flex items-center gap-2">
+              <Globe className="size-3.5 text-muted-foreground" />
+              Country <span className="text-red-500">*</span>
+            </Label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setCountry("US")}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-all ${
+                  country === "US"
+                    ? "border-blue-500 bg-blue-500/10 text-blue-600"
+                    : "border-muted hover:border-muted-foreground/30"
+                }`}
+              >
+                🇺🇸 United States
+              </button>
+              <button
+                type="button"
+                onClick={() => setCountry("CA")}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-all ${
+                  country === "CA"
+                    ? "border-blue-500 bg-blue-500/10 text-blue-600"
+                    : "border-muted hover:border-muted-foreground/30"
+                }`}
+              >
+                🇨🇦 Canada
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="onboard-email" className="flex items-center gap-2">
