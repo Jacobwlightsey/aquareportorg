@@ -515,7 +515,7 @@ export const saveCompanyImage = mutation({
     }
 
     // Delete old storage if replacing
-    const company = await ctx.db.get(membership.companyId);
+    const company = await ctx.db.get(membership.companyId) as any;
     if (company) {
       const oldStorageId =
         args.field === "logo"
@@ -553,7 +553,7 @@ export const removeCompanyImage = mutation({
   },
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "owner");
-    const company = await ctx.db.get(membership.companyId);
+    const company = await ctx.db.get(membership.companyId) as any;
     if (!company) throw new Error("Company not found");
 
     const update: Record<string, unknown> = {};
