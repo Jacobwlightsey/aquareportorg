@@ -2,9 +2,13 @@ import { useQuery, useMutation } from "convex/react";
 import {
   Building2,
   ChevronRight,
+  Copy,
   CreditCard,
+  ExternalLink,
   FileText,
+  Link2,
   Loader2,
+  Megaphone,
   Search,
   ShieldCheck,
   Users,
@@ -556,6 +560,333 @@ function AdminManagementSection() {
 }
 
 /* ---------- Main Admin Page ---------- */
+/* ── Dealer Lead Capture Section ──────────────────────────── */
+
+const LEAD_STATUSES = [
+  { value: "new", label: "New", color: "bg-blue-500/20 text-blue-400" },
+  { value: "contacted", label: "Contacted", color: "bg-purple-500/20 text-purple-400" },
+  { value: "qualified", label: "Qualified", color: "bg-cyan-500/20 text-cyan-400" },
+  { value: "demo_scheduled", label: "Demo Scheduled", color: "bg-amber-500/20 text-amber-400" },
+  { value: "demo_completed", label: "Demo Completed", color: "bg-emerald-500/20 text-emerald-400" },
+  { value: "converted", label: "Converted", color: "bg-green-500/20 text-green-400" },
+  { value: "lost", label: "Lost", color: "bg-red-500/20 text-red-400" },
+];
+
+function DealerLeadSection() {
+  const trackingLinks = useQuery(api.dealerLeads.getTrackingLinks) || [];
+  const dealerLeads = useQuery(api.dealerLeads.getDealerLeads) || [];
+  const createLink = useMutation(api.dealerLeads.createTrackingLink);
+  const toggleLink = useMutation(api.dealerLeads.toggleTrackingLink);
+  const deleteLink = useMutation(api.dealerLeads.deleteTrackingLink);
+  const updateLead = useMutation(api.dealerLeads.updateDealerLead);
+  const deleteLead = useMutation(api.dealerLeads.deleteDealerLead);
+
+  const [showNewLink, setShowNewLink] = useState(false);
+  const [newLink, setNewLink] = useState({ name: "", slug: "", utmSource: "facebook", utmMedium: "paid", utmCampaign: "", utmContent: "", utmTerm: "" });
+  const [linkCreating, setLinkCreating] = useState(false);
+  const [tab, setTab] = useState<"leads" | "links">("leads");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://aquareport.org";
+
+  async function handleCreateLink() {
+    if (!newLink.name || !newLink.slug) return;
+    setLinkCreating(true);
+    try {
+      await createLink({
+        name: newLink.name,
+        slug: newLink.slug.replace(/[^a-z0-9-]/gi, "").toLowerCase(),
+        utmSource: newLink.utmSource || undefined,
+        utmMedium: newLink.utmMedium || undefined,
+        utmCampaign: newLink.utmCampaign || undefined,
+        utmContent: newLink.utmContent || undefined,
+        utmTerm: newLink.utmTerm || undefined,
+      });
+      setNewLink({ name: "", slug: "", utmSource: "facebook", utmMedium: "paid", utmCampaign: "", utmContent: "", utmTerm: "" });
+      setShowNewLink(false);
+      toast.success("Tracking link created");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create link");
+    } finally {
+      setLinkCreating(false);
+    }
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  }
+
+  const filteredLeads = statusFilter === "all" ? dealerLeads : dealerLeads.filter((l) => l.status === statusFilter);
+  const leadsByStatus = LEAD_STATUSES.map((s) => ({
+    ...s,
+    count: dealerLeads.filter((l) => l.status === s.value).length,
+  }));
+
+  return (
+    <div className="border rounded-2xl p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg p-2 bg-cyan-500/10">
+            <Megaphone className="size-5 text-cyan-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Dealer Lead Capture</h2>
+            <p className="text-sm text-muted-foreground">
+              Trackable landing pages for Facebook ads &amp; dealer outreach
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setTab("leads")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tab === "leads" ? "bg-cyan-500/20 text-cyan-400" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Leads ({dealerLeads.length})
+          </button>
+          <button
+            onClick={() => setTab("links")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tab === "links" ? "bg-cyan-500/20 text-cyan-400" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Tracking Links ({trackingLinks.length})
+          </button>
+        </div>
+      </div>
+
+      {tab === "links" && (
+        <div className="space-y-4">
+          {/* Create Link Form */}
+          {showNewLink ? (
+            <div className="border rounded-xl p-4 space-y-3 bg-muted/30">
+              <h3 className="text-sm font-bold">New Tracking Link</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Name</label>
+                  <input
+                    type="text"
+                    value={newLink.name}
+                    onChange={(e) => setNewLink((p) => ({ ...p, name: e.target.value }))}
+                    placeholder="Facebook — Water Dealers May"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">URL Slug</label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">/book-demo/</span>
+                    <input
+                      type="text"
+                      value={newLink.slug}
+                      onChange={(e) => setNewLink((p) => ({ ...p, slug: e.target.value.replace(/[^a-z0-9-]/gi, "").toLowerCase() }))}
+                      placeholder="fb-may26"
+                      className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {(["utmSource", "utmMedium", "utmCampaign", "utmContent", "utmTerm"] as const).map((f) => (
+                  <div key={f} className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">{f.replace("utm", "utm_").replace(/([A-Z])/g, "_$1").toLowerCase().replace("utm__", "utm_")}</label>
+                    <input
+                      type="text"
+                      value={newLink[f]}
+                      onChange={(e) => setNewLink((p) => ({ ...p, [f]: e.target.value }))}
+                      className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setShowNewLink(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleCreateLink} disabled={linkCreating || !newLink.name || !newLink.slug}>
+                  {linkCreating ? <Loader2 className="size-3 animate-spin mr-1" /> : <Plus className="size-3 mr-1" />}
+                  Create Link
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setShowNewLink(true)}>
+              <Plus className="size-3 mr-1" />
+              New Tracking Link
+            </Button>
+          )}
+
+          {/* Links Table */}
+          {trackingLinks.length > 0 ? (
+            <div className="border rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30">
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Name</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">URL</th>
+                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-muted-foreground">Clicks</th>
+                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-muted-foreground">Leads</th>
+                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-muted-foreground">Conv %</th>
+                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-muted-foreground">Status</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trackingLinks.map((link) => {
+                    const fullUrl = `${baseUrl}/book-demo/${link.slug}`;
+                    const convRate = link.clickCount > 0 ? ((link.leadCount / link.clickCount) * 100).toFixed(1) : "—";
+                    return (
+                      <tr key={link._id} className="border-b last:border-0 hover:bg-muted/20">
+                        <td className="px-4 py-3">
+                          <p className="font-medium">{link.name}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {[link.utmSource, link.utmMedium, link.utmCampaign].filter(Boolean).join(" · ")}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <code className="text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[200px]">{fullUrl}</code>
+                            <button onClick={() => copyToClipboard(fullUrl)} className="p-1 rounded hover:bg-muted" title="Copy URL">
+                              <Copy className="size-3 text-muted-foreground" />
+                            </button>
+                            <a href={fullUrl} target="_blank" rel="noopener noreferrer" className="p-1 rounded hover:bg-muted" title="Open">
+                              <ExternalLink className="size-3 text-muted-foreground" />
+                            </a>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center tabular-nums font-semibold">{link.clickCount}</td>
+                        <td className="px-4 py-3 text-center tabular-nums font-semibold">{link.leadCount}</td>
+                        <td className="px-4 py-3 text-center tabular-nums">{convRate}%</td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => toggleLink({ linkId: link._id, isActive: !link.isActive })}
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${link.isActive ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}
+                          >
+                            {link.isActive ? "Active" : "Paused"}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={async () => { if (confirm("Delete this tracking link?")) { await deleteLink({ linkId: link._id }); toast.success("Link deleted"); } }}
+                            className="p-1 rounded hover:bg-red-500/10 text-red-400"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              <Link2 className="size-8 mx-auto opacity-30 mb-2" />
+              <p>No tracking links yet. Create one to start capturing leads.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "leads" && (
+        <div className="space-y-4">
+          {/* Status Funnel */}
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setStatusFilter("all")}
+              className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${statusFilter === "all" ? "border-cyan-500 bg-cyan-500/10 text-cyan-400" : "border-border text-muted-foreground hover:text-foreground"}`}
+            >
+              All ({dealerLeads.length})
+            </button>
+            {leadsByStatus.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => setStatusFilter(s.value)}
+                className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${statusFilter === s.value ? "border-cyan-500 bg-cyan-500/10 text-cyan-400" : "border-border text-muted-foreground hover:text-foreground"}`}
+              >
+                {s.label} ({s.count})
+              </button>
+            ))}
+          </div>
+
+          {/* Leads Table */}
+          {filteredLeads.length > 0 ? (
+            <div className="border rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30">
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Lead</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Company</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">Source</th>
+                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-muted-foreground">Status</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-muted-foreground">Date</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLeads.map((lead) => {
+                    const statusObj = LEAD_STATUSES.find((s) => s.value === lead.status) || LEAD_STATUSES[0];
+                    return (
+                      <tr key={lead._id} className="border-b last:border-0 hover:bg-muted/20">
+                        <td className="px-4 py-3">
+                          <p className="font-medium">{lead.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><Mail className="size-3" />{lead.email}</span>
+                            {lead.phone && <span className="flex items-center gap-1"><Phone className="size-3" />{lead.phone}</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm">{lead.companyName || "—"}</p>
+                          {lead.companySize && <p className="text-xs text-muted-foreground">{lead.companySize} reps</p>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-xs">
+                            {lead.trackingLinkName ? (
+                              <span className="font-medium">{lead.trackingLinkName}</span>
+                            ) : lead.utmSource ? (
+                              <span>{lead.utmSource}/{lead.utmMedium || "—"}</span>
+                            ) : (
+                              <span className="text-muted-foreground">Direct</span>
+                            )}
+                            {lead.utmCampaign && <p className="text-muted-foreground mt-0.5">{lead.utmCampaign}</p>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <select
+                            value={lead.status}
+                            onChange={(e) => updateLead({ leadId: lead._id, status: e.target.value })}
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border-0 cursor-pointer ${statusObj.color}`}
+                          >
+                            {LEAD_STATUSES.map((s) => (
+                              <option key={s.value} value={s.value}>{s.label}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3 text-right text-xs text-muted-foreground tabular-nums">
+                          {new Date(lead._creationTime).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={async () => { if (confirm("Delete this lead?")) { await deleteLead({ leadId: lead._id }); toast.success("Lead deleted"); } }}
+                            className="p-1 rounded hover:bg-red-500/10 text-red-400"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              <Users className="size-8 mx-auto opacity-30 mb-2" />
+              <p>{statusFilter === "all" ? "No dealer leads yet. Create a tracking link and start running ads!" : "No leads with this status."}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AdminPage() {
   const isAdmin = useQuery(api.admin.isPlatformAdmin);
   const stats = useQuery(api.admin.getPlatformStats);
@@ -828,6 +1159,9 @@ export function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* ─── Dealer Lead Capture ─── */}
+      <DealerLeadSection />
 
       {/* ─── Platform Admin Management ─── */}
       <AdminManagementSection />

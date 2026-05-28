@@ -691,6 +691,51 @@ const schema = defineSchema({
     addedAt: v.number(),
   }).index("by_email", ["email"]),
 
+  // ─── Dealer Lead Capture (B2B marketing) ────────────────────────
+  dealerLeads: defineTable({
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    companyName: v.optional(v.string()),
+    companySize: v.optional(v.string()), // "solo" | "2-5" | "6-15" | "16-50" | "50+"
+    message: v.optional(v.string()),
+    status: v.string(), // "new" | "contacted" | "qualified" | "demo_scheduled" | "demo_completed" | "converted" | "lost"
+    notes: v.optional(v.string()),
+    // Tracking / attribution
+    trackingLinkId: v.optional(v.id("trackingLinks")),
+    utmSource: v.optional(v.string()),
+    utmMedium: v.optional(v.string()),
+    utmCampaign: v.optional(v.string()),
+    utmContent: v.optional(v.string()),
+    utmTerm: v.optional(v.string()),
+    referrer: v.optional(v.string()),
+    landingPage: v.optional(v.string()),
+    // Lifecycle
+    contactedAt: v.optional(v.number()),
+    demoScheduledAt: v.optional(v.number()),
+    convertedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_email", ["email"])
+    .index("by_trackingLink", ["trackingLinkId"]),
+
+  trackingLinks: defineTable({
+    name: v.string(), // e.g. "Facebook - Water Dealers - May 2026"
+    slug: v.string(), // unique slug for URL: /book-demo/fb-may26
+    utmSource: v.optional(v.string()),
+    utmMedium: v.optional(v.string()),
+    utmCampaign: v.optional(v.string()),
+    utmContent: v.optional(v.string()),
+    utmTerm: v.optional(v.string()),
+    isActive: v.boolean(),
+    clickCount: v.number(),
+    leadCount: v.number(),
+    createdAt: v.number(),
+    createdBy: v.optional(v.string()),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_active", ["isActive"]),
+
   referralRewards: defineTable({
     companyId: v.id("companies"),
     referrerName: v.string(),

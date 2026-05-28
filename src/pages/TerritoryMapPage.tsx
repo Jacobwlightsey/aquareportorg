@@ -15,6 +15,11 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { api } from "../../convex/_generated/api";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare global {
+  interface Window { google?: any; }
+}
+
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_KEY || "";
 
 function scoreColor(s: number) {
@@ -34,7 +39,7 @@ function scoreBg(s: number) {
 
 function TerritoryMap({ territories, apiKey }: { territories: { zip: string; city: string; state: string; avgScore: number; reports: number }[]; apiKey: string }) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<google.maps.Map | null>(null);
+  const mapInstance = useRef<any>(null);
   const [loaded, setLoaded] = useState(!!window.google?.maps);
 
   // Load Google Maps JS API once
@@ -52,7 +57,8 @@ function TerritoryMap({ territories, apiKey }: { territories: { zip: string; cit
   // Initialize map and add markers
   useEffect(() => {
     if (!loaded || !mapRef.current || !window.google?.maps) return;
-    const map = new google.maps.Map(mapRef.current, {
+    const G = window.google.maps;
+    const map = new G.Map(mapRef.current, {
       zoom: 5,
       center: { lat: 39.5, lng: -98.35 }, // center of US
       mapTypeId: "roadmap",
@@ -72,23 +78,23 @@ function TerritoryMap({ territories, apiKey }: { territories: { zip: string; cit
     mapInstance.current = map;
 
     // Geocode each territory by "city, state zip" and add markers
-    const geocoder = new google.maps.Geocoder();
-    const bounds = new google.maps.LatLngBounds();
+    const geocoder = new G.Geocoder();
+    const bounds = new G.LatLngBounds();
     let placed = 0;
 
     for (const t of territories.slice(0, 50)) { // limit to 50 for API quota
       const address = `${t.city}, ${t.state} ${t.zip}`;
-      geocoder.geocode({ address }, (results, status) => {
+      geocoder.geocode({ address }, (results: any, status: any) => {
         if (status === "OK" && results && results[0]) {
           const pos = results[0].geometry.location;
           bounds.extend(pos);
           const color = t.avgScore >= 80 ? "#10b981" : t.avgScore >= 60 ? "#f59e0b" : t.avgScore >= 40 ? "#f97316" : "#ef4444";
-          const marker = new google.maps.Marker({
+          const marker = new G.Marker({
             position: pos,
             map,
             title: `${t.zip} — ${t.city}, ${t.state}`,
             icon: {
-              path: google.maps.SymbolPath.CIRCLE,
+              path: G.SymbolPath.CIRCLE,
               scale: Math.min(6 + t.reports * 2, 16),
               fillColor: color,
               fillOpacity: 0.85,
@@ -96,7 +102,7 @@ function TerritoryMap({ territories, apiKey }: { territories: { zip: string; cit
               strokeColor: "#fff",
             },
           });
-          const info = new google.maps.InfoWindow({
+          const info = new G.InfoWindow({
             content: `<div style="color:#111;font-size:13px;line-height:1.5"><strong>${t.zip}</strong> · ${t.city}, ${t.state}<br/>Score: <strong>${t.avgScore}/100</strong><br/>${t.reports} report${t.reports !== 1 ? "s" : ""}</div>`,
           });
           marker.addListener("click", () => info.open(map, marker));

@@ -62,6 +62,7 @@ const WaterQualityIndexPage = lazy(() => import("./pages/WaterQualityIndexPage")
 const LearnHubPage = lazy(() => import("./pages/LearnHubPage").then((m) => ({ default: m.LearnHubPage })));
 const AttributionPage = lazy(() => import("./pages/AttributionPage").then((m) => ({ default: m.AttributionPage })));
 const AudiencePage = lazy(() => import("./pages/AudiencePage").then((m) => ({ default: m.AudiencePage })));
+const BookDemoPage = lazy(() => import("./pages/BookDemoPage").then((m) => ({ default: m.BookDemoPage })));
 
 function App() {
   return (
@@ -75,6 +76,10 @@ function App() {
 
           {/* Sprint 4A: Spouse review — public, no auth */}
           <Route path="/review/:token" element={<SpouseReviewPage />} />
+
+          {/* Dealer lead capture — public, no auth */}
+          <Route path="/book-demo" element={<BookDemoPage />} />
+          <Route path="/book-demo/:slug" element={<BookDemoPage />} />
 
           {/* Public customer report — no layout chrome */}
           <Route path="/r/:shareToken" element={<CustomerReportPage />} />

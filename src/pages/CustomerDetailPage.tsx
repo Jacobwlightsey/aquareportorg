@@ -910,7 +910,7 @@ export function CustomerDetailPage() {
                       <span className="text-xs text-muted-foreground ml-2">${a.monthlyFee}/mo</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Next service: {new Date(a.nextServiceDate).toLocaleDateString()}</span>
+                      <span className="text-xs text-muted-foreground">Next service: {a.nextServiceDate ? new Date(a.nextServiceDate).toLocaleDateString() : "N/A"}</span>
                       <Badge variant="outline" className="capitalize">{a.status}</Badge>
                     </div>
                   </div>
