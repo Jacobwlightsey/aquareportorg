@@ -203,7 +203,7 @@ export function BookDemoPage() {
             </div>
             <div className="flex items-center gap-6 text-sm text-white/40 pt-2">
               <span className="flex items-center gap-1.5">
-                <CheckCircle className="size-3.5 text-emerald-400" /> Free 14-day trial
+                <CheckCircle className="size-3.5 text-emerald-400" /> Free trial
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle className="size-3.5 text-emerald-400" /> No credit card
