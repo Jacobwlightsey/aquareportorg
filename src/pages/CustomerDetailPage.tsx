@@ -2,27 +2,30 @@ import { useAction, useQuery } from "convex/react";
 import { getCountryText } from "@/lib/i18n";
 import {
   AlertTriangle,
+  Calendar,
   Check,
   ClipboardCopy,
+  DollarSign,
   Download,
   Droplets,
   ExternalLink,
   FlaskConical,
   Loader2,
   Mail,
-
   FileText,
   MessageSquare,
   Phone,
   Play,
   RefreshCw,
   Shield,
+  Star,
   Wrench,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -275,6 +278,10 @@ export function CustomerDetailPage() {
   const generateReportPdf = useAction(api.reportPdf.generateReportPdf);
   const demoSessions = useQuery(
     api.dealerShared.getDemoSessionsByReport,
+    reportId ? { reportId: reportId as any } : "skip"
+  );
+  const hub = useQuery(
+    api.reports.getCustomerHub,
     reportId ? { reportId: reportId as any } : "skip"
   );
   const [activeTab, setActiveTab] = useState("overview");
@@ -599,6 +606,21 @@ export function CustomerDetailPage() {
               Demo Report
             </TabsTrigger>
           )}
+          <TabsTrigger value="pipeline" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 data-[state=active]:bg-transparent pb-2">
+            Pipeline
+          </TabsTrigger>
+          <TabsTrigger value="appointments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 data-[state=active]:bg-transparent pb-2">
+            Appointments
+          </TabsTrigger>
+          <TabsTrigger value="follow-ups" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 data-[state=active]:bg-transparent pb-2">
+            Follow-Ups
+          </TabsTrigger>
+          <TabsTrigger value="proposals" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 data-[state=active]:bg-transparent pb-2">
+            Proposals
+          </TabsTrigger>
+          <TabsTrigger value="retention" className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-400 data-[state=active]:text-cyan-400 data-[state=active]:bg-transparent pb-2">
+            Retention
+          </TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
@@ -773,6 +795,169 @@ export function CustomerDetailPage() {
             ))}
           </TabsContent>
         )}
+
+        {/* PIPELINE TAB */}
+        <TabsContent value="pipeline" className="space-y-4 mt-4">
+          {hub?.deals && hub.deals.length > 0 ? hub.deals.map((deal) => (
+            <Card key={deal._id}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm">{deal.customerName}</CardTitle>
+                  <Badge variant="outline" className="capitalize">{deal.stage.replace(/_/g, " ")}</Badge>
+                </div>
+                {deal.dealValue && <CardDescription>${deal.dealValue.toLocaleString()}</CardDescription>}
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground space-y-1">
+                {deal.source && <p>Source: {deal.source}</p>}
+                {deal.notes && <p>{deal.notes}</p>}
+                {deal.closedAt && <p>Closed: {new Date(deal.closedAt).toLocaleDateString()}</p>}
+              </CardContent>
+            </Card>
+          )) : (
+            <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">No deals linked to this customer yet.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* APPOINTMENTS TAB */}
+        <TabsContent value="appointments" className="space-y-4 mt-4">
+          {hub?.appointments && hub.appointments.length > 0 ? hub.appointments.map((appt) => (
+            <Card key={appt._id}>
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="size-4 text-muted-foreground" />
+                    <span className="font-medium text-sm">{new Date(appt.scheduledAt).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(appt.scheduledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
+                    <span className="text-xs text-muted-foreground">({appt.durationMinutes}min)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="capitalize">{appt.type.replace(/_/g, " ")}</Badge>
+                    <Badge variant={appt.status === "completed" ? "default" : appt.status === "cancelled" ? "destructive" : "secondary"} className="capitalize">{appt.status}</Badge>
+                  </div>
+                </div>
+                {appt.notes && <p className="text-xs text-muted-foreground mt-2">{appt.notes}</p>}
+              </CardContent>
+            </Card>
+          )) : (
+            <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">No appointments scheduled yet.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* FOLLOW-UPS TAB */}
+        <TabsContent value="follow-ups" className="space-y-4 mt-4">
+          {hub?.followUps && hub.followUps.length > 0 ? (
+            <Card>
+              <CardContent className="py-4">
+                <div className="space-y-3">
+                  {hub.followUps.map((msg) => (
+                    <div key={msg._id} className="flex items-center gap-3 text-sm">
+                      <div className={`size-2 rounded-full shrink-0 ${msg.status === "sent" ? "bg-green-500" : msg.status === "pending" ? "bg-amber-400" : msg.status === "failed" ? "bg-red-500" : "bg-muted-foreground/30"}`} />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium">{msg.subject || `Step ${msg.stepIndex + 1}`}</span>
+                        <span className="text-xs text-muted-foreground ml-2">via {msg.channel}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {msg.sentAt ? new Date(msg.sentAt).toLocaleDateString() : new Date(msg.scheduledAt).toLocaleDateString()}
+                      </span>
+                      <Badge variant="outline" className="capitalize text-[10px]">{msg.status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">No follow-up messages yet.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* PROPOSALS TAB */}
+        <TabsContent value="proposals" className="space-y-4 mt-4">
+          {hub?.proposals && hub.proposals.length > 0 ? hub.proposals.map((prop) => (
+            <Card key={prop._id}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <DollarSign className="size-4" />
+                    ${prop.totalPrice.toLocaleString()}
+                  </CardTitle>
+                  <Badge variant={prop.status === "accepted" ? "default" : prop.status === "declined" ? "destructive" : "secondary"} className="capitalize">{prop.status}</Badge>
+                </div>
+                {prop.monthlyPayment && <CardDescription>${prop.monthlyPayment}/mo financing</CardDescription>}
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground space-y-1">
+                {prop.sentAt && <p>Sent: {new Date(prop.sentAt).toLocaleDateString()}</p>}
+                {prop.viewedAt && <p>Viewed: {new Date(prop.viewedAt).toLocaleDateString()}</p>}
+                {prop.acceptedAt && <p>Accepted: {new Date(prop.acceptedAt).toLocaleDateString()}</p>}
+                {prop.notes && <p>{prop.notes}</p>}
+              </CardContent>
+            </Card>
+          )) : (
+            <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">No proposals created yet.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* RETENTION TAB */}
+        <TabsContent value="retention" className="space-y-4 mt-4">
+          {/* Service Agreements */}
+          {hub?.agreements && hub.agreements.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Wrench className="size-4" /> Service Agreements</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {hub.agreements.map((a) => (
+                  <div key={a._id} className="flex items-center justify-between text-sm border-b border-muted/20 pb-2 last:border-0">
+                    <div>
+                      <span className="font-medium">{a.equipmentInstalled}</span>
+                      <span className="text-xs text-muted-foreground ml-2">${a.monthlyFee}/mo</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Next service: {new Date(a.nextServiceDate).toLocaleDateString()}</span>
+                      <Badge variant="outline" className="capitalize">{a.status}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+          {/* Service Reminders */}
+          {hub?.reminders && hub.reminders.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><RefreshCw className="size-4" /> Service Reminders</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {hub.reminders.map((r) => (
+                  <div key={r._id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="capitalize">{r.reminderType.replace(/_/g, " ")}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Due: {new Date(r.dueDate).toLocaleDateString()}</span>
+                      <Badge variant={r.status === "completed" ? "default" : r.status === "sent" ? "secondary" : "outline"} className="capitalize">{r.status}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+          {/* Review Requests */}
+          {hub?.reviews && hub.reviews.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Star className="size-4" /> Review Requests</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {hub.reviews.map((r) => (
+                  <div key={r._id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      {r.rating && <span className="text-amber-400">{"★".repeat(r.rating)}</span>}
+                      <span className="text-xs text-muted-foreground">{new Date(r.scheduledAt).toLocaleDateString()}</span>
+                    </div>
+                    <Badge variant={r.status === "positive_review" ? "default" : r.status === "negative_feedback" ? "destructive" : "outline"} className="capitalize">{r.status.replace(/_/g, " ")}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+          {(!hub?.agreements?.length && !hub?.reminders?.length && !hub?.reviews?.length) && (
+            <Card><CardContent className="py-8 text-center text-muted-foreground text-sm">No retention records yet. Create a service agreement after the sale closes.</CardContent></Card>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );

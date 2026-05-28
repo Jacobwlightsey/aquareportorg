@@ -6,7 +6,7 @@ import {
   MapPin,
   Search,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { api } from "../../convex/_generated/api";
+
+const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_KEY || "";
 
 function scoreColor(s: number) {
   if (s >= 80) return "text-emerald-400";
@@ -26,6 +28,100 @@ function scoreBg(s: number) {
   if (s >= 60) return "bg-amber-500";
   if (s >= 40) return "bg-orange-500";
   return "bg-red-500";
+}
+
+/* ── Interactive Territory Map via Google Maps JS API ──── */
+
+function TerritoryMap({ territories, apiKey }: { territories: { zip: string; city: string; state: string; avgScore: number; reports: number }[]; apiKey: string }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<google.maps.Map | null>(null);
+  const [loaded, setLoaded] = useState(!!window.google?.maps);
+
+  // Load Google Maps JS API once
+  useEffect(() => {
+    if (window.google?.maps) { setLoaded(true); return; }
+    if (document.querySelector('script[src*="maps.googleapis.com"]')) return;
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geocoding`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setLoaded(true);
+    document.head.appendChild(script);
+  }, [apiKey]);
+
+  // Initialize map and add markers
+  useEffect(() => {
+    if (!loaded || !mapRef.current || !window.google?.maps) return;
+    const map = new google.maps.Map(mapRef.current, {
+      zoom: 5,
+      center: { lat: 39.5, lng: -98.35 }, // center of US
+      mapTypeId: "roadmap",
+      disableDefaultUI: false,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      styles: [
+        { elementType: "geometry", stylers: [{ color: "#1a1a2e" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#8a8a9a" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a2e" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#2a2a3e" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1525" }] },
+        { featureType: "poi", stylers: [{ visibility: "off" }] },
+      ],
+    });
+    mapInstance.current = map;
+
+    // Geocode each territory by "city, state zip" and add markers
+    const geocoder = new google.maps.Geocoder();
+    const bounds = new google.maps.LatLngBounds();
+    let placed = 0;
+
+    for (const t of territories.slice(0, 50)) { // limit to 50 for API quota
+      const address = `${t.city}, ${t.state} ${t.zip}`;
+      geocoder.geocode({ address }, (results, status) => {
+        if (status === "OK" && results && results[0]) {
+          const pos = results[0].geometry.location;
+          bounds.extend(pos);
+          const color = t.avgScore >= 80 ? "#10b981" : t.avgScore >= 60 ? "#f59e0b" : t.avgScore >= 40 ? "#f97316" : "#ef4444";
+          const marker = new google.maps.Marker({
+            position: pos,
+            map,
+            title: `${t.zip} — ${t.city}, ${t.state}`,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: Math.min(6 + t.reports * 2, 16),
+              fillColor: color,
+              fillOpacity: 0.85,
+              strokeWeight: 1.5,
+              strokeColor: "#fff",
+            },
+          });
+          const info = new google.maps.InfoWindow({
+            content: `<div style="color:#111;font-size:13px;line-height:1.5"><strong>${t.zip}</strong> · ${t.city}, ${t.state}<br/>Score: <strong>${t.avgScore}/100</strong><br/>${t.reports} report${t.reports !== 1 ? "s" : ""}</div>`,
+          });
+          marker.addListener("click", () => info.open(map, marker));
+          placed++;
+          if (placed === Math.min(territories.length, 50)) {
+            map.fitBounds(bounds, 60);
+          }
+        }
+      });
+    }
+  }, [loaded, territories]);
+
+  if (!apiKey) return null;
+
+  return (
+    <Card className="overflow-hidden">
+      <div ref={mapRef} className="w-full h-[400px] rounded-lg" style={{ minHeight: 300 }}>
+        {!loaded && (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+            Loading map…
+          </div>
+        )}
+      </div>
+    </Card>
+  );
 }
 
 export function TerritoryMapPage() {
@@ -141,6 +237,11 @@ export function TerritoryMapPage() {
           icon={AlertTriangle}
         />
       </div>
+
+      {/* Territory Map */}
+      {GOOGLE_MAPS_KEY && filtered.length > 0 && (
+        <TerritoryMap territories={filtered} apiKey={GOOGLE_MAPS_KEY} />
+      )}
 
       {/* Territory List */}
       <Card>

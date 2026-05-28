@@ -735,3 +735,91 @@ export const deleteReport = mutation({
     });
   },
 });
+
+// ─── Customer Hub: all linked records for a report ───────────────
+
+export const getCustomerHub = query({
+  args: { reportId: v.id("reports") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const report = await ctx.db.get(args.reportId);
+    if (!report) return null;
+    const membership = await ctx.db
+      .query("companyMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!membership || membership.companyId !== report.companyId) return null;
+
+    // Deals linked to this report
+    const deals = await ctx.db
+      .query("deals")
+      .withIndex("by_report", (q) => q.eq("reportId", args.reportId))
+      .collect();
+
+    const dealIds = new Set(deals.map((d) => d._id));
+
+    // Appointments linked to this report's deals
+    const allAppts = await ctx.db
+      .query("appointments")
+      .withIndex("by_company", (q) => q.eq("companyId", report.companyId))
+      .collect();
+    const appointments = allAppts.filter(
+      (a) => a.reportId === args.reportId || (a.dealId && dealIds.has(a.dealId))
+    );
+
+    // Follow-up messages linked to this report
+    const allMessages = await ctx.db
+      .query("followUpMessages")
+      .withIndex("by_company", (q) => q.eq("companyId", report.companyId))
+      .collect();
+    const followUps = allMessages.filter(
+      (m) => m.reportId === args.reportId || (m.dealId && dealIds.has(m.dealId as any))
+    );
+
+    // Proposals linked to this report or its deals
+    const allProposals = await ctx.db
+      .query("proposals")
+      .withIndex("by_company", (q) => q.eq("companyId", report.companyId))
+      .collect();
+    const proposals = allProposals.filter(
+      (p) => p.reportId === args.reportId || (p.dealId && dealIds.has(p.dealId))
+    );
+
+    // Retention: service agreements + reminders + review requests for same customer name
+    const custName = report.customerName?.toLowerCase().trim();
+    const allAgreements = await ctx.db
+      .query("serviceAgreements")
+      .withIndex("by_company", (q) => q.eq("companyId", report.companyId))
+      .collect();
+    const agreements = custName
+      ? allAgreements.filter((a) => a.customerName?.toLowerCase().trim() === custName)
+      : [];
+
+    const allReminders = await ctx.db
+      .query("serviceReminders")
+      .withIndex("by_company", (q) => q.eq("companyId", report.companyId))
+      .collect();
+    const reminders = custName
+      ? allReminders.filter((r) => r.customerName?.toLowerCase().trim() === custName)
+      : [];
+
+    const allReviews = await ctx.db
+      .query("reviewRequests")
+      .withIndex("by_company", (q) => q.eq("companyId", report.companyId))
+      .collect();
+    const reviews = allReviews.filter(
+      (r) => (r.dealId && dealIds.has(r.dealId)) || (custName && r.customerName?.toLowerCase().trim() === custName)
+    );
+
+    return {
+      deals,
+      appointments: appointments.sort((a, b) => a.scheduledAt - b.scheduledAt),
+      followUps: followUps.sort((a, b) => a.scheduledAt - b.scheduledAt),
+      proposals: proposals.sort((a, b) => (b as any)._creationTime - (a as any)._creationTime),
+      agreements,
+      reminders: reminders.sort((a, b) => a.dueDate - b.dueDate),
+      reviews: reviews.sort((a, b) => a.scheduledAt - b.scheduledAt),
+    };
+  },
+});

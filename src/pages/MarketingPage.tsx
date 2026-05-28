@@ -29,6 +29,18 @@ import { PageHeader } from "@/components/PageHeader";
 import { api } from "../../convex/_generated/api";
 import { getCountryText } from "@/lib/i18n";
 
+/** Royalty-free stock photos for water treatment social posts (Unsplash). */
+const STOCK_WATER_PHOTOS = [
+  { label: "Clean Water Glass", thumb: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=1200&q=80" },
+  { label: "Kitchen Faucet", thumb: "https://images.unsplash.com/photo-1585351650024-2a347aea8b8a?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1585351650024-2a347aea8b8a?w=1200&q=80" },
+  { label: "Family Home", thumb: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&q=80" },
+  { label: "Water Testing", thumb: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&q=80" },
+  { label: "Modern Kitchen", thumb: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80" },
+  { label: "Water Droplet", thumb: "https://images.unsplash.com/photo-1525498128493-380d1990a112?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1525498128493-380d1990a112?w=1200&q=80" },
+  { label: "Drinking Water", thumb: "https://images.unsplash.com/photo-1559839914-17aae19cec71?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1559839914-17aae19cec71?w=1200&q=80" },
+  { label: "Plumber Install", thumb: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=120&h=120&fit=crop", url: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=1200&q=80" },
+];
+
 export function MarketingPage() {
   const company = useQuery(api.companies.getMyCompany);
   const t = getCountryText(company?.country);
@@ -358,7 +370,31 @@ export function MarketingPage() {
               {generating ? "Generating..." : "Generate Post"}
             </Button>
             {generated && (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                {/* Stock Photo Picker */}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Suggested Stock Images</Label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {STOCK_WATER_PHOTOS.map((photo, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className="relative aspect-square rounded-md overflow-hidden border border-white/10 hover:border-cyan-400/50 transition-colors group"
+                        onClick={() => {
+                          navigator.clipboard.writeText(photo.url);
+                          toast.success(`"${photo.label}" URL copied — paste into your post!`);
+                        }}
+                        title={`${photo.label} — click to copy URL`}
+                      >
+                        <img src={photo.thumb} alt={photo.label} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-[9px] text-white font-medium px-1 text-center">{photo.label}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Click any image to copy its URL for your social post.</p>
+                </div>
                 <Textarea
                   value={generated}
                   onChange={(e) => setGenerated(e.target.value)}
@@ -429,11 +465,36 @@ export function MarketingPage() {
               {generating ? "Generating..." : "Generate"}
             </Button>
             {generated && (
-              <div className="space-y-2">
+              <div className="space-y-4">
+                {/* Visual Door Hanger Preview */}
+                <div id="door-hanger-preview" className="relative mx-auto w-[280px] rounded-2xl border-2 border-cyan-500/30 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-5 shadow-xl overflow-hidden">
+                  {/* Hole cutout */}
+                  <div className="mx-auto w-10 h-10 rounded-full border-2 border-white/20 bg-black/40 mb-3" />
+                  {/* Company branding */}
+                  <div className="text-center mb-4">
+                    <p className="text-[10px] uppercase tracking-widest text-cyan-400/70 font-bold">Free Water Quality Report</p>
+                    <h3 className="text-lg font-black text-white leading-tight mt-1">Is Your Water Safe?</h3>
+                    <p className="text-xs text-white/60 mt-1">ZIP {doorHangerForm.zip}</p>
+                  </div>
+                  {/* Content from AI */}
+                  <div className="text-[11px] text-white/80 leading-relaxed whitespace-pre-wrap max-h-44 overflow-y-auto scrollbar-thin">
+                    {generated.slice(0, 400)}
+                    {generated.length > 400 && "…"}
+                  </div>
+                  {/* CTA */}
+                  <div className="mt-4 rounded-lg bg-cyan-500 py-2.5 text-center">
+                    <p className="text-xs font-bold text-white">Scan for Your Free Report →</p>
+                  </div>
+                  {/* Decorative watermark */}
+                  <div className="absolute -bottom-6 -right-6 size-24 rounded-full bg-cyan-500/5 pointer-events-none" />
+                </div>
+
+                {/* Raw text editor */}
                 <Textarea
                   value={generated}
                   onChange={(e) => setGenerated(e.target.value)}
-                  rows={10}
+                  rows={6}
+                  className="text-xs"
                 />
                 <div className="flex gap-2">
                   <Button
@@ -445,6 +506,22 @@ export function MarketingPage() {
                     }}
                   >
                     <Copy className="size-3 mr-1" /> Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // Print-friendly version
+                      const printWin = window.open("", "_blank");
+                      if (printWin) {
+                        const el = document.getElementById("door-hanger-preview");
+                        printWin.document.write(`<html><head><title>Door Hanger</title><style>body{display:flex;justify-content:center;padding:40px;background:#fff;} .hanger{width:280px;border:2px solid #06b6d4;border-radius:16px;padding:20px;text-align:center;font-family:system-ui;} .hole{width:40px;height:40px;border-radius:50%;border:2px solid #ccc;margin:0 auto 12px;} h3{font-size:18px;margin:8px 0;} .cta{background:#06b6d4;color:#fff;padding:10px;border-radius:8px;margin-top:16px;font-weight:bold;font-size:12px;}</style></head><body><div class="hanger"><div class="hole"></div><p style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#06b6d4">Free Water Quality Report</p><h3>Is Your Water Safe?</h3><p style="font-size:11px;color:#666;margin:12px 0;white-space:pre-wrap">${generated.replace(/"/g, "&quot;").replace(/</g, "&lt;")}</p><div class="cta">Scan for Your Free Report →</div></div></body></html>`);
+                        printWin.document.close();
+                        printWin.print();
+                      }
+                    }}
+                  >
+                    <FileText className="size-3 mr-1" /> Print
                   </Button>
                   <Button
                     size="sm"
