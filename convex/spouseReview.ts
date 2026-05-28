@@ -110,6 +110,44 @@ export const getSpouseReview = query({
       // ignore parse errors
     }
 
+    // Fetch the most recent demo session linked to this report (if any)
+    const demoSession = await ctx.db
+      .query("demoSessions")
+      .withIndex("by_report", (q) => q.eq("reportId", link.reportId))
+      .order("desc")
+      .first();
+
+    // Parse demo data for richer display
+    let liveReadings: { chlorine?: number; ph?: number; hardness?: number; tds?: number } = {};
+    let selectedConcerns: string[] = [];
+    let equipmentRecommended: Array<{ name: string; description?: string }> = [];
+    let projectedScore: number | null = null;
+
+    if (demoSession) {
+      try { liveReadings = JSON.parse(demoSession.liveReadings || "{}"); } catch { /* ok */ }
+      try { selectedConcerns = JSON.parse(demoSession.selectedConcerns || "[]"); } catch { /* ok */ }
+      try {
+        const eq = JSON.parse(demoSession.equipmentRecommended || "[]");
+        equipmentRecommended = Array.isArray(eq) ? eq : [];
+      } catch { /* ok */ }
+      // Use verified score from demo if available
+      if (demoSession.verifiedScore) {
+        projectedScore = Math.min(demoSession.verifiedScore + 25, 99);
+      }
+    }
+
+    // Also check proposals for projected score
+    if (!projectedScore) {
+      const proposal = await ctx.db
+        .query("proposals")
+        .withIndex("by_company", (q) => q.eq("companyId", link.companyId))
+        .order("desc")
+        .first();
+      if (proposal && proposal.reportId === link.reportId && proposal.projectedScore) {
+        projectedScore = proposal.projectedScore;
+      }
+    }
+
     return {
       data: {
         customerName: report.customerName || "Homeowner",
@@ -131,6 +169,16 @@ export const getSpouseReview = query({
         systemName: company?.solutionProductName || null,
         systemDescription: company?.solutionProductDescription || null,
         systemFeatures: company?.solutionProductBullets || [],
+        // Real demo data
+        liveReadings,
+        selectedConcerns,
+        equipmentRecommended,
+        projectedScore,
+        // On-site readings from report itself
+        chlorine: report.chlorine ?? null,
+        hardness: report.hardness ?? null,
+        tds: report.tds ?? null,
+        ph: report.ph ?? null,
       },
     };
   },

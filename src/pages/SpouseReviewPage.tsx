@@ -9,12 +9,14 @@ import { useQuery } from "convex/react";
 import {
   AlertTriangle,
   ArrowRight,
+  Beaker,
   Droplets,
   Phone,
   Mail,
   Shield,
   ShieldCheck,
   Clock,
+  ThermometerSun,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
@@ -94,9 +96,17 @@ export function SpouseReviewPage() {
 
   const d = result.data;
   const tier = tierInfo(d.waterScore);
-  // TODO: accept real projected score from the demo filtration model
-  // once it's stored on the report record; +30 is a conservative estimate
-  const projectedScore = Math.min(d.waterScore + 30, 99);
+  // Use real projected score from demo/proposal, fallback to +30 estimate
+  const projectedScore = d.projectedScore ?? Math.min(d.waterScore + 30, 99);
+  const hasLiveReadings = d.chlorine != null || d.hardness != null || d.tds != null || d.ph != null;
+  const hasReadings = hasLiveReadings || (d.liveReadings && Object.keys(d.liveReadings).length > 0);
+  // Merge on-site report readings with demo live readings (report takes priority)
+  const readings = {
+    chlorine: d.chlorine ?? d.liveReadings?.chlorine ?? null,
+    ph: d.ph ?? d.liveReadings?.ph ?? null,
+    hardness: d.hardness ?? d.liveReadings?.hardness ?? null,
+    tds: d.tds ?? d.liveReadings?.tds ?? null,
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e1a] via-[#0d1530] to-[#111827] text-white">
@@ -151,6 +161,66 @@ export function SpouseReviewPage() {
           </div>
         </div>
 
+        {/* On-Site Water Readings */}
+        {hasReadings && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Beaker className="size-5 text-blue-400" />
+              On-Site Water Readings
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {readings.chlorine != null && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Chlorine</p>
+                  <p className="text-2xl font-black">{readings.chlorine}<span className="text-xs text-white/40 ml-1">ppm</span></p>
+                  <p className="text-[10px] text-white/30 mt-1">EPA limit: 4.0 ppm</p>
+                </div>
+              )}
+              {readings.ph != null && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">pH Level</p>
+                  <p className="text-2xl font-black">{readings.ph}</p>
+                  <p className="text-[10px] text-white/30 mt-1">Ideal: 6.5–8.5</p>
+                </div>
+              )}
+              {readings.hardness != null && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Hardness</p>
+                  <p className="text-2xl font-black">{readings.hardness}<span className="text-xs text-white/40 ml-1">gpg</span></p>
+                  <p className="text-[10px] text-white/30 mt-1">Soft: &lt;3.5 · Hard: &gt;7</p>
+                </div>
+              )}
+              {readings.tds != null && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">TDS</p>
+                  <p className="text-2xl font-black">{readings.tds}<span className="text-xs text-white/40 ml-1">ppm</span></p>
+                  <p className="text-[10px] text-white/30 mt-1">EPA limit: 500 ppm</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Customer Concerns from Demo */}
+        {d.selectedConcerns && d.selectedConcerns.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <ThermometerSun className="size-5 text-amber-400" />
+              Your Household Concerns
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {d.selectedConcerns.map((concern, i) => (
+                <span
+                  key={i}
+                  className="rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-white/70 capitalize"
+                >
+                  {concern.replace(/_/g, " ")}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Top 5 Contaminants */}
         {d.topContaminants.length > 0 && (
           <div className="space-y-3">
@@ -202,8 +272,32 @@ export function SpouseReviewPage() {
           </p>
         </div>
 
+        {/* Equipment from Demo Session (no pricing) */}
+        {d.equipmentRecommended && d.equipmentRecommended.length > 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <ShieldCheck className="size-5 text-emerald-400" />
+              Recommended Equipment
+            </h2>
+            <ul className="space-y-2">
+              {d.equipmentRecommended.map((eq, i) => (
+                <li key={i} className="flex items-start gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                  <span className="mt-0.5 size-2 shrink-0 rounded-full bg-emerald-400" />
+                  <div>
+                    <p className="text-sm font-semibold">{eq.name}</p>
+                    {eq.description && <p className="text-xs text-white/50 mt-0.5">{eq.description}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-white/40 text-center italic">
+              Contact your water specialist for pricing details.
+            </p>
+          </div>
+        )}
+
         {/* System Recommendation (no pricing) */}
-        {d.systemName && (
+        {d.systemName && !(d.equipmentRecommended && d.equipmentRecommended.length > 0) && (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3">
             <h2 className="text-lg font-bold flex items-center gap-2">
               <ShieldCheck className="size-5 text-emerald-400" />
