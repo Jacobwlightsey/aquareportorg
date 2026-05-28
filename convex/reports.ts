@@ -83,46 +83,50 @@ function computeFieldReadingAdjustment(report: any): number {
   const hardness = typeof report?.hardness === "number" ? report.hardness : undefined;
   const tds = typeof report?.tds === "number" ? report.tds : undefined;
   const ph = typeof report?.ph === "number" ? report.ph : undefined;
+  const MAX_PER_READING = 3;
 
   let adjustment = 0;
-  let factors = 0;
 
   if (chlorine !== undefined) {
-    factors++;
-    if (chlorine < 0.2) adjustment += 3;
-    else if (chlorine <= 1) adjustment += 1;
-    else if (chlorine <= 2) adjustment -= 1;
-    else if (chlorine <= 4) adjustment -= 3;
-    else adjustment -= 5;
+    let sev: number;
+    if (chlorine < 0.2) sev = 0.15;
+    else if (chlorine <= 0.5) sev = 0.30;
+    else if (chlorine <= 1) sev = 0.50;
+    else if (chlorine <= 2) sev = 0.70;
+    else if (chlorine <= 4) sev = 0.90;
+    else sev = 1.0;
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
   if (hardness !== undefined) {
-    factors++;
-    if (hardness <= 1) adjustment += 3;
-    else if (hardness <= 3.5) adjustment += 1;
-    else if (hardness <= 7) adjustment -= 1;
-    else if (hardness <= 10.5) adjustment -= 2;
-    else if (hardness <= 15) adjustment -= 4;
-    else adjustment -= 6;
+    let sev: number;
+    if (hardness <= 1) sev = 0.10;
+    else if (hardness <= 3.5) sev = 0.25;
+    else if (hardness <= 7) sev = 0.50;
+    else if (hardness <= 10.5) sev = 0.70;
+    else if (hardness <= 15) sev = 0.85;
+    else sev = 1.0;
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
   if (tds !== undefined) {
-    factors++;
-    if (tds <= 50) adjustment += 3;
-    else if (tds <= 150) adjustment += 2;
-    else if (tds <= 300) adjustment += 0;
-    else if (tds <= 500) adjustment -= 1;
-    else if (tds <= 1000) adjustment -= 3;
-    else adjustment -= 6;
+    let sev: number;
+    if (tds <= 50) sev = 0.10;
+    else if (tds <= 150) sev = 0.20;
+    else if (tds <= 300) sev = 0.45;
+    else if (tds <= 500) sev = 0.65;
+    else if (tds <= 1000) sev = 0.85;
+    else sev = 1.0;
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
   if (ph !== undefined) {
-    factors++;
-    if (ph >= 6.8 && ph <= 7.4) adjustment += 3;
-    else if (ph >= 6.5 && ph < 6.8) adjustment += 0;
-    else if (ph < 6.5) adjustment -= 3;
-    else if (ph > 7.4 && ph <= 8.5) adjustment += 0;
-    else adjustment -= 3;
+    let sev: number;
+    if (ph >= 6.8 && ph <= 7.4) sev = 0.10;
+    else if ((ph >= 6.5 && ph < 6.8) || (ph > 7.4 && ph <= 8.5)) sev = 0.40;
+    else if ((ph >= 6.0 && ph < 6.5) || (ph > 8.5 && ph <= 9.0)) sev = 0.70;
+    else sev = 1.0;
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
 
-  return factors > 0 ? Math.round((adjustment / factors) * 3) : 0;
+  return Math.round(adjustment);
 }
 
 function withNormalizedAquaScore<T extends { waterScore?: number; scoreMode?: string; contaminants?: string }>(report: T) {

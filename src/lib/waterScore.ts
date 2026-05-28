@@ -36,20 +36,19 @@ export function readingPayload(readings: FieldWaterReadings) {
 }
 
 /**
- * Field-reading adjustment — every on-site reading always lowers the score,
- * and penalties *scale with the starting score* so higher scores experience
- * bigger drops (≈ 3 pts max per reading at a typical score of 75).
+ * Field-reading adjustment — every on-site reading always lowers the score.
+ * Max penalty per reading = 3 pts (4 readings × 3 = 12 pts max total).
  *
  * Each reading maps to a severity fraction (0.0–1.0).
- * penalty = severity × baseScore × 0.04  →  ≈3 max at score 75, ≈4 at 100, ≈2 at 50.
+ * penalty = severity × 3  →  up to 3 pts per reading.
  * Minimum penalty per reading = 0.5 pt (so it always moves the needle).
  */
-export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {}, baseScore?: number): number {
+export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {}, _baseScore?: number): number {
   const chlorine = readingNumber(readings.chlorine);
   const hardness = readingNumber(readings.hardness);
   const tds = readingNumber(readings.tds);
   const ph = readingNumber(readings.ph);
-  const base = baseScore ?? 50;
+  const MAX_PER_READING = 3;
 
   let adjustment = 0;
 
@@ -62,7 +61,7 @@ export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {},
     else if (chlorine <= 2) sev = 0.70;      // high
     else if (chlorine <= 4) sev = 0.90;      // severe
     else sev = 1.0;                          // extreme
-    adjustment -= Math.max(0.5, sev * base * 0.04);
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
 
   // Hardness (gpg)
@@ -74,7 +73,7 @@ export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {},
     else if (hardness <= 10.5) sev = 0.70;   // hard
     else if (hardness <= 15) sev = 0.85;     // very hard
     else sev = 1.0;                          // severe
-    adjustment -= Math.max(0.5, sev * base * 0.04);
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
 
   // TDS (ppm)
@@ -86,7 +85,7 @@ export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {},
     else if (tds <= 500) sev = 0.65;        // high
     else if (tds <= 1000) sev = 0.85;       // very high
     else sev = 1.0;                         // severe
-    adjustment -= Math.max(0.5, sev * base * 0.04);
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
 
   // pH
@@ -96,7 +95,7 @@ export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {},
     else if ((ph >= 6.5 && ph < 6.8) || (ph > 7.4 && ph <= 8.5)) sev = 0.40;    // mild
     else if ((ph >= 6.0 && ph < 6.5) || (ph > 8.5 && ph <= 9.0)) sev = 0.70;    // moderate
     else sev = 1.0;                                                               // extreme
-    adjustment -= Math.max(0.5, sev * base * 0.04);
+    adjustment -= Math.max(0.5, sev * MAX_PER_READING);
   }
 
   return adjustment;

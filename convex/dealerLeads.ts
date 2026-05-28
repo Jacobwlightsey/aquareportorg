@@ -72,12 +72,14 @@ export const getTrackingLinks = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
     const user = await ctx.db.get(userId);
-    if (!user) return [];
-    const admin = await ctx.db
+    if (!user?.email) return [];
+    const email = user.email.toLowerCase();
+    const isEnvAdmin = getEnvAdminEmails().includes(email);
+    const isDbAdmin = !isEnvAdmin && !!(await ctx.db
       .query("platformAdmins")
-      .withIndex("by_email", (q) => q.eq("email", user.email ?? ""))
-      .first();
-    if (!admin) return [];
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first());
+    if (!isEnvAdmin && !isDbAdmin) return [];
 
     return await ctx.db
       .query("trackingLinks")
@@ -203,12 +205,14 @@ export const getDealerLeads = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
     const user = await ctx.db.get(userId);
-    if (!user) return [];
-    const admin = await ctx.db
+    if (!user?.email) return [];
+    const email = user.email.toLowerCase();
+    const isEnvAdmin = getEnvAdminEmails().includes(email);
+    const isDbAdmin = !isEnvAdmin && !!(await ctx.db
       .query("platformAdmins")
-      .withIndex("by_email", (q) => q.eq("email", user.email ?? ""))
-      .first();
-    if (!admin) return [];
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first());
+    if (!isEnvAdmin && !isDbAdmin) return [];
 
     const leads = await ctx.db.query("dealerLeads").order("desc").collect();
 

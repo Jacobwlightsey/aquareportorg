@@ -1,4 +1,4 @@
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -438,11 +438,30 @@ function DemoWizardInner() {
     if (idx >= 0) setCurrentStep(idx);
   }, [activeSteps]);
 
-  const exitDemo = useCallback(() => {
+  const saveDemoSession = useMutation(api.dealerShared.saveDemoSession);
+
+  const exitDemo = useCallback(async (outcome?: string) => {
     if (timerRef.current) clearInterval(timerRef.current);
+    // Save demo session when ending early (outcome passed from EndDemoModal)
+    if (outcome && reportId) {
+      try {
+        await saveDemoSession({
+          reportId: reportId as any,
+          outcome,
+          durationSeconds: demoTimer || undefined,
+          selectedConcerns: customerConcerns ? JSON.stringify(customerConcerns.selected) : undefined,
+          liveReadings: liveReadings ? JSON.stringify(liveReadings) : undefined,
+          verifiedScore: finalScore || undefined,
+          stepTimings: stepTimings.length ? JSON.stringify(stepTimings) : undefined,
+          monthlyExpenses: monthlyExpenses || undefined,
+          boostApplied: boostApplied || undefined,
+          pricingSnapshot: pricingState ? JSON.stringify(pricingState) : undefined,
+        });
+      } catch { /* best-effort save */ }
+    }
     if (reportId) clearDemoState(reportId); // Sprint 4C: clear saved state on exit
     navigate(`/customers/${reportId}`);
-  }, [navigate, reportId]);
+  }, [navigate, reportId, saveDemoSession, demoTimer, customerConcerns, liveReadings, finalScore, stepTimings, monthlyExpenses, boostApplied, pricingState]);
 
   // Scroll content to top on step change
   useEffect(() => {
