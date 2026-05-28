@@ -194,7 +194,7 @@ export function MarketingPage() {
             content.map((c) => (
               <Card
                 key={c._id}
-                className="hover:border-white/20 transition-colors"
+                className="hover:border-border transition-colors"
               >
                 <CardContent className="p-3 sm:p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -366,7 +366,7 @@ export function MarketingPage() {
                       <button
                         key={i}
                         type="button"
-                        className="relative aspect-square rounded-md overflow-hidden border border-white/10 hover:border-cyan-400/50 transition-colors group"
+                        className="relative aspect-square rounded-md overflow-hidden border border-border hover:border-cyan-400/50 transition-colors group"
                         onClick={() => {
                           navigator.clipboard.writeText(photo.url);
                           toast.success(`"${photo.label}" URL copied — paste into your post!`);
@@ -375,7 +375,7 @@ export function MarketingPage() {
                       >
                         <img src={photo.thumb} alt={photo.label} className="w-full h-full object-cover" loading="lazy" />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-[9px] text-white font-medium px-1 text-center">{photo.label}</span>
+                          <span className="text-[9px] text-foreground font-medium px-1 text-center">{photo.label}</span>
                         </div>
                       </button>
                     ))}

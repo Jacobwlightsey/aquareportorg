@@ -22,7 +22,7 @@ export function EmptyState({
   return (
     <Card>
       <CardContent className="flex flex-col items-center py-16 text-center">
-        <div className="mb-4 rounded-2xl bg-white/[0.04] p-4">
+        <div className="mb-4 rounded-2xl bg-muted/8 p-4">
           <Icon className="size-10 text-muted-foreground/40" />
         </div>
         <p className="font-semibold">{title}</p>

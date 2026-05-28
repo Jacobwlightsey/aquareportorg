@@ -29,8 +29,8 @@ const STATUS_MAP: Record<
 > = {
   draft: {
     label: "Draft",
-    color: "text-slate-400 border-white/20",
-    bg: "bg-slate-500/10",
+    color: "text-muted-foreground border-border",
+    bg: "bg-muted",
     icon: FileText,
     next: "sent",
     nextLabel: "Mark Sent",
@@ -98,7 +98,7 @@ function StatusProgress({ status }: { status: string }) {
           <div key={s} className="flex items-center gap-1 flex-1">
             <div
               className={`h-1.5 rounded-full flex-1 transition-colors ${
-                isActive ? (status === "accepted" && i === 3 ? "bg-emerald-500" : "bg-cyan-500") : "bg-white/[0.06]"
+                isActive ? (status === "accepted" && i === 3 ? "bg-emerald-500" : "bg-cyan-500") : "bg-muted/12"
               }`}
             />
           </div>
@@ -117,7 +117,7 @@ function EquipmentList({ items }: { items: { name: string; description: string; 
         <Package className="size-3" /> Equipment
       </p>
       {items.map((item, i) => (
-        <div key={i} className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+        <div key={i} className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-muted/5 border border-border">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium truncate">{item.name}</p>
             {item.description && (
@@ -200,7 +200,7 @@ function ProposalCard({
   };
 
   return (
-    <Card className={`transition-all hover:border-white/20 ${expanded ? "ring-1 ring-cyan-500/20" : ""}`}>
+    <Card className={`transition-all hover:border-border ${expanded ? "ring-1 ring-cyan-500/20" : ""}`}>
       <CardContent className="p-0">
         {/* Status accent bar */}
         <div
@@ -209,7 +209,7 @@ function ProposalCard({
             proposal.status === "declined" ? "bg-red-500" :
             proposal.status === "viewed" ? "bg-amber-500" :
             proposal.status === "sent" ? "bg-blue-500" :
-            "bg-white/10"
+            "bg-muted/20"
           }`}
         />
 
@@ -346,7 +346,7 @@ function ProposalCard({
 
         {/* Expanded content */}
         {expanded && (
-          <div className="border-t border-white/[0.06] px-3 sm:px-4 py-3 space-y-3">
+          <div className="border-t border-border px-3 sm:px-4 py-3 space-y-3">
             {editing ? (
               /* Edit mode */
               <div className="space-y-3">
@@ -476,7 +476,7 @@ function ProposalCard({
 
                 {/* Shareable link */}
                 {proposal.shareToken && (
-                  <div className="mt-3 p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                  <div className="mt-3 p-2.5 rounded-lg bg-muted/5 border border-border">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
@@ -519,7 +519,7 @@ function TimelineItem({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <div className={`size-4 rounded-full bg-white/[0.04] flex items-center justify-center ${color}`}>
+      <div className={`size-4 rounded-full bg-muted/8 flex items-center justify-center ${color}`}>
         {icon}
       </div>
       <span className={`text-[11px] font-medium ${color}`}>{label}</span>
@@ -615,7 +615,7 @@ export function ProposalsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Total" value={stats.total} color="text-white" icon={FileText} />
+        <StatCard label="Total" value={stats.total} color="text-foreground" icon={FileText} />
         <StatCard label="Pending" value={stats.pending} color="text-amber-400" icon={Eye} />
         <StatCard label="Accepted" value={stats.accepted} color="text-emerald-400" icon={CheckCircle} />
         <StatCard label="Revenue" value={`$${stats.revenue.toLocaleString()}`} color="text-cyan-400" icon={DollarSign} />
@@ -640,13 +640,13 @@ export function ProposalsPage() {
                 className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                   statusFilter === f.key
                     ? "bg-cyan-500 text-white"
-                    : "bg-white/[0.06] text-muted-foreground hover:text-white"
+                    : "bg-muted/12 text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {f.label}
                 <span
                   className={`min-w-[18px] text-center rounded-full px-1 py-0.5 text-[10px] font-bold ${
-                    statusFilter === f.key ? "bg-white/25" : "bg-white/10"
+                    statusFilter === f.key ? "bg-muted" : "bg-muted/20"
                   }`}
                 >
                   {f.count}
@@ -666,7 +666,7 @@ export function ProposalsPage() {
           onAction={() => setShowCreate(true)}
         />
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/10 p-10 text-center">
+        <div className="rounded-xl border border-dashed border-border p-10 text-center">
           <p className="text-sm text-muted-foreground">No {statusFilter} proposals</p>
         </div>
       ) : (

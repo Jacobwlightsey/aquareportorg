@@ -235,7 +235,7 @@ export function AppSidebar() {
           className="flex items-center gap-2.5 px-2 py-1 font-semibold text-lg"
         >
           <div className="size-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-400 flex items-center justify-center">
-            <span className="text-sm font-bold text-white">AQ</span>
+            <span className="text-sm font-bold text-foreground">AQ</span>
           </div>
           <span>AquaReport</span>
         </Link>

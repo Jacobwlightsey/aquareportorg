@@ -38,14 +38,14 @@ import { api } from "../../convex/_generated/api";
 
 /* ---- card gradients keyed by plan id ---- */
 const gradients: Record<string, string> = {
-  starter: "from-slate-800/30 to-slate-900/10",
-  growth: "from-violet-900/30 to-indigo-900/10",
-  pro: "from-amber-900/30 to-orange-900/10",
+  starter: "dark:from-slate-800/30 dark:to-slate-900/10 from-slate-100/80 to-slate-50/60",
+  growth: "dark:from-violet-900/30 dark:to-indigo-900/10 from-violet-50/80 to-indigo-50/60",
+  pro: "dark:from-amber-900/30 dark:to-orange-900/10 from-amber-50/80 to-orange-50/60",
 };
 const accentBorders: Record<string, string> = {
-  starter: "border-white/10 hover:border-white/20",
+  starter: "border-border hover:border-border",
   growth: "border-2 border-violet-500/40 shadow-lg shadow-violet-500/10",
-  pro: "border-white/10 hover:border-white/20",
+  pro: "border-border hover:border-border",
 };
 const iconBoxes: Record<string, string> = {
   starter: "rounded-lg bg-blue-500/20 p-2 text-blue-400",
@@ -211,8 +211,8 @@ export function SubscriptionPage() {
               <Gift className="size-5 text-cyan-400" />
             </div>
             <div>
-              <p className="font-semibold text-white">Your first report is on us</p>
-              <p className="text-sm text-white/60">
+              <p className="font-semibold text-foreground">Your first report is on us</p>
+              <p className="text-sm text-foreground">
                 Create 1 premium water quality report with full Pro features — branded, scored, and
                 shareable. No credit card needed.
               </p>
@@ -223,14 +223,14 @@ export function SubscriptionPage() {
 
       {/* Monthly/Annual Toggle */}
       <div className="flex items-center justify-center gap-1">
-        <div className="inline-flex items-center rounded-full bg-slate-900 border border-white/10 p-1">
+        <div className="inline-flex items-center rounded-full dark:bg-slate-900 bg-slate-200 border border-border p-1">
           <button
             type="button"
             onClick={() => setBillingCycle("monthly")}
             className={`rounded-full px-5 py-2 text-sm font-semibold transition-all cursor-pointer ${
               billingCycle === "monthly"
-                ? "bg-white text-slate-900 shadow-md"
-                : "text-white/50 hover:text-white/80"
+                ? "bg-foreground text-background shadow-md"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Monthly
@@ -240,8 +240,8 @@ export function SubscriptionPage() {
             onClick={() => setBillingCycle("annual")}
             className={`rounded-full px-5 py-2 text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
               billingCycle === "annual"
-                ? "bg-white text-slate-900 shadow-md"
-                : "text-white/50 hover:text-white/80"
+                ? "bg-foreground text-background shadow-md"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Annual
@@ -305,7 +305,7 @@ export function SubscriptionPage() {
                   ? accentBorders[plan.id]
                   : isCurrent
                     ? "border-2 border-emerald-500/50 shadow-lg shadow-emerald-500/10"
-                    : "border border-white/10 hover:border-white/20"
+                    : "border border-border hover:border-border"
               }`}
             >
               {/* Background gradient */}
@@ -316,7 +316,7 @@ export function SubscriptionPage() {
               {/* Popular ribbon */}
               {plan.popular && !isCurrent && (
                 <div className="absolute -right-8 top-4 rotate-45 bg-violet-500 px-10 py-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
                     Popular
                   </span>
                 </div>
@@ -409,7 +409,7 @@ export function SubscriptionPage() {
       </div>
 
       {/* Enterprise */}
-      <Card className="border-dashed border-white/15">
+      <Card className="border-dashed border-border">
         <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -503,7 +503,7 @@ export function SubscriptionPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-5 text-slate-500" />
+            <ShieldCheck className="size-5 text-muted-foreground" />
             Internal Access Code
           </CardTitle>
           <CardDescription>For demos and internal QA only.</CardDescription>

@@ -34,8 +34,8 @@ export function FullscreenToggle({ compact = false }: Props) {
         onClick={toggle}
         className={`flex items-center justify-center rounded-lg p-1.5 transition-all cursor-pointer ${
           isFs
-            ? "bg-cyan-400/10 text-cyan-300 border border-cyan-400/30"
-            : "bg-white/5 text-white/70 active:bg-white/10"
+            ? "bg-cyan-400/10 text-cyan-400 border border-cyan-400/30"
+            : "bg-muted/10 text-foreground active:bg-muted/20"
         }`}
         title={isFs ? "Exit Fullscreen" : "Fullscreen"}
       >
@@ -50,7 +50,7 @@ export function FullscreenToggle({ compact = false }: Props) {
       className={`fixed bottom-4 right-4 z-50 flex items-center justify-center rounded-full p-3 shadow-lg transition-all cursor-pointer ${
         isFs
           ? "bg-cyan-600 text-white hover:bg-cyan-700"
-          : "bg-gray-800/90 text-gray-300 hover:bg-gray-700/90 border border-gray-600/50"
+          : "bg-secondary text-muted-foreground hover:bg-accent border border-gray-600/50"
       }`}
       title={isFs ? "Exit Fullscreen" : "Fullscreen"}
     >

@@ -21,7 +21,7 @@ export function PageHeader({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         {Icon && (
-          <div className={`rounded-xl bg-white/[0.06] p-2.5 ${iconColor}`}>
+          <div className={`rounded-xl bg-muted/12 p-2.5 ${iconColor}`}>
             <Icon className="size-5" />
           </div>
         )}

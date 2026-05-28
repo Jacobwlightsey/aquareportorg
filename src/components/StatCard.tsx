@@ -22,7 +22,7 @@ export function StatCard({
 }) {
   return (
     <Card
-      className={onClick ? "cursor-pointer hover:border-white/20 transition-colors" : ""}
+      className={onClick ? "cursor-pointer hover:border-border transition-colors" : ""}
       onClick={onClick}
     >
       <CardContent className="p-4">
@@ -37,7 +37,7 @@ export function StatCard({
             )}
           </div>
           {Icon && (
-            <div className={`shrink-0 rounded-xl bg-white/[0.04] p-2 ${color}`}>
+            <div className={`shrink-0 rounded-xl bg-muted/8 p-2 ${color}`}>
               <Icon className="size-4" />
             </div>
           )}

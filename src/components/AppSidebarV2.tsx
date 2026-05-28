@@ -1,11 +1,12 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Users as UsersIcon, Users2 } from "lucide-react";
+import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, Moon, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Sun, Users as UsersIcon, Users2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
 
 import { APP_NAME } from "@/lib/constants";
+import { useTheme } from "@/contexts/ThemeContext";
 import { api } from "../../convex/_generated/api";
 
 import { Avatar, AvatarFallback } from "./ui/avatar";
@@ -303,17 +304,27 @@ function SidebarUserMenu() {
 
 export function AppSidebarV2() {
   const { setOpenMobile } = useSidebar();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
-        <Link
-          to="/dashboard"
-          onClick={() => setOpenMobile(false)}
-          className="flex items-center gap-2.5 px-2 py-1 font-semibold text-lg"
-        >
-          <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
-        </Link>
+        <div className="flex items-center justify-between px-2 py-1">
+          <Link
+            to="/dashboard"
+            onClick={() => setOpenMobile(false)}
+            className="flex items-center gap-2.5 font-semibold text-lg"
+          >
+            <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
+          </Link>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center size-8 rounded-lg hover:bg-sidebar-accent text-muted-foreground hover:text-foreground transition-colors"
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
+        </div>
       </SidebarHeader>
       <SidebarNav />
       <SidebarUserMenu />

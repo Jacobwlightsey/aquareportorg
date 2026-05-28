@@ -75,7 +75,7 @@ function AquaScoreGauge({ score }: { score?: number }) {
     s >= 80
       ? "bg-amber-500/20 text-amber-400"
       : s >= 60
-        ? "bg-slate-500/20 text-slate-300"
+        ? "bg-muted text-muted-foreground"
         : s >= 40
           ? "bg-orange-500/20 text-orange-400"
           : "bg-rose-500/20 text-rose-400";

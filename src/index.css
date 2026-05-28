@@ -49,10 +49,31 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* ─── Always dark ─────────────────────────────────────────────────── */
+/* ─── Shared values ───────────────────────────────────────────────── */
 :root {
   --sidebar-width: 16rem;
   --sidebar-width-icon: 3rem;
+  --radius: 0.625rem;
+
+  --success: #16a34a;
+  --success-foreground: #f0fdf4;
+  --warning: #d97706;
+  --warning-foreground: #fffbeb;
+  --info: #0891b2;
+  --info-foreground: #ecfeff;
+
+  --chart-1: #0d9488;
+  --chart-2: #ea580c;
+  --chart-3: #0891b2;
+  --chart-4: #e11d48;
+  --chart-5: #65a30d;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK THEME  —  .dark on <html>
+   ═══════════════════════════════════════════════════════════════════ */
+.dark {
+  color-scheme: dark;
 
   --primary: #ffffff;
   --primary-foreground: #0a0e14;
@@ -71,8 +92,6 @@
   --chart-3: #22d3ee;
   --chart-4: #fb7185;
   --chart-5: #a3e635;
-
-  --radius: 0.625rem;
 
   /* Rich dark background with blue undertone */
   --background: #060a10;
@@ -111,10 +130,54 @@
   --sidebar-ring: #38bdf8;
 }
 
-/* Force dark class on html */
-:root {
-  color-scheme: dark;
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT THEME  —  .light on <html>
+   ═══════════════════════════════════════════════════════════════════ */
+.light {
+  color-scheme: light;
+
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+  --sidebar-primary: #0f172a;
+  --sidebar-primary-foreground: #ffffff;
+
+  /* Background: clean white with subtle warmth */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  /* Cards: white with subtle shadow (via component styles) */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #334155;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  /* Borders: clean slate */
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0ea5e9;
+
+  /* Sidebar: white with subtle border */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0ea5e9;
 }
+
 
 @layer base {
   * {
@@ -167,88 +230,211 @@
   }
 }
 
-/* ─── Global polish ───────────────────────────────────────────────── */
+/* ─── Global polish — DARK ────────────────────────────────────────── */
 
 /* Subtle background gradient on body */
 html, body {
   overflow-x: hidden;
 }
-body {
+
+.dark body {
   background: linear-gradient(175deg, #060a10 0%, #070d16 40%, #060a10 100%);
   min-height: 100vh;
 }
 
-/* Card glass effect */
-[data-slot="card"],
-.card-glass {
+/* Card glass effect — dark */
+.dark [data-slot="card"],
+.dark .card-glass {
   background: linear-gradient(145deg, rgba(12, 16, 24, 0.9), rgba(8, 12, 20, 0.95));
   border: 1px solid rgba(56, 139, 253, 0.08);
   backdrop-filter: blur(12px);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-[data-slot="card"]:hover {
+.dark [data-slot="card"]:hover {
   border-color: rgba(56, 139, 253, 0.18);
 }
 
-/* Sidebar active item glow */
-[data-sidebar="menu-button"][data-active="true"] {
+/* Sidebar active item glow — dark */
+.dark [data-sidebar="menu-button"][data-active="true"] {
   background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(56, 139, 253, 0.08)) !important;
   border-left: 2px solid #22d3ee;
   color: #22d3ee;
 }
 
-/* Input focus ring */
-input:focus, textarea:focus, select:focus,
-[data-slot="select-trigger"]:focus {
+/* Input focus ring — dark */
+.dark input:focus, .dark textarea:focus, .dark select:focus,
+.dark [data-slot="select-trigger"]:focus {
   border-color: rgba(56, 189, 248, 0.4) !important;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
 }
 
-/* Button primary glow */
-[data-slot="button"]:not([data-variant]):not([variant]) {
+/* Button primary glow — dark */
+.dark [data-slot="button"]:not([data-variant]):not([variant]) {
   background: linear-gradient(135deg, #0891b2, #0284c7);
   box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
 }
-[data-slot="button"]:not([data-variant]):not([variant]):hover {
+.dark [data-slot="button"]:not([data-variant]):not([variant]):hover {
   box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
+/* Scrollbar styling — dark */
+.dark ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track {
   background: transparent;
 }
-::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb {
   background: rgba(56, 139, 253, 0.15);
   border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(56, 139, 253, 0.3);
 }
 
-/* Badge outline polish */
-[data-slot="badge"][data-variant="outline"] {
+/* Badge outline polish — dark */
+.dark [data-slot="badge"][data-variant="outline"] {
   border-color: rgba(56, 139, 253, 0.15);
 }
 
-/* Dialog backdrop */
-[data-slot="dialog-overlay"] {
+/* Dialog backdrop — dark */
+.dark [data-slot="dialog-overlay"] {
   background: rgba(0, 0, 0, 0.7) !important;
   backdrop-filter: blur(4px);
 }
 
-/* Tab active indicator */
-[data-slot="tabs-trigger"][data-state="active"] {
+/* Tab active indicator — dark */
+.dark [data-slot="tabs-trigger"][data-state="active"] {
   background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(56, 139, 253, 0.1));
   color: #22d3ee;
   border-color: rgba(6, 182, 212, 0.3);
 }
 
+/* ─── Global polish — LIGHT ───────────────────────────────────────── */
 
-/* ── Compact sidebar in landscape mode (tablet only) ── */
+.light body {
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+/* Card — light */
+.light [data-slot="card"],
+.light .card-glass {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.light [data-slot="card"]:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Sidebar active item — light */
+.light [data-sidebar="menu-button"][data-active="true"] {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(56, 139, 253, 0.05)) !important;
+  border-left: 2px solid #0ea5e9;
+  color: #0369a1;
+}
+
+/* Input focus ring — light */
+.light input:focus, .light textarea:focus, .light select:focus,
+.light [data-slot="select-trigger"]:focus {
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.15);
+}
+
+/* Button primary — light */
+.light [data-slot="button"]:not([data-variant]):not([variant]) {
+  background: linear-gradient(135deg, #0891b2, #0284c7);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(8, 145, 178, 0.3);
+}
+.light [data-slot="button"]:not([data-variant]):not([variant]):hover {
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.4);
+}
+
+/* Scrollbar styling — light */
+.light ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.light ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.2);
+  border-radius: 3px;
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.35);
+}
+
+/* Badge outline — light */
+.light [data-slot="badge"][data-variant="outline"] {
+  border-color: #e2e8f0;
+}
+
+/* Dialog backdrop — light */
+.light [data-slot="dialog-overlay"] {
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Tab active indicator — light */
+.light [data-slot="tabs-trigger"][data-state="active"] {
+  background: rgba(14, 165, 233, 0.08);
+  color: #0369a1;
+  border-color: rgba(14, 165, 233, 0.3);
+}
+
+/* ─── Light mode accent-color contrast ────────────────────────────
+   400-shade accent colors are hard to read on white backgrounds.
+   Bump them to 600-shade (or darker) in light mode so text stays
+   WCAG-AA compliant. These only affect light mode. */
+
+.light .text-cyan-400    { color: #0891b2; }  /* cyan-600 */
+.light .text-emerald-400 { color: #059669; }  /* emerald-600 */
+.light .text-teal-400    { color: #0d9488; }  /* teal-600 */
+.light .text-sky-400     { color: #0284c7; }  /* sky-600 */
+.light .text-blue-400    { color: #2563eb; }  /* blue-600 */
+.light .text-green-400   { color: #16a34a; }  /* green-600 */
+.light .text-amber-400   { color: #d97706; }  /* amber-600 */
+.light .text-yellow-400  { color: #ca8a04; }  /* yellow-600 */
+.light .text-orange-400  { color: #ea580c; }  /* orange-600 */
+.light .text-red-400     { color: #dc2626; }  /* red-600 */
+.light .text-rose-400    { color: #e11d48; }  /* rose-600 */
+.light .text-pink-400    { color: #db2777; }  /* pink-600 */
+.light .text-violet-400  { color: #7c3aed; }  /* violet-600 */
+.light .text-purple-400  { color: #9333ea; }  /* purple-600 */
+.light .text-indigo-400  { color: #4f46e5; }  /* indigo-600 */
+.light .text-fuchsia-400 { color: #c026d3; }  /* fuchsia-600 */
+
+/* 300-shade also needs a bump in light mode */
+.light .text-cyan-300    { color: #0891b2; }
+.light .text-emerald-300 { color: #059669; }
+.light .text-sky-300     { color: #0284c7; }
+.light .text-blue-300    { color: #2563eb; }
+.light .text-green-300   { color: #16a34a; }
+.light .text-amber-300   { color: #d97706; }
+.light .text-red-300     { color: #dc2626; }
+.light .text-violet-300  { color: #7c3aed; }
+.light .text-purple-300  { color: #9333ea; }
+
+/* Background tints: dark-mode low-opacity overlays → subtle in light */
+.light .bg-cyan-500\/10,
+.light .bg-emerald-500\/10,
+.light .bg-blue-500\/10,
+.light .bg-amber-500\/10,
+.light .bg-red-500\/10,
+.light .bg-violet-500\/10 {
+  background-color: rgba(241, 245, 249, 0.8);
+}
+
+/* Sidebar section label colors — keep saturated in both modes */
+
+/* ─── Compact sidebar in landscape mode (tablet only) ─────────── */
 @media (orientation: landscape) and (max-height: 700px) and (max-width: 1024px) {
   [data-sidebar="group"] {
     padding: 0.25rem 0.5rem;

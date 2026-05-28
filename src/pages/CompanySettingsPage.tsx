@@ -965,7 +965,7 @@ function DemoConfigSections({ company }: { company: any }) {
             <Label className="text-xs text-muted-foreground">Projected Score After Filtration</Label>
             <div className="flex items-center gap-3 mt-1">
               <input type="range" min={60} max={100} value={cfg.projectedScore ?? 95} onChange={(e) => update({ projectedScore: Number(e.target.value) })} className="flex-1 accent-blue-500 cursor-pointer" />
-              <div className="size-10 rounded-full flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: accent }}>{cfg.projectedScore ?? 95}</div>
+              <div className="size-10 rounded-full flex items-center justify-center text-foreground text-sm font-black" style={{ backgroundColor: accent }}>{cfg.projectedScore ?? 95}</div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -1241,7 +1241,7 @@ function ProposalTemplateSection({ company, onUpdate }: { company: Record<string
   return (
     <SettingsSection emoji="📄" title="Proposal Template" description="Upload a custom proposal PDF or use the auto-generated branded template.">
       <div className="space-y-4">
-        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-3">
+        <div className="rounded-lg border border-border bg-muted/5 p-4 space-y-3">
           <div className="flex items-center gap-2">
             <FileText className="size-4 text-violet-400" />
             <p className="text-sm font-medium">
@@ -1315,7 +1315,7 @@ function BillingSection() {
           <p className="text-lg font-bold capitalize">{currentPlan}</p>
           {isActive && subscription?.periodEnd && <p className="text-xs text-muted-foreground mt-0.5">Renews {new Date(subscription.periodEnd).toLocaleDateString()}</p>}
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : currentPlan === "free" ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"}`}>
+        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : currentPlan === "free" ? "bg-gray-100 text-muted-foreground dark:bg-gray-800 dark:text-muted-foreground" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"}`}>
           {isActive ? "Active" : currentPlan === "free" ? "1 free report" : subscription?.status || "Inactive"}
         </div>
       </div>

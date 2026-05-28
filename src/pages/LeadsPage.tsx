@@ -158,9 +158,9 @@ export function LeadsPage() {
         </button>
         <button
           onClick={() => setFilter("closed")}
-          className={`p-3 rounded-xl border text-center transition-colors ${filter === "closed" ? "border-gray-500 bg-gray-500/5" : "hover:bg-muted/50"}`}
+          className={`p-3 rounded-xl border text-center transition-colors ${filter === "closed" ? "border-gray-500 bg-muted/50" : "hover:bg-muted/50"}`}
         >
-          <p className="text-2xl font-bold text-gray-500">{closedCount}</p>
+          <p className="text-2xl font-bold text-muted-foreground">{closedCount}</p>
           <p className="text-[11px] text-muted-foreground">Closed</p>
         </button>
       </div>
@@ -184,10 +184,10 @@ export function LeadsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
                     <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${
-                      lead.status === "new" ? "bg-emerald-500/10" : lead.status === "contacted" ? "bg-amber-500/10" : "bg-gray-500/10"
+                      lead.status === "new" ? "bg-emerald-500/10" : lead.status === "contacted" ? "bg-amber-500/10" : "bg-muted"
                     }`}>
                       <User className={`size-5 ${
-                        lead.status === "new" ? "text-emerald-500" : lead.status === "contacted" ? "text-amber-500" : "text-gray-500"
+                        lead.status === "new" ? "text-emerald-500" : lead.status === "contacted" ? "text-amber-500" : "text-muted-foreground"
                       }`} />
                     </div>
                     <div className="min-w-0 flex-1">

@@ -48,15 +48,15 @@ function StatCard({
   color: string;
 }) {
   return (
-    <Card className="border-white/10 bg-white/5 text-white">
+    <Card className="border-border bg-muted/10 text-foreground">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium text-white/50 uppercase tracking-wider">{label}</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
             <p className="mt-1 text-2xl font-bold" style={{ color }}>
               {value}
             </p>
-            {sub && <p className="mt-0.5 text-xs text-white/40">{sub}</p>}
+            {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
           </div>
           <div className="rounded-lg p-2" style={{ background: color + "20" }}>
             <Icon className="size-5" style={{ color }} />
@@ -102,15 +102,15 @@ function FunnelChart({ funnel }: { funnel: any }) {
         return (
           <div key={step.label}>
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-white/70">{step.label}</span>
+              <span className="text-foreground">{step.label}</span>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white tabular-nums">{step.value}</span>
+                <span className="font-bold text-foreground tabular-nums">{step.value}</span>
                 {convRate !== null && (
-                  <span className="text-[10px] text-white/30">({convRate}%)</span>
+                  <span className="text-[10px] text-muted-foreground">({convRate}%)</span>
                 )}
               </div>
             </div>
-            <div className="h-3 rounded-full bg-white/5 overflow-hidden">
+            <div className="h-3 rounded-full bg-muted/10 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{ width: `${pct}%`, background: step.color }}
@@ -128,16 +128,16 @@ function WeeklyChart({ data }: { data: any[] }) {
   const recent = data.slice(-12);
   return (
     <div className="flex items-end gap-2 h-36 pt-4">
-      {recent.length === 0 && <p className="text-xs text-white/30 m-auto">No data yet</p>}
+      {recent.length === 0 && <p className="text-xs text-muted-foreground m-auto">No data yet</p>}
       {recent.map((d) => {
         const soldH = (d.sold / max) * 120;
         const otherH = ((d.total - d.sold) / max) * 120;
         return (
           <div key={d.week} className="flex-1 flex flex-col items-center justify-end gap-0">
-            <span className="text-[10px] text-white/50 mb-1">{d.total}</span>
-            <div className="w-full rounded-t-sm bg-white/10" style={{ height: `${otherH}px` }} />
+            <span className="text-[10px] text-muted-foreground mb-1">{d.total}</span>
+            <div className="w-full rounded-t-sm bg-muted/20" style={{ height: `${otherH}px` }} />
             <div className="w-full rounded-b-sm bg-emerald-500/70" style={{ height: `${soldH}px` }} />
-            <span className="text-[9px] text-white/25 mt-1.5 leading-none whitespace-nowrap">
+            <span className="text-[9px] text-muted-foreground mt-1.5 leading-none whitespace-nowrap">
               {d.week.slice(5)}
             </span>
           </div>
@@ -155,9 +155,9 @@ function DayChart({ data }: { data: any[] }) {
         const h = Math.max((d.count / max) * 80, 2);
         return (
           <div key={d.name} className="flex-1 flex flex-col items-center justify-end">
-            <span className="text-[10px] text-white/50 mb-1 tabular-nums">{d.count}</span>
+            <span className="text-[10px] text-muted-foreground mb-1 tabular-nums">{d.count}</span>
             <div className="w-full rounded-t-sm bg-blue-500/60" style={{ height: `${h}px` }} />
-            <span className="text-[9px] text-white/25 mt-1">{d.name}</span>
+            <span className="text-[9px] text-muted-foreground mt-1">{d.name}</span>
           </div>
         );
       })}
@@ -193,7 +193,7 @@ export function DemoAnalyticsPage() {
   if (analytics === undefined || enhanced === undefined || analytics === null || enhanced === null) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-white/30">Loading analytics…</div>
+        <div className="animate-pulse text-muted-foreground">Loading analytics…</div>
       </div>
     );
   }
@@ -201,7 +201,7 @@ export function DemoAnalyticsPage() {
   if (!analytics || !enhanced) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white/40">No analytics data available yet.</div>
+        <div className="text-muted-foreground">No analytics data available yet.</div>
       </div>
     );
   }
@@ -216,11 +216,11 @@ export function DemoAnalyticsPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 p-2.5">
-          <Activity className="size-5 text-white" />
+          <Activity className="size-5 text-foreground" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">Demo Analytics</h1>
-          <p className="text-sm text-white/40">
+          <h1 className="text-xl font-bold text-foreground">Demo Analytics</h1>
+          <p className="text-sm text-muted-foreground">
             Track demo performance, lead funnel, and customer insights
           </p>
         </div>
@@ -253,7 +253,7 @@ export function DemoAnalyticsPage() {
 
       {/* Funnel + Weekly Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Filter className="size-4 text-blue-400" />
@@ -265,7 +265,7 @@ export function DemoAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Activity className="size-4 text-blue-400" />
@@ -274,13 +274,13 @@ export function DemoAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <WeeklyChart data={analytics.byWeek} />
-            <div className="flex items-center gap-4 mt-3 text-xs text-white/40">
+            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded-sm bg-emerald-500/70" />
                 Sold
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-sm bg-white/10" />
+                <span className="size-2.5 rounded-sm bg-muted/20" />
                 Other
               </span>
             </div>
@@ -290,7 +290,7 @@ export function DemoAnalyticsPage() {
 
       {/* Outcomes + Best Days + Avg Score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="size-4 text-emerald-400" />
@@ -308,13 +308,13 @@ export function DemoAnalyticsPage() {
               return (
                 <div key={item.label}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-white/70">{item.label}</span>
+                    <span className="text-foreground">{item.label}</span>
                     <span className="font-mono font-medium" style={{ color: item.color }}>
                       {item.value}{" "}
-                      <span className="text-white/30 text-xs">({pct}%)</span>
+                      <span className="text-muted-foreground text-xs">({pct}%)</span>
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-2 rounded-full bg-muted/10 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${pct}%`, background: item.color }}
@@ -326,7 +326,7 @@ export function DemoAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="size-4 text-cyan-400" />
@@ -338,7 +338,7 @@ export function DemoAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <CheckCircle className="size-4 text-amber-400" />
@@ -353,7 +353,7 @@ export function DemoAnalyticsPage() {
                   <div key={outcome} className="flex items-center justify-between">
                     <OutcomeBadge outcome={outcome} />
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div className="w-24 h-2 rounded-full bg-muted/10 overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${score}%`, background: color }}
@@ -367,7 +367,7 @@ export function DemoAnalyticsPage() {
                 );
               })}
               {Object.keys(enhanced.avgScoreByOutcome).length === 0 && (
-                <p className="text-xs text-white/30 text-center py-2">No scored demos yet</p>
+                <p className="text-xs text-muted-foreground text-center py-2">No scored demos yet</p>
               )}
             </div>
           </CardContent>
@@ -376,7 +376,7 @@ export function DemoAnalyticsPage() {
 
       {/* Lead Pipeline + Sources */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Users className="size-4 text-blue-400" />
@@ -392,37 +392,37 @@ export function DemoAnalyticsPage() {
                   closed: "#10b981",
                 };
                 return (
-                  <div key={status} className="text-center rounded-xl bg-white/5 p-4">
+                  <div key={status} className="text-center rounded-xl bg-muted/10 p-4">
                     <p className="text-2xl font-bold" style={{ color: colors[status] || "#6b7280" }}>
                       {count}
                     </p>
-                    <p className="text-xs text-white/40 capitalize mt-1">{status}</p>
+                    <p className="text-xs text-muted-foreground capitalize mt-1">{status}</p>
                   </div>
                 );
               })}
             </div>
             {enhanced.recentLeads.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-xs text-white/40 font-medium uppercase tracking-wider">
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                   Recent Leads
                 </p>
                 {enhanced.recentLeads.slice(0, 5).map((lead: any) => (
                   <div
                     key={lead._id}
-                    className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-white/5"
+                    className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-muted/10"
                   >
                     <div className="flex items-center gap-2">
-                      <div className="size-7 rounded-full bg-white/10 flex items-center justify-center">
-                        <Users className="size-3.5 text-white/50" />
+                      <div className="size-7 rounded-full bg-muted/20 flex items-center justify-center">
+                        <Users className="size-3.5 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="text-sm font-medium">{lead.name}</p>
-                        <p className="text-[10px] text-white/30">{lead.source || "Direct"}</p>
+                        <p className="text-[10px] text-muted-foreground">{lead.source || "Direct"}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <OutcomeBadge outcome={lead.status} />
-                      <p className="text-[10px] text-white/25 mt-0.5">{timeAgo(lead.createdAt)}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(lead.createdAt)}</p>
                     </div>
                   </div>
                 ))}
@@ -431,7 +431,7 @@ export function DemoAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Filter className="size-4 text-purple-400" />
@@ -451,12 +451,12 @@ export function DemoAnalyticsPage() {
                   return (
                     <div key={source}>
                       <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-white/70 capitalize">{source}</span>
-                        <span className="font-mono text-white/50">
-                          {count} <span className="text-white/30 text-xs">({pct}%)</span>
+                        <span className="text-foreground capitalize">{source}</span>
+                        <span className="font-mono text-muted-foreground">
+                          {count} <span className="text-muted-foreground text-xs">({pct}%)</span>
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div className="h-2 rounded-full bg-muted/10 overflow-hidden">
                         <div
                           className="h-full rounded-full bg-purple-500/60 transition-all duration-700"
                           style={{ width: `${pct}%` }}
@@ -466,7 +466,7 @@ export function DemoAnalyticsPage() {
                   );
                 })}
               {Object.keys(enhanced.sourceBreakdown).length === 0 && (
-                <p className="text-xs text-white/30 text-center py-4">No leads captured yet</p>
+                <p className="text-xs text-muted-foreground text-center py-4">No leads captured yet</p>
               )}
             </div>
           </CardContent>
@@ -474,7 +474,7 @@ export function DemoAnalyticsPage() {
       </div>
 
       {/* Customer Profiles */}
-      <Card className="border-white/10 bg-white/5 text-white">
+      <Card className="border-border bg-muted/10 text-foreground">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -488,8 +488,8 @@ export function DemoAnalyticsPage() {
                   onClick={() => setOutcomeFilter(f)}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     outcomeFilter === f
-                      ? "bg-white/10 text-white"
-                      : "text-white/40 hover:text-white/60"
+                      ? "bg-muted/20 text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {f === "all"
@@ -506,7 +506,7 @@ export function DemoAnalyticsPage() {
         </CardHeader>
         <CardContent>
           {profiles.length === 0 ? (
-            <p className="text-sm text-white/30 text-center py-6">
+            <p className="text-sm text-muted-foreground text-center py-6">
               {analytics.total === 0
                 ? "Run your first demo to start building customer profiles"
                 : "No profiles match this filter"}
@@ -522,10 +522,10 @@ export function DemoAnalyticsPage() {
                       ? "#f59e0b"
                       : "#ef4444";
                 return (
-                  <div key={idx} className="border border-white/5 rounded-xl overflow-hidden">
+                  <div key={idx} className="border border-border rounded-xl overflow-hidden">
                     <button
                       onClick={() => setExpandedProfile(expanded ? null : idx)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-all cursor-pointer text-left"
+                      className="w-full flex items-center gap-3 p-3 hover:bg-muted/10 transition-all cursor-pointer text-left"
                     >
                       <div
                         className="size-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
@@ -535,42 +535,42 @@ export function DemoAnalyticsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{profile.customerName}</p>
-                        <p className="text-xs text-white/40">
+                        <p className="text-xs text-muted-foreground">
                           {profile.city}, {profile.state} · {profile.totalDemos} demo
                           {profile.totalDemos !== 1 ? "s" : ""} · Rep: {profile.repName}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
                         <OutcomeBadge outcome={profile.lastOutcome} />
-                        <p className="text-[10px] text-white/25 mt-1">
+                        <p className="text-[10px] text-muted-foreground mt-1">
                           {timeAgo(profile.lastDemoDate)}
                         </p>
                       </div>
                     </button>
                     {expanded && (
-                      <div className="px-4 pb-4 space-y-3 border-t border-white/5 bg-white/[0.02]">
+                      <div className="px-4 pb-4 space-y-3 border-t border-border bg-muted/5">
                         <div className="grid grid-cols-2 gap-3 pt-3">
                           {profile.email && (
-                            <div className="flex items-center gap-2 text-xs text-white/50">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Mail className="size-3" /> {profile.email}
                             </div>
                           )}
                           {profile.phone && (
-                            <div className="flex items-center gap-2 text-xs text-white/50">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Phone className="size-3" /> {profile.phone}
                             </div>
                           )}
                         </div>
                         <div>
-                          <p className="text-xs text-white/30 font-medium mb-1.5">Demo History</p>
+                          <p className="text-xs text-muted-foreground font-medium mb-1.5">Demo History</p>
                           <div className="space-y-1">
                             {profile.demoHistory.map((h: any, hIdx: number) => (
                               <div
                                 key={hIdx}
-                                className="flex items-center justify-between text-xs py-1 px-2 rounded bg-white/5"
+                                className="flex items-center justify-between text-xs py-1 px-2 rounded bg-muted/10"
                               >
                                 <OutcomeBadge outcome={h.outcome} />
-                                <div className="flex items-center gap-3 text-white/40">
+                                <div className="flex items-center gap-3 text-muted-foreground">
                                   {h.durationSeconds && (
                                     <span className="flex items-center gap-1">
                                       <Clock className="size-3" />
@@ -595,7 +595,7 @@ export function DemoAnalyticsPage() {
 
       {/* Rep Leaderboard */}
       {analytics.repStats.length > 0 && (
-        <Card className="border-white/10 bg-white/5 text-white">
+        <Card className="border-border bg-muted/10 text-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Trophy className="size-4 text-amber-400" />
@@ -606,7 +606,7 @@ export function DemoAnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-white/40 text-xs uppercase tracking-wider border-b border-white/5">
+                  <tr className="text-left text-muted-foreground text-xs uppercase tracking-wider border-b border-border">
                     <th className="pb-3 pr-4">#</th>
                     <th className="pb-3 pr-4">Rep</th>
                     <th className="pb-3 pr-4 text-right">Demos</th>
@@ -617,14 +617,14 @@ export function DemoAnalyticsPage() {
                 </thead>
                 <tbody>
                   {analytics.repStats.map((rep: any, idx: number) => (
-                    <tr key={rep.userId} className="border-b border-white/5 last:border-0">
+                    <tr key={rep.userId} className="border-b border-border last:border-0">
                       <td className="py-3 pr-4">
                         {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : (
-                          <span className="text-white/30">{idx + 1}</span>
+                          <span className="text-muted-foreground">{idx + 1}</span>
                         )}
                       </td>
                       <td className="py-3 pr-4 font-medium">{rep.name}</td>
-                      <td className="py-3 pr-4 text-right text-white/60">{rep.total}</td>
+                      <td className="py-3 pr-4 text-right text-foreground">{rep.total}</td>
                       <td className="py-3 pr-4 text-right text-emerald-400 font-medium">{rep.sold}</td>
                       <td className="py-3 pr-4 text-right">
                         <span
@@ -641,7 +641,7 @@ export function DemoAnalyticsPage() {
                           {rep.closeRate}%
                         </span>
                       </td>
-                      <td className="py-3 text-right text-white/50 font-mono text-xs">
+                      <td className="py-3 text-right text-muted-foreground font-mono text-xs">
                         {formatDuration(rep.avgDuration)}
                       </td>
                     </tr>
@@ -655,11 +655,11 @@ export function DemoAnalyticsPage() {
 
       {/* Empty state */}
       {analytics.total === 0 && (
-        <Card className="border-white/10 bg-white/5 text-white border-dashed">
+        <Card className="border-border bg-muted/10 text-foreground border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Activity className="size-10 text-white/15 mb-3" />
-            <h3 className="text-lg font-semibold text-white/70">No demos yet</h3>
-            <p className="text-sm text-white/30 max-w-sm mt-1">
+            <Activity className="size-10 text-muted-foreground mb-3" />
+            <h3 className="text-lg font-semibold text-foreground">No demos yet</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">
               Run your first in-home demo to start tracking performance, customer insights, and rep
               metrics.
             </p>

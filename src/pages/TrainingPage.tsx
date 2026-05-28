@@ -137,7 +137,7 @@ export function TrainingPage() {
             </div>
             <p className="text-2xl font-black text-emerald-400">{myPercent}%</p>
           </div>
-          <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-2 rounded-full bg-muted/12 overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
               style={{ width: `${myPercent}%` }}
@@ -187,7 +187,7 @@ export function TrainingPage() {
                         return (
                           <Card
                             key={mod._id}
-                            className={`cursor-pointer hover:border-white/20 transition-colors ${
+                            className={`cursor-pointer hover:border-border transition-colors ${
                               isComplete ? "border-emerald-500/15" : ""
                             }`}
                             onClick={() => {
@@ -202,7 +202,7 @@ export function TrainingPage() {
                                     ? "bg-emerald-500/10"
                                     : isInProgress
                                       ? "bg-amber-500/10"
-                                      : "bg-white/[0.04]"
+                                      : "bg-muted/8"
                                 }`}
                               >
                                 {isComplete ? (
@@ -270,7 +270,7 @@ export function TrainingPage() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className="flex-1 h-1.5 rounded-full bg-muted/12 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${
                             member.percentage >= 80

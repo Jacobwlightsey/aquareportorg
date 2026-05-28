@@ -488,7 +488,7 @@ export function GenerateReportPage() {
             <>
               {/* Customer + Utility summary */}
               <Card className="overflow-hidden">
-                <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6">
+                <div className="bg-gradient-to-r dark:from-slate-900 dark:to-slate-800 from-slate-100 to-slate-50 text-foreground p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-blue-300 text-sm font-medium mb-1">
@@ -496,7 +496,7 @@ export function GenerateReportPage() {
                       </p>
                       <h2 className="text-xl font-bold">{lead.name}</h2>
                       {lead.address && (
-                        <p className="text-sm text-gray-300 flex items-center gap-1 mt-1">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                           <MapPin className="size-3" />
                           {lead.address}
                           {lead.city && `, ${lead.city}`}
@@ -510,40 +510,40 @@ export function GenerateReportPage() {
                       >
                         {waterScore}
                       </div>
-                      <p className="text-xs text-gray-400">AquaScore</p>
+                      <p className="text-xs text-muted-foreground">AquaScore</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+                  <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
                     <div>
-                      <p className="text-gray-400 text-xs">Water System</p>
+                      <p className="text-muted-foreground text-xs">Water System</p>
                       <p className="font-medium">{report.utility_info.utility_name}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-xs">Source</p>
+                      <p className="text-muted-foreground text-xs">Source</p>
                       <p className="font-medium capitalize">{report.utility_info.water_source}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-xs">Tested</p>
+                      <p className="text-muted-foreground text-xs">Tested</p>
                       <p className="font-medium">{totalTested}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-xs">Detected</p>
+                      <p className="text-muted-foreground text-xs">Detected</p>
                       <p className="font-medium">{totalDetected}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-xs">Over Health Guidelines</p>
+                      <p className="text-muted-foreground text-xs">Over Health Guidelines</p>
                       <p className="font-medium text-amber-400">{overHealthCount}</p>
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4">
+                  <div className="mt-5 rounded-xl border border-border bg-muted/10 p-4">
                     <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <FlaskConical className="size-5 text-blue-300" />
                         <div>
                           <p className="font-semibold">Add Field Test Results</p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground">
                             Type while presenting. The contamination score updates live.
                           </p>
                         </div>
@@ -558,7 +558,7 @@ export function GenerateReportPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                       <div>
-                        <label htmlFor="report-reading-chlorine" className="mb-1.5 block text-xs font-medium text-gray-300">
+                        <label htmlFor="report-reading-chlorine" className="mb-1.5 block text-xs font-medium text-muted-foreground">
                           Chlorine
                         </label>
                         <Input
@@ -567,12 +567,12 @@ export function GenerateReportPage() {
                           placeholder="ppm"
                           value={readings.chlorine}
                           onChange={(e) => handleReadingChange("chlorine", e.target.value)}
-                          className="h-10 border-white/10 bg-slate-950/40 text-white placeholder:text-gray-500"
+                          className="h-10 border-border bg-muted text-foreground placeholder:text-muted-foreground"
                         />
-                        <p className="mt-1 text-[10px] text-gray-500">EPA MRDL: 4 ppm</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">EPA MRDL: 4 ppm</p>
                       </div>
                       <div>
-                        <label htmlFor="report-reading-hardness" className="mb-1.5 block text-xs font-medium text-gray-300">
+                        <label htmlFor="report-reading-hardness" className="mb-1.5 block text-xs font-medium text-muted-foreground">
                           Hardness
                         </label>
                         <Input
@@ -581,12 +581,12 @@ export function GenerateReportPage() {
                           placeholder="ppm"
                           value={readings.hardness}
                           onChange={(e) => handleReadingChange("hardness", e.target.value)}
-                          className="h-10 border-white/10 bg-slate-950/40 text-white placeholder:text-gray-500"
+                          className="h-10 border-border bg-muted text-foreground placeholder:text-muted-foreground"
                         />
-                        <p className="mt-1 text-[10px] text-gray-500">USGS very hard: &gt;180 ppm</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">USGS very hard: &gt;180 ppm</p>
                       </div>
                       <div>
-                        <label htmlFor="report-reading-tds" className="mb-1.5 block text-xs font-medium text-gray-300">
+                        <label htmlFor="report-reading-tds" className="mb-1.5 block text-xs font-medium text-muted-foreground">
                           TDS
                         </label>
                         <Input
@@ -595,12 +595,12 @@ export function GenerateReportPage() {
                           placeholder="ppm"
                           value={readings.tds}
                           onChange={(e) => handleReadingChange("tds", e.target.value)}
-                          className="h-10 border-white/10 bg-slate-950/40 text-white placeholder:text-gray-500"
+                          className="h-10 border-border bg-muted text-foreground placeholder:text-muted-foreground"
                         />
-                        <p className="mt-1 text-[10px] text-gray-500">EPA secondary: 500 ppm</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">EPA secondary: 500 ppm</p>
                       </div>
                       <div>
-                        <label htmlFor="report-reading-ph" className="mb-1.5 block text-xs font-medium text-gray-300">
+                        <label htmlFor="report-reading-ph" className="mb-1.5 block text-xs font-medium text-muted-foreground">
                           pH
                         </label>
                         <Input
@@ -609,9 +609,9 @@ export function GenerateReportPage() {
                           placeholder="7.4"
                           value={readings.ph}
                           onChange={(e) => handleReadingChange("ph", e.target.value)}
-                          className="h-10 border-white/10 bg-slate-950/40 text-white placeholder:text-gray-500"
+                          className="h-10 border-border bg-muted text-foreground placeholder:text-muted-foreground"
                         />
-                        <p className="mt-1 text-[10px] text-gray-500">EPA secondary: 6.5-8.5</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">EPA secondary: 6.5-8.5</p>
                       </div>
                     </div>
                   </div>

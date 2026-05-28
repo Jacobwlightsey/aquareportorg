@@ -191,14 +191,14 @@ export function CommissionsPage() {
               return (
                 <div
                   key={rep.userId}
-                  className="relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-3"
+                  className="relative overflow-hidden rounded-xl border border-border bg-muted/5 p-3"
                 >
                   <div
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500/10 to-transparent transition-all duration-700"
                     style={{ width: `${barWidth}%` }}
                   />
                   <div className="relative flex items-center gap-3">
-                    <div className={`flex items-center justify-center size-8 rounded-full text-white text-xs font-bold shrink-0 ${
+                    <div className={`flex items-center justify-center size-8 rounded-full text-foreground text-xs font-bold shrink-0 ${
                       i === 0 ? "bg-gradient-to-br from-amber-400 to-amber-600" :
                       i === 1 ? "bg-gradient-to-br from-slate-300 to-slate-500" :
                       i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-700" :
@@ -244,7 +244,7 @@ export function CommissionsPage() {
         <CardContent>
           {commissions.length === 0 ? (
             <div className="flex flex-col items-center py-10">
-              <div className="rounded-2xl bg-white/[0.04] p-4 mb-3">
+              <div className="rounded-2xl bg-muted/8 p-4 mb-3">
                 <DollarSign className="size-8 text-muted-foreground/30" />
               </div>
               <p className="text-sm text-muted-foreground">
@@ -264,7 +264,7 @@ export function CommissionsPage() {
               {commissions.map((c) => (
                 <div
                   key={c._id}
-                  className="flex flex-col gap-2 sm:flex-row sm:items-center p-3 rounded-xl border border-white/10 hover:bg-white/[0.02] transition-colors"
+                  className="flex flex-col gap-2 sm:flex-row sm:items-center p-3 rounded-xl border border-border hover:bg-muted/5 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

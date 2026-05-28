@@ -128,7 +128,7 @@ export function DashboardPage() {
           <CardContent className="space-y-2.5">
             {todayAppts.length === 0 ? (
               <div className="flex flex-col items-center py-10">
-                <div className="rounded-2xl bg-white/[0.04] p-4 mb-3">
+                <div className="rounded-2xl bg-muted/8 p-4 mb-3">
                   <Calendar className="size-8 text-muted-foreground/30" />
                 </div>
                 <p className="text-sm text-muted-foreground">No appointments today</p>
@@ -145,7 +145,7 @@ export function DashboardPage() {
               todayAppts.map((appt) => (
                 <div
                   key={appt._id}
-                  className="flex items-center gap-3 sm:gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4 hover:bg-white/[0.04] transition-colors cursor-pointer"
+                  className="flex items-center gap-3 sm:gap-4 rounded-xl border border-border bg-muted/5 p-3 sm:p-4 hover:bg-muted/8 transition-colors cursor-pointer"
                   onClick={() => navigate("/appointments")}
                 >
                   <div className="text-center min-w-[52px] sm:min-w-[60px]">
@@ -245,7 +245,7 @@ export function DashboardPage() {
                       <span className="text-muted-foreground">{s.label}</span>
                       <span className="font-bold tabular-nums">{count}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-muted/12 overflow-hidden">
                       <div
                         className={`h-full rounded-full ${s.color} transition-all duration-500`}
                         style={{
@@ -277,7 +277,7 @@ export function DashboardPage() {
               {recentActivity.map((a: any) => (
                 <div
                   key={a.id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.02] transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/5 transition-colors"
                 >
                   <div className="size-7 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 flex items-center justify-center shrink-0">
                     <span className="text-[10px] font-bold text-violet-400">

@@ -370,7 +370,7 @@ export function ViewReportPage() {
       {/* Report Header */}
       <Card className="order-1 overflow-hidden print:shadow-none print:border">
         <div
-          className="p-6 text-white print:text-black print:bg-gray-100"
+          className="p-6 text-foreground print:text-black print:bg-gray-100"
           style={{
             background: `linear-gradient(135deg, ${report.companyColor}, #06b6d4)`,
           }}

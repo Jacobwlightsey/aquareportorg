@@ -122,7 +122,7 @@ export function FollowUpsPage() {
             sequences.map((seq) => {
               const steps = seq.steps ? JSON.parse(seq.steps) : [];
               return (
-                <Card key={seq._id} className="hover:border-white/20 transition-colors">
+                <Card key={seq._id} className="hover:border-border transition-colors">
                   <CardContent className="p-3 sm:p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <div className="min-w-0 flex-1">
@@ -146,7 +146,7 @@ export function FollowUpsPage() {
                         <div className="flex items-center gap-1 mt-2 flex-wrap">
                           {steps.map((step: any, i: number) => (
                             <div key={i} className="flex items-center gap-1">
-                              {i > 0 && <div className="h-px w-3 bg-white/10" />}
+                              {i > 0 && <div className="h-px w-3 bg-muted/20" />}
                               <div
                                 className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                   step.channel === "email"
@@ -276,7 +276,7 @@ export function FollowUpsPage() {
               {form.steps.map((step, i) => (
                 <div
                   key={i}
-                  className="p-3 rounded-xl border border-white/10 bg-white/[0.01] space-y-2"
+                  className="p-3 rounded-xl border border-border bg-muted/5 space-y-2"
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="secondary" className="text-[10px]">

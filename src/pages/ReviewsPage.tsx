@@ -120,7 +120,7 @@ export function ReviewsPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Total" value={reviewRequests.length} color="text-white" icon={Star} />
+        <StatCard label="Total" value={reviewRequests.length} color="text-foreground" icon={Star} />
         <StatCard label="Positive" value={positive} color="text-emerald-400" icon={ThumbsUp} />
         <StatCard label="Needs Attention" value={negative} color="text-red-400" icon={ThumbsDown} />
         <StatCard label="Pending" value={pending} color="text-amber-400" icon={Star} />
@@ -211,7 +211,7 @@ export function ReviewsPage() {
               {testimonials.map((t) => (
                 <Card
                   key={t._id}
-                  className="hover:border-white/20 transition-colors"
+                  className="hover:border-border transition-colors"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-2">

@@ -72,7 +72,7 @@ function DealCard({
 }) {
   return (
     <div
-      className="rounded-xl border border-white/10 bg-white/[0.02] p-3 hover:bg-white/[0.05] hover:border-white/20 transition-all cursor-pointer group"
+      className="rounded-xl border border-border bg-muted/5 p-3 hover:bg-muted/10 hover:border-border transition-all cursor-pointer group"
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-2">
@@ -197,8 +197,8 @@ function DealDetailSheet({
 
         <div className="space-y-5">
           {/* Stage + Value banner */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-            <div className={`px-2.5 py-1 rounded-lg text-xs font-bold text-white ${stageInfo.color}`}>
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/5 border border-border">
+            <div className={`px-2.5 py-1 rounded-lg text-xs font-bold text-foreground ${stageInfo.color}`}>
               {stageInfo.label}
             </div>
             <div className="flex-1" />
@@ -384,7 +384,7 @@ function DealDetailSheet({
                     <button
                       key={s.key}
                       onClick={() => { onMove(deal._id, s.key); onOpenChange(false); }}
-                      className="flex items-center gap-2 p-2 rounded-lg border border-white/10 bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/20 transition-colors text-left"
+                      className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/5 hover:bg-muted/8 hover:border-border transition-colors text-left"
                     >
                       <div className={`size-2 rounded-full ${s.color} shrink-0`} />
                       <span className="text-[11px] font-medium">{s.label}</span>
@@ -402,7 +402,7 @@ function DealDetailSheet({
                       const stage = STAGES.find((s) => s.key === h.stage);
                       return (
                         <div key={i} className="flex items-center gap-2">
-                          <div className={`size-2 rounded-full ${stage?.color || "bg-white/20"} shrink-0`} />
+                          <div className={`size-2 rounded-full ${stage?.color || "bg-muted"} shrink-0`} />
                           <span className={`text-[11px] font-medium ${stage?.text || ""}`}>{stage?.label || h.stage}</span>
                           <span className="text-[10px] text-muted-foreground/50 ml-auto tabular-nums">
                             {new Date(h.timestamp).toLocaleDateString()} {new Date(h.timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
@@ -545,12 +545,12 @@ export function PipelinePage() {
                 onClick={() => setMobileStage(s.key)}
                 className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                   mobileStage === s.key
-                    ? `${s.color} text-white`
-                    : "bg-white/[0.06] text-muted-foreground hover:text-white"
+                    ? `${s.color} text-foreground`
+                    : "bg-muted/12 text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {s.label}
-                <span className={`min-w-[18px] text-center rounded-full px-1 py-0.5 text-[10px] font-bold ${mobileStage === s.key ? "bg-white/25" : "bg-white/10"}`}>
+                <span className={`min-w-[18px] text-center rounded-full px-1 py-0.5 text-[10px] font-bold ${mobileStage === s.key ? "bg-muted" : "bg-muted/20"}`}>
                   {count}
                 </span>
               </button>
@@ -564,7 +564,7 @@ export function PipelinePage() {
               <DealCard key={deal._id} deal={deal} onMove={handleMove} onClick={() => setSelectedDeal(deal)} />
             ))}
           {(grouped[mobileStage] || []).length === 0 && (
-            <div className="rounded-xl border border-dashed border-white/10 p-8 text-center">
+            <div className="rounded-xl border border-dashed border-border p-8 text-center">
               <p className="text-xs text-muted-foreground/50">No deals in this stage</p>
             </div>
           )}
@@ -578,7 +578,7 @@ export function PipelinePage() {
           const stageValue = stageDeals.reduce((s: number, d: any) => s + (d.dealValue ?? 0), 0);
           return (
             <div key={stage.key} className="min-w-[260px] w-[260px] shrink-0 space-y-2.5">
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5">
+              <div className="rounded-xl border border-border bg-muted/5 p-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className={`size-2 rounded-full ${stage.color}`} />
@@ -597,7 +597,7 @@ export function PipelinePage() {
                     <DealCard key={deal._id} deal={deal} onMove={handleMove} onClick={() => setSelectedDeal(deal)} />
                   ))}
                 {stageDeals.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-white/10 p-6 text-center">
+                  <div className="rounded-xl border border-dashed border-border p-6 text-center">
                     <p className="text-[11px] text-muted-foreground/40">No deals</p>
                   </div>
                 )}

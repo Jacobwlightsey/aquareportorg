@@ -268,7 +268,7 @@ export function TerritoryMapPage() {
           ) : (
             <>
               {/* Desktop table header */}
-              <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-white/5 mb-1">
+              <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
                 <div className="col-span-2">ZIP</div>
                 <div className="col-span-3">Location</div>
                 <div className="col-span-1 text-center">Reports</div>
@@ -283,7 +283,7 @@ export function TerritoryMapPage() {
                 {filtered.map((t) => (
                   <div
                     key={t.zip}
-                    className="grid grid-cols-12 gap-2 px-3 py-2.5 rounded-lg border border-white/5 hover:bg-white/[0.02] transition-colors items-center"
+                    className="grid grid-cols-12 gap-2 px-3 py-2.5 rounded-lg border border-border hover:bg-muted/5 transition-colors items-center"
                   >
                     <div className="col-span-2 font-bold text-sm tabular-nums">
                       {t.zip}
@@ -309,7 +309,7 @@ export function TerritoryMapPage() {
                       {t.overLimit > 0 ? t.overLimit : "—"}
                     </div>
                     <div className="col-span-2">
-                      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-muted/12 overflow-hidden">
                         <div
                           className={`h-full rounded-full ${scoreBg(t.avgScore)} transition-all`}
                           style={{ width: `${t.avgScore}%` }}
@@ -325,7 +325,7 @@ export function TerritoryMapPage() {
                 {filtered.map((t) => (
                   <div
                     key={t.zip}
-                    className="rounded-xl border border-white/10 p-3 space-y-2"
+                    className="rounded-xl border border-border p-3 space-y-2"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -350,7 +350,7 @@ export function TerritoryMapPage() {
                         </span>
                       )}
                     </div>
-                    <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-muted/12 overflow-hidden">
                       <div
                         className={`h-full rounded-full ${scoreBg(t.avgScore)} transition-all`}
                         style={{ width: `${t.avgScore}%` }}

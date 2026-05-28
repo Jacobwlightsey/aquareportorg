@@ -50,12 +50,12 @@ export function FacebookIntegrationCard() {
   }
 
   return (
-    <div className="rounded-xl border border-slate-800/60 bg-slate-900/40 p-6 space-y-6">
+    <div className="rounded-xl border border-border bg-card p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-white">Facebook / Zapier Integration</h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <h3 className="text-lg font-bold text-foreground">Facebook / Zapier Integration</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Connect Facebook Lead Ads via Zapier to automatically import leads.
           </p>
         </div>
@@ -67,39 +67,39 @@ export function FacebookIntegrationCard() {
       </div>
 
       {/* Setup Instructions */}
-      <div className="rounded-lg border border-slate-800/40 bg-slate-950/40 p-4">
-        <h4 className="text-sm font-semibold text-white mb-3">Zapier Setup Instructions</h4>
-        <ol className="space-y-2 text-sm text-slate-400">
+      <div className="rounded-lg border border-border bg-muted p-4">
+        <h4 className="text-sm font-semibold text-foreground mb-3">Zapier Setup Instructions</h4>
+        <ol className="space-y-2 text-sm text-muted-foreground">
           <li className="flex gap-2">
             <span className="shrink-0 font-bold text-cyan-400">1.</span>
             Generate an API key below and copy it.
           </li>
           <li className="flex gap-2">
             <span className="shrink-0 font-bold text-cyan-400">2.</span>
-            In Zapier, create a new Zap with <strong className="text-white">Facebook Lead Ads</strong> as the trigger.
+            In Zapier, create a new Zap with <strong className="text-foreground">Facebook Lead Ads</strong> as the trigger.
           </li>
           <li className="flex gap-2">
             <span className="shrink-0 font-bold text-cyan-400">3.</span>
-            Add a <strong className="text-white">Webhooks by Zapier</strong> action → POST request.
+            Add a <strong className="text-foreground">Webhooks by Zapier</strong> action → POST request.
           </li>
           <li className="flex gap-2">
             <span className="shrink-0 font-bold text-cyan-400">4.</span>
-            Set the URL to: <code className="rounded bg-slate-800 px-1.5 py-0.5 text-xs text-cyan-300">https://groovy-basilisk-939.convex.site/api/zapier-facebook-lead</code>
+            Set the URL to: <code className="rounded bg-secondary px-1.5 py-0.5 text-xs text-cyan-400">https://groovy-basilisk-939.convex.site/api/zapier-facebook-lead</code>
           </li>
           <li className="flex gap-2">
             <span className="shrink-0 font-bold text-cyan-400">5.</span>
-            Add header: <code className="rounded bg-slate-800 px-1.5 py-0.5 text-xs text-cyan-300">Authorization: Bearer YOUR_API_KEY</code>
+            Add header: <code className="rounded bg-secondary px-1.5 py-0.5 text-xs text-cyan-400">Authorization: Bearer YOUR_API_KEY</code>
           </li>
           <li className="flex gap-2">
             <span className="shrink-0 font-bold text-cyan-400">6.</span>
-            Map Facebook fields: <code className="text-xs text-slate-300">fbLeadId</code>, <code className="text-xs text-slate-300">fields</code> (array with name/values).
+            Map Facebook fields: <code className="text-xs text-muted-foreground">fbLeadId</code>, <code className="text-xs text-muted-foreground">fields</code> (array with name/values).
           </li>
         </ol>
         <a
           href="https://zapier.com/apps/facebook-lead-ads/integrations/webhooks"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-cyan-400 hover:text-cyan-300"
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-cyan-400 hover:text-cyan-400"
         >
           Open Zapier <ExternalLink className="h-3 w-3" />
         </a>
@@ -113,19 +113,19 @@ export function FacebookIntegrationCard() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-amber-300">Save this key — it won't be shown again!</p>
               <div className="mt-2 flex items-center gap-2">
-                <code className="flex-1 truncate rounded bg-slate-800 px-3 py-1.5 text-xs text-white font-mono">
+                <code className="flex-1 truncate rounded bg-secondary px-3 py-1.5 text-xs text-foreground font-mono">
                   {generatedKey}
                 </code>
                 <button
                   onClick={() => handleCopy(generatedKey)}
-                  className="shrink-0 rounded-lg border border-slate-700 bg-slate-800 p-2 text-slate-300 hover:text-white"
+                  className="shrink-0 rounded-lg border border-border bg-secondary p-2 text-muted-foreground hover:text-foreground"
                 >
                   {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
               <button
                 onClick={() => setGeneratedKey(null)}
-                className="mt-2 text-xs text-slate-500 hover:text-slate-300"
+                className="mt-2 text-xs text-muted-foreground hover:text-muted-foreground"
               >
                 I've saved it — dismiss
               </button>
@@ -136,8 +136,8 @@ export function FacebookIntegrationCard() {
 
       {/* Generate New Key */}
       <div>
-        <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-          <Key className="h-4 w-4 text-slate-400" />
+        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+          <Key className="h-4 w-4 text-muted-foreground" />
           API Keys
         </h4>
         <div className="flex gap-2">
@@ -146,13 +146,13 @@ export function FacebookIntegrationCard() {
             placeholder="Key name (e.g. Zapier Production)"
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
-            className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+            className="flex-1 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:border-cyan-500 focus:outline-none"
             onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
           />
           <button
             onClick={handleGenerate}
             disabled={generating || !newKeyName.trim()}
-            className="shrink-0 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {generating ? "Generating…" : "Generate"}
           </button>
@@ -165,18 +165,18 @@ export function FacebookIntegrationCard() {
           {activeKeys.map((k) => (
             <div
               key={k._id}
-              className="flex items-center justify-between rounded-lg border border-slate-800/40 bg-slate-950/40 px-4 py-3"
+              className="flex items-center justify-between rounded-lg border border-border bg-muted px-4 py-3"
             >
               <div>
-                <p className="text-sm font-medium text-white">{k.name}</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-medium text-foreground">{k.name}</p>
+                <p className="text-xs text-muted-foreground">
                   Created {new Date(k._creationTime).toLocaleDateString()}
                   {k.lastUsedAt && ` · Last used ${new Date(k.lastUsedAt).toLocaleDateString()}`}
                 </p>
               </div>
               <button
                 onClick={() => handleRevoke(k._id)}
-                className="rounded-lg p-2 text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
                 title="Revoke key"
               >
                 <Trash2 className="h-4 w-4" />
@@ -188,13 +188,13 @@ export function FacebookIntegrationCard() {
 
       {/* Revoked Keys */}
       {revokedKeys.length > 0 && (
-        <details className="text-xs text-slate-500">
-          <summary className="cursor-pointer hover:text-slate-400">
+        <details className="text-xs text-muted-foreground">
+          <summary className="cursor-pointer hover:text-muted-foreground">
             {revokedKeys.length} revoked key{revokedKeys.length !== 1 ? "s" : ""}
           </summary>
           <div className="mt-2 space-y-1">
             {revokedKeys.map((k) => (
-              <div key={k._id} className="flex items-center justify-between rounded bg-slate-950/40 px-3 py-2 opacity-50">
+              <div key={k._id} className="flex items-center justify-between rounded bg-muted px-3 py-2 opacity-50">
                 <span>{k.name}</span>
                 <span>Revoked {k.revokedAt ? new Date(k.revokedAt).toLocaleDateString() : ""}</span>
               </div>

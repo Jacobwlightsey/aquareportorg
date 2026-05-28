@@ -36,7 +36,7 @@ import { PixelCodeCard } from "@/components/integrations/PixelCodeCard";
 /* ---------- tiny helpers ---------- */
 function PlanBadge({ plan }: { plan: string }) {
   const colors: Record<string, string> = {
-    free: "bg-gray-500/20 text-gray-400",
+    free: "bg-muted text-muted-foreground",
     starter: "bg-blue-500/20 text-blue-400",
     growth: "bg-purple-500/20 text-purple-400",
     pro: "bg-amber-500/20 text-amber-400",
@@ -63,15 +63,15 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <Card className="border-white/10 bg-white/5 text-white">
+    <Card className="border-border bg-muted/10 text-foreground">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium text-white/50 uppercase tracking-wider">{label}</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
             <p className="mt-1 text-2xl font-bold" style={{ color }}>
               {value}
             </p>
-            {sub && <p className="mt-0.5 text-xs text-white/40">{sub}</p>}
+            {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
           </div>
           <div className="rounded-lg p-2" style={{ background: color + "20" }}>
             <Icon className="size-5" />
@@ -435,7 +435,7 @@ function CompanyDetailModal({
                             ? "bg-amber-500/20 text-amber-400"
                             : d.outcome === "not_interested"
                               ? "bg-red-500/20 text-red-400"
-                              : "bg-gray-500/20 text-gray-400"
+                              : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {d.outcome.replace("_", " ")}

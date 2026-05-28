@@ -13,17 +13,17 @@ export function AudiencePage() {
 
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Audiences</h1>
-          <p className="mt-1 text-slate-400">Build custom segments and export audiences for Facebook and other platforms.</p>
+          <h1 className="text-2xl font-bold text-foreground">Audiences</h1>
+          <p className="mt-1 text-muted-foreground">Build custom segments and export audiences for Facebook and other platforms.</p>
         </div>
 
         {/* Coming Soon / Pro Gate */}
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-800/60 bg-slate-900/40 py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-16 text-center">
           <div className="rounded-2xl bg-purple-500/10 p-4">
             <Users className="h-10 w-10 text-purple-400" />
           </div>
-          <h2 className="mt-4 text-xl font-bold text-white">Custom Audiences</h2>
-          <p className="mt-2 max-w-md text-slate-400">
+          <h2 className="mt-4 text-xl font-bold text-foreground">Custom Audiences</h2>
+          <p className="mt-2 max-w-md text-muted-foreground">
             Create audience segments based on water quality scores, contaminants, location, and engagement.
             Export directly to Facebook Custom Audiences for targeted ad campaigns.
           </p>
@@ -37,9 +37,9 @@ export function AudiencePage() {
               "Facebook export",
               "CSV download",
             ].map((feature) => (
-              <div key={feature} className="flex items-center gap-2 rounded-lg border border-slate-800/40 bg-slate-950/40 px-3 py-2 text-sm">
+              <div key={feature} className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-sm">
                 <div className="size-1.5 rounded-full bg-purple-400" />
-                <span className="text-slate-300">{feature}</span>
+                <span className="text-muted-foreground">{feature}</span>
               </div>
             ))}
           </div>
