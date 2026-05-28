@@ -617,10 +617,10 @@ function DealerLeadSection() {
     toast.success("Copied to clipboard");
   }
 
-  const filteredLeads = statusFilter === "all" ? dealerLeads : dealerLeads.filter((l) => l.status === statusFilter);
+  const filteredLeads = statusFilter === "all" ? dealerLeads : dealerLeads.filter((l: any) => l.status === statusFilter);
   const leadsByStatus = LEAD_STATUSES.map((s) => ({
     ...s,
-    count: dealerLeads.filter((l) => l.status === s.value).length,
+    count: dealerLeads.filter((l: any) => l.status === s.value).length,
   }));
 
   return (
@@ -728,7 +728,7 @@ function DealerLeadSection() {
                   </tr>
                 </thead>
                 <tbody>
-                  {trackingLinks.map((link) => {
+                  {trackingLinks.map((link: any) => {
                     const fullUrl = `${baseUrl}/book-demo/${link.slug}`;
                     const convRate = link.clickCount > 0 ? ((link.leadCount / link.clickCount) * 100).toFixed(1) : "—";
                     return (
@@ -820,7 +820,7 @@ function DealerLeadSection() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredLeads.map((lead) => {
+                  {filteredLeads.map((lead: any) => {
                     const statusObj = LEAD_STATUSES.find((s) => s.value === lead.status) || LEAD_STATUSES[0];
                     return (
                       <tr key={lead._id} className="border-b last:border-0 hover:bg-muted/20">

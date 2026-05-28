@@ -21,6 +21,7 @@ import type * as consent from "../consent.js";
 import type * as constants from "../constants.js";
 import type * as crons from "../crons.js";
 import type * as contracts from "../contracts.js";
+import type * as dealerLeads from "../dealerLeads.js";
 import type * as dealerShared from "../dealerShared.js";
 import type * as deals from "../deals.js";
 import type * as demoAssistant from "../demoAssistant.js";
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   constants: typeof constants;
   crons: typeof crons;
   contracts: typeof contracts;
+  dealerLeads: typeof dealerLeads;
   dealerShared: typeof dealerShared;
   deals: typeof deals;
   demoAssistant: typeof demoAssistant;
