@@ -4,7 +4,10 @@
    ──── */
 
 import { Activity, Clock, Droplets, FileText, FlaskConical, ShieldCheck, Target } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { colors, scoreTierInfo } from "@/lib/designTokens";
+import { AICoachReport } from "./AICoachReport";
 
 interface DemoSession {
   _id: string;
@@ -22,6 +25,8 @@ interface DemoSession {
   boostApplied?: boolean;
   pricingSnapshot?: string; // JSON
   demoMode?: string;
+  // AI Coach
+  aiCoachStatus?: string;
 }
 
 interface Props {
@@ -70,6 +75,12 @@ export function DemoReport({ session }: Props) {
   const readings: Record<string, number> = session.liveReadings ? JSON.parse(session.liveReadings) : {};
   const pricing = session.pricingSnapshot ? JSON.parse(session.pricingSnapshot) : null;
   const stepTimings: Array<{ stepKey: string; duration: number }> = session.stepTimings ? JSON.parse(session.stepTimings) : [];
+
+  // AI Sales Coach
+  const coachData = useQuery(
+    api.demoCoach.getCoachReport,
+    session.aiCoachStatus ? { sessionId: session._id as any } : "skip",
+  );
 
   const tier = session.verifiedScore != null ? scoreTierInfo(session.verifiedScore) : session.waterScore != null ? scoreTierInfo(session.waterScore) : null;
 
@@ -221,6 +232,16 @@ export function DemoReport({ session }: Props) {
               })}
           </div>
         </div>
+      )}
+
+      {/* AI Sales Coach Report */}
+      {coachData && (
+        <AICoachReport
+          status={coachData.status}
+          error={coachData.error}
+          report={coachData.report}
+          transcript={coachData.transcript}
+        />
       )}
     </div>
   );

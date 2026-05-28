@@ -25,6 +25,7 @@ import type * as dealerLeads from "../dealerLeads.js";
 import type * as dealerShared from "../dealerShared.js";
 import type * as deals from "../deals.js";
 import type * as demoAssistant from "../demoAssistant.js";
+import type * as demoCoach from "../demoCoach.js";
 import type * as email from "../email.js";
 import type * as followUps from "../followUps.js";
 import type * as http from "../http.js";
@@ -73,6 +74,7 @@ declare const fullApi: ApiFromModules<{
   dealerShared: typeof dealerShared;
   deals: typeof deals;
   demoAssistant: typeof demoAssistant;
+  demoCoach: typeof demoCoach;
   email: typeof email;
   followUps: typeof followUps;
   http: typeof http;

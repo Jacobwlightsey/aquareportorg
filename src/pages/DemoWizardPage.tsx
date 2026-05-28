@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
+import { useAudioRecording } from "@/hooks/useAudioRecording";
 import {
   AlertTriangle,
   ArrowRight,
@@ -7,6 +8,7 @@ import {
   Lock,
   User,
   Home,
+  Mic,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -302,6 +304,21 @@ function DemoWizardInner() {
   const [coaching, setCoaching] = useState<CoachingState>({ level: "green", tip: "" });
   const [showCoachingTip, setShowCoachingTip] = useState(false);
 
+  // AI Sales Coach — audio recording
+  const {
+    isRecording,
+    isSupported: audioSupported,
+    audioBlob,
+    durationSeconds: audioDuration,
+    error: audioError,
+    startRecording,
+    stopRecording,
+  } = useAudioRecording();
+  const [recordingEnabled, setRecordingEnabled] = useState(false);
+  const [audioUploading, setAudioUploading] = useState(false);
+  const generateUploadUrl = useMutation(api.demoCoach.generateAudioUploadUrl);
+  const attachAudio = useMutation(api.demoCoach.attachAudio);
+
   // Auto-dismiss coaching tooltip after 4s
   useEffect(() => {
     if (!showCoachingTip) return;
@@ -440,12 +457,19 @@ function DemoWizardInner() {
 
   const saveDemoSession = useMutation(api.dealerShared.saveDemoSession);
 
+  // Ref to hold the sessionId for audio upload after navigation
+  const pendingSessionRef = useRef<string | null>(null);
+
   const exitDemo = useCallback(async (outcome?: string) => {
     if (timerRef.current) clearInterval(timerRef.current);
-    // Save demo session when ending early (outcome passed from EndDemoModal)
+    // Stop recording if active
+    if (isRecording) stopRecording();
+
+    // Save demo session when ending (outcome passed from EndDemoModal or dealerClose)
+    let sessionId: string | null = null;
     if (outcome && reportId) {
       try {
-        await saveDemoSession({
+        sessionId = await saveDemoSession({
           reportId: reportId as any,
           outcome,
           durationSeconds: demoTimer || undefined,
@@ -459,9 +483,41 @@ function DemoWizardInner() {
         });
       } catch { /* best-effort save */ }
     }
-    if (reportId) clearDemoState(reportId); // Sprint 4C: clear saved state on exit
+    // Store sessionId for audio upload effect
+    if (sessionId) pendingSessionRef.current = sessionId;
+
+    if (reportId) clearDemoState(reportId);
     navigate(`/customers/${reportId}`);
-  }, [navigate, reportId, saveDemoSession, demoTimer, customerConcerns, liveReadings, finalScore, stepTimings, monthlyExpenses, boostApplied, pricingState]);
+  }, [navigate, reportId, saveDemoSession, demoTimer, customerConcerns, liveReadings, finalScore, stepTimings, monthlyExpenses, boostApplied, pricingState, isRecording, stopRecording]);
+
+  // Upload audio after recording stops (audioBlob becomes available)
+  useEffect(() => {
+    if (!audioBlob || !pendingSessionRef.current || audioUploading) return;
+    const sessionId = pendingSessionRef.current;
+    pendingSessionRef.current = null;
+
+    (async () => {
+      setAudioUploading(true);
+      try {
+        const uploadUrl = await generateUploadUrl();
+        const res = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": audioBlob.type || "audio/webm" },
+          body: audioBlob,
+        });
+        const { storageId } = await res.json();
+        await attachAudio({
+          sessionId: sessionId as any,
+          storageId,
+          mimeType: audioBlob.type || "audio/webm",
+          durationSeconds: audioDuration || undefined,
+        });
+      } catch (err) {
+        console.error("Audio upload failed:", err);
+      }
+      setAudioUploading(false);
+    })();
+  }, [audioBlob, generateUploadUrl, attachAudio, audioDuration, audioUploading]);
 
   // Scroll content to top on step change
   useEffect(() => {
@@ -658,6 +714,29 @@ function DemoWizardInner() {
           {/* Center: controls cluster */}
           <div className="flex items-center gap-1.5 landscape:gap-1">
             <MuteToggle />
+            {/* AI Coach — mic recording toggle */}
+            {audioSupported && (
+              <button
+                onClick={async () => {
+                  if (isRecording) {
+                    stopRecording();
+                    setRecordingEnabled(false);
+                  } else {
+                    await startRecording();
+                    setRecordingEnabled(true);
+                  }
+                }}
+                className={`relative flex size-7 items-center justify-center rounded-lg transition-all cursor-pointer ${
+                  isRecording ? "bg-red-500/20" : "bg-white/5"
+                }`}
+                title={isRecording ? "Stop recording" : "Record demo for AI coaching"}
+              >
+                <Mic className={`size-3.5 ${isRecording ? "text-red-400" : "text-white/50"}`} />
+                {isRecording && (
+                  <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-red-500 animate-pulse" />
+                )}
+              </button>
+            )}
             <FullscreenToggle compact />
             <ViewModeToggle />
             {showStepLabel && (

@@ -297,6 +297,14 @@ const schema = defineSchema({
     monthlyExpenses: v.optional(v.number()),
     boostApplied: v.optional(v.boolean()),
     demoMode: v.optional(v.string()), // "quick" | "standard" | "full"
+    // AI Sales Coach fields
+    audioStorageId: v.optional(v.id("_storage")),
+    audioMimeType: v.optional(v.string()),
+    audioDurationSeconds: v.optional(v.number()),
+    transcript: v.optional(v.string()), // full transcript text
+    aiCoachReport: v.optional(v.string()), // JSON — structured coaching report
+    aiCoachStatus: v.optional(v.string()), // "uploading" | "transcribing" | "analyzing" | "complete" | "error"
+    aiCoachError: v.optional(v.string()),
   })
     .index("by_company", ["companyId"])
     .index("by_report", ["reportId"])
