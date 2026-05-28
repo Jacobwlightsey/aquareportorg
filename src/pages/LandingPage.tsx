@@ -362,14 +362,14 @@ function HeroMockup() {
           {/* Left */}
           <div className="p-4 space-y-3">
             {/* AquaScore card — dominant anchor */}
-            <div className="relative rounded-xl border border-teal-400/[0.12] bg-white/[0.02] p-3.5">
-              <div className="absolute -inset-1 rounded-xl bg-teal-400/[0.03] blur-sm pointer-events-none" />
+            <div className="relative rounded-xl border border-teal-400/[0.18] bg-white/[0.03] p-3.5">
+              <div className="absolute -inset-2 rounded-xl bg-teal-400/[0.06] blur-md pointer-events-none" />
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/20">AquaScore™ · 29526 Conway, SC</span>
                 <span className="text-[8px] text-white/15">2m ago</span>
               </div>
               <div className="flex items-end gap-2.5 mb-2.5">
-                <span className="font-[Sora,system-ui,sans-serif] text-[3.5rem] font-black leading-none tracking-tight text-teal-400 drop-shadow-[0_0_20px_rgba(45,212,191,0.3)]">28</span>
+                <span className="font-[Sora,system-ui,sans-serif] text-[4rem] font-black leading-none tracking-tight text-teal-400 drop-shadow-[0_0_24px_rgba(45,212,191,0.4)]">28</span>
                 <div className="pb-1"><span className="block text-[10px] font-bold text-amber-400/80">AT RISK</span><span className="text-[9px] text-white/15">of 100</span></div>
               </div>
               <div className="relative h-[3px] rounded-full bg-white/[0.03] overflow-hidden mb-1.5">
@@ -386,7 +386,7 @@ function HeroMockup() {
               </div>
             </div>
             {/* Live test */}
-            <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-3.5">
+            <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-3.5 opacity-85">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/20">Live Test</span>
                 <span className="flex items-center gap-1 text-[8px] text-emerald-400/50"><span className="size-[4px] rounded-full bg-emerald-400/50 animate-pulse" />On-site</span>
@@ -408,7 +408,7 @@ function HeroMockup() {
           </div>
 
           {/* Right — secondary */}
-          <div className="p-4 space-y-3 opacity-80">
+          <div className="p-4 space-y-3 opacity-60">
             {/* Coaching */}
             <div className="rounded-xl border border-amber-400/[0.08] bg-amber-400/[0.02] p-3.5">
               <div className="flex items-center gap-2 mb-1.5">
@@ -593,7 +593,7 @@ function GlowPricingCard({ plan, billingCycle }: { plan: (typeof SUBSCRIPTION_PL
 function PricingSection() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
   return (
-    <section id="pricing" className="relative overflow-hidden py-28 md:py-36">
+    <section id="pricing" className="relative overflow-hidden py-24 md:py-30">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(45,212,191,.06),transparent_50%)]" />
       <div className="mx-auto max-w-[1280px] px-6 relative">
         <Reveal>
@@ -611,7 +611,7 @@ function PricingSection() {
             </button>
           </div>
         </div>
-        <div className="grid gap-8 lg:grid-cols-3 max-w-5xl mx-auto">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
           {SUBSCRIPTION_PLANS.map((plan) => <GlowPricingCard key={plan.id} plan={plan} billingCycle={billingCycle} />)}
         </div>
         <Reveal>
@@ -653,12 +653,12 @@ function LandingNav() {
         <a href="/" className="flex items-center gap-2 text-[1rem] font-bold text-white">
           <img src="/aquareport-logo.png" alt="AquaReport" className="h-7 w-auto" />
         </a>
-        <nav className="hidden items-center gap-7 text-[0.84rem] text-white/25 md:flex">
+        <nav className="hidden items-center gap-7 text-[0.84rem] text-white/35 md:flex">
           {NAV_LINKS.map((l) => <a key={l.href} href={l.href} className="transition-colors hover:text-white/70">{l.label}</a>)}
           <Link to="/blog" className="transition-colors hover:text-white/70">Blog</Link>
         </nav>
         <div className="hidden items-center gap-3 md:flex">
-          <Link to="/login" className="text-[0.85rem] text-white/30 transition-colors hover:text-white/70">Sign in</Link>
+          <Link to="/login" className="text-[0.85rem] text-white/40 transition-colors hover:text-white/70">Sign in</Link>
           <Link to="/signup" className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-[0.85rem] font-semibold text-[#080d19] transition hover:bg-white/90">Start Free Trial</Link>
         </div>
         <button type="button" className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] text-white/50 md:hidden" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle navigation">
@@ -735,11 +735,12 @@ function AquaScoreReveal() {
   };
 
   const currentColor = getScoreColor(score);
-  const glowOpacity = phase === "landed" ? 0.35 : phase === "dropping" ? 0.15 : 0.05;
+  const glowOpacity = phase === "landed" ? 0.4 : phase === "dropping" ? 0.15 : 0.05;
+  const ringScale = phase === "landed" ? "scale(1.015)" : "scale(1)";
 
   return (
     <div ref={containerRef} className="mx-auto max-w-4xl">
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0a0f1c]/80 p-8 md:p-12 backdrop-blur-xl overflow-hidden relative">
+      <div className="rounded-2xl border border-white/[0.06] bg-[#0a0f1c]/80 p-8 md:p-10 lg:p-12 backdrop-blur-xl overflow-hidden relative">
         {/* Ambient glow that shifts color */}
         <div className="absolute inset-0 pointer-events-none transition-all duration-1000" style={{ background: `radial-gradient(circle at 50% 40%, ${currentColor.replace("rgb", "rgba").replace(")", `,${glowOpacity})`)}, transparent 60%)` }} />
 
@@ -747,19 +748,21 @@ function AquaScoreReveal() {
           {/* Score ring */}
           <div className="flex flex-col items-center">
             <div className="relative">
-              <svg width="240" height="240" viewBox="0 0 200 200" className="transform -rotate-90">
-                {/* Background ring */}
-                <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
+              <svg width="240" height="240" viewBox="0 0 200 200" className="transform -rotate-90 transition-transform duration-700 ease-out" style={{ transform: `rotate(-90deg) ${ringScale}` }}>
+                {/* Background ring — double track for depth */}
+                <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="8" />
+                <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
                 {/* Progress ring */}
+                {/* Ring draw animation — cinematic */}
                 <circle
                   cx="100" cy="100" r="90" fill="none"
                   stroke={currentColor}
                   strokeWidth="6"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
-                  strokeDashoffset={strokeOffset}
-                  className="transition-all duration-100"
-                  style={{ filter: `drop-shadow(0 0 8px ${currentColor})` }}
+                  strokeDashoffset={phase === "waiting" ? circumference : strokeOffset}
+                  className="transition-[stroke-dashoffset] duration-[2800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  style={{ filter: `drop-shadow(0 0 ${phase === "landed" || phase === "recovered" ? "12px" : "6px"} ${currentColor})` }}
                 />
               </svg>
               {/* Score number */}
@@ -843,27 +846,27 @@ export function LandingPage() {
         <style>{`@keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-25px) scale(1.05); } 66% { transform: translate(-20px,15px) scale(0.95); } }
         @keyframes scanMockup { 0% { transform: translateY(100%); opacity: 0; } 50% { opacity: 0.04; } 100% { transform: translateY(-100%); opacity: 0; } }`}</style>
 
-        <div className="mx-auto grid max-w-[1280px] items-center gap-12 px-6 md:gap-16 md:grid-cols-[1fr_1.1fr]">
+        <div className="mx-auto grid max-w-[1280px] items-center gap-12 px-6 md:gap-12 lg:gap-16 md:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_1.1fr]">
           {/* Left */}
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.22, 0.61, 0.36, 1] }}>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-medium text-white/40 backdrop-blur-sm">
               <Droplets className="size-3 text-teal-400/60" /> The operating system for water treatment sales
             </div>
-            <h1 className="mt-7 font-[Sora,system-ui,sans-serif] text-[clamp(2.75rem,5.5vw,4.5rem)] font-extrabold leading-[1.06] tracking-[-0.02em]">
+            <h1 className="mt-7 font-[Sora,system-ui,sans-serif] text-[clamp(2.75rem,5vw,4.5rem)] font-extrabold leading-[1.06] tracking-[-0.02em]">
               Your reps shouldn't<br />have to sell<br /><span className="bg-gradient-to-r from-teal-300 to-teal-400 bg-clip-text text-transparent">without this.</span>
             </h1>
             <p className="mt-8 max-w-[480px] text-[1.05rem] leading-[1.9] text-white/30">
               AquaReport is the 21-step Demo Wizard that runs on a tablet at the kitchen table — real water data, live testing, AquaScore™, and built-in coaching that turns every in-home consultation into a close.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
-              <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[0.9rem] font-semibold text-[#080d19] shadow-[0_0_40px_rgba(255,255,255,0.06)] transition hover:bg-white/90">
+              <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 md:px-7 md:py-3.5 text-[0.9rem] font-semibold text-[#080d19] shadow-[0_0_40px_rgba(255,255,255,0.06)] transition hover:bg-white/90">
                 <Zap className="size-4" /> Start Free Trial
               </Link>
-              <a href="#preview" className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-6 py-3 text-[0.9rem] font-medium text-white/60 transition hover:bg-white/[0.03] hover:text-white/80">
+              <a href="#preview" className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-6 py-3 md:px-7 md:py-3.5 text-[0.9rem] font-medium text-white/60 transition hover:bg-white/[0.03] hover:text-white/80">
                 See It In Action
               </a>
             </div>
-            <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+            <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4 lg:gap-x-8">
               {([
                 [Smartphone, "Tablet-First", "Built for the table"],
                 [Zap, "21-Step Flow", "Psychology that closes"],
@@ -877,13 +880,17 @@ export function LandingPage() {
               ))}
             </div>
           </motion.div>
-          {/* Right — Mockup */}
-          <div className="hidden md:block"><HeroMockup /></div>
+          {/* Right — Mockup (visible tablet+) */}
+          <div className="hidden md:block md:scale-[0.92] lg:scale-100 origin-center"><HeroMockup /></div>
         </div>
       </section>
 
+      {/* ═══ Atmospheric transition ═══ */}
+      <div className="h-px bg-gradient-to-r from-transparent via-teal-400/[0.06] to-transparent" />
+      <div className="h-16 bg-gradient-to-b from-[#080d19] via-[#080d19]/50 to-transparent pointer-events-none -mb-16 relative z-10" />
+
       {/* ═══ STATS BAR ═══ */}
-      <section className="border-y border-white/[0.04] bg-white/[0.01] py-16">
+      <section className="border-y border-white/[0.04] bg-white/[0.01] py-12">
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-12 px-6 md:grid-cols-4">
           {([
             ["21", "guided steps", "Psychologically sequenced from rapport to close."],
@@ -903,7 +910,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ DEMO WIZARD — Cinematic Timeline ═══ */}
-      <section id="wizard" className="relative py-28 md:py-36">
+      <section id="wizard" className="relative py-24 md:py-32">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">The Demo Wizard</p>
@@ -917,16 +924,16 @@ export function LandingPage() {
           </Reveal>
 
           {/* Timeline */}
-          <div className="relative mt-20 ml-6 md:ml-0">
+          <div className="relative mt-16 ml-6 md:ml-0">
             <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-teal-400/20 via-teal-400/8 to-transparent md:left-6" />
-            <div className="space-y-10">
+            <div className="space-y-8">
               {WIZARD_PHASES.map((phase, i) => (
                 <Reveal key={phase.num} delay={i * 0.08}>
                   <div className="relative pl-16 md:pl-20">
                     <div className="absolute left-0 top-1 flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#0c1222] md:size-12">
                       <span className="font-[Sora,system-ui,sans-serif] text-xs font-bold text-teal-400/50 md:text-sm">{phase.num}</span>
                     </div>
-                    <div className="rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 transition-colors duration-300 hover:border-white/[0.08] md:p-6">
+                    <div className="rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 transition-colors duration-300 hover:border-white/[0.08] md:p-5 lg:p-6">
                       <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-teal-400/40">{phase.steps}</span>
                       <h3 className="mt-1.5 font-[Sora,system-ui,sans-serif] text-lg font-bold tracking-tight text-white md:text-xl">{phase.title}</h3>
                       <p className="mt-2.5 text-[0.875rem] leading-[1.8] text-white/30">{phase.desc}</p>
@@ -940,7 +947,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ FEATURES ═══ */}
-      <section id="features" className="py-28 md:py-36 border-t border-white/[0.04]">
+      <section id="features" className="py-24 md:py-30 border-t border-white/[0.04]">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">Platform</p>
@@ -967,8 +974,14 @@ export function LandingPage() {
       </section>
 
 
+      {/* ═══ Atmospheric depth ═══ */}
+      <div className="relative h-8 overflow-hidden pointer-events-none">
+        <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(45,212,191,0.02),transparent)]" />
+      </div>
+
       {/* ═══ FULL PLATFORM — Beyond the Demo ═══ */}
-      <section className="border-t border-white/[0.04] py-20 md:py-24">
+      <section className="border-t border-white/[0.04] py-16 md:py-20">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <div className="mx-auto mb-12 max-w-3xl text-center">
@@ -998,7 +1011,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ PREVIEW / LIVE DEMO ═══ */}
-      <section id="preview" className="py-28 md:py-36 border-t border-white/[0.04]">
+      <section id="preview" className="py-24 md:py-30 border-t border-white/[0.04]">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <div className="mx-auto mb-14 max-w-3xl text-center">
@@ -1016,12 +1029,18 @@ export function LandingPage() {
       </section>
 
 
+      {/* ═══ Atmospheric build-up to AquaScore ═══ */}
+      <div className="relative h-20 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#080d19]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_100%_at_50%_100%,rgba(45,212,191,0.04),transparent)]" />
+      </div>
+
       {/* ═══ AQUASCORE REVEAL — The Unforgettable Moment ═══ */}
-      <section className="relative overflow-hidden border-t border-white/[0.04] py-28 md:py-36">
+      <section className="relative overflow-hidden border-t border-white/[0.04] py-24 md:py-30">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(45,212,191,.05),transparent_50%)]" />
         <div className="mx-auto max-w-[1280px] px-6 relative">
           <Reveal>
-            <div className="mx-auto max-w-3xl text-center mb-16">
+            <div className="mx-auto max-w-3xl text-center mb-12">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">The Moment</p>
               <h2 className="mt-4 font-[Sora,system-ui,sans-serif] text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.06] tracking-tight text-white">
                 This is what changes the conversation.
@@ -1035,8 +1054,13 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ═══ Atmospheric cool-down ═══ */}
+      <div className="relative h-12 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(45,212,191,0.02)] to-transparent" />
+      </div>
+
       {/* ═══ COVERAGE MAP ═══ */}
-      <section id="coverage-map" className="border-t border-white/[0.04] py-28 md:py-36">
+      <section id="coverage-map" className="border-t border-white/[0.04] py-24 md:py-30">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">Infrastructure</p>
@@ -1111,7 +1135,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ TESTIMONIALS ═══ */}
-      <section className="border-t border-white/[0.04] py-28 md:py-36">
+      <section className="border-t border-white/[0.04] py-24 md:py-30">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">From the Field</p>
@@ -1120,7 +1144,7 @@ export function LandingPage() {
             </h2>
             <p className="mt-4 text-[0.85rem] text-white/25">From dealers using AquaReport in live consultations.</p>
           </Reveal>
-          <div className="mt-14 grid gap-5 md:grid-cols-3">
+          <div className="mt-12 grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
               <Reveal key={t.author} delay={i * 0.1}>
                 <div className="group flex flex-col rounded-2xl border border-white/[0.05] bg-white/[0.015] p-6 transition-colors duration-300 hover:border-white/[0.08] h-full">
@@ -1144,11 +1168,16 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ═══ Atmospheric shift ═══ */}
+      <div className="relative h-10 overflow-hidden pointer-events-none">
+        <div className="absolute inset-x-0 top-1/2 h-[1px] bg-gradient-to-r from-transparent via-teal-400/[0.04] to-transparent" />
+      </div>
+
       {/* ═══ PRICING ═══ */}
       <PricingSection />
 
       {/* ═══ RESOURCES ═══ */}
-      <section className="py-28 md:py-36 border-t border-white/[0.04]">
+      <section className="py-22 md:py-28 border-t border-white/[0.04]">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">Resources</p>
@@ -1180,7 +1209,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ FAQ ═══ */}
-      <section id="faq" className="border-t border-white/[0.04] py-28 md:py-36">
+      <section id="faq" className="border-t border-white/[0.04] py-22 md:py-28">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <div className="text-center">
@@ -1197,7 +1226,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ FINAL CTA ═══ */}
-      <section className="py-28 md:py-36">
+      <section className="py-22 md:py-28">
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <div className="mx-auto max-w-[860px] rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-16 text-center md:px-12 md:py-20">
