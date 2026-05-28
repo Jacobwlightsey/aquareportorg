@@ -12,7 +12,6 @@ import {
   ChevronUp,
   Droplets,
   ExternalLink,
-  Globe2,
   Loader2,
   MapPin,
   Monitor,
@@ -497,6 +496,95 @@ function PricingSection() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   COVERAGE MAP — SVG dot-density map of North America
+   ═══════════════════════════════════════════════════════════════ */
+function CoverageMapVisual() {
+  // City positions calculated from real lat/lon coordinates, viewBox 0 0 800 460
+  // [x, y, type, label?, major?]
+  const cities: [number, number, string, string?, boolean?][] = [
+    // Canada
+    [258,112,"ca"],[190,220,"ca","Vancouver",true],[265,186,"ca"],[261,206,"ca","Calgary"],
+    [318,197,"ca"],[334,210,"ca"],[392,214,"ca","Winnipeg"],[453,226,"ca"],
+    [528,264,"ca","Toronto",true],[557,250,"ca"],[573,249,"ca","Montréal",true],
+    [592,239,"ca"],[628,246,"ca"],[651,256,"ca","Halifax"],[735,233,"ca"],
+    // US — West
+    [197,234,"us","Seattle",true],[194,251,"us"],[196,313,"us","San Francisco",true],
+    [229,343,"us","Los Angeles",true],[237,354,"us"],[245,265,"us"],[278,288,"us"],
+    [253,325,"us"],[276,348,"us","Phoenix"],[332,297,"us","Denver",true],
+    [320,333,"us"],[321,360,"us"],
+    // US — Central
+    [421,254,"us","Minneapolis"],[419,281,"us"],[411,301,"us"],[389,330,"us"],
+    [394,352,"us","Dallas",true],[388,372,"us"],[381,379,"us"],
+    [405,376,"us","Houston"],[446,374,"us"],
+    // US — Great Lakes
+    [468,279,"us","Chicago",true],[463,268,"us"],[476,296,"us"],
+    [445,306,"us"],[500,276,"us","Detroit"],[510,283,"us"],
+    [501,296,"us"],[524,292,"us"],
+    // US — South
+    [471,324,"us","Nashville"],[447,333,"us"],[471,346,"us"],
+    [490,344,"us","Atlanta",true],[445,356,"us"],
+    // US — Southeast
+    [518,333,"us"],[535,328,"us"],[525,352,"us"],
+    [510,372,"us"],[504,391,"us"],[513,386,"us"],[522,408,"us","Miami",true],
+    // US — Northeast
+    [548,303,"us","DC",true],[555,292,"us"],[562,289,"us"],
+    [571,282,"us","NYC",true],[581,275,"us"],[593,270,"us","Boston",true],
+    [599,258,"us"],[544,314,"us"],
+    // Alaska / Hawaii insets
+    [75,395,"us"],[70,408,"us"],[90,412,"us"],[75,442,"us"],
+  ];
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-[#1e293b] bg-[#060b18]">
+      <svg viewBox="0 0 800 460" className="h-auto w-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="mapDots" width="16" height="16" patternUnits="userSpaceOnUse">
+            <circle cx="8" cy="8" r="0.5" fill="rgba(45,212,191,0.1)" />
+          </pattern>
+          <radialGradient id="usGlow" cx="55%" cy="68%" r="35%">
+            <stop offset="0%" stopColor="rgba(45,212,191,0.1)" />
+            <stop offset="100%" stopColor="transparent" />
+          </radialGradient>
+          <radialGradient id="caGlow" cx="55%" cy="30%" r="30%">
+            <stop offset="0%" stopColor="rgba(94,234,212,0.07)" />
+            <stop offset="100%" stopColor="transparent" />
+          </radialGradient>
+          <filter id="cityGlow"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        </defs>
+        <rect width="800" height="460" fill="url(#mapDots)" />
+        <rect width="800" height="460" fill="url(#usGlow)" />
+        <rect width="800" height="460" fill="url(#caGlow)" />
+        {/* Alaska inset outline */}
+        <rect x="50" y="378" width="65" height="48" rx="6" fill="none" stroke="rgba(45,212,191,0.08)" strokeWidth="0.5" strokeDasharray="3 3" />
+        <text x="53" y="390" fill="rgba(255,255,255,0.25)" fontSize="7" fontFamily="Inter,system-ui">AK</text>
+        <text x="68" y="439" fill="rgba(255,255,255,0.25)" fontSize="7" fontFamily="Inter,system-ui">HI</text>
+        {/* City dots */}
+        {cities.map(([x, y, type, label, major], i) => (
+          <g key={i}>
+            {major && <circle cx={x} cy={y} r={8} fill={type === "us" ? "rgba(45,212,191,0.06)" : "rgba(94,234,212,0.05)"} />}
+            <circle cx={x} cy={y} r={major ? 3.5 : 2} fill={type === "us" ? "rgba(45,212,191,0.85)" : "rgba(94,234,212,0.75)"} filter={major ? "url(#cityGlow)" : undefined} />
+            {label && (
+              <text x={x > 520 ? x - 7 : x + 7} y={y + 3} textAnchor={x > 520 ? "end" : "start"} fill="rgba(255,255,255,0.4)" fontSize={major ? "9" : "8"} fontFamily="Inter,system-ui">{label}</text>
+            )}
+          </g>
+        ))}
+        {/* Dividing line hint between US/CA */}
+        <line x1="180" y1="228" x2="540" y2="262" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" strokeDasharray="6 6" />
+      </svg>
+      {/* Country labels (HTML for emoji support) */}
+      <div className="pointer-events-none absolute left-[48%] top-[38%] -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-teal-300/15 bg-[#0b1120]/70 px-3 py-1 backdrop-blur-sm">
+        <span className="text-xs">🇨🇦</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-teal-300/70">Canada</span>
+      </div>
+      <div className="pointer-events-none absolute left-[52%] top-[65%] -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-teal-400/15 bg-[#0b1120]/70 px-3 py-1 backdrop-blur-sm">
+        <span className="text-xs">🇺🇸</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400/70">United States</span>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    NAV
    ═══════════════════════════════════════════════════════════════ */
 function LandingNav() {
@@ -571,10 +659,10 @@ export function LandingPage() {
             <h1 className="mt-6 font-[Sora,system-ui,sans-serif] text-[clamp(2.5rem,5.5vw,4.5rem)] font-extrabold leading-[1.02]">
               Close more deals<br />at every<br /><span className="bg-gradient-to-r from-[#e0f7fa] to-teal-400 bg-clip-text text-transparent">kitchen table.</span>
             </h1>
-            <p className="mt-6 max-w-[540px] text-lg leading-relaxed text-slate-400">
+            <p className="mt-7 max-w-[540px] text-lg leading-[1.75] text-slate-400">
               AquaReport is the 21-step Demo Wizard your reps run on a tablet — real water data, live testing, AquaScore™, and built-in coaching that turns "let me think about it" into "let's get started."
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-9 flex flex-wrap gap-4">
               <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-400 to-teal-300 px-7 py-3 text-[0.95rem] font-semibold text-[#0b1120] shadow-[0_10px_60px_-10px_rgba(45,212,191,0.35)] transition hover:opacity-90">
                 <Zap className="size-4" /> Start Free Trial
               </Link>
@@ -583,7 +671,7 @@ export function LandingPage() {
                 See It In Action
               </a>
             </div>
-            <div className="mt-10 flex flex-wrap gap-6">
+            <div className="mt-12 flex flex-wrap gap-7">
               {[
                 { icon: <Smartphone className="size-3.5" />, title: "Tablet First", sub: "Built for in-home demos" },
                 { icon: <Zap className="size-3.5" />, title: "21-Step Flow", sub: "Psychology that closes" },
@@ -605,8 +693,8 @@ export function LandingPage() {
       </section>
 
       {/* ═══ STATS BAR ═══ */}
-      <section className="border-y border-[#1e293b] bg-[rgba(19,28,46,0.3)] py-10">
-        <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-8 px-6 md:grid-cols-4">
+      <section className="border-y border-[#1e293b] bg-[rgba(19,28,46,0.3)] py-14">
+        <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-10 px-6 md:grid-cols-4">
           {[
             { num: "21", label: "guided steps", desc: "Psychology-based flow from rapport to close." },
             { num: "2–3×", label: "close rate lift", desc: "Personalized demos convert dramatically better." },
@@ -629,18 +717,18 @@ export function LandingPage() {
           <h2 className="font-[Sora,system-ui,sans-serif] text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[1.05] text-white">
             A 21-step kitchen-table flow<br />engineered to <span className="bg-gradient-to-r from-[#e0f7fa] to-teal-400 bg-clip-text text-transparent">close.</span>
           </h2>
-          <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-slate-400">
+          <p className="mt-6 max-w-[680px] text-lg leading-relaxed text-slate-400">
             Most demos meander. AquaReport runs reps through six deliberate phases — building rapport, creating urgency, and handling every objection before it leaves the homeowner's mouth.
           </p>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {WIZARD_PHASES.map((p) => (
               <div key={p.num} className="rounded-[0.875rem] border border-[#1e293b] bg-[#131c2e] p-7 transition hover:border-teal-400/30">
                 <div className="flex items-start justify-between">
                   <span className="font-[Sora,system-ui,sans-serif] text-5xl font-extrabold text-teal-400 opacity-30">{p.num}</span>
                   <span className="mt-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{p.steps}</span>
                 </div>
-                <h3 className="mt-2 font-[Sora,system-ui,sans-serif] text-xl font-bold text-white">{p.title}</h3>
-                <p className="mt-2 text-[0.9rem] leading-relaxed text-slate-400">{p.desc}</p>
+                <h3 className="mt-3 font-[Sora,system-ui,sans-serif] text-xl font-bold text-white">{p.title}</h3>
+                <p className="mt-3 text-[0.9rem] leading-[1.7] text-slate-400">{p.desc}</p>
               </div>
             ))}
           </div>
@@ -654,15 +742,15 @@ export function LandingPage() {
           <h2 className="font-[Sora,system-ui,sans-serif] text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[1.05] text-white">
             Your best rep's playbook, in<br /><span className="bg-gradient-to-r from-[#e0f7fa] to-teal-400 bg-clip-text text-transparent">every rep's hands.</span>
           </h2>
-          <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-slate-400">
+          <p className="mt-6 max-w-[680px] text-lg leading-relaxed text-slate-400">
             Every feature in AquaReport exists for one reason: to make the kitchen-table demo close. No fluff, no generic CRM bloat — just the tools that move a homeowner from "let me think about it" to signed.
           </p>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
               <div key={f.title} className="rounded-[0.875rem] border border-[#1e293b] bg-[#131c2e] p-6 transition hover:border-teal-400/30">
                 <FeatureIcon icon={f.icon} />
-                <h3 className="mt-4 font-[Sora,system-ui,sans-serif] text-base font-bold text-white">{f.title}</h3>
-                <p className="mt-2 text-[0.85rem] leading-relaxed text-slate-400">{f.desc}</p>
+                <h3 className="mt-5 font-[Sora,system-ui,sans-serif] text-[0.95rem] font-bold text-white">{f.title}</h3>
+                <p className="mt-2.5 text-[0.875rem] leading-relaxed text-slate-400">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -692,12 +780,12 @@ export function LandingPage() {
           <h2 className="font-[Sora,system-ui,sans-serif] text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[1.05] text-white">
             Now closing deals in <span className="bg-gradient-to-r from-[#e0f7fa] to-teal-400 bg-clip-text text-transparent">North America.</span>
           </h2>
-          <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-slate-400">
+          <p className="mt-6 max-w-[680px] text-lg leading-relaxed text-slate-400">
             Same AquaScore. Same Demo Wizard. Same dealer tools. Localized water data, regulatory standards, and terminology for every market you sell in.
           </p>
 
           {/* Coverage stats card */}
-          <div className="mt-12 rounded-[0.875rem] border border-[#1e293b] bg-[#131c2e] p-8">
+          <div className="mt-14 rounded-[0.875rem] border border-[#1e293b] bg-[#131c2e] p-8">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-teal-400">NORTH AMERICA COVERAGE</p>
@@ -709,13 +797,7 @@ export function LandingPage() {
                 <span className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-sm bg-slate-400" /> CA — supported</span>
               </div>
             </div>
-            {/* Map placeholder */}
-            <div className="flex h-64 items-center justify-center rounded-lg bg-[radial-gradient(ellipse_at_center,rgba(45,212,191,0.08),transparent)]">
-              <div className="flex items-center gap-3 text-slate-500">
-                <Globe2 className="size-8 text-teal-400/40" />
-                <span className="text-lg font-semibold">US & Canada Interactive Coverage</span>
-              </div>
-            </div>
+            <CoverageMapVisual />
             <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
               {[
                 ["50", "US States"],
@@ -800,14 +882,14 @@ export function LandingPage() {
           <h2 className="font-[Sora,system-ui,sans-serif] text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[1.05] text-white">
             Built by dealers, for the way<br />water <span className="bg-gradient-to-r from-[#e0f7fa] to-teal-400 bg-clip-text text-transparent">actually sells.</span>
           </h2>
-          <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-slate-400">
+          <p className="mt-6 max-w-[680px] text-lg leading-relaxed text-slate-400">
             The first sales tool built specifically for water treatment dealers — not a generic CRM, not enterprise bloat. A purpose-built closing machine for in-home consultations.
           </p>
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
             {TESTIMONIALS.map((t) => (
               <div key={t.author} className="rounded-[0.875rem] border border-[#1e293b] bg-[#131c2e] p-7">
                 <span className="block font-[Sora,system-ui,sans-serif] text-4xl leading-none text-teal-400 opacity-60">❝</span>
-                <p className="mt-4 text-[0.95rem] leading-relaxed text-slate-400">"{t.text}"</p>
+                <p className="mt-4 text-[0.95rem] leading-[1.75] text-slate-400">"{t.text}"</p>
                 <div className="mt-5">
                   <p className="font-semibold text-white">{t.author}</p>
                   <p className="text-xs text-slate-500">{t.role}</p>
@@ -828,10 +910,10 @@ export function LandingPage() {
           <h2 className="font-[Sora,system-ui,sans-serif] text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[1.05] text-white">
             Sell smarter at the <span className="bg-gradient-to-r from-[#e0f7fa] to-teal-400 bg-clip-text text-transparent">kitchen table.</span>
           </h2>
-          <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-slate-400">
+          <p className="mt-6 max-w-[680px] text-lg leading-relaxed text-slate-400">
             Tactical guides for dealer owners and sales managers who want every rep performing like their best closer.
           </p>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {PILLAR_RESOURCES.map((r) => (
               <Link key={r.to} to={r.to} className="group rounded-[0.875rem] border border-[#1e293b] bg-[#131c2e] p-6 transition hover:border-teal-400/30">
                 <div className="flex items-start justify-between">
@@ -858,7 +940,7 @@ export function LandingPage() {
               Straight answers for <span className="bg-gradient-to-r from-[#e0f7fa] to-teal-400 bg-clip-text text-transparent">dealer owners.</span>
             </h2>
           </div>
-          <div className="mx-auto mt-12 max-w-3xl rounded-2xl border border-white/10 bg-slate-950/70 px-6 shadow-2xl backdrop-blur">
+          <div className="mx-auto mt-14 max-w-3xl rounded-2xl border border-white/10 bg-slate-950/70 px-6 shadow-2xl backdrop-blur">
             {HOMEPAGE_FAQS.map((faq, i) => <FAQItem key={i} question={faq.question} answer={faq.answer} />)}
           </div>
         </div>
