@@ -1,5 +1,5 @@
 import { useAction, useMutation, useQuery } from "convex/react";
-import { Copy, FileText, Loader2, Megaphone, Sparkles, Swords, Trash2 } from "lucide-react";
+import { Copy, FileText, Loader2, Megaphone, Printer, Sparkles, Swords, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { api } from "../../convex/_generated/api";
 import { getCountryText } from "@/lib/i18n";
+import { DoorHangerPreview } from "@/components/marketing/DoorHangerPreview";
 
 /** Royalty-free stock photos for water treatment social posts (Unsplash). */
 const STOCK_WATER_PHOTOS = [
@@ -49,7 +50,6 @@ export function MarketingPage() {
   const createContent = useMutation(api.marketing.createContent);
   const deleteContent = useMutation(api.marketing.deleteContent);
   const generateSocial = useAction(api.marketing.generateSocialPost);
-  const generateDoorHanger = useAction(api.marketing.generateDoorHanger);
   const createCompetitor = useMutation(api.marketing.createCompetitorTemplate);
 
   const [generating, setGenerating] = useState(false);
@@ -59,7 +59,6 @@ export function MarketingPage() {
   const [showCompetitor, setShowCompetitor] = useState(false);
 
   const [socialForm, setSocialForm] = useState({ platform: "facebook", topic: "" });
-  const [doorHangerForm, setDoorHangerForm] = useState({ zip: "" });
   const [competitorForm, setCompetitorForm] = useState({
     competitorName: "",
     competitorType: "pitcher_filter",
@@ -79,18 +78,6 @@ export function MarketingPage() {
       setGenerated(result);
     } catch {
       toast.error("Failed to generate content");
-    }
-    setGenerating(false);
-  };
-
-  const handleGenerateDoorHanger = async () => {
-    if (!doorHangerForm.zip) return;
-    setGenerating(true);
-    try {
-      const result = await generateDoorHanger({ zip: doorHangerForm.zip });
-      setGenerated(result);
-    } catch {
-      toast.error("Failed to generate");
     }
     setGenerating(false);
   };
@@ -432,114 +419,27 @@ export function MarketingPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Door Hanger Dialog */}
+      {/* Door Hanger Dialog — auto-populated from company info */}
       <Dialog open={showDoorHanger} onOpenChange={setShowDoorHanger}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Generate Door Hanger</DialogTitle>
+            <DialogTitle className="flex items-center gap-1.5">
+              <Printer className="size-4" /> Door Hanger Preview
+            </DialogTitle>
             <DialogDescription>
-              Create localized marketing content for a {t.zipLabel.toLowerCase()}.
+              Print-ready 4.25″ × 11″ — auto-filled with your company info.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t.zipLabel} *</Label>
-              <Input
-                value={doorHangerForm.zip}
-                onChange={(e) =>
-                  setDoorHangerForm({ ...doorHangerForm, zip: e.target.value })
-                }
-                placeholder="75001"
-              />
-            </div>
-            <Button
-              onClick={handleGenerateDoorHanger}
-              disabled={generating || !doorHangerForm.zip}
-              className="w-full"
-            >
-              {generating ? (
-                <Loader2 className="size-4 mr-1 animate-spin" />
-              ) : (
-                <FileText className="size-4 mr-1" />
-              )}
-              {generating ? "Generating..." : "Generate"}
-            </Button>
-            {generated && (
-              <div className="space-y-4">
-                {/* Visual Door Hanger Preview */}
-                <div id="door-hanger-preview" className="relative mx-auto w-[280px] rounded-2xl border-2 border-cyan-500/30 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-5 shadow-xl overflow-hidden">
-                  {/* Hole cutout */}
-                  <div className="mx-auto w-10 h-10 rounded-full border-2 border-white/20 bg-black/40 mb-3" />
-                  {/* Company branding */}
-                  <div className="text-center mb-4">
-                    <p className="text-[10px] uppercase tracking-widest text-cyan-400/70 font-bold">Free Water Quality Report</p>
-                    <h3 className="text-lg font-black text-white leading-tight mt-1">Is Your Water Safe?</h3>
-                    <p className="text-xs text-white/60 mt-1">ZIP {doorHangerForm.zip}</p>
-                  </div>
-                  {/* Content from AI */}
-                  <div className="text-[11px] text-white/80 leading-relaxed whitespace-pre-wrap max-h-44 overflow-y-auto scrollbar-thin">
-                    {generated.slice(0, 400)}
-                    {generated.length > 400 && "…"}
-                  </div>
-                  {/* CTA */}
-                  <div className="mt-4 rounded-lg bg-cyan-500 py-2.5 text-center">
-                    <p className="text-xs font-bold text-white">Scan for Your Free Report →</p>
-                  </div>
-                  {/* Decorative watermark */}
-                  <div className="absolute -bottom-6 -right-6 size-24 rounded-full bg-cyan-500/5 pointer-events-none" />
-                </div>
-
-                {/* Raw text editor */}
-                <Textarea
-                  value={generated}
-                  onChange={(e) => setGenerated(e.target.value)}
-                  rows={6}
-                  className="text-xs"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(generated);
-                      toast.success("Copied!");
-                    }}
-                  >
-                    <Copy className="size-3 mr-1" /> Copy
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      // Print-friendly version
-                      const printWin = window.open("", "_blank");
-                      if (printWin) {
-                        const el = document.getElementById("door-hanger-preview");
-                        printWin.document.write(`<html><head><title>Door Hanger</title><style>body{display:flex;justify-content:center;padding:40px;background:#fff;} .hanger{width:280px;border:2px solid #06b6d4;border-radius:16px;padding:20px;text-align:center;font-family:system-ui;} .hole{width:40px;height:40px;border-radius:50%;border:2px solid #ccc;margin:0 auto 12px;} h3{font-size:18px;margin:8px 0;} .cta{background:#06b6d4;color:#fff;padding:10px;border-radius:8px;margin-top:16px;font-weight:bold;font-size:12px;}</style></head><body><div class="hanger"><div class="hole"></div><p style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#06b6d4">Free Water Quality Report</p><h3>Is Your Water Safe?</h3><p style="font-size:11px;color:#666;margin:12px 0;white-space:pre-wrap">${generated.replace(/"/g, "&quot;").replace(/</g, "&lt;")}</p><div class="cta">Scan for Your Free Report →</div></div></body></html>`);
-                        printWin.document.close();
-                        printWin.print();
-                      }
-                    }}
-                  >
-                    <FileText className="size-3 mr-1" /> Print
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      saveContent(
-                        `Door Hanger — ${doorHangerForm.zip}`,
-                        generated,
-                        "door_hanger"
-                      );
-                      setShowDoorHanger(false);
-                    }}
-                  >
-                    Save to Library
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          {company ? (
+            <DoorHangerPreview
+              companyName={company.name}
+              companyPhone={company.phone || "(___) ___-____"}
+              companyWebsite={company.website}
+              companyLogoUrl={company.logoUrl}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">Loading company info…</p>
+          )}
         </DialogContent>
       </Dialog>
 
