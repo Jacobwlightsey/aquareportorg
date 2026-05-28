@@ -81,10 +81,10 @@ export const zipWaterReport = action({
 
 // Get water report for a specific utility by PWSID
 export const getWaterReport = action({
-  args: { pwsid: v.string() },
-  handler: async (_ctx, { pwsid }) => {
-    // Canadian PWSIDs start with "CA-" (e.g. "CA-ON-TORONTO")
-    if (pwsid.startsWith("CA-")) {
+  args: { pwsid: v.string(), country: v.optional(v.string()) },
+  handler: async (_ctx, { pwsid, country }) => {
+    // Route to Canadian RPC when country is CA or PWSID looks Canadian
+    if (country === "CA" || pwsid.startsWith("CA-")) {
       const data = await supabaseRpc("ca_get_water_report", { p_pwsid: pwsid });
       const report = normalizeReportData(data);
       if (report?.utility_info?.utility_name) return report;

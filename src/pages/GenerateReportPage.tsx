@@ -90,12 +90,12 @@ export function GenerateReportPage() {
   };
 
   const fetchReport = useCallback(
-    async (pwsid: string) => {
+    async (pwsid: string, country?: string) => {
       setLoading(true);
       setError("");
       setReport(null);
       try {
-        const data = await getWaterReport({ pwsid });
+        const data = await getWaterReport({ pwsid, country });
         if (data) {
           // Filter out non-contaminant rule entries before showing the sales preview.
           const JUNK = ["reverse osmosis", "how your levels compare", "surface water treatment rule",
@@ -147,7 +147,7 @@ export function GenerateReportPage() {
       if (data.length === 1) {
         setSelectedUtility(data[0]);
         setStep(3);
-        await fetchReport(data[0].pwsid);
+        await fetchReport(data[0].pwsid, data[0].country);
       } else {
         setUtilities(data);
         setStep(2);
@@ -164,7 +164,7 @@ export function GenerateReportPage() {
     async (util: UtilityOption) => {
       setSelectedUtility(util);
       setStep(3);
-      await fetchReport(util.pwsid);
+      await fetchReport(util.pwsid, (util as any).country);
     },
     [fetchReport]
   );

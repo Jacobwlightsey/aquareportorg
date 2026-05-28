@@ -41,6 +41,7 @@ interface UtilityOption {
   utility_name: string;
   city: string;
   state: string;
+  country?: string;
   population_served: number;
   water_source: string;
 }
@@ -56,6 +57,7 @@ function normalizeUtilityOption(raw: any): UtilityOption | null {
     state: String(raw.state ?? raw.State ?? ""),
     population_served: Number(raw.population_served ?? raw.populationServed ?? raw.population ?? 0) || 0,
     water_source: String(raw.water_source ?? raw.waterSource ?? raw.source ?? "unknown"),
+    country: raw.country ? String(raw.country) : undefined,
   };
 }
 
@@ -71,6 +73,7 @@ function utilityFromReport(report: WaterReport, fallback?: UtilityOption | null)
     utility_name: utility?.utility_name || report.utility_info?.utility_name || "Unknown Utility",
     city: utility?.city || report.utility_info?.city || "",
     state: utility?.state || report.utility_info?.state || "",
+    country: utility?.country || (report.utility_info as any)?.country || (report as any).country || undefined,
     population_served: finiteNumber(
       utility?.population_served || report.utility_info?.population_served,
     ),
@@ -165,7 +168,7 @@ export function CreateCustomerPage() {
   const fetchReport = async (utility: UtilityOption) => {
     setLoading(true);
     try {
-      const result = await getWaterReport({ pwsid: utility.pwsid });
+      const result = await getWaterReport({ pwsid: utility.pwsid, country: utility.country });
       if (!result) {
         setError("No report data available for this water system.");
         return;
