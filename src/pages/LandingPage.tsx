@@ -89,9 +89,9 @@ const FEATURES: { title: string; desc: string; icon: string }[] = [
 ];
 
 const TESTIMONIALS = [
-  { text: "The AquaScore reveal changed the conversation completely. Homeowners stop questioning if they need treatment and start asking which system. Our close rate improved noticeably in the first quarter.", author: "Marcus T.", role: "Dealer Owner", location: "Dallas–Fort Worth, TX", metric: "Improved close rate" },
-  { text: "We onboarded new reps and within days they were running demos that looked like they'd been selling for a decade. The coaching prompts do the heavy lifting — the learning curve practically disappears.", author: "Jessica R.", role: "Sales Director", location: "Phoenix, AZ", metric: "Faster onboarding" },
-  { text: "The spouse review link changed everything. We used to lose so many deals to 'I need to talk to my husband.' Now they see the same data, same AquaScore. Follow-up conversions improved dramatically.", author: "Derek H.", role: "General Manager", location: "Charlotte, NC", metric: "Fewer lost deals" },
+  { text: "The AquaScore reveal changed the conversation completely. Homeowners stop questioning if they need treatment and start asking which system. Our close rate improved noticeably in the first quarter.", author: "Marcus T.", role: "Dealer Owner", location: "Dallas–Fort Worth, TX", metric: "Improved close rate", dealerType: "Residential Water Treatment", demosPerWeek: "15–20 demos/week", timeUsing: "Using AquaReport since Q1" },
+  { text: "We onboarded new reps and within days they were running demos that looked like they'd been selling for a decade. The coaching prompts do the heavy lifting — the learning curve practically disappears.", author: "Jessica R.", role: "Sales Director", location: "Phoenix, AZ", metric: "Faster onboarding", dealerType: "Multi-Location Dealer", demosPerWeek: "30+ demos/week", timeUsing: "3 months in" },
+  { text: "The spouse review link changed everything. We used to lose so many deals to 'I need to talk to my husband.' Now they see the same data, same AquaScore. Follow-up conversions improved dramatically.", author: "Derek H.", role: "General Manager", location: "Charlotte, NC", metric: "Fewer lost deals", dealerType: "Residential Water Systems", demosPerWeek: "10–15 demos/week", timeUsing: "Using AquaReport since launch" },
 ];
 
 const HOMEPAGE_FAQS = [
@@ -134,7 +134,7 @@ function useMouseGlow() {
    ═══════════════════════════════════════════════════════════════ */
 function Reveal({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   return (
-    <motion.div className={className} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94], delay }}>
+    <motion.div className={className} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.85, ease: [0.22, 0.61, 0.36, 1], delay }}>
       {children}
     </motion.div>
   );
@@ -340,7 +340,7 @@ function EnterpriseContactDialog({ children, source }: { children: ReactNode; so
 function HeroMockup() {
   const barHeights = useMemo(() => [40,58,45,72,55,80,48,65,85,52,70,90,55,68,78,50,75,60,82,48], []);
   return (
-    <motion.div className="relative" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}>
+    <motion.div className="relative" initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.4, ease: [0.22, 0.61, 0.36, 1], delay: 0.5 }}>
       <div className="absolute -inset-6 rounded-3xl bg-gradient-to-b from-teal-500/[0.07] via-teal-500/[0.02] to-transparent blur-2xl" />
       <div className="relative rounded-2xl border border-white/[0.06] bg-[#0a101e]/95 shadow-[0_30px_80px_-20px_rgba(0,0,0,.6)] backdrop-blur-xl overflow-hidden">
         {/* Window chrome */}
@@ -451,6 +451,7 @@ function HeroMockup() {
    COVERAGE MAP — Animated intelligence infrastructure
    ═══════════════════════════════════════════════════════════════ */
 function CoverageMapVisual() {
+  /* City nodes positioned on the map */
   const cities: [number, number, string, string?, boolean?][] = [
     [258,112,"ca"],[190,220,"ca","Vancouver",true],[265,186,"ca"],[261,206,"ca","Calgary"],
     [318,197,"ca"],[334,210,"ca"],[392,214,"ca","Winnipeg"],[453,226,"ca"],
@@ -476,8 +477,16 @@ function CoverageMapVisual() {
     [394,352,405,376],[332,297,421,254],[196,313,229,343],
   ];
 
+  /* Simplified geographic outlines for US and Canada */
+  const usOutline = "M195,233 C192,248 190,268 191,285 C192,302 194,318 204,335 C212,348 222,355 232,360 L245,364 C265,368 290,372 315,375 C345,378 370,382 395,386 C415,390 435,393 455,392 C470,390 485,392 498,396 C510,402 518,412 524,420 L528,416 C530,408 527,396 522,386 C518,375 516,364 518,352 C524,336 534,322 545,312 C553,304 560,296 568,290 C576,284 584,278 590,272 C596,266 600,258 598,250 C596,245 592,244 586,246 L575,250 C555,254 535,258 518,262 C505,260 492,258 480,256 C465,253 450,250 435,248 C420,246 405,244 390,243 C375,242 360,244 345,246 C330,248 315,248 300,246 C285,244 270,241 255,238 C240,236 225,234 210,233 C202,233 197,233 195,233 Z";
+  const caOutline = "M185,220 C183,205 184,185 190,165 C196,145 205,128 218,115 C235,105 260,98 290,94 C325,90 365,88 405,92 C445,96 485,105 520,118 C555,132 585,148 610,165 C632,180 650,196 660,214 C668,228 670,240 665,250 C660,258 652,262 642,264 L632,262 C622,258 610,254 598,250 C588,248 578,250 568,254 C558,258 548,262 536,264 C525,262 515,258 505,256 C495,258 485,255 475,252 C460,249 445,247 430,246 C415,244 400,243 385,243 C370,244 355,246 340,248 C325,248 310,246 295,244 C280,242 265,239 250,236 C235,234 220,230 205,226 C195,224 188,222 185,220 Z";
+  /* Alaska simplified outline */
+  const akOutline = "M58,398 C62,392 70,388 80,386 C90,385 100,388 108,392 C112,396 114,402 112,408 C110,414 105,418 98,420 L95,425 C92,430 86,434 80,436 C74,438 68,436 64,432 C60,428 56,422 55,416 C55,410 56,404 58,398 Z";
+  /* Hawaii simplified */
+  const hiOutline = "M68,445 C72,443 78,442 84,443 C88,444 92,447 93,450 C92,453 88,455 84,456 C80,456 76,454 72,452 C69,450 67,448 68,445 Z";
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#050910]">
+    <div className="relative overflow-hidden rounded-2xl border border-white/[0.05] bg-[#050910]">
       <style>{`
         @keyframes nodePulse { 0%,100% { r: 3.5; opacity: 0.8; } 50% { r: 5; opacity: 1; } }
         @keyframes scanLine { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
@@ -486,37 +495,49 @@ function CoverageMapVisual() {
       `}</style>
       <svg viewBox="0 0 800 460" className="h-auto w-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <pattern id="mapGrid" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="0.4" fill="rgba(45,212,191,0.06)" /></pattern>
-          <radialGradient id="usG" cx="55%" cy="68%" r="35%"><stop offset="0%" stopColor="rgba(45,212,191,0.08)" /><stop offset="100%" stopColor="transparent" /></radialGradient>
-          <radialGradient id="caG" cx="55%" cy="30%" r="30%"><stop offset="0%" stopColor="rgba(94,234,212,0.05)" /><stop offset="100%" stopColor="transparent" /></radialGradient>
-          <linearGradient id="scanG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="transparent" /><stop offset="50%" stopColor="rgba(45,212,191,0.04)" /><stop offset="100%" stopColor="transparent" /></linearGradient>
+          <pattern id="mapGrid" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="0.3" fill="rgba(45,212,191,0.04)" /></pattern>
+          <radialGradient id="usGlow" cx="50%" cy="65%" r="35%"><stop offset="0%" stopColor="rgba(45,212,191,0.06)" /><stop offset="100%" stopColor="transparent" /></radialGradient>
+          <radialGradient id="caGlow" cx="50%" cy="30%" r="35%"><stop offset="0%" stopColor="rgba(94,234,212,0.04)" /><stop offset="100%" stopColor="transparent" /></radialGradient>
+          <linearGradient id="scanG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="transparent" /><stop offset="50%" stopColor="rgba(45,212,191,0.03)" /><stop offset="100%" stopColor="transparent" /></linearGradient>
           <filter id="nodeGlow"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+          <filter id="landGlow"><feGaussianBlur stdDeviation="8" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
         </defs>
+
+        {/* Background grid */}
+        <rect width="800" height="460" fill="#050910" />
         <rect width="800" height="460" fill="url(#mapGrid)" />
-        <rect width="800" height="460" fill="url(#usG)" />
-        <rect width="800" height="460" fill="url(#caG)" />
+
+        {/* Country landmass fills */}
+        <path d={caOutline} fill="rgba(94,234,212,0.04)" stroke="rgba(94,234,212,0.08)" strokeWidth="0.8" filter="url(#landGlow)" />
+        <path d={usOutline} fill="rgba(45,212,191,0.05)" stroke="rgba(45,212,191,0.10)" strokeWidth="0.8" filter="url(#landGlow)" />
+        <path d={akOutline} fill="rgba(45,212,191,0.04)" stroke="rgba(45,212,191,0.08)" strokeWidth="0.6" />
+        <path d={hiOutline} fill="rgba(45,212,191,0.04)" stroke="rgba(45,212,191,0.08)" strokeWidth="0.6" />
+
+        {/* Ambient glow over landmass */}
+        <rect width="800" height="460" fill="url(#usGlow)" />
+        <rect width="800" height="460" fill="url(#caGlow)" />
+
         {/* Scan line */}
-        <rect width="200" height="460" fill="url(#scanG)" style={{ animation: "scanLine 12s linear infinite" }} />
-        {/* Connections */}
-        {connections.map(([x1,y1,x2,y2], i) => (<line key={`c${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(45,212,191,0.04)" strokeWidth="0.5" />))}
-        {/* Alaska inset */}
-        <rect x="50" y="378" width="65" height="48" rx="6" fill="none" stroke="rgba(45,212,191,0.05)" strokeWidth="0.5" strokeDasharray="3 3" />
-        <text x="53" y="389" fill="rgba(255,255,255,0.15)" fontSize="7" fontFamily="Inter,system-ui">AK</text>
-        <text x="68" y="438" fill="rgba(255,255,255,0.15)" fontSize="7" fontFamily="Inter,system-ui">HI</text>
+        <rect width="160" height="460" fill="url(#scanG)" style={{ animation: "scanLine 14s linear infinite" }} />
+
+        {/* Network connections */}
+        {connections.map(([x1,y1,x2,y2], i) => (<line key={`c${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(45,212,191,0.06)" strokeWidth="0.5" />))}
+
         {/* City dots */}
         {cities.map(([x,y,type,label,major], i) => (
           <g key={i}>
-            {major && <circle cx={x} cy={y} r={10} fill={type === "us" ? "rgba(45,212,191,0.03)" : "rgba(94,234,212,0.02)"} />}
-            <circle className={major ? "major-node" : ""} cx={x} cy={y} r={major ? 3.5 : 1.5} fill={type === "us" ? "rgba(45,212,191,0.75)" : "rgba(94,234,212,0.6)"} filter={major ? "url(#nodeGlow)" : undefined} />
-            {label && (<text x={x > 520 ? x - 8 : x + 8} y={y + 3} textAnchor={x > 520 ? "end" : "start"} fill="rgba(255,255,255,0.3)" fontSize={major ? "8.5" : "7.5"} fontFamily="Inter,system-ui">{label}</text>)}
+            {major && <circle cx={x} cy={y} r={10} fill={type === "us" ? "rgba(45,212,191,0.04)" : "rgba(94,234,212,0.03)"} />}
+            <circle className={major ? "major-node" : ""} cx={x} cy={y} r={major ? 3 : 1.5} fill={type === "us" ? "rgba(45,212,191,0.8)" : "rgba(94,234,212,0.65)"} filter={major ? "url(#nodeGlow)" : undefined} />
+            {label && (<text x={x > 520 ? x - 8 : x + 8} y={y + 3} textAnchor={x > 520 ? "end" : "start"} fill="rgba(255,255,255,0.25)" fontSize={major ? "8" : "7"} fontFamily="Inter,system-ui" fontWeight={major ? "500" : "400"}>{label}</text>)}
           </g>
         ))}
       </svg>
-      <div className="pointer-events-none absolute left-[48%] top-[36%] -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-[#080d19]/80 px-3 py-1 backdrop-blur-sm">
-        <span className="text-[11px]">🇨🇦</span><span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-teal-300/50">Canada</span>
+      {/* Country labels */}
+      <div className="pointer-events-none absolute left-[48%] top-[34%] -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-white/[0.05] bg-[#080d19]/80 px-3 py-1 backdrop-blur-sm">
+        <span className="text-[10px]">🇨🇦</span><span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-teal-300/40">Canada</span>
       </div>
-      <div className="pointer-events-none absolute left-[52%] top-[63%] -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-[#080d19]/80 px-3 py-1 backdrop-blur-sm">
-        <span className="text-[11px]">🇺🇸</span><span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-teal-400/50">United States</span>
+      <div className="pointer-events-none absolute left-[52%] top-[62%] -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-white/[0.05] bg-[#080d19]/80 px-3 py-1 backdrop-blur-sm">
+        <span className="text-[10px]">🇺🇸</span><span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-teal-400/40">United States</span>
       </div>
     </div>
   );
@@ -632,7 +653,7 @@ function LandingNav() {
         <a href="/" className="flex items-center gap-2 text-[1rem] font-bold text-white">
           <img src="/aquareport-logo.png" alt="AquaReport" className="h-7 w-auto" />
         </a>
-        <nav className="hidden items-center gap-7 text-[0.85rem] text-white/30 md:flex">
+        <nav className="hidden items-center gap-7 text-[0.84rem] text-white/25 md:flex">
           {NAV_LINKS.map((l) => <a key={l.href} href={l.href} className="transition-colors hover:text-white/70">{l.label}</a>)}
           <Link to="/blog" className="transition-colors hover:text-white/70">Blog</Link>
         </nav>
@@ -678,9 +699,8 @@ function AquaScoreReveal() {
     const tick = (now: number) => {
       const p = Math.min((now - start) / dur, 1);
       // Ease-out with a slight bounce at the end
-      const eased = p < 0.85
-        ? 1 - Math.pow(1 - (p / 0.85), 3)
-        : 1 + Math.sin((p - 0.85) / 0.15 * Math.PI) * 0.02;
+      // Smooth ease-out, no bounce
+      const eased = 1 - Math.pow(1 - p, 4);
       const current = Math.round(100 - (100 - 28) * Math.min(eased, 1));
       setScore(current);
       if (p < 1) {
@@ -715,7 +735,7 @@ function AquaScoreReveal() {
   };
 
   const currentColor = getScoreColor(score);
-  const glowOpacity = phase === "landed" ? 0.25 : phase === "dropping" ? 0.1 : 0.05;
+  const glowOpacity = phase === "landed" ? 0.35 : phase === "dropping" ? 0.15 : 0.05;
 
   return (
     <div ref={containerRef} className="mx-auto max-w-4xl">
@@ -727,7 +747,7 @@ function AquaScoreReveal() {
           {/* Score ring */}
           <div className="flex flex-col items-center">
             <div className="relative">
-              <svg width="220" height="220" viewBox="0 0 200 200" className="transform -rotate-90">
+              <svg width="240" height="240" viewBox="0 0 200 200" className="transform -rotate-90">
                 {/* Background ring */}
                 <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
                 {/* Progress ring */}
@@ -744,7 +764,7 @@ function AquaScoreReveal() {
               </svg>
               {/* Score number */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-[Sora,system-ui,sans-serif] text-[4.5rem] font-black leading-none tracking-tight transition-colors duration-300" style={{ color: currentColor }}>{score}</span>
+                <span className="font-[Sora,system-ui,sans-serif] text-[5.5rem] font-black leading-none tracking-tight transition-colors duration-500" style={{ color: currentColor }}>{score}</span>
                 <span className="mt-1 text-[11px] font-bold uppercase tracking-[0.15em] transition-colors duration-300" style={{ color: currentColor, opacity: 0.7 }}>{getTierLabel(score)}</span>
               </div>
             </div>
@@ -761,13 +781,13 @@ function AquaScoreReveal() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={phase === "landed" || phase === "recovered" ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.3, duration: 0.6 }}>
-              <p className="text-[0.95rem] leading-[1.8] text-white/35">
+              <p className="text-[0.95rem] leading-[1.8] text-white/30">
                 That puts your home in the <span className="font-semibold text-red-400/70">At Risk</span> tier. Chloroform, haloacetic acids, and chromium-6 were all detected above health guidelines.
               </p>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={phase === "landed" || phase === "recovered" ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8, duration: 0.6 }}>
-              <p className="text-[0.85rem] leading-[1.7] text-white/25 italic">
+              <p className="text-[0.9rem] leading-[1.7] text-white/30 italic">
                 "Let me show you exactly what that means for your family."
               </p>
               <p className="mt-1 text-[10px] text-white/15">↑ Built-in coaching prompt · visible only to the rep</p>
@@ -820,21 +840,22 @@ export function LandingPage() {
         {/* Ambient orbs */}
         <div className="absolute top-[15%] right-[10%] w-[600px] h-[600px] rounded-full bg-teal-500/[0.04] blur-[120px]" style={{ animation: "float 20s ease-in-out infinite" }} />
         <div className="absolute top-[50%] left-[5%] w-[400px] h-[400px] rounded-full bg-cyan-500/[0.03] blur-[100px]" style={{ animation: "float 28s ease-in-out infinite reverse" }} />
-        <style>{`@keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-25px) scale(1.05); } 66% { transform: translate(-20px,15px) scale(0.95); } }`}</style>
+        <style>{`@keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-25px) scale(1.05); } 66% { transform: translate(-20px,15px) scale(0.95); } }
+        @keyframes scanMockup { 0% { transform: translateY(100%); opacity: 0; } 50% { opacity: 0.04; } 100% { transform: translateY(-100%); opacity: 0; } }`}</style>
 
-        <div className="mx-auto grid max-w-[1280px] items-center gap-16 px-6 lg:grid-cols-[1fr_1.1fr]">
+        <div className="mx-auto grid max-w-[1280px] items-center gap-12 px-6 md:gap-16 md:grid-cols-[1fr_1.1fr]">
           {/* Left */}
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.22, 0.61, 0.36, 1] }}>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-medium text-white/40 backdrop-blur-sm">
               <Droplets className="size-3 text-teal-400/60" /> The operating system for water treatment sales
             </div>
-            <h1 className="mt-7 font-[Sora,system-ui,sans-serif] text-[clamp(2.5rem,5.2vw,4.25rem)] font-extrabold leading-[1.04] tracking-[-0.02em]">
+            <h1 className="mt-7 font-[Sora,system-ui,sans-serif] text-[clamp(2.75rem,5.5vw,4.5rem)] font-extrabold leading-[1.06] tracking-[-0.02em]">
               Your reps shouldn't<br />have to sell<br /><span className="bg-gradient-to-r from-teal-300 to-teal-400 bg-clip-text text-transparent">without this.</span>
             </h1>
-            <p className="mt-7 max-w-[520px] text-[1.05rem] leading-[1.85] text-white/35">
+            <p className="mt-8 max-w-[480px] text-[1.05rem] leading-[1.9] text-white/30">
               AquaReport is the 21-step Demo Wizard that runs on a tablet at the kitchen table — real water data, live testing, AquaScore™, and built-in coaching that turns every in-home consultation into a close.
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-10 flex flex-wrap gap-4">
               <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[0.9rem] font-semibold text-[#080d19] shadow-[0_0_40px_rgba(255,255,255,0.06)] transition hover:bg-white/90">
                 <Zap className="size-4" /> Start Free Trial
               </Link>
@@ -842,7 +863,7 @@ export function LandingPage() {
                 See It In Action
               </a>
             </div>
-            <div className="mt-12 grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+            <div className="mt-14 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
               {([
                 [Smartphone, "Tablet-First", "Built for the table"],
                 [Zap, "21-Step Flow", "Psychology that closes"],
@@ -857,7 +878,7 @@ export function LandingPage() {
             </div>
           </motion.div>
           {/* Right — Mockup */}
-          <div className="hidden lg:block"><HeroMockup /></div>
+          <div className="hidden md:block"><HeroMockup /></div>
         </div>
       </section>
 
@@ -905,7 +926,7 @@ export function LandingPage() {
                     <div className="absolute left-0 top-1 flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#0c1222] md:size-12">
                       <span className="font-[Sora,system-ui,sans-serif] text-xs font-bold text-teal-400/50 md:text-sm">{phase.num}</span>
                     </div>
-                    <div className="rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 transition-colors duration-300 hover:border-white/[0.1] md:p-6">
+                    <div className="rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 transition-colors duration-300 hover:border-white/[0.08] md:p-6">
                       <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-teal-400/40">{phase.steps}</span>
                       <h3 className="mt-1.5 font-[Sora,system-ui,sans-serif] text-lg font-bold tracking-tight text-white md:text-xl">{phase.title}</h3>
                       <p className="mt-2.5 text-[0.875rem] leading-[1.8] text-white/30">{phase.desc}</p>
@@ -931,10 +952,10 @@ export function LandingPage() {
               No CRM bloat. No generic templates. Every tool in AquaReport is purpose-built for the kitchen-table demo that closes.
             </p>
           </Reveal>
-          <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f, i) => (
               <Reveal key={f.title} delay={i * 0.04}>
-                <div className="group rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 transition-all duration-300 hover:border-white/[0.1] hover:bg-white/[0.025] h-full">
+                <div className="group rounded-2xl border border-white/[0.04] bg-white/[0.015] p-5 transition-all duration-300 hover:border-white/[0.08] hover:bg-white/[0.025] h-full">
                   <FeatureIcon icon={f.icon} />
                   <h3 className="mt-4 text-[0.9rem] font-semibold tracking-tight text-white">{f.title}</h3>
                   <p className="mt-2 text-[0.8rem] leading-[1.75] text-white/25">{f.desc}</p>
@@ -951,7 +972,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-[1280px] px-6">
           <Reveal>
             <div className="mx-auto mb-12 max-w-3xl text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">Full Platform</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">Complete Ecosystem</p>
               <h2 className="mt-4 font-[Sora,system-ui,sans-serif] text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.08] tracking-tight text-white">
                 The Demo Wizard closes deals.<br /><span className="bg-gradient-to-r from-white/60 to-white/25 bg-clip-text text-transparent">The platform runs your operation.</span>
               </h2>
@@ -965,7 +986,7 @@ export function LandingPage() {
               { icon: "🔗", title: "Consumer Portal", desc: "Every homeowner gets a branded link at myaquareport.com to review their water report. Shareable, professional, and always under your brand." },
             ] as const).map((item, i) => (
               <Reveal key={item.title} delay={i * 0.06}>
-                <div className="rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 h-full transition-colors duration-300 hover:border-white/[0.1]">
+                <div className="rounded-2xl border border-white/[0.04] bg-white/[0.015] p-5 h-full transition-colors duration-300 hover:border-white/[0.08]">
                   <span className="text-2xl">{item.icon}</span>
                   <h3 className="mt-3 text-[0.9rem] font-semibold tracking-tight text-white">{item.title}</h3>
                   <p className="mt-2 text-[0.8rem] leading-[1.75] text-white/25">{item.desc}</p>
@@ -1041,7 +1062,7 @@ export function LandingPage() {
             <CoverageMapVisual />
             <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
               {([["50","US States"],["13","Provinces/Terr."],["1,765","FSA Codes"],["138K","Contaminant Readings"]] as const).map(([num, label]) => (
-                <div key={label} className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4 text-center">
+                <div key={label} className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 text-center">
                   <strong className="block font-[Sora,system-ui,sans-serif] text-xl font-extrabold tracking-tight text-white">{num}</strong>
                   <span className="text-[10px] uppercase tracking-[0.12em] text-white/20">{label}</span>
                 </div>
@@ -1055,7 +1076,7 @@ export function LandingPage() {
               { flag: "🇺🇸", name: "United States", sub: "State, ZIP Code, County", badge: "LIVE", details: [["LOOKUP","ZIP code"],["STANDARDS","EPA / MCL + EWG"],["DATA","Full SDWIS database"]], stats: [["50","States"],["EPA","+ EWG"],["SDWIS","Full DB"]] },
               { flag: "🇨🇦", name: "Canada", sub: "Province, Postal Code, FSA", badge: "NOW LIVE", details: [["LOOKUP","Postal code (FSA)"],["STANDARDS","Health Canada / GCDWQ"],["DATA","3,413 utilities"]], stats: [["1,765","FSA"],["3,413","Utilities"],["138K","Readings"]] },
             ] as const).map((c) => (
-              <div key={c.name} className="rounded-2xl border border-white/[0.05] bg-white/[0.015] p-6">
+              <div key={c.name} className="rounded-2xl border border-white/[0.04] bg-white/[0.015] p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{c.flag}</span>
@@ -1102,13 +1123,19 @@ export function LandingPage() {
           <div className="mt-14 grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
               <Reveal key={t.author} delay={i * 0.1}>
-                <div className="group flex flex-col rounded-2xl border border-white/[0.05] bg-white/[0.015] p-6 transition-colors duration-300 hover:border-white/[0.1] h-full">
+                <div className="group flex flex-col rounded-2xl border border-white/[0.05] bg-white/[0.015] p-6 transition-colors duration-300 hover:border-white/[0.08] h-full">
                   <div className="mb-4 inline-flex self-start items-center rounded-full border border-teal-400/15 bg-teal-400/[0.05] px-2.5 py-0.5 text-[10px] font-bold text-teal-400/60">{t.metric}</div>
                   <p className="flex-1 text-[0.9rem] leading-[1.8] text-white/35">"{t.text}"</p>
                   <div className="mt-5 pt-4 border-t border-white/[0.04]">
                     <p className="text-sm font-semibold text-white/70">{t.author}</p>
                     <p className="text-[0.8rem] text-white/25">{t.role}</p>
-                    <p className="text-[0.75rem] text-white/15">{t.location}</p>
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.7rem] text-white/15">
+                      <span>{t.location}</span>
+                      <span>·</span>
+                      <span>{t.dealerType}</span>
+                      <span>·</span>
+                      <span>{t.demosPerWeek}</span>
+                    </div>
                   </div>
                 </div>
               </Reveal>
@@ -1135,7 +1162,7 @@ export function LandingPage() {
           <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {PILLAR_RESOURCES.map((r, i) => (
               <Reveal key={r.to} delay={i * 0.06}>
-                <Link to={r.to} className="group block rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 transition-all duration-300 hover:border-white/[0.1] h-full">
+                <Link to={r.to} className="group block rounded-2xl border border-white/[0.04] bg-white/[0.015] p-5 transition-all duration-300 hover:border-white/[0.08] h-full">
                   <div className="flex items-start justify-between">
                     <h3 className="text-[0.9rem] font-semibold text-white/70 transition group-hover:text-white">{r.title}</h3>
                     <ExternalLink className="size-3.5 shrink-0 text-white/15" />
