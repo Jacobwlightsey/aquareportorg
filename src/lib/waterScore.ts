@@ -17,7 +17,7 @@ export interface ScoreContaminant {
 }
 
 function clampScore(score: number): number {
-  return Math.max(15, Math.min(100, Math.round(score)));
+  return Math.max(1, Math.min(100, Math.round(score)));
 }
 
 export function readingNumber(value: string | number | null | undefined): number | undefined {
@@ -36,14 +36,15 @@ export function readingPayload(readings: FieldWaterReadings) {
 }
 
 /**
- * Field-reading adjustment — matches backend logic (convex/reports.ts).
- * Good readings earn bonus points, bad readings are penalized.
- * Result is averaged across factors then scaled ×3 for meaningful impact.
+ * Field-reading adjustment — every on-site reading lowers the score.
+ * The live water test is the anchor of the in-home demo: entering any
+ * reading should always move the score downward.  Worse readings drop
+ * it dramatically so the homeowner feels the urgency.
  *
- * Chlorine (ppm): 0-0.2 good | 0.2-1 elevated | 1-2 high | 2-4 severe | 4+ extreme
- * pH:             6.8-7.4 normal | 6.5-6.8 acidic | <6.5 very acidic | 7.5-8.5 slightly alk | 8.5+ high alk
- * Hardness (gpg): 0-1 soft | 1-3.5 slightly hard | 3.5-7 moderately hard | 7-10.5 hard | 10.5-15 very hard | 15+ severe
- * TDS (ppm):      0-50 excellent | 50-150 good | 150-300 elevated | 300-500 acceptable | 500-1000 high | 1000+ severe
+ * Chlorine (ppm): 0-0.2 trace | 0.2-0.5 treated | 0.5-1 elevated | 1-2 high | 2-4 severe | 4+ extreme
+ * Hardness (gpg): 0-1 soft | 1-3.5 slight | 3.5-7 moderate | 7-10.5 hard | 10.5-15 very hard | 15+ severe
+ * TDS (ppm):      0-50 excellent | 50-150 good | 150-300 elevated | 300-500 high | 500-1000 very high | 1000+ severe
+ * pH:             6.8-7.4 normal | 6.5-6.8 / 7.4-8.5 mild | 6.0-6.5 / 8.5-9.0 moderate | outside extreme
  */
 export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {}): number {
   const chlorine = readingNumber(readings.chlorine);
@@ -53,37 +54,42 @@ export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {})
 
   let adjustment = 0;
 
-  // Each individual test: +1 (good) to −4 (bad), summed independently
-
-  // Chlorine (ppm)
+  // Chlorine (ppm) — even trace chlorine is penalized
   if (chlorine !== undefined) {
-    if (chlorine < 0.2) adjustment += 1;           // good
-    else if (chlorine <= 1) adjustment += 0;       // normal
-    else if (chlorine <= 2) adjustment -= 2;       // high
-    else adjustment -= 4;                          // severe / extreme
+    if (chlorine < 0.2) adjustment -= 1;           // trace — still present
+    else if (chlorine <= 0.5) adjustment -= 3;     // normal treated water
+    else if (chlorine <= 1) adjustment -= 5;       // elevated
+    else if (chlorine <= 2) adjustment -= 8;       // high
+    else if (chlorine <= 4) adjustment -= 12;      // severe
+    else adjustment -= 15;                         // extreme
   }
 
-  // Hardness (gpg)
+  // Hardness (gpg) — any measurable hardness deducts
   if (hardness !== undefined) {
-    if (hardness <= 3.5) adjustment += 1;          // soft / normal
-    else if (hardness <= 7) adjustment += 0;       // moderate
-    else if (hardness <= 10.5) adjustment -= 2;    // hard
-    else adjustment -= 4;                          // very hard / severe
+    if (hardness <= 1) adjustment -= 1;            // soft — minor
+    else if (hardness <= 3.5) adjustment -= 3;     // slightly hard
+    else if (hardness <= 7) adjustment -= 6;       // moderately hard
+    else if (hardness <= 10.5) adjustment -= 9;    // hard
+    else if (hardness <= 15) adjustment -= 12;     // very hard
+    else adjustment -= 15;                         // severe
   }
 
-  // TDS (ppm)
+  // TDS (ppm) — measures total dissolved solids
   if (tds !== undefined) {
-    if (tds <= 150) adjustment += 1;               // good
-    else if (tds <= 300) adjustment += 0;          // elevated
-    else if (tds <= 500) adjustment -= 2;          // high
-    else adjustment -= 4;                          // severe
+    if (tds <= 50) adjustment -= 1;                // excellent — minor
+    else if (tds <= 150) adjustment -= 2;          // good
+    else if (tds <= 300) adjustment -= 5;          // elevated
+    else if (tds <= 500) adjustment -= 8;          // high
+    else if (tds <= 1000) adjustment -= 12;        // very high
+    else adjustment -= 15;                         // severe
   }
 
-  // pH
+  // pH — even normal pH shows a small reading impact
   if (ph !== undefined) {
-    if (ph >= 6.8 && ph <= 7.4) adjustment += 1;  // normal
-    else if ((ph >= 6.5 && ph < 6.8) || (ph > 7.4 && ph <= 8.5)) adjustment += 0; // mild
-    else adjustment -= 4;                          // extreme
+    if (ph >= 6.8 && ph <= 7.4) adjustment -= 1;                                    // normal — minor
+    else if ((ph >= 6.5 && ph < 6.8) || (ph > 7.4 && ph <= 8.5)) adjustment -= 4;  // mild imbalance
+    else if ((ph >= 6.0 && ph < 6.5) || (ph > 8.5 && ph <= 9.0)) adjustment -= 8;  // moderate
+    else adjustment -= 12;                                                           // extreme
   }
 
   return adjustment;

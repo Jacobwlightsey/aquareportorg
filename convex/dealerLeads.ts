@@ -65,7 +65,7 @@ export const getTrackingLinks = query({
     if (!user) return [];
     const admin = await ctx.db
       .query("platformAdmins")
-      .withIndex("by_email", (q) => q.eq("email", user.email))
+      .withIndex("by_email", (q) => q.eq("email", user.email ?? ""))
       .first();
     if (!admin) return [];
 
@@ -156,7 +156,7 @@ export const submitDealerLead = mutation({
     if (args.trackingSlug) {
       const link = await ctx.db
         .query("trackingLinks")
-        .withIndex("by_slug", (q) => q.eq("slug", args.trackingSlug))
+        .withIndex("by_slug", (q) => q.eq("slug", args.trackingSlug!))
         .first();
       if (link) {
         trackingLinkId = link._id;
@@ -196,7 +196,7 @@ export const getDealerLeads = query({
     if (!user) return [];
     const admin = await ctx.db
       .query("platformAdmins")
-      .withIndex("by_email", (q) => q.eq("email", user.email))
+      .withIndex("by_email", (q) => q.eq("email", user.email ?? ""))
       .first();
     if (!admin) return [];
 

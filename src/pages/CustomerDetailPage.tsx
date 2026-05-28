@@ -509,12 +509,10 @@ export function CustomerDetailPage() {
         <Button
           variant="outline"
           className="rounded-lg"
-          asChild
+          onClick={() => navigate(`/reports/${reportId}/v2`)}
         >
-          <Link to={`/reports/${reportId}/v2`} target="_blank">
-            <FileText className="size-4" />
-            Report
-          </Link>
+          <FileText className="size-4" />
+          Edit PDF
         </Button>
         {report.pdfUrl && (
           <Button
