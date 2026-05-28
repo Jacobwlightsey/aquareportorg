@@ -8,16 +8,26 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// ─── Helper: check platform admin ──────────────────────────────
+// ─── Helper: check platform admin (env + DB, matches admin.ts) ─
+
+function getEnvAdminEmails(): string[] {
+  return (process.env.PLATFORM_ADMIN_EMAILS ?? "jacobwlightsey@gmail.com,clearflowwaterco@gmail.com")
+    .split(",")
+    .map((e: string) => e.trim().toLowerCase());
+}
 
 async function requirePlatformAdmin(ctx: any) {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw new Error("Authentication required");
   const user = await ctx.db.get(userId);
-  if (!user) throw new Error("User not found");
+  if (!user?.email) throw new Error("User not found");
+  const email = user.email.toLowerCase();
+  // Check env-based admins
+  if (getEnvAdminEmails().includes(email)) return userId;
+  // Check DB-based admins
   const admin = await ctx.db
     .query("platformAdmins")
-    .withIndex("by_email", (q: any) => q.eq("email", user.email))
+    .withIndex("by_email", (q: any) => q.eq("email", email))
     .first();
   if (!admin) throw new Error("Platform admin access required");
   return userId;
