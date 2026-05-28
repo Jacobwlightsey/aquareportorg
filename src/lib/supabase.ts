@@ -49,8 +49,27 @@ export function contaminantName(contaminant: Pick<Contaminant, "contaminant" | "
   return contaminant.contaminant || contaminant.name || "Unknown contaminant";
 }
 
+// Treatment methods / non-chemical entries that sometimes appear in water data
+const NON_CONTAMINANTS = new Set([
+  "reverse osmosis",
+  "water softener",
+  "carbon filter",
+  "uv disinfection",
+  "ion exchange",
+  "distillation",
+  "filtration",
+  "chlorination",
+  "ozonation",
+  "aeration",
+]);
+
+/** True if this entry is an actual detected contaminant (not a treatment method) */
 export function isDetectedContaminant(
-  contaminant: Pick<Contaminant, "detected" | "detection_status">,
+  contaminant: Pick<Contaminant, "detected" | "detection_status"> & { contaminant?: string; name?: string },
 ): boolean {
-  return contaminant.detected !== false && contaminant.detection_status !== "not_detected";
+  if (contaminant.detected === false || contaminant.detection_status === "not_detected") return false;
+  // Filter out treatment methods that aren't chemicals
+  const cName = (contaminant.contaminant || contaminant.name || "").toLowerCase().trim();
+  if (NON_CONTAMINANTS.has(cName)) return false;
+  return true;
 }

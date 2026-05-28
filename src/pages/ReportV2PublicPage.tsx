@@ -30,7 +30,16 @@ interface Contaminant {
 }
 
 function cName(c: Contaminant) { return c.contaminant || c.name || "Unknown"; }
-function isDetected(c: Contaminant) { return c.detected !== false && c.detection_status !== "not_detected"; }
+const NON_CONTAMINANTS = new Set([
+  "reverse osmosis", "water softener", "carbon filter", "uv disinfection",
+  "ion exchange", "distillation", "filtration", "chlorination", "ozonation", "aeration",
+]);
+function isDetected(c: Contaminant) {
+  if (c.detected === false || c.detection_status === "not_detected") return false;
+  const n = (c.contaminant || c.name || "").toLowerCase().trim();
+  if (NON_CONTAMINANTS.has(n)) return false;
+  return true;
+}
 
 function guessCategory(name: string): string {
   const n = name.toLowerCase();

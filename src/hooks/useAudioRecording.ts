@@ -2,6 +2,8 @@
    MediaRecorder hook for demo voice capture.
    Returns start/stop controls and a Blob of the recording.
    Uses webm/opus for best compression + browser support.
+   stopRecording returns a Promise<Blob|null> so callers can
+   await the finished recording before navigating away.
    ──── */
 
 import { useCallback, useRef, useState } from "react";
@@ -19,8 +21,8 @@ export interface AudioRecordingState {
   error: string | null;
   /** Start recording (requests mic permission) */
   startRecording: () => Promise<void>;
-  /** Stop recording and return the blob */
-  stopRecording: () => void;
+  /** Stop recording and return a promise that resolves with the blob */
+  stopRecording: () => Promise<Blob | null>;
   /** Clear the recording blob */
   clearRecording: () => void;
 }
@@ -35,6 +37,7 @@ export function useAudioRecording(): AudioRecordingState {
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const startTimeRef = useRef<number>(0);
+  const mimeTypeRef = useRef<string>("");
 
   const isSupported =
     typeof window !== "undefined" &&
@@ -76,6 +79,7 @@ export function useAudioRecording(): AudioRecordingState {
       streamRef.current = stream;
 
       const mimeType = getMimeType();
+      mimeTypeRef.current = mimeType;
       const recorder = new MediaRecorder(stream, {
         ...(mimeType ? { mimeType } : {}),
         audioBitsPerSecond: 32000, // Low bitrate for speech
@@ -85,14 +89,13 @@ export function useAudioRecording(): AudioRecordingState {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
+      // Default onstop (overridden by stopRecording promise)
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, {
           type: mimeType || "audio/webm",
         });
         setAudioBlob(blob);
         setDurationSeconds(Math.round((Date.now() - startTimeRef.current) / 1000));
-
-        // Clean up stream tracks
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       };
@@ -115,11 +118,31 @@ export function useAudioRecording(): AudioRecordingState {
     }
   }, [isSupported, getMimeType]);
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
+  const stopRecording = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      const recorder = mediaRecorderRef.current;
+      if (!recorder || recorder.state !== "recording") {
+        setIsRecording(false);
+        resolve(null);
+        return;
+      }
+
+      // Override onstop to resolve the promise with the blob
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, {
+          type: mimeTypeRef.current || "audio/webm",
+        });
+        const dur = Math.round((Date.now() - startTimeRef.current) / 1000);
+        setAudioBlob(blob);
+        setDurationSeconds(dur);
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        resolve(blob);
+      };
+
+      recorder.stop();
+      setIsRecording(false);
+    });
   }, []);
 
   const clearRecording = useCallback(() => {

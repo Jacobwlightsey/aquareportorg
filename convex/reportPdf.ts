@@ -80,8 +80,16 @@ async function createFlipbook(pdfUrl: string, title: string, subtitle: string) {
   };
 }
 
+const NON_CONTAMINANTS = new Set([
+  "reverse osmosis", "water softener", "carbon filter", "uv disinfection",
+  "ion exchange", "distillation", "filtration", "chlorination", "ozonation", "aeration",
+]);
+
 function isDetectedContaminant(c: any): boolean {
-  return c?.detected !== false && c?.detection_status !== "not_detected";
+  if (c?.detected === false || c?.detection_status === "not_detected") return false;
+  const n = (c?.contaminant || c?.name || "").toLowerCase().trim();
+  if (NON_CONTAMINANTS.has(n)) return false;
+  return true;
 }
 
 /**

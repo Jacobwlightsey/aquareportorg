@@ -23,8 +23,16 @@ function contaminantName(item: Contaminant): string {
   return item.contaminant || item.name || "Unknown contaminant";
 }
 
+const NON_CONTAMINANTS = new Set([
+  "reverse osmosis", "water softener", "carbon filter", "uv disinfection",
+  "ion exchange", "distillation", "filtration", "chlorination", "ozonation", "aeration",
+]);
+
 function isDetectedContaminant(item: Contaminant): boolean {
-  return item.detected !== false && item.detection_status !== "not_detected";
+  if (item.detected === false || item.detection_status === "not_detected") return false;
+  const n = (item.contaminant || item.name || "").toLowerCase().trim();
+  if (NON_CONTAMINANTS.has(n)) return false;
+  return true;
 }
 
 function scoreLabel(score: number) {

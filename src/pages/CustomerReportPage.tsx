@@ -53,8 +53,16 @@ function contaminantName(c: Contaminant): string {
   return c.contaminant || c.name || "Unknown contaminant";
 }
 
+const NON_CONTAMINANTS = new Set([
+  "reverse osmosis", "water softener", "carbon filter", "uv disinfection",
+  "ion exchange", "distillation", "filtration", "chlorination", "ozonation", "aeration",
+]);
+
 function isDetectedContaminant(c: Contaminant): boolean {
-  return c.detected !== false && c.detection_status !== "not_detected";
+  if (c.detected === false || c.detection_status === "not_detected") return false;
+  const n = (c.contaminant || c.name || "").toLowerCase().trim();
+  if (NON_CONTAMINANTS.has(n)) return false;
+  return true;
 }
 
 type Severity = "critical" | "high" | "moderate" | "low";

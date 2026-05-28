@@ -28,8 +28,16 @@ function parseContaminants(raw: string) {
   }
 }
 
+const NON_CONTAMINANTS = new Set([
+  "reverse osmosis", "water softener", "carbon filter", "uv disinfection",
+  "ion exchange", "distillation", "filtration", "chlorination", "ozonation", "aeration",
+]);
+
 function isDetectedContaminant(contaminant: any) {
-  return contaminant?.detected !== false && contaminant?.detection_status !== "not_detected";
+  if (contaminant?.detected === false || contaminant?.detection_status === "not_detected") return false;
+  const n = (contaminant?.contaminant || contaminant?.name || "").toLowerCase().trim();
+  if (NON_CONTAMINANTS.has(n)) return false;
+  return true;
 }
 
 /**

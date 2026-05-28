@@ -306,18 +306,16 @@ function DemoWizardInner() {
   const [coaching, setCoaching] = useState<CoachingState>({ level: "green", tip: "" });
   const [showCoachingTip, setShowCoachingTip] = useState(false);
 
-  // AI Sales Coach — audio recording
+  // AI Sales Coach — audio recording (auto-start/stop for enterprise + admins)
   const {
     isRecording,
     isSupported: audioSupported,
-    audioBlob,
     durationSeconds: audioDuration,
-    error: audioError,
     startRecording,
     stopRecording,
   } = useAudioRecording();
-  const [recordingEnabled, setRecordingEnabled] = useState(false);
   const [audioUploading, setAudioUploading] = useState(false);
+  const autoStartedRef = useRef(false);
   const generateUploadUrl = useMutation(api.demoCoach.generateAudioUploadUrl);
   const attachAudio = useMutation(api.demoCoach.attachAudio);
 
@@ -333,6 +331,16 @@ function DemoWizardInner() {
     document.addEventListener("pointerdown", handler);
     return () => { clearTimeout(t); document.removeEventListener("pointerdown", handler); };
   }, [showCoachingTip]);
+
+  // Auto-start recording for enterprise/admin users
+  useEffect(() => {
+    if (autoStartedRef.current) return;
+    if (!audioSupported || !canUseAICoach) return;
+    autoStartedRef.current = true;
+    startRecording().catch(() => {
+      // Mic permission denied — silently skip, demo still works
+    });
+  }, [audioSupported, canUseAICoach, startRecording]);
 
   // skipScoreAnimation from company config (Sprint 1 flag #2)
   const skipScoreAnimation = !!(company as any)?.demoConfig?.skipScoreAnimation;
@@ -459,13 +467,14 @@ function DemoWizardInner() {
 
   const saveDemoSession = useMutation(api.dealerShared.saveDemoSession);
 
-  // Ref to hold the sessionId for audio upload after navigation
-  const pendingSessionRef = useRef<string | null>(null);
-
   const exitDemo = useCallback(async (outcome?: string) => {
     if (timerRef.current) clearInterval(timerRef.current);
-    // Stop recording if active
-    if (isRecording) stopRecording();
+
+    // Stop recording and await the blob (returns null if not recording)
+    let blob: Blob | null = null;
+    if (isRecording) {
+      blob = await stopRecording();
+    }
 
     // Save demo session when ending (outcome passed from EndDemoModal or dealerClose)
     let sessionId: string | null = null;
@@ -485,41 +494,31 @@ function DemoWizardInner() {
         });
       } catch { /* best-effort save */ }
     }
-    // Store sessionId for audio upload effect
-    if (sessionId) pendingSessionRef.current = sessionId;
 
-    if (reportId) clearDemoState(reportId);
-    navigate(`/customers/${reportId}`);
-  }, [navigate, reportId, saveDemoSession, demoTimer, customerConcerns, liveReadings, finalScore, stepTimings, monthlyExpenses, boostApplied, pricingState, isRecording, stopRecording]);
-
-  // Upload audio after recording stops (audioBlob becomes available)
-  useEffect(() => {
-    if (!audioBlob || !pendingSessionRef.current || audioUploading) return;
-    const sessionId = pendingSessionRef.current;
-    pendingSessionRef.current = null;
-
-    (async () => {
-      setAudioUploading(true);
+    // Upload audio inline (before navigating so we don't lose the blob)
+    if (blob && sessionId) {
       try {
         const uploadUrl = await generateUploadUrl();
         const res = await fetch(uploadUrl, {
           method: "POST",
-          headers: { "Content-Type": audioBlob.type || "audio/webm" },
-          body: audioBlob,
+          headers: { "Content-Type": blob.type || "audio/webm" },
+          body: blob,
         });
         const { storageId } = await res.json();
         await attachAudio({
           sessionId: sessionId as any,
           storageId,
-          mimeType: audioBlob.type || "audio/webm",
+          mimeType: blob.type || "audio/webm",
           durationSeconds: audioDuration || undefined,
         });
       } catch (err) {
-        console.error("Audio upload failed:", err);
+        console.error("AI Coach audio upload failed:", err);
       }
-      setAudioUploading(false);
-    })();
-  }, [audioBlob, generateUploadUrl, attachAudio, audioDuration, audioUploading]);
+    }
+
+    if (reportId) clearDemoState(reportId);
+    navigate(`/customers/${reportId}`);
+  }, [navigate, reportId, saveDemoSession, demoTimer, customerConcerns, liveReadings, finalScore, stepTimings, monthlyExpenses, boostApplied, pricingState, isRecording, stopRecording, generateUploadUrl, attachAudio, audioDuration]);
 
   // Scroll content to top on step change
   useEffect(() => {
@@ -716,28 +715,15 @@ function DemoWizardInner() {
           {/* Center: controls cluster */}
           <div className="flex items-center gap-1.5 landscape:gap-1">
             <MuteToggle />
-            {/* AI Coach — mic recording toggle (enterprise + admin only) */}
-            {audioSupported && canUseAICoach && (
-              <button
-                onClick={async () => {
-                  if (isRecording) {
-                    stopRecording();
-                    setRecordingEnabled(false);
-                  } else {
-                    await startRecording();
-                    setRecordingEnabled(true);
-                  }
-                }}
-                className={`relative flex size-7 items-center justify-center rounded-lg transition-all cursor-pointer ${
-                  isRecording ? "bg-red-500/20" : "bg-white/5"
-                }`}
-                title={isRecording ? "Stop recording" : "Record demo for AI coaching"}
+            {/* AI Coach — recording indicator (auto-started for enterprise + admin) */}
+            {isRecording && (
+              <div
+                className="relative flex size-7 items-center justify-center rounded-lg bg-red-500/10"
+                title="AI Coach is recording this demo"
               >
-                <Mic className={`size-3.5 ${isRecording ? "text-red-400" : "text-white/50"}`} />
-                {isRecording && (
-                  <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-red-500 animate-pulse" />
-                )}
-              </button>
+                <Mic className="size-3.5 text-red-400" />
+                <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-red-500 animate-pulse" />
+              </div>
             )}
             <FullscreenToggle compact />
             <ViewModeToggle />
