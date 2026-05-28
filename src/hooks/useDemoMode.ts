@@ -12,7 +12,7 @@ export const DemoModeContext = createContext<DemoModeCtx>({
   setDemoMode: () => {},
 });
 
-/** Default step keys for each mode (matches original 12-step flow + extras) */
+/** Default step keys for each mode (matches 21-step flow) */
 export const DEFAULT_MODE_STEPS: Record<DemoModeType, string[]> = {
   quick: [
     "welcome",

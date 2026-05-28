@@ -476,3 +476,123 @@ export const updateFeatureAccess = mutation({
     });
   },
 });
+
+// ─── Image Upload (Convex File Storage) ──────────────────────────
+
+/**
+ * Generate a short-lived upload URL for company images (logo, product image).
+ * Any authenticated company member can upload.
+ */
+export const generateCompanyUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireRole(ctx, "sales_rep"); // any member can upload
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/**
+ * Save a company image (logo or product) from Convex storage.
+ * Resolves the storage ID to a URL and saves both.
+ */
+export const saveCompanyImage = mutation({
+  args: {
+    field: v.union(v.literal("logo"), v.literal("productImage")),
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const { userId, membership } = await requireRole(ctx, "owner");
+    const url = await ctx.storage.getUrl(args.storageId);
+    if (!url) throw new Error("Failed to resolve storage URL");
+
+    const update: Record<string, unknown> = {};
+    if (args.field === "logo") {
+      update.logoUrl = url;
+      update.logoStorageId = args.storageId;
+    } else {
+      update.solutionProductImage = url;
+      update.productImageStorageId = args.storageId;
+    }
+
+    // Delete old storage if replacing
+    const company = await ctx.db.get(membership.companyId);
+    if (company) {
+      const oldStorageId =
+        args.field === "logo"
+          ? (company.logoStorageId as string | undefined)
+          : (company.productImageStorageId as string | undefined);
+      if (oldStorageId && oldStorageId !== args.storageId) {
+        try {
+          await ctx.storage.delete(oldStorageId as any);
+        } catch {
+          // ignore if already deleted
+        }
+      }
+    }
+
+    await ctx.db.patch(membership.companyId, update);
+    await audit(ctx, {
+      companyId: membership.companyId,
+      actorId: userId,
+      action: "company.image_uploaded",
+      entityType: "company",
+      entityId: String(membership.companyId),
+      metadata: { field: args.field },
+    });
+
+    return url;
+  },
+});
+
+/**
+ * Remove a company image (logo or product) and delete from storage.
+ */
+export const removeCompanyImage = mutation({
+  args: {
+    field: v.union(v.literal("logo"), v.literal("productImage")),
+  },
+  handler: async (ctx, args) => {
+    const { userId, membership } = await requireRole(ctx, "owner");
+    const company = await ctx.db.get(membership.companyId);
+    if (!company) throw new Error("Company not found");
+
+    const update: Record<string, unknown> = {};
+    if (args.field === "logo") {
+      update.logoUrl = "";
+      update.logoStorageId = undefined;
+      if (company.logoStorageId) {
+        try { await ctx.storage.delete(company.logoStorageId); } catch { /* ok */ }
+      }
+    } else {
+      update.solutionProductImage = "";
+      update.productImageStorageId = undefined;
+      if (company.productImageStorageId) {
+        try { await ctx.storage.delete(company.productImageStorageId); } catch { /* ok */ }
+      }
+    }
+
+    await ctx.db.patch(membership.companyId, update);
+    await audit(ctx, {
+      companyId: membership.companyId,
+      actorId: userId,
+      action: "company.image_removed",
+      entityType: "company",
+      entityId: String(membership.companyId),
+      metadata: { field: args.field },
+    });
+  },
+});
+
+/**
+ * Resolve a Convex storage ID to a URL. Used by frontend after uploading
+ * an image to get the public URL for display/storage in config fields.
+ */
+export const resolveStorageUrl = mutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    await requireRole(ctx, "sales_rep");
+    const url = await ctx.storage.getUrl(args.storageId);
+    if (!url) throw new Error("Storage file not found");
+    return url;
+  },
+});

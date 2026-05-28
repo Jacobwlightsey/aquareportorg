@@ -8,6 +8,8 @@ const schema = defineSchema({
   companies: defineTable({
     name: v.string(),
     logoUrl: v.optional(v.string()),
+    logoStorageId: v.optional(v.id("_storage")),
+    productImageStorageId: v.optional(v.id("_storage")),
     primaryColor: v.optional(v.string()),
     disclaimer: v.optional(v.string()),
     solutionProductName: v.optional(v.string()),

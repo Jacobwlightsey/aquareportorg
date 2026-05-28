@@ -358,6 +358,12 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
       ? (company.solutionProductBullets as string[]).join("\n")
       : "Reduces chemicals, heavy metals, and harmful contaminants\nProtects your health and home\nImproves taste, skin, and hair\nHigh capacity, low maintenance"
   );
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [productImageUploading, setProductImageUploading] = useState(false);
+
+  const generateUploadUrl = useMutation(api.companies.generateCompanyUploadUrl);
+  const saveCompanyImage = useMutation(api.companies.saveCompanyImage);
+  const removeCompanyImage = useMutation(api.companies.removeCompanyImage);
 
   useEffect(() => {
     setColor((company.primaryColor as string) || "#2563eb");
@@ -372,24 +378,51 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
     );
   }, [company]);
 
-  const readImageFile = (file: File, setter: (v: string) => void) => {
+  /** Upload an image to Convex file storage and save to company record */
+  const uploadImage = async (file: File, field: "logo" | "productImage") => {
     if (!file.type.startsWith("image/")) { toast.error("Please upload an image"); return; }
-    if (file.size > 15_000_000) { toast.error("Image must be under 15MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => setter(String(reader.result || ""));
-    reader.readAsDataURL(file);
+    if (file.size > 5_000_000) { toast.error("Image must be under 5 MB"); return; }
+    const setUploading = field === "logo" ? setLogoUploading : setProductImageUploading;
+    setUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const { storageId } = await res.json();
+      const url = await saveCompanyImage({ field, storageId });
+      if (field === "logo") setLogoUrl(url);
+      else setProductImage(url);
+      toast.success(field === "logo" ? "Logo uploaded!" : "Product image uploaded!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async (field: "logo" | "productImage") => {
+    try {
+      await removeCompanyImage({ field });
+      if (field === "logo") setLogoUrl("");
+      else setProductImage("");
+      toast.success(field === "logo" ? "Logo removed" : "Product image removed");
+    } catch {
+      toast.error("Failed to remove image");
+    }
   };
 
   const saved = useAutoSave(async () => {
     await onUpdate({
       primaryColor: color,
-      logoUrl: logoUrl.trim() || undefined,
       solutionProductName: productName.trim() || undefined,
-      solutionProductImage: productImage.trim() || undefined,
       solutionProductDescription: productDescription.trim() || undefined,
       solutionProductBullets: productBullets.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 6),
     });
-  }, [color, logoUrl, productName, productImage, productDescription, productBullets]);
+  }, [color, productName, productDescription, productBullets]);
 
   const presetColors = ["#2563eb", "#0891b2", "#059669", "#d97706", "#dc2626", "#7c3aed", "#db2777", "#1e293b"];
 
@@ -419,23 +452,46 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
           {logoUrl ? (
             <div className="flex items-center gap-3 mt-1">
               <img src={logoUrl} alt="" className="max-h-10 max-w-40 object-contain" />
-              <Button type="button" size="sm" variant="outline" onClick={() => {
+              <Button type="button" size="sm" variant="outline" disabled={logoUploading} onClick={() => {
                 const input = document.createElement("input");
                 input.type = "file";
                 input.accept = "image/png,image/jpeg,image/webp";
-                input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) readImageFile(f, setLogoUrl); };
+                input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) uploadImage(f, "logo"); };
                 input.click();
-              }}>Change Logo</Button>
-              <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => setLogoUrl("")}>Remove</Button>
+              }}>{logoUploading ? <><Loader2 className="size-3 animate-spin mr-1" />Uploading…</> : "Change Logo"}</Button>
+              <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveImage("logo")}>Remove</Button>
             </div>
           ) : (
-            <Input key="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) readImageFile(f, setLogoUrl); }} className="mt-1" />
+            <div className="mt-1">
+              <Input key="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" disabled={logoUploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, "logo"); if (e.target) e.target.value = ""; }} />
+              {logoUploading && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Uploading…</p>}
+            </div>
           )}
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Product Image</Label>
-          <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) readImageFile(f, setProductImage); }} className="mt-1" />
-          {productImage && <img src={productImage} alt="" className="mt-2 max-h-10 max-w-40 object-contain" />}
+          <div className="mt-1">
+            {productImage ? (
+              <div className="flex items-center gap-3">
+                <img src={productImage} alt="" className="max-h-10 max-w-40 object-contain" />
+                <Button type="button" size="sm" variant="outline" disabled={productImageUploading} onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = "image/png,image/jpeg,image/webp";
+                  input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) uploadImage(f, "productImage"); };
+                  input.click();
+                }}>{productImageUploading ? <><Loader2 className="size-3 animate-spin mr-1" />Uploading…</> : "Change"}</Button>
+                <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveImage("productImage")}>Remove</Button>
+              </div>
+            ) : (
+              <>
+                <Input type="file" accept="image/png,image/jpeg,image/webp" disabled={productImageUploading}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, "productImage"); if (e.target) e.target.value = ""; }} />
+                {productImageUploading && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Loader2 className="size-3 animate-spin" />Uploading…</p>}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -608,6 +664,7 @@ const DEFAULT_FINANCING_TERMS = [60, 84, 120];
 
 function DemoConfigSections({ company }: { company: any }) {
   const updateDemoConfig = useMutation(api.dealerShared.updateDemoConfig);
+  const generateUploadUrl = useMutation(api.companies.generateCompanyUploadUrl);
   const navigate = useNavigate();
   const [initialized, setInitialized] = useState(false);
   const [cfg, setCfg] = useState<Record<string, any>>({});
@@ -681,6 +738,25 @@ function DemoConfigSections({ company }: { company: any }) {
   const update = useCallback((patch: Record<string, any>) => {
     setCfg((prev) => ({ ...prev, ...patch }));
   }, []);
+
+  const resolveStorageUrl = useMutation(api.companies.resolveStorageUrl);
+
+  /** Upload a demo config image (e.g. roSystemImage) to Convex storage */
+  const uploadDemoImage = useCallback(async (file: File, field: string) => {
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image"); return; }
+    if (file.size > 5_000_000) { toast.error("Image must be under 5 MB"); return; }
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+      if (!res.ok) throw new Error("Upload failed");
+      const { storageId } = await res.json();
+      const url = await resolveStorageUrl({ storageId });
+      update({ [field]: url });
+      toast.success("Image uploaded!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    }
+  }, [generateUploadUrl, resolveStorageUrl, update]);
 
   const saved = useAutoSave(async () => {
     if (!initialized) return;
@@ -911,7 +987,7 @@ function DemoConfigSections({ company }: { company: any }) {
             <Upload className="size-4" /> {cfg.roSystemImage ? "Replace RO Image" : "Upload RO Image"}
             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) { const reader = new FileReader(); reader.onload = () => update({ roSystemImage: reader.result as string }); reader.readAsDataURL(file); }
+              if (file) uploadDemoImage(file, "roSystemImage");
               if (e.target) e.target.value = "";
             }} />
           </label>

@@ -164,7 +164,7 @@ Every report should carry your company name, logo, colors, and contact informati
 
 ### 4. In-Home Presentation Tools
 
-The best software includes tools for presenting results during the in-home appointment. AquaReport's 12-step Demo Wizard is designed specifically for this — it walks you through the entire presentation on a tablet, from AquaScore reveal to pricing to close.
+The best software includes tools for presenting results during the in-home appointment. AquaReport's 21-step Demo Wizard is designed specifically for this — it walks you through the entire presentation on a tablet, from AquaScore reveal to pricing to close.
 
 ### 5. Consumer Delivery Portal
 
@@ -191,7 +191,7 @@ The workflow is straightforward:
 | Time per report | 30–60 min | 15–20 min | 2 min |
 | Professional appearance | Low | Medium | High |
 | Automated scoring | No | Manual formulas | Yes (AquaScore™) |
-| In-home presentation | Notes | Laptop screen | 12-step Demo Wizard |
+| In-home presentation | Notes | Laptop screen | 21-step Demo Wizard |
 | Consumer delivery | Hand paper | Email PDF | myaquareport.com link |
 | Lead tracking | Notebook | Spreadsheet | Built-in CRM |
 | Team management | None | Shared file | Role-based access |
@@ -253,7 +253,7 @@ The fastest path to professional water quality reports:
       {
         question: "Can I show reports on a tablet during in-home presentations?",
         answer:
-          "Yes. AquaReport includes a 12-step Demo Wizard specifically designed for tablet-based in-home sales presentations. It walks through the water test results interactively with the homeowner.",
+          "Yes. AquaReport includes a 21-step Demo Wizard specifically designed for tablet-based in-home sales presentations. It walks through the water test results interactively with the homeowner.",
       },
     ],
     content: `**A professional water test report is a branded, data-driven document that presents water quality results with automated scoring, contaminant grades, and treatment recommendations — and it's the single most effective sales tool a water treatment dealer can use.** Dealers who switch from handwritten results to professional digital reports consistently see close rate improvements of 20–40%.
@@ -320,26 +320,46 @@ Here's the exact workflow:
 
 **Step 4:** Click "Generate." The AquaScore algorithm processes every result against EPA and health thresholds and produces a complete report in seconds.
 
-**Step 5:** Use the 12-step Demo Wizard for your in-home presentation. It walks you through the AquaScore reveal, individual contaminant deep-dives, before/after treatment visualization, pricing, and close.
+**Step 5:** Use the 21-step Demo Wizard for your in-home presentation. It walks you through the AquaScore reveal, individual contaminant deep-dives, before/after treatment visualization, pricing, and close.
 
 **Step 6:** Send the report to the homeowner via myaquareport.com. They get a link — no login required — and can review their results anytime on any device.
 
 ## The In-Home Presentation Flow
 
-AquaReport's Demo Wizard structures your in-home presentation into 12 steps:
+AquaReport's Demo Wizard structures your in-home presentation into 21 steps across 6 psychology-driven phases:
 
-1. **Welcome & Introduction** — Set expectations for the appointment
-2. **Local Water Overview** — Show what's in the local water supply (EPA data by ZIP)
-3. **AquaScore Reveal** — The big moment: show their overall score
-4. **Contaminant Deep-Dive** — Walk through each problem contaminant
-5. **Health Context** — What these contaminants mean for their family
-6. **Live Test** — Run real-time tests (pH strips, TDS meter) with instant scoring
-7. **Before Score** — Lock in their current water quality baseline
-8. **Treatment Options** — Present what solutions exist
-9. **After Score Transform** — Show what their score would be after treatment
-10. **Pricing Presentation** — Present your pricing with confidence
-11. **Report Delivery** — Send the full report to their phone
-12. **Close** — Ask for the sale
+**Phase 1 — Personalize**
+1. **Intake** — Dealer-only pre-demo prep (hidden from homeowner)
+2. **Welcome** — Set expectations and agenda for the appointment
+3. **Priorities** — Discover what matters most to the homeowner
+
+**Phase 2 — Diagnose**
+4. **Top Concerns** — Surface the top 3 water quality concerns
+5. **Contaminants** — Full contaminant breakdown with severity levels
+6. **AquaScore Reveal** — The big moment: show their overall water quality score
+7. **Live Test** — Run real-time tests (pH strips, TDS meter) with instant scoring
+8. **Verified Score** — Lock in the verified score with live test data
+
+**Phase 3 — Emotionalize**
+9. **Impact** — Room-by-room personalized impact analysis
+
+**Phase 4 — Transform**
+10. **Score Improvement** — Show projected score after filtration
+11. **System** — Present the recommended filtration system
+12. **Trust Proof** — Social proof, certifications, reviews
+13. **Before & After** — Chemical-by-chemical comparison
+
+**Phase 5 — Justify**
+14. **Expenses** — What unfiltered water is already costing them
+15. **Investment** — Present pricing with confidence
+16. **Breakdown** — Detailed investment breakdown
+
+**Phase 6 — Close**
+17. **Score Journey** — 3-stage score journey visualization
+18. **Upgrade** — RO upsell opportunity
+19. **Summary** — Home Water Plan summary
+20. **Decision** — "What makes sense for your family?"
+21. **Close** — Customer handoff and next steps
 
 This structured approach ensures you never forget a step and keeps the presentation professional and consistent.
 
@@ -628,7 +648,7 @@ Digital reports are the fastest way to improve your close rate because they tran
 
 ### 1. The Professional Presentation Edge
 
-When you walk into a home with AquaReport's Demo Wizard on a tablet, you look different from every other water dealer. The 12-step structured presentation builds trust systematically:
+When you walk into a home with AquaReport's Demo Wizard on a tablet, you look different from every other water dealer. The 21-step structured presentation builds trust systematically:
 
 - Show them their local water quality data (EPA sourced)
 - Reveal their AquaScore — one number that captures their situation
@@ -727,7 +747,7 @@ Track these numbers monthly:
       {
         question: "What software do water treatment dealers need?",
         answer:
-          "At minimum, water treatment dealers need reporting software (to create professional water quality reports), a CRM (to track leads and customers), and a presentation tool for in-home demos. AquaReport combines all three — report generation, lead tracking, and a 12-step Demo Wizard — in one platform.",
+          "At minimum, water treatment dealers need reporting software (to create professional water quality reports), a CRM (to track leads and customers), and a presentation tool for in-home demos. AquaReport combines all three — report generation, lead tracking, and a 21-step Demo Wizard — in one platform.",
       },
       {
         question: "Can one platform handle reporting and CRM for water dealers?",
@@ -767,7 +787,7 @@ This is the foundation. You need software that turns raw test data into professi
 
 The appointment is where you win or lose the deal. Dedicated presentation software structures your pitch and keeps it professional:
 
-- Step-by-step guided flow (AquaReport's 12-step Demo Wizard)
+- Step-by-step guided flow (AquaReport's 21-step Demo Wizard)
 - Interactive score reveals and contaminant deep-dives
 - Before/after treatment visualization
 - Pricing presentation
@@ -798,7 +818,7 @@ AquaReport combines all four of these tools into a single platform:
 
 **Reporting:** Enter test data, get an instant AquaScore-graded report with branded PDF and digital delivery via myaquareport.com.
 
-**Demo Wizard:** A 12-step tablet-optimized presentation tool that guides your in-home appointment from introduction to close.
+**Demo Wizard:** A 21-step tablet-optimized presentation tool that guides your in-home appointment from introduction to close.
 
 **Lead Management:** Track customers, view report history, monitor engagement, and manage your pipeline.
 
@@ -1030,7 +1050,7 @@ Digital delivery gives you visibility. You can see when the homeowner views thei
 | Shareable with others | No | Yes (link sharing) |
 | Automated scoring | No | Yes (AquaScore™) |
 | Follow-up data | None | View tracking & engagement |
-| In-home presentation | Manual | 12-step Demo Wizard |
+| In-home presentation | Manual | 21-step Demo Wizard |
 | Cost per report | Paper + printer | Included in subscription |
 | Team consistency | Varies by rep | Standardized |
 | Lead tracking | Notebook/spreadsheet | Built-in CRM |
@@ -1041,7 +1061,7 @@ The transition from paper to digital is faster than most dealers expect:
 
 **Day 1:** Sign up for AquaReport and create your first report using data from a recent test. See how the output compares to your paper process.
 
-**Day 2–3:** Practice the Demo Wizard on your tablet. Run through the 12-step flow until it feels natural.
+**Day 2–3:** Practice the Demo Wizard on your tablet. Run through the 21-step flow until it feels natural.
 
 **Week 1:** Use digital reports for all new appointments. Keep paper as a backup if it makes you comfortable — but you'll stop needing it quickly.
 
@@ -1189,7 +1209,7 @@ AquaReport's built-in lead management helps you track every prospect:
         question:
           "What is the best way to show water test results to a homeowner?",
         answer:
-          "Use a structured, visual presentation. Start with the overall water quality score, then break down individual contaminants with clear grades and health context. AquaReport's 12-step Demo Wizard guides dealers through this exact flow on a tablet during in-home presentations.",
+          "Use a structured, visual presentation. Start with the overall water quality score, then break down individual contaminants with clear grades and health context. AquaReport's 21-step Demo Wizard guides dealers through this exact flow on a tablet during in-home presentations.",
       },
       {
         question: "How long should an in-home water test presentation take?",
@@ -1197,7 +1217,7 @@ AquaReport's built-in lead management helps you track every prospect:
           "A well-structured presentation takes 20–30 minutes. AquaReport's Demo Wizard is designed for this timeframe — long enough to be thorough but short enough to maintain attention and momentum.",
       },
     ],
-    content: `**The best way to present water test results to customers is with a structured, visual presentation that starts with an overall water quality score, walks through individual contaminants with clear grades and health context, and ends with a treatment recommendation backed by data.** AquaReport's 12-step Demo Wizard was built specifically for this — it guides dealers through a proven presentation flow on a tablet during in-home appointments, and dealers who use it consistently report significantly higher close rates.
+    content: `**The best way to present water test results to customers is with a structured, visual presentation that starts with an overall water quality score, walks through individual contaminants with clear grades and health context, and ends with a treatment recommendation backed by data.** AquaReport's 21-step Demo Wizard was built specifically for this — it guides dealers through a proven presentation flow on a tablet during in-home appointments, and dealers who use it consistently report significantly higher close rates.
 
 You can have the best water treatment products in the industry. But if you can't present test results in a way that a homeowner understands and trusts, you'll lose the sale to a competitor with a better pitch — even if their product is worse.
 
@@ -1283,7 +1303,7 @@ The moment their score goes from Bronze to Gold is the emotional peak of the pre
 
 ## Key Takeaways
 
-- Structure your presentation with a proven flow (12-step Demo Wizard) instead of winging it every time
+- Structure your presentation with a proven flow (21-step Demo Wizard) instead of winging it every time
 - Start with the AquaScore — one number that instantly communicates water quality
 - Focus on 3–5 key contaminants rather than overwhelming with every data point
 - The before/after score transform is your most powerful closing tool
@@ -1881,7 +1901,7 @@ Several specific features contribute to higher close rates:
 
 **Before/after transformation:** Showing the score go from 43 to 91 visualizes the value of treatment in a way words can't.
 
-**Demo Wizard structure:** A proven 12-step presentation flow ensures every appointment is consistent and professional.
+**Demo Wizard structure:** A proven 21-step presentation flow ensures every appointment is consistent and professional.
 
 **Digital delivery:** The homeowner can review results on their own time and share with decision-makers (spouse, landlord, etc.).
 

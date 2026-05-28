@@ -7,7 +7,7 @@ import { useState, useCallback, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
-import { ChevronRight, ChevronLeft, Sparkles, Upload, X } from "lucide-react";
+import { ChevronRight, ChevronLeft, Loader2, Sparkles, Upload, X } from "lucide-react";
 import type { CompanyForDemo } from "@/lib/types";
 
 interface Props {
@@ -258,12 +258,25 @@ function StepTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) 
 }
 
 function BrandStep({ cfg, update, accent }: { cfg: any; update: (p: any) => void; accent: string }) {
-  const readImageFile = (file: File) => {
+  const [uploading, setUploading] = useState(false);
+  const generateUploadUrl = useMutation(api.companies.generateCompanyUploadUrl);
+  const saveCompanyImage = useMutation(api.companies.saveCompanyImage);
+
+  const uploadLogo = async (file: File) => {
     if (!file.type.startsWith("image/")) { toast.error("Please upload an image"); return; }
-    if (file.size > 15_000_000) { toast.error("Image must be under 15MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => update({ logoUrl: String(reader.result || "") });
-    reader.readAsDataURL(file);
+    if (file.size > 5_000_000) { toast.error("Image must be under 5 MB"); return; }
+    setUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+      if (!res.ok) throw new Error("Upload failed");
+      const { storageId } = await res.json();
+      const url = await saveCompanyImage({ field: "logo", storageId });
+      update({ logoUrl: url });
+      toast.success("Logo uploaded!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally { setUploading(false); }
   };
 
   return (
@@ -280,9 +293,9 @@ function BrandStep({ cfg, update, accent }: { cfg: any; update: (p: any) => void
               </button>
             </div>
           ) : (
-            <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/15 text-white/40 text-sm hover:bg-white/[0.03] transition-colors cursor-pointer">
-              <Upload className="size-4" /> Upload logo
-              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) readImageFile(f); e.target.value = ""; }} />
+            <label className={`flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-white/15 text-white/40 text-sm hover:bg-white/[0.03] transition-colors cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              {uploading ? <><Loader2 className="size-4 animate-spin" /> Uploading…</> : <><Upload className="size-4" /> Upload logo</>}
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = ""; }} />
             </label>
           )}
         </div>
