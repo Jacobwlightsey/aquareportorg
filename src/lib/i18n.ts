@@ -74,7 +74,7 @@ const CA_TEXT: CountryText = {
   cityLabel: "City",
   agency: "Health Canada",
   guideline: "GCDWQ",
-  guidelineFull: "Guideline for Canadian Drinking Water Quality",
+  guidelineFull: "Maximum Acceptable Concentration",
   healthSource: "Health Canada",
   healthGuideline: "Health Canada guidelines",
   agencyAndHealth: "Health Canada guidelines (GCDWQ)",
