@@ -38,6 +38,7 @@ const schema = defineSchema({
     reportLimitOverride: v.optional(v.number()),
     demoConfig: v.optional(v.any()),
     demoStepConfig: v.optional(v.any()),
+    customProposalUrl: v.optional(v.string()),
   })
     .index("by_createdBy", ["createdBy"])
     .index("by_customDomain", ["customDomain"])

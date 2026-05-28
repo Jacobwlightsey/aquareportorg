@@ -2,7 +2,7 @@
    Save outcome, share report, follow-up. Surface cards, designTokens.
    ──── */
 
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import {
   Calendar, Check, CircleSlash, ClipboardCopy, ExternalLink,
   Loader2, Mail, MessageSquare, Send, Share2, Timer, X,
@@ -81,6 +81,13 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
   const generateProposal = useAction(api.proposalPdf.generateProposalPdf);
   const [generatingProposal, setGeneratingProposal] = useState(false);
   const [proposalUrl, setProposalUrl] = useState<string | null>(null);
+
+  // If company has a custom proposal PDF uploaded, resolve its storage URL
+  const customProposalStorageId = report.customProposalUrl;
+  const resolvedCustomUrl = useQuery(
+    api.dealerShared.getStorageUrl,
+    customProposalStorageId ? { storageId: customProposalStorageId } : "skip",
+  );
 
   const [referralUrl, setReferralUrl] = useState("");
   const [creatingReferral, setCreatingReferral] = useState(false);
@@ -280,35 +287,39 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
           >
             <Calendar className="size-4 shrink-0" style={{ color: colors.primary }} />Schedule Follow-Up
           </button>
-          {!proposalUrl ? (
-            <button
-              onClick={async () => {
-                setGeneratingProposal(true);
-                try {
-                  const result = await generateProposal({ reportId: report._id });
-                  if (result.ok && result.pdfUrl) { setProposalUrl(result.pdfUrl); toast.success("Proposal PDF generated!"); }
-                  else toast.error((result as any).message || "Could not generate proposal.");
-                } catch (e: any) { toast.error(e.message || "Proposal generation failed"); }
-                finally { setGeneratingProposal(false); }
-              }}
-              disabled={generatingProposal}
-              className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer disabled:opacity-50"
-              style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
-            >
-              {generatingProposal ? <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: "#8b5cf6" }} /> : <Send className="size-4 shrink-0" style={{ color: "#8b5cf6" }} />}
-              {generatingProposal ? "Generating…" : "Generate Proposal"}
-            </button>
-          ) : (
-            <a
-              href={proposalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer"
-              style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", color: "#a78bfa" }}
-            >
-              <ExternalLink className="size-4 shrink-0" />View Proposal PDF
-            </a>
-          )}
+          {(() => {
+            const effectiveUrl = proposalUrl || resolvedCustomUrl;
+            if (effectiveUrl) return (
+              <a
+                href={effectiveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer"
+                style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", color: "#a78bfa" }}
+              >
+                <ExternalLink className="size-4 shrink-0" />{resolvedCustomUrl && !proposalUrl ? "Send Proposal" : "View Proposal PDF"}
+              </a>
+            );
+            return (
+              <button
+                onClick={async () => {
+                  setGeneratingProposal(true);
+                  try {
+                    const result = await generateProposal({ reportId: report._id });
+                    if (result.ok && result.pdfUrl) { setProposalUrl(result.pdfUrl); toast.success("Proposal PDF generated!"); }
+                    else toast.error((result as any).message || "Could not generate proposal.");
+                  } catch (e: any) { toast.error(e.message || "Proposal generation failed"); }
+                  finally { setGeneratingProposal(false); }
+                }}
+                disabled={generatingProposal}
+                className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer disabled:opacity-50"
+                style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
+              >
+                {generatingProposal ? <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: "#8b5cf6" }} /> : <Send className="size-4 shrink-0" style={{ color: "#8b5cf6" }} />}
+                {generatingProposal ? "Generating…" : "Generate Proposal"}
+              </button>
+            );
+          })()}
         </div>
 
         {/* Spouse Review Link */}

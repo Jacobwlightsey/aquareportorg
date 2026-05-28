@@ -1,4 +1,4 @@
-import { useAction } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import {
   Calendar,
   Check,
@@ -24,6 +24,16 @@ export function DemoNextSteps({ report, reportId, onEndDemo }: Props) {
   const [referralUrl, setReferralUrl] = useState("");
   const [creating, setCreating] = useState(false);
   const createReferral = useAction(api.referrals.createConsumerReferral);
+
+  // Custom proposal PDF support
+  const customProposalStorageId = report.customProposalUrl;
+  const resolvedCustomUrl = useQuery(
+    api.dealerShared.getStorageUrl,
+    customProposalStorageId ? { storageId: customProposalStorageId } : "skip",
+  );
+  const generateProposal = useAction(api.proposalPdf.generateProposalPdf);
+  const [generatingProposal, setGeneratingProposal] = useState(false);
+  const [proposalUrl, setProposalUrl] = useState<string | null>(null);
 
   const shareUrl = report.shareToken
     ? `${window.location.origin}/r/${report.shareToken}`
@@ -159,10 +169,39 @@ export function DemoNextSteps({ report, reportId, onEndDemo }: Props) {
             <Calendar className="size-4 text-blue-400 shrink-0" />
             Schedule Follow-Up
           </button>
-          <button className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10">
-            <Send className="size-4 text-violet-400 shrink-0" />
-            Send Proposal
-          </button>
+          {(() => {
+            const effectiveUrl = proposalUrl || resolvedCustomUrl;
+            if (effectiveUrl) return (
+              <a
+                href={effectiveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl p-3 text-left text-sm font-medium"
+                style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", color: "#a78bfa" }}
+              >
+                <ExternalLink className="size-4 shrink-0" />
+                {resolvedCustomUrl && !proposalUrl ? "Send Proposal" : "View Proposal PDF"}
+              </a>
+            );
+            return (
+              <button
+                onClick={async () => {
+                  setGeneratingProposal(true);
+                  try {
+                    const result = await generateProposal({ reportId: reportId as any });
+                    if (result.ok && result.pdfUrl) { setProposalUrl(result.pdfUrl); toast.success("Proposal PDF generated!"); }
+                    else toast.error((result as any).message || "Could not generate proposal.");
+                  } catch (e: any) { toast.error(e.message || "Proposal generation failed"); }
+                  finally { setGeneratingProposal(false); }
+                }}
+                disabled={generatingProposal}
+                className="flex items-center gap-2 rounded-xl bg-white/5 p-3 text-left text-sm font-medium active:bg-white/10 disabled:opacity-50"
+              >
+                {generatingProposal ? <Loader2 className="size-4 text-violet-400 shrink-0 animate-spin" /> : <Send className="size-4 text-violet-400 shrink-0" />}
+                {generatingProposal ? "Generating…" : "Send Proposal"}
+              </button>
+            );
+          })()}
         </div>
       </div>
 

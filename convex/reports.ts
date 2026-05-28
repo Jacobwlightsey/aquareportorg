@@ -354,6 +354,7 @@ export const getReport = query({
       repName: report.repName,
       repDate: report.repDate,
       repPhone: report.repPhone,
+      customProposalUrl: (company as any)?.customProposalUrl,
     };
   },
 });

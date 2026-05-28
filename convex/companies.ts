@@ -138,6 +138,7 @@ export const updateCompany = mutation({
     brandMode: v.optional(v.string()),
     country: v.optional(v.string()),
     reportLimitOverride: v.optional(v.number()),
+    customProposalUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "owner");

@@ -7,6 +7,7 @@ import {
   CreditCard,
   Droplets,
   ExternalLink,
+  FileText,
   Sparkles,
   GripVertical,
   Loader2,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SUBSCRIPTION_PLANS_FLAT as SUBSCRIPTION_PLANS } from "@/lib/constants";
 import {
@@ -136,6 +138,9 @@ export function CompanySettingsPage() {
           onRemove={removeMember}
           onRevoke={revokeInvite}
         />
+
+        {/* ── Proposals ── */}
+        {isAdmin && <ProposalTemplateSection company={company} onUpdate={updateCompany} />}
 
         {/* ── Billing ── */}
         {isAdmin && <BillingSection />}
@@ -1105,6 +1110,97 @@ function TeamSection({
           </form>
         </DialogContent>
       </Dialog>
+    </SettingsSection>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Proposal Template Section
+   ═══════════════════════════════════════════════════════════════════ */
+
+function ProposalTemplateSection({ company, onUpdate }: { company: Record<string, unknown>; onUpdate: (args: Record<string, string | undefined>) => Promise<unknown> }) {
+  const generateUploadUrl = useMutation(api.dealerShared.generateUploadUrl);
+  const getStorageUrl = useQuery(api.dealerShared.getStorageUrl, company.customProposalUrl ? { storageId: company.customProposalUrl as any } : "skip");
+  const [uploading, setUploading] = useState(false);
+  const customUrl = (company.customProposalUrl as string) || "";
+
+  const handleUpload = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      toast.error("Please upload a PDF file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File must be under 10 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const { storageId } = await res.json();
+      // Store the storageId — resolved to URL via getStorageUrl query
+      await onUpdate({ customProposalUrl: storageId });
+      toast.success("Custom proposal template uploaded!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    await onUpdate({ customProposalUrl: undefined });
+    toast.success("Custom template removed — proposals will use auto-generated template.");
+  };
+
+  return (
+    <SettingsSection emoji="📄" title="Proposal Template" description="Upload a custom proposal PDF or use the auto-generated branded template.">
+      <div className="space-y-4">
+        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <FileText className="size-4 text-violet-400" />
+            <p className="text-sm font-medium">
+              {customUrl ? "Custom Template Active" : "Using Default Template"}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {customUrl
+              ? "Your custom PDF will be sent when reps tap \"Send Proposal\" at the end of a demo. Remove it to switch back to auto-generated proposals."
+              : "Proposals are auto-generated with your branding, water data, and equipment from each report. Upload a custom PDF to override this."}
+          </p>
+
+          {customUrl ? (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-violet-400 border-violet-500/30">Custom PDF</Badge>
+              <Button size="sm" variant="outline" onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "application/pdf";
+                input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleUpload(f); };
+                input.click();
+              }} disabled={uploading}>
+                {uploading ? "Uploading..." : "Replace"}
+              </Button>
+              <Button size="sm" variant="ghost" className="text-destructive" onClick={handleRemove}>Remove</Button>
+            </div>
+          ) : (
+            <div>
+              <Input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); }}
+                disabled={uploading}
+              />
+              {uploading && <p className="text-xs text-muted-foreground mt-1">Uploading...</p>}
+            </div>
+          )}
+        </div>
+      </div>
     </SettingsSection>
   );
 }
