@@ -17,4 +17,25 @@ crons.weekly(
   internal.consent.cleanupOldConsent,
 );
 
+// Follow-ups: process due messages every 15 minutes
+crons.interval(
+  "process follow-up messages",
+  { minutes: 15 },
+  internal.followUps.processDueFollowUps,
+);
+
+// Retention: process due service reminders every hour
+crons.interval(
+  "process service reminders",
+  { hours: 1 },
+  internal.retention.processDueReminders,
+);
+
+// Reviews: process due review requests every hour
+crons.interval(
+  "process review requests",
+  { hours: 1 },
+  internal.retention.processDueReviewRequests,
+);
+
 export default crons;

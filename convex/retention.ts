@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { getMembership } from "./security";
 
 // ─── Service Agreements ──────────────────────────────────────────
@@ -275,5 +275,63 @@ export const redeemReward = mutation({
       status: "redeemed",
       redeemedAt: Date.now(),
     });
+  },
+});
+
+// ─── Cron: process due service reminders ─────────────────────────
+
+export const processDueReminders = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const pending = await ctx.db
+      .query("serviceReminders")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.lte(q.field("dueDate"), now)
+        )
+      )
+      .take(100);
+
+    let processed = 0;
+    for (const reminder of pending) {
+      // TODO: Call email action in production
+      await ctx.db.patch(reminder._id, {
+        status: "sent",
+        sentAt: now,
+      });
+      processed++;
+    }
+    return { processed };
+  },
+});
+
+// ─── Cron: process due review requests ───────────────────────────
+
+export const processDueReviewRequests = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const pending = await ctx.db
+      .query("reviewRequests")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.lte(q.field("scheduledAt"), now)
+        )
+      )
+      .take(100);
+
+    let processed = 0;
+    for (const req of pending) {
+      // TODO: Call email action with Google Review link CTA in production
+      await ctx.db.patch(req._id, {
+        status: "sent",
+        sentAt: now,
+      });
+      processed++;
+    }
+    return { processed };
   },
 });

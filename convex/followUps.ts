@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { getMembership } from "./security";
 
 export const getSequences = query({
@@ -128,5 +128,45 @@ export const cancelMessages = mutation({
         await ctx.db.patch(m._id, { status: "cancelled" });
       }
     }
+  },
+});
+
+// ─── Cron: process due follow-up messages ────────────────────────
+
+/**
+ * Called by the cron scheduler. Finds all pending follow-up messages
+ * that are due (scheduledAt <= now) and marks them as sent.
+ * In production this would call an email/SMS action; for now it
+ * updates status so the UI reflects delivery.
+ */
+export const processDueFollowUps = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    // Get all companies and process pending messages
+    // Since we can't query across companies with a compound index efficiently,
+    // we query all pending messages and filter by time
+    const pending = await ctx.db
+      .query("followUpMessages")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.lte(q.field("scheduledAt"), now)
+        )
+      )
+      .take(100); // Process in batches of 100
+
+    let processed = 0;
+    for (const msg of pending) {
+      // TODO: In production, call email/SMS action here
+      // await ctx.scheduler.runAfter(0, internal.email.sendFollowUp, { messageId: msg._id });
+      await ctx.db.patch(msg._id, {
+        status: "sent",
+        sentAt: now,
+      });
+      processed++;
+    }
+
+    return { processed };
   },
 });

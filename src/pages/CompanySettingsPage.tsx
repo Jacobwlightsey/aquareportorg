@@ -287,6 +287,7 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
   const [phone, setPhone] = useState((company.phone as string) || "");
   const [website, setWebsite] = useState((company.website as string) || "");
   const [address, setAddress] = useState((company.address as string) || "");
+  const [googleReviewUrl, setGoogleReviewUrl] = useState((company.googleReviewUrl as string) || "");
 
   useEffect(() => {
     setCountry((company.country as string) || "US");
@@ -295,6 +296,7 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
     setPhone((company.phone as string) || "");
     setWebsite((company.website as string) || "");
     setAddress((company.address as string) || "");
+    setGoogleReviewUrl((company.googleReviewUrl as string) || "");
   }, [company]);
 
   const saved = useAutoSave(async () => {
@@ -305,8 +307,9 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
       phone: phone.trim() || undefined,
       website: website.trim() || undefined,
       address: address.trim() || undefined,
+      googleReviewUrl: googleReviewUrl.trim() || undefined,
     });
-  }, [country, name, email, phone, website, address]);
+  }, [country, name, email, phone, website, address, googleReviewUrl]);
 
   return (
     <SettingsSection emoji="🏢" title="Company" description="Your business info — appears on every report">
@@ -338,6 +341,7 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
         </div>
         <div><Label className="text-xs text-muted-foreground">Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourcompany.com" /></div>
         <div><Label className="text-xs text-muted-foreground">Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.addressPlaceholder} /></div>
+        <div><Label className="text-xs text-muted-foreground">Google Review Link</Label><Input value={googleReviewUrl} onChange={(e) => setGoogleReviewUrl(e.target.value)} placeholder="https://g.page/r/your-business/review" /><p className="text-[11px] text-muted-foreground mt-0.5">Used in review request emails as the CTA button link</p></div>
       </div>
     </SettingsSection>
   );

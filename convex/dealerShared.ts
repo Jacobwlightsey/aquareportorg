@@ -948,6 +948,66 @@ export const saveDemoSession = mutation({
       }),
     });
 
+    // Propagate outcome to pipeline — update deal stage if a deal exists for this report
+    if (args.reportId) {
+      const deal = await ctx.db
+        .query("deals")
+        .withIndex("by_report", (q) => q.eq("reportId", args.reportId!))
+        .first();
+      if (deal) {
+        const outcomeToStage: Record<string, string> = {
+          sold: "closed_won",
+          follow_up: "demo_completed",
+          not_interested: "closed_lost",
+          no_show: "new_lead",
+        };
+        const newStage = outcomeToStage[args.outcome] || "demo_completed";
+        if (deal.stage !== newStage) {
+          const history = deal.stageHistory ? JSON.parse(deal.stageHistory) : [];
+          history.push({ stage: newStage, timestamp: Date.now(), userId: String(userId) });
+          const patch: Record<string, unknown> = {
+            stage: newStage,
+            demoSessionId: sessionId,
+            stageHistory: JSON.stringify(history),
+          };
+          if (newStage === "closed_won" || newStage === "closed_lost") {
+            patch.closedAt = Date.now();
+          }
+          if (args.outcome === "not_interested") {
+            patch.lostReason = args.notes || "Not interested after demo";
+          }
+          await ctx.db.patch(deal._id, patch);
+        }
+      }
+      // Also update lead status
+      const lead = await ctx.db
+        .query("leads")
+        .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+        .filter((q) => q.eq(q.field("reportShareToken"), undefined)) // fallback - try by name
+        .first();
+      // Better: find lead linked to this report's share token
+      const report = await ctx.db.get(args.reportId);
+      if (report?.shareToken) {
+        const linkedLead = await ctx.db
+          .query("leads")
+          .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
+          .filter((q) => q.eq(q.field("reportShareToken"), report.shareToken))
+          .first();
+        if (linkedLead) {
+          const outcomeToLeadStatus: Record<string, string> = {
+            sold: "won",
+            follow_up: "follow_up",
+            not_interested: "lost",
+            no_show: "no_show",
+          };
+          const newStatus = outcomeToLeadStatus[args.outcome] || "contacted";
+          if (linkedLead.status !== newStatus) {
+            await ctx.db.patch(linkedLead._id, { status: newStatus });
+          }
+        }
+      }
+    }
+
     return sessionId;
   },
 });

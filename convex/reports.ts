@@ -238,6 +238,23 @@ export const saveReport = mutation({
         ?? (args.waterScore === null || args.waterScore === undefined ? undefined : finiteNumber(args.waterScore)),
     });
 
+    // Auto-create lead + deal so pipeline/funnel updates automatically
+    await ctx.scheduler.runAfter(0, internal.deals.autoCreateLeadAndDeal, {
+      companyId: membership.companyId,
+      reportId,
+      userId,
+      customerName: optionalString(args.customerName),
+      customerEmail: optionalString(args.customerEmail),
+      customerPhone: optionalString(args.customerPhone),
+      customerAddress: optionalString(args.customerAddress),
+      shareToken,
+      city: args.city,
+      state: args.state,
+      waterScore: calculateAquaScoreFromContaminants(parseReportContaminants(args.contaminants))
+        ?? (args.waterScore === null || args.waterScore === undefined ? undefined : finiteNumber(args.waterScore)),
+      source: "report",
+    });
+
     return { reportId, shareToken };
   },
 });

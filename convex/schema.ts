@@ -108,6 +108,7 @@ const schema = defineSchema({
 
   leads: defineTable({
     companyId: v.id("companies"),
+    reportId: v.optional(v.id("reports")),
     reportShareToken: v.optional(v.string()),
     name: v.string(),
     phone: v.optional(v.string()),

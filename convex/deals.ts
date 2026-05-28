@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getMembership } from "./security";
 
@@ -169,5 +169,72 @@ export const getPipelineStats = query({
         ? Math.round((wonCount / deals.filter((d) => d.stage === "closed_won" || d.stage === "closed_lost").length) * 100)
         : 0,
     };
+  },
+});
+
+// ─── Auto-create lead + deal on report creation ──────────────────
+
+/**
+ * Called internally after a report is saved. Creates a lead and deal
+ * so the pipeline funnel and leads page reflect real activity.
+ */
+export const autoCreateLeadAndDeal = internalMutation({
+  args: {
+    companyId: v.id("companies"),
+    reportId: v.id("reports"),
+    userId: v.id("users"),
+    customerName: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),
+    customerAddress: v.optional(v.string()),
+    shareToken: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    waterScore: v.optional(v.number()),
+    source: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const name = args.customerName?.trim() || "Unnamed Customer";
+
+    // Check if a deal already exists for this report (idempotency)
+    const existingDeal = await ctx.db
+      .query("deals")
+      .withIndex("by_report", (q) => q.eq("reportId", args.reportId))
+      .first();
+    if (existingDeal) return { leadId: existingDeal.leadId, dealId: existingDeal._id };
+
+    // Create lead
+    const leadId = await ctx.db.insert("leads", {
+      companyId: args.companyId,
+      reportId: args.reportId,
+      reportShareToken: args.shareToken,
+      name,
+      phone: args.customerPhone,
+      email: args.customerEmail,
+      status: "new",
+      utilityCityState: args.city && args.state ? `${args.city}, ${args.state}` : undefined,
+      source: args.source || "report",
+      assignedTo: args.userId,
+    });
+
+    // Create deal
+    const stageHistory = JSON.stringify([
+      { stage: "new_lead", timestamp: Date.now(), userId: String(args.userId) },
+    ]);
+    const dealId = await ctx.db.insert("deals", {
+      companyId: args.companyId,
+      reportId: args.reportId,
+      leadId,
+      customerName: name,
+      customerEmail: args.customerEmail,
+      customerPhone: args.customerPhone,
+      customerAddress: args.customerAddress,
+      stage: "new_lead",
+      assignedTo: args.userId,
+      source: args.source || "report",
+      stageHistory,
+    });
+
+    return { leadId, dealId };
   },
 });
