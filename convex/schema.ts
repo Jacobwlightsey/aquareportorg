@@ -51,6 +51,7 @@ const schema = defineSchema({
     email: v.optional(v.string()),
     invitedBy: v.optional(v.id("users")),
     acceptedAt: v.optional(v.number()),
+    featureAccess: v.optional(v.array(v.string())),
   })
     .index("by_company", ["companyId"])
     .index("by_user", ["userId"])

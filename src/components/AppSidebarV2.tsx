@@ -67,19 +67,18 @@ const settingsNav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-// Minimum roles for each section
-const SECTION_ACCESS: Record<string, string[]> = {
-  pipeline: ["owner", "admin", "manager", "sales_rep", "viewer"],
-  sales: ["owner", "admin", "manager", "sales_rep"],
-  retention: ["owner", "admin", "manager"],
-  intelligence: ["owner", "admin", "manager"],
-  settings: ["owner", "admin", "manager", "sales_rep", "viewer"],
-};
-
-function hasAccess(role: string | undefined, section: string): boolean {
-  // Show all sections for free trial (no role) and unknown roles
+// Feature access gating: owners see everything, sales reps see only granted sections
+function hasAccess(role: string | undefined, section: string, featureAccess?: string[]): boolean {
+  // Owners always see everything
+  if (role === "owner") return true;
+  // Settings is always visible
+  if (section === "settings") return true;
+  // No role yet (loading / free trial) — show all
   if (!role) return true;
-  return SECTION_ACCESS[section]?.includes(role) ?? false;
+  // Sales reps: check featureAccess array
+  const access = featureAccess ?? ["pipeline"];
+  if (access.includes("all")) return true;
+  return access.includes(section);
 }
 
 function NavLink({
@@ -134,6 +133,7 @@ function SidebarNav() {
   const isAdmin = useQuery(api.admin.isPlatformAdmin);
   const company = useQuery(api.companies.getMyCompany);
   const role = company?.role;
+  const featureAccess = (company as any)?.featureAccess as string[] | undefined;
   const { isFree, plan } = useFreeTrial();
 
   /** Pages free-trial users can access (matches TrialGate allowlist) */
@@ -170,11 +170,11 @@ function SidebarNav() {
 
   // Build flat list of sections
   const sections: { label: string; color: string; items: typeof pipelineNav; section: string }[] = [];
-  if (hasAccess(role, "pipeline")) sections.push({ label: "PIPELINE", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
-  if (hasAccess(role, "sales")) sections.push({ label: "SALES", color: "#34d399", items: salesNav, section: "sales" });
-  if (hasAccess(role, "retention")) sections.push({ label: "RETENTION", color: "#fbbf24", items: retentionNav, section: "retention" });
-  if (hasAccess(role, "intelligence")) sections.push({ label: "INTELLIGENCE", color: "#a78bfa", items: intelligenceNav, section: "intelligence" });
-  if (hasAccess(role, "settings")) sections.push({ label: "SETTINGS", color: "#71717a", items: settingsNav, section: "settings" });
+  if (hasAccess(role, "pipeline", featureAccess)) sections.push({ label: "PIPELINE", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
+  if (hasAccess(role, "sales", featureAccess)) sections.push({ label: "SALES", color: "#34d399", items: salesNav, section: "sales" });
+  if (hasAccess(role, "retention", featureAccess)) sections.push({ label: "RETENTION", color: "#fbbf24", items: retentionNav, section: "retention" });
+  if (hasAccess(role, "intelligence", featureAccess)) sections.push({ label: "INTELLIGENCE", color: "#a78bfa", items: intelligenceNav, section: "intelligence" });
+  if (hasAccess(role, "settings", featureAccess)) sections.push({ label: "SETTINGS", color: "#71717a", items: settingsNav, section: "settings" });
   if (isAdmin) sections.push({ label: "PLATFORM", color: "#fb7185", items: [{ href: "/admin", label: "Admin Dashboard", icon: ShieldCheck }], section: "settings" });
 
   return (

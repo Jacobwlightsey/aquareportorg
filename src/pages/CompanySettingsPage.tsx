@@ -7,6 +7,7 @@ import {
   CreditCard,
   Droplets,
   ExternalLink,
+  Sparkles,
   GripVertical,
   Loader2,
   Mail,
@@ -61,7 +62,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { DemoSetupWizard } from "@/components/DemoSetupWizard";
 
 
-type TeamRole = "owner" | "admin" | "manager" | "sales_rep" | "viewer";
+type TeamRole = "owner" | "sales_rep";
 
 /* ═══════════════════════════════════════════════════════════════════
    Main Page — Apple Settings iOS aesthetic
@@ -104,7 +105,7 @@ export function CompanySettingsPage() {
     );
   }
 
-  const isAdmin = company.role === "admin" || company.role === "owner";
+  const isAdmin = company.role === "owner";
 
   return (
     <div className="max-w-xl mx-auto pb-24">
@@ -410,8 +411,21 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <Label className="text-xs text-muted-foreground">Company Logo</Label>
-          <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) readImageFile(f, setLogoUrl); }} className="mt-1" />
-          {logoUrl && <img src={logoUrl} alt="" className="mt-2 max-h-10 max-w-40 object-contain" />}
+          {logoUrl ? (
+            <div className="flex items-center gap-3 mt-1">
+              <img src={logoUrl} alt="" className="max-h-10 max-w-40 object-contain" />
+              <Button type="button" size="sm" variant="outline" onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/png,image/jpeg,image/webp";
+                input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) readImageFile(f, setLogoUrl); };
+                input.click();
+              }}>Change Logo</Button>
+              <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => setLogoUrl("")}>Remove</Button>
+            </div>
+          ) : (
+            <Input key="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { const f = e.target.files?.[0]; if (f) readImageFile(f, setLogoUrl); }} className="mt-1" />
+          )}
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Product Image</Label>
@@ -527,7 +541,7 @@ function DemoWizardStepsSection() {
             draggable
             onDragStart={() => setDragIdx(idx)}
             onDragOver={(e) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) { setSteps((prev) => { const n = [...prev]; const [item] = n.splice(dragIdx, 1); n.splice(idx, 0, item); return n; }); setDragIdx(idx); } }}
-            onDragEnd={() => { if (dragIdx !== null) persist(steps); setDragIdx(null); }}
+            onDragEnd={() => { setDragIdx(null); setSteps((prev) => { persist(prev); return prev; }); }}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all cursor-grab active:cursor-grabbing ${dragIdx === idx ? "bg-muted/50 scale-[1.02] shadow-lg" : "hover:bg-muted/30"} ${step.enabled ? "" : "opacity-40"}`}
           >
             <GripVertical className="size-4 text-muted-foreground/30 shrink-0" />
@@ -1051,7 +1065,7 @@ function TeamSection({
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-sm">{member.name || "Unnamed"}</p>
                   {member.kind === "invite" && <span className="text-[10px] font-medium text-amber-700 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded">Pending</span>}
-                  {(member.role === "admin" || member.role === "owner") && <span className="text-[10px] font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.5 rounded">{member.role === "owner" ? "Owner" : "Admin"}</span>}
+                  {member.role === "owner" && <span className="text-[10px] font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.5 rounded">Owner</span>}
                 </div>
                 <p className="text-xs text-muted-foreground">{member.email || "No email"} · {member.kind === "invite" ? "invite sent" : `${member.reportCount} reports`}</p>
               </div>
@@ -1080,9 +1094,7 @@ function TeamSection({
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sales_rep">Sales Rep</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  
                 </SelectContent>
               </Select>
             </div>
@@ -1104,18 +1116,8 @@ function TeamSection({
 function BillingSection() {
   const navigate = useNavigate();
   const subscription = useQuery(api.stripe.getSubscription);
-  const createCheckout = useAction(api.stripe.createCheckoutSession);
   const createPortal = useAction(api.stripe.createPortalSession);
   const [loading, setLoading] = useState("");
-
-  const handleSubscribe = async (priceId: string, plan: string) => {
-    setLoading(plan);
-    try {
-      const { url } = await createCheckout({ priceId, plan });
-      if (url) window.location.href = url;
-    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to start checkout"); }
-    finally { setLoading(""); }
-  };
 
   const handleManageBilling = async () => {
     setLoading("portal");
@@ -1142,32 +1144,25 @@ function BillingSection() {
         </div>
       </div>
 
-      {(!isActive || currentPlan === "free") && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {SUBSCRIPTION_PLANS.map((plan) => (
-            <div key={plan.id} className={`rounded-xl border p-4 space-y-3 ${plan.id === "growth" ? "border-blue-500 bg-blue-500/5" : ""}`}>
-              <div>
-                <p className="font-semibold text-sm">{plan.name}</p>
-                <p className="text-lg font-bold">{plan.price}</p>
-              </div>
-              <ul className="space-y-1">
-                {plan.features.map((f) => (<li key={f} className="text-xs text-muted-foreground flex items-center gap-1.5"><Check className="size-3 text-emerald-500 shrink-0" />{f}</li>))}
-              </ul>
-              <Button size="sm" variant={plan.id === "growth" ? "default" : "outline"} className="w-full" disabled={loading === plan.id}
-                onClick={() => { if (plan.priceId) handleSubscribe(plan.priceId, plan.id); else navigate("/subscription"); }}>
-                {loading === plan.id ? <Loader2 className="size-4 animate-spin" /> : plan.id === "enterprise" ? "Contact" : "Subscribe"}
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {isActive && (
-        <Button variant="outline" onClick={handleManageBilling} disabled={loading === "portal"}>
-          {loading === "portal" ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
-          Manage Billing
+      <div className="flex flex-wrap gap-3">
+        <Button variant="outline" asChild>
+          <Link to="/subscription">Manage Subscription</Link>
         </Button>
-      )}
+        {isActive && (
+          <Button variant="outline" onClick={handleManageBilling} disabled={loading === "portal"}>
+            {loading === "portal" ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
+            Billing Portal
+          </Button>
+        )}
+        {!isActive && currentPlan === "free" && (
+          <Button asChild>
+            <Link to="/subscription">
+              <Sparkles className="size-4" />
+              Upgrade Plan
+            </Link>
+          </Button>
+        )}
+      </div>
     </SettingsSection>
   );
 }

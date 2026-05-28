@@ -8,10 +8,7 @@ declare const process: { env: Record<string, string | undefined> };
 
 const roleValidator = v.union(
   v.literal("owner"),
-  v.literal("admin"),
-  v.literal("manager"),
-  v.literal("sales_rep"),
-  v.literal("viewer")
+  v.literal("sales_rep")
 );
 
 function inviteToken() {
@@ -46,7 +43,7 @@ export const getMyCompany = query({
 
     if (!membership) return null;
     const company = await ctx.db.get(membership.companyId);
-    return company ? { ...company, role: normalizeRole(membership.role) } : null;
+    return company ? { ...company, role: normalizeRole(membership.role), featureAccess: membership.featureAccess } : null;
   },
 });
 
@@ -143,7 +140,7 @@ export const updateCompany = mutation({
     reportLimitOverride: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { userId, membership } = await requireRole(ctx, "admin");
+    const { userId, membership } = await requireRole(ctx, "owner");
 
     const update: Record<string, unknown> = {};
     for (const key of Object.keys(args) as Array<keyof typeof args>) {
@@ -228,7 +225,7 @@ export const inviteTeamMember = mutation({
     role: roleValidator,
   },
   handler: async (ctx, args) => {
-    const { userId, membership } = await requireRole(ctx, "manager");
+    const { userId, membership } = await requireRole(ctx, "owner");
     if (!canRole(membership.role, "owner") && args.role === "owner") {
       throw new Error("Only owners can invite other owners");
     }
@@ -360,6 +357,7 @@ export const acceptInvite = mutation({
         email: user?.email || invite.email,
         invitedBy: invite.invitedBy,
         acceptedAt: Date.now(),
+        featureAccess: invite.role === "sales_rep" ? ["pipeline"] : ["all"],
       });
     }
 
@@ -379,7 +377,7 @@ export const acceptInvite = mutation({
 export const revokeInvite = mutation({
   args: { inviteId: v.id("companyInvites") },
   handler: async (ctx, args) => {
-    const { userId, membership } = await requireRole(ctx, "admin");
+    const { userId, membership } = await requireRole(ctx, "owner");
     const invite = await ctx.db.get(args.inviteId);
     if (!invite || invite.companyId !== membership.companyId) {
       throw new Error("Invite not found");
@@ -399,7 +397,7 @@ export const revokeInvite = mutation({
 export const removeTeamMember = mutation({
   args: { memberId: v.id("companyMembers") },
   handler: async (ctx, args) => {
-    const { userId, membership } = await requireRole(ctx, "admin");
+    const { userId, membership } = await requireRole(ctx, "owner");
 
     const target = await ctx.db.get(args.memberId);
     if (!target || target.companyId !== membership.companyId) {
@@ -428,7 +426,7 @@ export const updateTeamMemberRole = mutation({
     role: roleValidator,
   },
   handler: async (ctx, args) => {
-    const { userId, membership } = await requireRole(ctx, "admin");
+    const { userId, membership } = await requireRole(ctx, "owner");
     const target = await ctx.db.get(args.memberId);
     if (!target || target.companyId !== membership.companyId) {
       throw new Error("Member not found");
@@ -449,6 +447,31 @@ export const updateTeamMemberRole = mutation({
       entityType: "companyMember",
       entityId: String(args.memberId),
       metadata: { email: target.email, previousRole: target.role, role: args.role },
+    });
+  },
+});
+
+export const updateFeatureAccess = mutation({
+  args: {
+    memberId: v.id("companyMembers"),
+    featureAccess: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { userId, membership } = await requireRole(ctx, "owner");
+    const target = await ctx.db.get(args.memberId);
+    if (!target || target.companyId !== membership.companyId) {
+      throw new Error("Member not found");
+    }
+    // Ensure "pipeline" is always included
+    const access = Array.from(new Set(["pipeline", ...args.featureAccess]));
+    await ctx.db.patch(args.memberId, { featureAccess: access });
+    await audit(ctx, {
+      companyId: membership.companyId,
+      actorId: userId,
+      action: "team.feature_access_updated",
+      entityType: "companyMember",
+      entityId: String(args.memberId),
+      metadata: { email: target.email, featureAccess: access },
     });
   },
 });
