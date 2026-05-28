@@ -24,7 +24,7 @@ import {
   Code,
   BarChart3,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -181,6 +181,7 @@ function CompanyDetailModal({
 
   const tabs = [
     { key: "overview", label: "Overview", icon: Building2 },
+    { key: "enterprise", label: "Enterprise", icon: Globe },
     { key: "settings", label: "Settings", icon: ShieldCheck },
     { key: "billing", label: "Billing", icon: CreditCard },
     { key: "reports", label: "Reports", icon: FileText },
@@ -555,6 +556,293 @@ function AdminManagementSection() {
           Add Admin
         </Button>
       </div>
+    </div>
+  );
+}
+
+/* ── Enterprise Management Section ─────────────────────────── */
+
+function EnterpriseSection({ companies }: { companies: any[] }) {
+  const enterpriseCompanies = useQuery(api.admin.getEnterpriseCompanies) ?? [];
+  const setEnterprise = useMutation(api.admin.setEnterprise);
+  const updateConfig = useMutation(api.admin.updateEnterpriseConfig);
+  const [selectedId, setSelectedId] = useState<Id<"companies"> | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addSearch, setAddSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Edit state
+  const selected = enterpriseCompanies.find((c: any) => c._id === selectedId);
+  const config = selected?.enterpriseConfig ?? {};
+  const [billingEmail, setBillingEmail] = useState("");
+  const [billingNotes, setBillingNotes] = useState("");
+  const [customPricing, setCustomPricing] = useState("");
+  const [notes, setNotes] = useState("");
+  const [contractStart, setContractStart] = useState("");
+  const [contractEnd, setContractEnd] = useState("");
+
+  // Sync edit fields when selection changes
+  const prevSelectedId = useRef<string | null>(null);
+  if (selectedId !== prevSelectedId.current) {
+    prevSelectedId.current = selectedId as string | null;
+    if (selected) {
+      setBillingEmail(config.billingEmail ?? "");
+      setBillingNotes(config.billingNotes ?? "");
+      setCustomPricing(config.customPricing ?? "");
+      setNotes(config.notes ?? "");
+      setContractStart(config.contractStart ? new Date(config.contractStart).toISOString().split("T")[0] : "");
+      setContractEnd(config.contractEnd ? new Date(config.contractEnd).toISOString().split("T")[0] : "");
+    }
+  }
+
+  // Non-enterprise companies for the "add" dialog
+  const nonEnterprise = (companies || []).filter(
+    (c: any) => !c.isEnterprise && (!addSearch || c.name?.toLowerCase().includes(addSearch.toLowerCase()) || c.ownerEmail?.toLowerCase().includes(addSearch.toLowerCase()))
+  );
+
+  async function handleAdd(companyId: Id<"companies">) {
+    try {
+      await setEnterprise({ companyId, isEnterprise: true });
+      toast.success("Company upgraded to Enterprise");
+      setShowAddDialog(false);
+      setAddSearch("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upgrade");
+    }
+  }
+
+  async function handleRemove(companyId: Id<"companies">) {
+    if (!confirm("Remove enterprise status? This will downgrade the company.")) return;
+    try {
+      await setEnterprise({ companyId, isEnterprise: false });
+      toast.success("Enterprise status removed");
+      if (selectedId === companyId) setSelectedId(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed");
+    }
+  }
+
+  async function handleSaveConfig() {
+    if (!selectedId) return;
+    setSaving(true);
+    try {
+      await updateConfig({
+        companyId: selectedId,
+        config: {
+          billingEmail: billingEmail || undefined,
+          billingNotes: billingNotes || undefined,
+          customPricing: customPricing || undefined,
+          notes: notes || undefined,
+          contractStart: contractStart ? new Date(contractStart).getTime() : undefined,
+          contractEnd: contractEnd ? new Date(contractEnd).getTime() : undefined,
+          locations: config.locations || undefined,
+        },
+      });
+      toast.success("Enterprise config saved");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    }
+    setSaving(false);
+  }
+
+  return (
+    <div className="border rounded-2xl p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg p-2 bg-emerald-500/10">
+            <Globe className="size-5 text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Enterprise Management</h2>
+            <p className="text-sm text-muted-foreground">
+              Manage enterprise customers — multiple locations, custom billing & invoicing
+            </p>
+          </div>
+        </div>
+        <Button size="sm" className="gap-1.5" onClick={() => setShowAddDialog(true)}>
+          <Plus className="size-4" /> Add Enterprise
+        </Button>
+      </div>
+
+      {/* Enterprise Company List */}
+      {enterpriseCompanies.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <Globe className="size-10 mx-auto mb-2 opacity-30" />
+          <p className="text-sm">No enterprise customers yet</p>
+          <p className="text-xs mt-1">Click "Add Enterprise" to upgrade a company</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left: company list */}
+          <div className="space-y-2 lg:col-span-1">
+            {enterpriseCompanies.map((c: any) => (
+              <button
+                key={c._id}
+                onClick={() => setSelectedId(c._id)}
+                className={`w-full text-left rounded-xl px-4 py-3 transition-all cursor-pointer ${
+                  selectedId === c._id
+                    ? "bg-emerald-500/10 border border-emerald-500/30"
+                    : "bg-muted/30 hover:bg-muted/50 border border-transparent"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-sm">{c.name}</p>
+                    <p className="text-xs text-muted-foreground">{c.email || "No email"}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">
+                    ENTERPRISE
+                  </span>
+                </div>
+                {c.enterpriseConfig?.locations?.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <MapPin className="size-3 inline mr-1" />
+                    {c.enterpriseConfig.locations.length} location{c.enterpriseConfig.locations.length !== 1 ? "s" : ""}
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Right: detail panel */}
+          {selected ? (
+            <div className="lg:col-span-2 border rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg">{selected.name}</h3>
+                <button
+                  onClick={() => handleRemove(selected._id)}
+                  className="text-xs text-red-400 hover:text-red-300 cursor-pointer"
+                >
+                  Remove Enterprise
+                </button>
+              </div>
+
+              {/* Billing Info */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <CreditCard className="size-3.5" /> Billing & Contract
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Billing Email</label>
+                    <input
+                      type="email"
+                      value={billingEmail}
+                      onChange={(e) => setBillingEmail(e.target.value)}
+                      placeholder="billing@company.com"
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Custom Pricing</label>
+                    <input
+                      type="text"
+                      value={customPricing}
+                      onChange={(e) => setCustomPricing(e.target.value)}
+                      placeholder="e.g. $2,500/mo for 10 locations"
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Contract Start</label>
+                    <input
+                      type="date"
+                      value={contractStart}
+                      onChange={(e) => setContractStart(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Contract End</label>
+                    <input
+                      type="date"
+                      value={contractEnd}
+                      onChange={(e) => setContractEnd(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Billing Notes</label>
+                  <textarea
+                    value={billingNotes}
+                    onChange={(e) => setBillingNotes(e.target.value)}
+                    placeholder="Invoice details, PO numbers, NET terms..."
+                    rows={2}
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <FileText className="size-3.5" /> Internal Notes
+                </h4>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Internal notes about this enterprise customer..."
+                  rows={3}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+                />
+              </div>
+
+              {/* Save */}
+              <div className="flex justify-end">
+                <Button onClick={handleSaveConfig} disabled={saving} size="sm" className="gap-1.5">
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="lg:col-span-2 border rounded-xl p-8 flex items-center justify-center text-muted-foreground">
+              <p className="text-sm">Select an enterprise company to manage</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Add Enterprise Dialog */}
+      {showAddDialog && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAddDialog(false)}>
+          <div className="bg-background rounded-2xl shadow-2xl max-w-md w-full max-h-[70vh] overflow-y-auto p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Add Enterprise Company</h3>
+              <button onClick={() => setShowAddDialog(false)} className="p-1 rounded-lg hover:bg-muted cursor-pointer">
+                <X className="size-4" />
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Search companies..."
+              value={addSearch}
+              onChange={(e) => setAddSearch(e.target.value)}
+              className="w-full rounded-xl border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              autoFocus
+            />
+            <div className="space-y-1 max-h-60 overflow-y-auto">
+              {nonEnterprise.slice(0, 20).map((c: any) => (
+                <button
+                  key={c._id}
+                  onClick={() => handleAdd(c._id)}
+                  className="w-full text-left flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-emerald-500/10 transition-colors cursor-pointer"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{c.name}</p>
+                    <p className="text-xs text-muted-foreground">{c.ownerEmail || c.email || "—"}</p>
+                  </div>
+                  <PlanBadge plan={c.plan || "free"} />
+                </button>
+              ))}
+              {nonEnterprise.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">No companies found</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1159,6 +1447,9 @@ export function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* ─── Enterprise Management ─── */}
+      <EnterpriseSection companies={companies ?? []} />
 
       {/* ─── Dealer Lead Capture ─── */}
       <DealerLeadSection />

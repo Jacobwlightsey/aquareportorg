@@ -397,3 +397,121 @@ export const removePlatformAdmin = mutation({
     return { success: true };
   },
 });
+
+/* ── Enterprise Management ──────────────────────────────────── */
+
+export const getEnterpriseCompanies = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePlatformAdmin(ctx);
+    const all = await ctx.db.query("companies").collect();
+    return all
+      .filter((c: any) => c.isEnterprise)
+      .map((c: any) => ({
+        _id: c._id,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        address: c.address,
+        stripePlan: c.stripePlan,
+        stripeStatus: c.stripeStatus,
+        isEnterprise: c.isEnterprise,
+        enterpriseConfig: c.enterpriseConfig,
+        enterpriseParentId: c.enterpriseParentId,
+        _creationTime: c._creationTime,
+      }));
+  },
+});
+
+export const setEnterprise = mutation({
+  args: {
+    companyId: v.id("companies"),
+    isEnterprise: v.boolean(),
+  },
+  handler: async (ctx, { companyId, isEnterprise }) => {
+    await requirePlatformAdmin(ctx);
+    const company = await ctx.db.get(companyId);
+    if (!company) throw new Error("Company not found");
+    await ctx.db.patch(companyId, {
+      isEnterprise,
+      stripePlan: isEnterprise ? "enterprise" : company.stripePlan === "enterprise" ? "free" : company.stripePlan,
+      stripeStatus: isEnterprise ? "active" : company.stripeStatus,
+    });
+    return { success: true };
+  },
+});
+
+export const updateEnterpriseConfig = mutation({
+  args: {
+    companyId: v.id("companies"),
+    config: v.object({
+      locations: v.optional(v.array(v.object({
+        name: v.string(),
+        address: v.optional(v.string()),
+        companyId: v.optional(v.id("companies")),
+      }))),
+      billingEmail: v.optional(v.string()),
+      billingNotes: v.optional(v.string()),
+      contractStart: v.optional(v.number()),
+      contractEnd: v.optional(v.number()),
+      customPricing: v.optional(v.string()),
+      notes: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, { companyId, config }) => {
+    await requirePlatformAdmin(ctx);
+    const company = await ctx.db.get(companyId);
+    if (!company) throw new Error("Company not found");
+    if (!company.isEnterprise) throw new Error("Company is not enterprise");
+    await ctx.db.patch(companyId, { enterpriseConfig: config });
+    return { success: true };
+  },
+});
+
+export const linkEnterpriseChild = mutation({
+  args: {
+    parentId: v.id("companies"),
+    childId: v.id("companies"),
+  },
+  handler: async (ctx, { parentId, childId }) => {
+    await requirePlatformAdmin(ctx);
+    const parent = await ctx.db.get(parentId);
+    if (!parent?.isEnterprise) throw new Error("Parent must be an enterprise company");
+    const child = await ctx.db.get(childId);
+    if (!child) throw new Error("Child company not found");
+    await ctx.db.patch(childId, { enterpriseParentId: parentId });
+    return { success: true };
+  },
+});
+
+export const unlinkEnterpriseChild = mutation({
+  args: {
+    childId: v.id("companies"),
+  },
+  handler: async (ctx, { childId }) => {
+    await requirePlatformAdmin(ctx);
+    const child = await ctx.db.get(childId);
+    if (!child) throw new Error("Company not found");
+    await ctx.db.patch(childId, { enterpriseParentId: undefined });
+    return { success: true };
+  },
+});
+
+export const getEnterpriseChildren = query({
+  args: { parentId: v.id("companies") },
+  handler: async (ctx, { parentId }) => {
+    await requirePlatformAdmin(ctx);
+    const all = await ctx.db.query("companies").collect();
+    return all
+      .filter((c: any) => c.enterpriseParentId === parentId)
+      .map((c: any) => ({
+        _id: c._id,
+        name: c.name,
+        email: c.email,
+        address: c.address,
+        stripePlan: c.stripePlan,
+        stripeStatus: c.stripeStatus,
+        _creationTime: c._creationTime,
+      }));
+  },
+});

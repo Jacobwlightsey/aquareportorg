@@ -66,6 +66,16 @@ export const attachAudio = mutation({
       throw new Error("Access denied");
     }
 
+    // Gate: enterprise plan or platform admin only
+    const isAdmin = await isPlatformAdmin(ctx, userId);
+    if (!isAdmin) {
+      const company = await ctx.db.get(session.companyId);
+      const plan = company?.stripeStatus === "active" ? company?.stripePlan : "free";
+      if (plan !== "enterprise") {
+        throw new Error("AI Sales Coach requires an Enterprise plan. Contact us to upgrade.");
+      }
+    }
+
     await ctx.db.patch(args.sessionId, {
       audioStorageId: args.storageId,
       audioMimeType: args.mimeType,

@@ -7,6 +7,7 @@ import { Activity, Clock, Droplets, FileText, FlaskConical, ShieldCheck, Target 
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { colors, scoreTierInfo } from "@/lib/designTokens";
+import { hasAICoach } from "@/lib/planGate";
 import { AICoachReport } from "./AICoachReport";
 
 interface DemoSession {
@@ -76,10 +77,13 @@ export function DemoReport({ session }: Props) {
   const pricing = session.pricingSnapshot ? JSON.parse(session.pricingSnapshot) : null;
   const stepTimings: Array<{ stepKey: string; duration: number }> = session.stepTimings ? JSON.parse(session.stepTimings) : [];
 
-  // AI Sales Coach
+  // AI Sales Coach — enterprise + admin only
+  const company = useQuery(api.companies.getMyCompany);
+  const isAdmin = useQuery(api.admin.isPlatformAdmin);
+  const canViewCoach = isAdmin || hasAICoach(company);
   const coachData = useQuery(
     api.demoCoach.getCoachReport,
-    session.aiCoachStatus ? { sessionId: session._id as any } : "skip",
+    canViewCoach && session.aiCoachStatus ? { sessionId: session._id as any } : "skip",
   );
 
   const tier = session.verifiedScore != null ? scoreTierInfo(session.verifiedScore) : session.waterScore != null ? scoreTierInfo(session.waterScore) : null;

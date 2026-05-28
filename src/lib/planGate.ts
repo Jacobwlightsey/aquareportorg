@@ -124,6 +124,10 @@ export const hasFiltration = (company: any) => hasPlan(company, "growth");
 /** Basic territory insights */
 export const hasTerritoryBasic = (company: any) => hasPlan(company, "growth");
 
+// ── Enterprise features ──
+/** AI Sales Coach (demo recording + AI grading) */
+export const hasAICoach = (company: any) => hasPlan(company, "enterprise");
+
 // ── Pro features ──
 /** AI sales assistant */
 export const hasAISalesAssistant = (company: any) => hasPlan(company, "pro");
@@ -167,6 +171,7 @@ export function upgradeMessage(feature: string): string {
     lead_pipeline: "Upgrade to Pro ($599/mo) to access the lead pipeline",
     crm: "Upgrade to Pro ($599/mo) for CRM integration access",
     white_label: "Upgrade to Pro ($599/mo) for white-labeled reports",
+    ai_sales_coach: "Upgrade to Enterprise to unlock AI Sales Coach",
   };
   return msgs[feature] || "Upgrade your plan to unlock this feature";
 }
@@ -185,6 +190,7 @@ export function requiredPlanLabel(feature: string): string {
     lead_pipeline: "Pro",
     crm: "Pro",
     white_label: "Pro",
+    ai_sales_coach: "Enterprise",
   };
   return map[feature] || "Growth";
 }

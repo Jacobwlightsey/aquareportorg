@@ -143,6 +143,7 @@ const FEATURE_MIN_PLAN: Record<string, string> = {
   verify_filtration_installs: "growth",
   interactive_dashboard: "growth",
   lead_pipeline: "pro",
+  ai_sales_coach: "enterprise",
 };
 
 export function activePlan(company: any) {

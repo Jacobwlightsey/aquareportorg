@@ -41,6 +41,22 @@ const schema = defineSchema({
     demoConfig: v.optional(v.any()),
     demoStepConfig: v.optional(v.any()),
     customProposalUrl: v.optional(v.string()),
+    // Enterprise
+    isEnterprise: v.optional(v.boolean()),
+    enterpriseParentId: v.optional(v.id("companies")), // links child locations to parent
+    enterpriseConfig: v.optional(v.object({
+      locations: v.optional(v.array(v.object({
+        name: v.string(),
+        address: v.optional(v.string()),
+        companyId: v.optional(v.id("companies")),
+      }))),
+      billingEmail: v.optional(v.string()),
+      billingNotes: v.optional(v.string()),
+      contractStart: v.optional(v.number()),
+      contractEnd: v.optional(v.number()),
+      customPricing: v.optional(v.string()),
+      notes: v.optional(v.string()),
+    })),
   })
     .index("by_createdBy", ["createdBy"])
     .index("by_customDomain", ["customDomain"])

@@ -16,7 +16,7 @@ import { FullscreenToggle } from "@/components/FullscreenToggle";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { parseContaminants } from "@/lib/pipeline";
-import { hasPlanOverride, upgradeMessage } from "@/lib/planGate";
+import { hasAICoach, hasPlanOverride, upgradeMessage } from "@/lib/planGate";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { computeAquaScore, type FieldWaterReadings } from "@/lib/waterScore";
 import type { CompanyForDemo } from "@/lib/types";
@@ -270,6 +270,8 @@ function DemoWizardInner() {
     reportId ? { reportId: reportId as any } : "skip",
   );
   const company = useQuery(api.companies.getMyCompany);
+  const isAdmin = useQuery(api.admin.isPlatformAdmin);
+  const canUseAICoach = isAdmin || hasAICoach(company);
   const { effectivePlan } = useFreeTrial();
 
   // Sprint 0 contexts
@@ -714,8 +716,8 @@ function DemoWizardInner() {
           {/* Center: controls cluster */}
           <div className="flex items-center gap-1.5 landscape:gap-1">
             <MuteToggle />
-            {/* AI Coach — mic recording toggle */}
-            {audioSupported && (
+            {/* AI Coach — mic recording toggle (enterprise + admin only) */}
+            {audioSupported && canUseAICoach && (
               <button
                 onClick={async () => {
                   if (isRecording) {
