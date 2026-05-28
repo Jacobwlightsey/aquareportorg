@@ -121,10 +121,10 @@ export function ViewReportPage() {
     hardness: report.hardness,
     tds: report.tds,
     ph: report.ph,
-  });
+  }, report.waterScore);
   const baseAquaScore = report.waterScore === undefined ? undefined : report.waterScore - savedFieldAdjustment;
   const editedWaterScore = computeAquaScore(baseAquaScore, detectedContaminants, readings);
-  const fieldReadingAdjustment = computeFieldReadingAdjustment(readings);
+  const fieldReadingAdjustment = computeFieldReadingAdjustment(readings, editedWaterScore);
   const { effectivePlan: trialEffectivePlan, isFree: trialIsFree, hasUsedTrial: _hasUsedTrial } = useFreeTrial();
   const planRank: Record<string, number> = { free: 0, starter: 1, growth: 2, pro: 3, enterprise: 4 };
   // Use effective plan from free trial system (free users pre-trial get starter access)

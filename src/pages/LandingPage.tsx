@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
 import { useMutation } from "convex/react";
 import { Link } from "react-router-dom";
@@ -14,7 +14,6 @@ import {
   ExternalLink,
   Loader2,
   MapPin,
-  Search,
   Shield,
   Smartphone,
   WifiOff,
@@ -36,32 +35,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { SUBSCRIPTION_PLANS } from "@/lib/constants";
 import { api } from "../../convex/_generated/api";
 
-const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL || "https://groovy-basilisk-939.convex.site";
+
 
 /* ═══════════════════════════════════════════════════════════════
    TYPES
    ═══════════════════════════════════════════════════════════════ */
-interface Contaminant {
-  name?: string;
-  contaminant: string;
-  detected?: boolean;
-  detection_status?: "detected" | "not_detected" | "trace" | "unknown";
-  detected_level: number;
-  legal_limit: number | null;
-  health_guideline: number | null;
-  over_health: boolean;
-  over_legal: boolean;
-  times_above_ewg: number | null;
-  effect: string | null;
-  unit: string;
-}
-interface WaterReport {
-  utility_info: { utility_name: string; pwsid: string; city: string; state: string; population_served: number; water_source: string };
-  total_tested?: number; total_detected?: number; total_above_legal_limit?: number; total_above_health_guideline?: number;
-  contaminants: Contaminant[];
-}
-function contaminantName(c: Contaminant): string { return c.contaminant || c.name || "Unknown contaminant"; }
-function isDetectedContaminant(c: Contaminant): boolean { return c.detected !== false && c.detection_status !== "not_detected"; }
+
 
 /* ═══════════════════════════════════════════════════════════════
    DATA
@@ -191,101 +170,6 @@ function FeatureIcon({ icon }: { icon: string }) {
   return (
     <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-teal-400/70">
       {icons[icon] || <Zap className={cls} />}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LIVE DEMO (ZIP Lookup)
-   ═══════════════════════════════════════════════════════════════ */
-function LiveDemo() {
-  const [zip, setZip] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<WaterReport | null>(null);
-  const [error, setError] = useState("");
-  const resultRef = useRef<HTMLDivElement>(null);
-
-  const lookup = useCallback(async () => {
-    if (!/^\d{5}$/.test(zip)) { setError("Enter a valid 5-digit ZIP code"); return; }
-    setLoading(true); setError(""); setReport(null);
-    try {
-      const res = await fetch(`${CONVEX_SITE_URL}/api/zip-report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zip }) });
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0 && data[0]?.utility_info?.utility_name) {
-        const junk = ["reverse osmosis","how your levels compare","surface water treatment rule","consumer confidence rule","lead and copper rule","total coliform rule","ground water rule","filter backwash","disinfection byproducts rule","enhanced surface water","aircraft drinking water","lead (90th percentile)"];
-        const cleanReport = data[0];
-        cleanReport.contaminants = cleanReport.contaminants.filter((c: Contaminant) => { const n = contaminantName(c).toLowerCase(); return !junk.some((j) => n.includes(j)); });
-        setReport(cleanReport);
-      } else { setError("No water system found for that ZIP code. Try another."); }
-    } catch { setError("Network error. Please try again."); } finally { setLoading(false); }
-  }, [zip]);
-
-  useEffect(() => { if (report && resultRef.current) resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); }, [report]);
-
-  const detectedContaminants = report?.contaminants.filter(isDetectedContaminant) ?? [];
-  const overHealth = detectedContaminants.filter((c) => c.over_health);
-  const overLegal = detectedContaminants.filter((c) => c.over_legal);
-  const totalDetected = report?.total_detected ?? detectedContaminants.length;
-  const demoScore = report ? Math.max(0, Math.min(100, 100 - overHealth.length * 6 - overLegal.length * 12)) : 0;
-
-  return (
-    <div className="mx-auto w-full max-w-4xl">
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 shadow-2xl backdrop-blur md:p-7">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-teal-400/70">
-            <Search className="size-4" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-white">Run a live ZIP lookup</h3>
-            <p className="text-[13px] text-white/35">See the same water intelligence your reps use in the field.</p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Input placeholder="e.g. 29526" value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, "").slice(0, 5))} onKeyDown={(e) => e.key === "Enter" && lookup()} className="h-12 border-white/[0.08] bg-white/[0.03] text-lg text-white placeholder:text-white/20" maxLength={5} />
-          <Button onClick={lookup} disabled={loading} size="lg" className="h-12 shrink-0 bg-teal-400 px-7 font-semibold text-[#080d19] hover:bg-teal-300">
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-            {loading ? "Scanning…" : "Lookup Water"}
-          </Button>
-        </div>
-        {error && <p className="mt-3 text-sm text-red-400/80">{error}</p>}
-      </div>
-      {report && (
-        <div ref={resultRef} className="mt-6 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0f1c] text-white shadow-2xl">
-          <div className="bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,.12),transparent_40%)] p-6 md:p-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="mb-3 flex w-fit items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs text-white/50">
-                  <MapPin className="size-3 text-teal-400/60" /> {report.utility_info.city}, {report.utility_info.state}
-                </div>
-                <h4 className="text-2xl font-bold tracking-tight md:text-3xl">{report.utility_info.utility_name}</h4>
-                <p className="mt-1 text-sm text-white/30">{report.utility_info.population_served?.toLocaleString()} people served · {report.utility_info.water_source}</p>
-              </div>
-              <div className="flex size-24 shrink-0 items-center justify-center rounded-full border-[3px] border-teal-400/40 bg-[#0a0f1c]">
-                <span className="text-3xl font-black tracking-tight text-teal-400">{demoScore}</span>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 border-y border-white/[0.06]">
-            {([["Tested", report.total_tested ?? report.contaminants.length, "text-teal-300/80"], ["Detected", totalDetected, "text-amber-400/80"], ["Over health", report.total_above_health_guideline ?? overHealth.length, "text-red-400/80"]] as const).map(([label, value, color]) => (
-              <div key={label} className="border-r border-white/[0.06] p-4 text-center last:border-r-0">
-                <p className={`text-2xl font-bold ${color}`}>{value}</p>
-                <p className="text-[10px] uppercase tracking-[0.15em] text-white/25">{label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="p-6">
-            <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">Top concerns</p>
-            <div className="space-y-2">
-              {detectedContaminants.slice(0, 6).map((c) => (
-                <div key={contaminantName(c)} className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
-                  <span className="truncate text-sm font-medium text-white/70">{contaminantName(c)}</span>
-                  <span className="shrink-0 font-mono text-sm text-white/30">{c.detected_level} {c.unit}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -643,7 +527,7 @@ function LandingNav() {
   const NAV_LINKS = [
     { href: "#wizard", label: "Demo Wizard" },
     { href: "#features", label: "Features" },
-    { href: "#preview", label: "Preview" },
+
     { href: "#pricing", label: "Pricing" },
     { href: "#faq", label: "FAQ" },
   ];
@@ -862,7 +746,7 @@ export function LandingPage() {
               <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 md:px-7 md:py-3.5 text-[0.9rem] font-semibold text-[#080d19] shadow-[0_0_40px_rgba(255,255,255,0.06)] transition hover:bg-white/90">
                 <Zap className="size-4" /> Start Free Trial
               </Link>
-              <a href="#preview" className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-6 py-3 md:px-7 md:py-3.5 text-[0.9rem] font-medium text-white/60 transition hover:bg-white/[0.03] hover:text-white/80">
+              <a href="#wizard" className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-6 py-3 md:px-7 md:py-3.5 text-[0.9rem] font-medium text-white/60 transition hover:bg-white/[0.03] hover:text-white/80">
                 See It In Action
               </a>
             </div>
@@ -1010,23 +894,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ PREVIEW / LIVE DEMO ═══ */}
-      <section id="preview" className="py-24 md:py-30 border-t border-white/[0.04]">
-        <div className="mx-auto max-w-[1280px] px-6">
-          <Reveal>
-            <div className="mx-auto mb-14 max-w-3xl text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">Try It Live</p>
-              <h2 className="mt-4 font-[Sora,system-ui,sans-serif] text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.06] tracking-tight text-white">
-                Run a real water lookup in seconds.
-              </h2>
-              <p className="mt-4 text-base leading-[1.8] text-white/30">
-                Enter any US ZIP code. See the same report engine your reps will run at the kitchen table.
-              </p>
-            </div>
-          </Reveal>
-          <LiveDemo />
-        </div>
-      </section>
+      {/* ZIP lookup section removed */}
 
 
       {/* ═══ Atmospheric build-up to AquaScore ═══ */}
@@ -1240,7 +1108,7 @@ export function LandingPage() {
                 <Link to="/signup" className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-[0.9rem] font-semibold text-[#080d19] shadow-[0_0_40px_rgba(255,255,255,0.06)] transition hover:bg-white/90">
                   <Zap className="size-4" /> Start Free Trial
                 </Link>
-                <a href="#preview" className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-7 py-3 text-[0.9rem] font-medium text-white/60 transition hover:bg-white/[0.03] hover:text-white/80">
+                <a href="#wizard" className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-7 py-3 text-[0.9rem] font-medium text-white/60 transition hover:bg-white/[0.03] hover:text-white/80">
                   See It In Action
                 </a>
               </div>

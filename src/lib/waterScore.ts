@@ -36,67 +36,74 @@ export function readingPayload(readings: FieldWaterReadings) {
 }
 
 /**
- * Field-reading adjustment — every on-site reading lowers the score.
- * The live water test is the anchor of the in-home demo: entering any
- * reading should always move the score downward.  Worse readings drop
- * it dramatically so the homeowner feels the urgency.
+ * Field-reading adjustment — every on-site reading always lowers the score,
+ * and penalties *scale with the starting score* so higher scores experience
+ * bigger drops (≈ 3 pts max per reading at a typical score of 75).
  *
- * Chlorine (ppm): 0-0.2 trace | 0.2-0.5 treated | 0.5-1 elevated | 1-2 high | 2-4 severe | 4+ extreme
- * Hardness (gpg): 0-1 soft | 1-3.5 slight | 3.5-7 moderate | 7-10.5 hard | 10.5-15 very hard | 15+ severe
- * TDS (ppm):      0-50 excellent | 50-150 good | 150-300 elevated | 300-500 high | 500-1000 very high | 1000+ severe
- * pH:             6.8-7.4 normal | 6.5-6.8 / 7.4-8.5 mild | 6.0-6.5 / 8.5-9.0 moderate | outside extreme
+ * Each reading maps to a severity fraction (0.0–1.0).
+ * penalty = severity × baseScore × 0.04  →  ≈3 max at score 75, ≈4 at 100, ≈2 at 50.
+ * Minimum penalty per reading = 0.5 pt (so it always moves the needle).
  */
-export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {}): number {
+export function computeFieldReadingAdjustment(readings: FieldWaterReadings = {}, baseScore?: number): number {
   const chlorine = readingNumber(readings.chlorine);
   const hardness = readingNumber(readings.hardness);
   const tds = readingNumber(readings.tds);
   const ph = readingNumber(readings.ph);
+  const base = baseScore ?? 50;
 
   let adjustment = 0;
 
-  // Chlorine (ppm) — even trace chlorine is penalized
+  // Chlorine (ppm)
   if (chlorine !== undefined) {
-    if (chlorine < 0.2) adjustment -= 1;           // trace — still present
-    else if (chlorine <= 0.5) adjustment -= 3;     // normal treated water
-    else if (chlorine <= 1) adjustment -= 5;       // elevated
-    else if (chlorine <= 2) adjustment -= 8;       // high
-    else if (chlorine <= 4) adjustment -= 12;      // severe
-    else adjustment -= 15;                         // extreme
+    let sev: number;
+    if (chlorine < 0.2) sev = 0.15;          // trace
+    else if (chlorine <= 0.5) sev = 0.30;    // treated
+    else if (chlorine <= 1) sev = 0.50;      // elevated
+    else if (chlorine <= 2) sev = 0.70;      // high
+    else if (chlorine <= 4) sev = 0.90;      // severe
+    else sev = 1.0;                          // extreme
+    adjustment -= Math.max(0.5, sev * base * 0.04);
   }
 
-  // Hardness (gpg) — any measurable hardness deducts
+  // Hardness (gpg)
   if (hardness !== undefined) {
-    if (hardness <= 1) adjustment -= 1;            // soft — minor
-    else if (hardness <= 3.5) adjustment -= 3;     // slightly hard
-    else if (hardness <= 7) adjustment -= 6;       // moderately hard
-    else if (hardness <= 10.5) adjustment -= 9;    // hard
-    else if (hardness <= 15) adjustment -= 12;     // very hard
-    else adjustment -= 15;                         // severe
+    let sev: number;
+    if (hardness <= 1) sev = 0.10;           // soft
+    else if (hardness <= 3.5) sev = 0.25;    // slightly hard
+    else if (hardness <= 7) sev = 0.50;      // moderately hard
+    else if (hardness <= 10.5) sev = 0.70;   // hard
+    else if (hardness <= 15) sev = 0.85;     // very hard
+    else sev = 1.0;                          // severe
+    adjustment -= Math.max(0.5, sev * base * 0.04);
   }
 
-  // TDS (ppm) — measures total dissolved solids
+  // TDS (ppm)
   if (tds !== undefined) {
-    if (tds <= 50) adjustment -= 1;                // excellent — minor
-    else if (tds <= 150) adjustment -= 2;          // good
-    else if (tds <= 300) adjustment -= 5;          // elevated
-    else if (tds <= 500) adjustment -= 8;          // high
-    else if (tds <= 1000) adjustment -= 12;        // very high
-    else adjustment -= 15;                         // severe
+    let sev: number;
+    if (tds <= 50) sev = 0.10;              // excellent
+    else if (tds <= 150) sev = 0.20;        // good
+    else if (tds <= 300) sev = 0.45;        // elevated
+    else if (tds <= 500) sev = 0.65;        // high
+    else if (tds <= 1000) sev = 0.85;       // very high
+    else sev = 1.0;                         // severe
+    adjustment -= Math.max(0.5, sev * base * 0.04);
   }
 
-  // pH — even normal pH shows a small reading impact
+  // pH
   if (ph !== undefined) {
-    if (ph >= 6.8 && ph <= 7.4) adjustment -= 1;                                    // normal — minor
-    else if ((ph >= 6.5 && ph < 6.8) || (ph > 7.4 && ph <= 8.5)) adjustment -= 4;  // mild imbalance
-    else if ((ph >= 6.0 && ph < 6.5) || (ph > 8.5 && ph <= 9.0)) adjustment -= 8;  // moderate
-    else adjustment -= 12;                                                           // extreme
+    let sev: number;
+    if (ph >= 6.8 && ph <= 7.4) sev = 0.10;                                      // normal
+    else if ((ph >= 6.5 && ph < 6.8) || (ph > 7.4 && ph <= 8.5)) sev = 0.40;    // mild
+    else if ((ph >= 6.0 && ph < 6.5) || (ph > 8.5 && ph <= 9.0)) sev = 0.70;    // moderate
+    else sev = 1.0;                                                               // extreme
+    adjustment -= Math.max(0.5, sev * base * 0.04);
   }
 
   return adjustment;
 }
 
-export function computeFieldReadingPenalty(readings: FieldWaterReadings = {}): number {
-  return Math.max(0, -computeFieldReadingAdjustment(readings));
+export function computeFieldReadingPenalty(readings: FieldWaterReadings = {}, baseScore?: number): number {
+  return Math.max(0, -computeFieldReadingAdjustment(readings, baseScore));
 }
 
 export function computeWaterRiskScore(
@@ -138,7 +145,7 @@ export function calculateAquaScoreFromContaminants(
     }
   }
 
-  score += computeFieldReadingAdjustment(readings);
+  score += computeFieldReadingAdjustment(readings, score);
   return clampScore(score);
 }
 
@@ -152,7 +159,7 @@ export function computeAquaScore(
     return calculateAquaScoreFromContaminants(contaminants, readings);
   }
 
-  return clampScore((parsedBaseScore ?? 100) + computeFieldReadingAdjustment(readings));
+  return clampScore((parsedBaseScore ?? 100) + computeFieldReadingAdjustment(readings, parsedBaseScore ?? 100));
 }
 
 export function normalizeRiskScore(score: number | null | undefined, scoreMode?: string | null): number | undefined {

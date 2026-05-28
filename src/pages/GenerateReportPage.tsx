@@ -232,7 +232,7 @@ export function GenerateReportPage() {
   const totalDetected = report?.total_detected ?? detectedContaminants.length;
   const overHealthCount = report?.total_above_health_guideline ?? overHealth.length;
   const waterScore = report ? computeAquaScore(undefined, detectedContaminants, readings) : 0;
-  const fieldReadingAdjustment = computeFieldReadingAdjustment(readings);
+  const fieldReadingAdjustment = computeFieldReadingAdjustment(readings, waterScore);
 
   const stepLabels = ["Customer", "Water System", "Dealer Review", "Send"];
 

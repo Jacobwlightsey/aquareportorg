@@ -1,8 +1,5 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import PillarPage from "./pages/PillarPage";
-import { AdminPage } from "./pages/AdminPage";
-import { DemoAnalyticsPage } from "./pages/DemoAnalyticsPage";
 import { AppLayoutV2 } from "./components/AppLayoutV2";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -11,47 +8,15 @@ import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Toaster } from "./components/ui/sonner";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { TrialGate } from "./components/TrialGate";
-import {
-  AnalyticsPage,
-  CompanySettingsPage,
-  CreateCustomerPage,
-  CustomerDetailPage,
-  CustomerReportPage,
-  CustomersPage,
-  DealerVerificationPage,
-  DemoWizardPage,
-  FlipbookPage,
-  PrintReportPage,
-  ReportV2Page,
-  ReportV2PublicPage,
-  InvitePage,
-  LandingPage,
-  LeadsPage,
-  LoginPage,
-  PlatformPage,
-  ReportsPage,
-  SettingsPage,
-  SignupPage,
-  SubscriptionPage,
-  TeamPage,
-  ViewReportPage,
-} from "./pages";
 
-// New pages
-import { DashboardPage } from "./pages/DashboardPage";
-import { PipelinePage } from "./pages/PipelinePage";
-import { AppointmentsPage } from "./pages/AppointmentsPage";
-import { ProposalsPage } from "./pages/ProposalsPage";
-import { CommissionsPage } from "./pages/CommissionsPage";
-import { RetentionPage } from "./pages/RetentionPage";
-import { FollowUpsPage } from "./pages/FollowUpsPage";
-import { ReviewsPage } from "./pages/ReviewsPage";
-import { TerritoryMapPage } from "./pages/TerritoryMapPage";
-import { MarketingPage } from "./pages/MarketingPage";
-import { TrainingPage } from "./pages/TrainingPage";
-import { SpouseReviewPage } from "./pages/SpouseReviewPage";
-import { DemoPreviewPage } from "./pages/DemoPreviewPage";
-// Lazy-load SEO/content pages to keep the main bundle small (~950KB blogData.ts)
+/* ── Lazy-load ALL pages for fast initial load ────────────────────── */
+
+// Public — marketing / SEO
+const LandingPage = lazy(() => import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })));
+const LoginPage = lazy(() => import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })));
+const SignupPage = lazy(() => import("./pages/SignupPage").then((m) => ({ default: m.SignupPage })));
+const InvitePage = lazy(() => import("./pages/InvitePage").then((m) => ({ default: m.InvitePage })));
+const PillarPage = lazy(() => import("./pages/PillarPage"));
 const BlogPage = lazy(() => import("./pages/BlogPage").then((m) => ({ default: m.BlogPage })));
 const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage").then((m) => ({ default: m.BlogArticlePage })));
 const AuthorPage = lazy(() => import("./pages/AuthorPage").then((m) => ({ default: m.AuthorPage })));
@@ -60,9 +25,54 @@ const TermsPage = lazy(() => import("./pages/TermsPage").then((m) => ({ default:
 const CityWaterPage = lazy(() => import("./pages/CityWaterPage").then((m) => ({ default: m.CityWaterPage })));
 const WaterQualityIndexPage = lazy(() => import("./pages/WaterQualityIndexPage").then((m) => ({ default: m.WaterQualityIndexPage })));
 const LearnHubPage = lazy(() => import("./pages/LearnHubPage").then((m) => ({ default: m.LearnHubPage })));
+const BookDemoPage = lazy(() => import("./pages/BookDemoPage").then((m) => ({ default: m.BookDemoPage })));
+
+// Public — shared / no auth
+const SpouseReviewPage = lazy(() => import("./pages/SpouseReviewPage").then((m) => ({ default: m.SpouseReviewPage })));
+const DemoPreviewPage = lazy(() => import("./pages/DemoPreviewPage").then((m) => ({ default: m.DemoPreviewPage })));
+const CustomerReportPage = lazy(() => import("./pages/CustomerReportPage").then((m) => ({ default: m.CustomerReportPage })));
+const FlipbookPage = lazy(() => import("./pages/FlipbookPage").then((m) => ({ default: m.FlipbookPage })));
+const PrintReportPage = lazy(() => import("./pages/PrintReportPage").then((m) => ({ default: m.PrintReportPage })));
+const ReportV2PublicPage = lazy(() => import("./pages/ReportV2PublicPage").then((m) => ({ default: m.ReportV2PublicPage })));
+
+// Authenticated — core
+const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const CustomersPage = lazy(() => import("./pages/CustomersPage").then((m) => ({ default: m.CustomersPage })));
+const CreateCustomerPage = lazy(() => import("./pages/CreateCustomerPage").then((m) => ({ default: m.CreateCustomerPage })));
+const CustomerDetailPage = lazy(() => import("./pages/CustomerDetailPage").then((m) => ({ default: m.CustomerDetailPage })));
+const DemoWizardPage = lazy(() => import("./pages/DemoWizardPage").then((m) => ({ default: m.DemoWizardPage })));
+const ReportsPage = lazy(() => import("./pages/ReportsPage").then((m) => ({ default: m.ReportsPage })));
+const ViewReportPage = lazy(() => import("./pages/ViewReportPage").then((m) => ({ default: m.ViewReportPage })));
+const ReportV2Page = lazy(() => import("./pages/ReportV2Page").then((m) => ({ default: m.ReportV2Page })));
+const LeadsPage = lazy(() => import("./pages/LeadsPage").then((m) => ({ default: m.LeadsPage })));
+const GenerateReportPage = lazy(() => import("./pages/GenerateReportPage").then((m) => ({ default: m.GenerateReportPage })));
+
+// Authenticated — sales & analytics
+const PipelinePage = lazy(() => import("./pages/PipelinePage").then((m) => ({ default: m.PipelinePage })));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage })));
+const DemoAnalyticsPage = lazy(() => import("./pages/DemoAnalyticsPage").then((m) => ({ default: m.DemoAnalyticsPage })));
+const AppointmentsPage = lazy(() => import("./pages/AppointmentsPage").then((m) => ({ default: m.AppointmentsPage })));
+const ProposalsPage = lazy(() => import("./pages/ProposalsPage").then((m) => ({ default: m.ProposalsPage })));
+const CommissionsPage = lazy(() => import("./pages/CommissionsPage").then((m) => ({ default: m.CommissionsPage })));
+
+// Authenticated — retention & intelligence
+const RetentionPage = lazy(() => import("./pages/RetentionPage").then((m) => ({ default: m.RetentionPage })));
+const FollowUpsPage = lazy(() => import("./pages/FollowUpsPage").then((m) => ({ default: m.FollowUpsPage })));
+const ReviewsPage = lazy(() => import("./pages/ReviewsPage").then((m) => ({ default: m.ReviewsPage })));
+const TerritoryMapPage = lazy(() => import("./pages/TerritoryMapPage").then((m) => ({ default: m.TerritoryMapPage })));
+const MarketingPage = lazy(() => import("./pages/MarketingPage").then((m) => ({ default: m.MarketingPage })));
+const TrainingPage = lazy(() => import("./pages/TrainingPage").then((m) => ({ default: m.TrainingPage })));
 const AttributionPage = lazy(() => import("./pages/AttributionPage").then((m) => ({ default: m.AttributionPage })));
 const AudiencePage = lazy(() => import("./pages/AudiencePage").then((m) => ({ default: m.AudiencePage })));
-const BookDemoPage = lazy(() => import("./pages/BookDemoPage").then((m) => ({ default: m.BookDemoPage })));
+
+// Authenticated — settings & admin
+const AdminPage = lazy(() => import("./pages/AdminPage").then((m) => ({ default: m.AdminPage })));
+const PlatformPage = lazy(() => import("./pages/PlatformPage").then((m) => ({ default: m.PlatformPage })));
+const DealerVerificationPage = lazy(() => import("./pages/DealerVerificationPage").then((m) => ({ default: m.DealerVerificationPage })));
+const TeamPage = lazy(() => import("./pages/TeamPage").then((m) => ({ default: m.TeamPage })));
+const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage").then((m) => ({ default: m.SubscriptionPage })));
+const CompanySettingsPage = lazy(() => import("./pages/CompanySettingsPage").then((m) => ({ default: m.CompanySettingsPage })));
+const SettingsPage = lazy(() => import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 
 function App() {
   return (
