@@ -7,7 +7,7 @@ export const organizationSchema = {
   url: "https://aquareport.org",
   logo: "https://aquareport.org/favicon.png",
   description:
-    "Professional water quality reporting software for water treatment dealers. Create branded reports, score water quality with AquaScore™, and close more sales.",
+    "The sales operating system for water treatment dealers. 21-step Demo Wizard, AquaScore™ water grading, branded reports, and built-in rep coaching — designed to help dealers close more in-home consultations.",
   foundingDate: "2025",
   founder: { "@type": "Person", name: "Jacob Lightsey" },
   contactPoint: {
@@ -16,7 +16,10 @@ export const organizationSchema = {
     email: "support@aquareport.org",
     availableLanguage: "English",
   },
-  areaServed: { "@type": "Country", name: "United States" },
+  areaServed: [
+    { "@type": "Country", name: "United States" },
+    { "@type": "Country", name: "Canada" },
+  ],
   knowsAbout: [
     "Water Quality Testing",
     "Water Treatment Sales",
@@ -35,7 +38,7 @@ export const softwareAppSchema = {
   operatingSystem: "Web",
   url: "https://aquareport.org",
   description:
-    "Water quality reporting software that helps water treatment dealers create professional, branded reports with AquaScore™ grading, a 12-step Demo Wizard, and consumer delivery via myaquareport.com.",
+    "The sales operating system for water treatment dealers. 21-step Demo Wizard with AquaScore™ grading, built-in rep coaching, branded reports, and consumer delivery via myaquareport.com. Available in the US and Canada.",
   offers: {
     "@type": "AggregateOffer",
     priceCurrency: "USD",
@@ -48,7 +51,7 @@ export const softwareAppSchema = {
     "Custom branding and white labeling",
     "Automated contaminant scoring algorithm",
     "Consumer report delivery portal (myaquareport.com)",
-    "12-step interactive Demo Wizard for in-home sales",
+    "21-step interactive Demo Wizard for in-home sales",
     "Lead tracking and dealer analytics",
     "Real-time EPA & EWG contaminant data by ZIP code",
     "Interactive flipbook reports",
@@ -64,7 +67,7 @@ export const websiteSchema = {
   alternateName: ["AquaReport.org", "Aqua Report"],
   url: "https://aquareport.org/",
   description:
-    "The water quality reporting platform built for water treatment dealers.",
+    "The sales operating system for water treatment dealers. Demo Wizard, AquaScore™, branded reports, and rep coaching.",
   publisher: { "@type": "Organization", name: "AquaReport" },
   potentialAction: {
     "@type": "SearchAction",

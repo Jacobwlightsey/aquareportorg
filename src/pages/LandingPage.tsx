@@ -89,9 +89,9 @@ const FEATURES: { title: string; desc: string; icon: string }[] = [
 ];
 
 const TESTIMONIALS = [
-  { text: "Close rate went from 22% to 41% in the first quarter. The AquaScore reveal changes the conversation — homeowners stop questioning if they need treatment and start asking which system.", author: "Marcus Thompson", role: "Owner, Lone Star Water Solutions", location: "Dallas–Fort Worth, TX", metric: "+86% close rate" },
-  { text: "We onboarded 8 new reps last month. By day three they were running demos that looked like they'd been selling for a decade. The coaching prompts do the heavy lifting.", author: "Jessica Rodriguez", role: "Sales Director, Crystal Springs Water", location: "Phoenix, AZ", metric: "3-day onboarding" },
-  { text: "The spouse review link changed everything. We used to lose 30% of closes to 'I need to talk to my husband.' Now they see the same data. Follow-up close rate tripled.", author: "Derek Huang", role: "General Manager, BlueLine Filtration", location: "Charlotte, NC", metric: "3× follow-ups" },
+  { text: "The AquaScore reveal changed the conversation completely. Homeowners stop questioning if they need treatment and start asking which system. Our close rate improved noticeably in the first quarter.", author: "Marcus T.", role: "Dealer Owner", location: "Dallas–Fort Worth, TX", metric: "Improved close rate" },
+  { text: "We onboarded new reps and within days they were running demos that looked like they'd been selling for a decade. The coaching prompts do the heavy lifting — the learning curve practically disappears.", author: "Jessica R.", role: "Sales Director", location: "Phoenix, AZ", metric: "Faster onboarding" },
+  { text: "The spouse review link changed everything. We used to lose so many deals to 'I need to talk to my husband.' Now they see the same data, same AquaScore. Follow-up conversions improved dramatically.", author: "Derek H.", role: "General Manager", location: "Charlotte, NC", metric: "Fewer lost deals" },
 ];
 
 const HOMEPAGE_FAQS = [
@@ -361,14 +361,15 @@ function HeroMockup() {
         <div className="grid grid-cols-[1.25fr_1fr] divide-x divide-white/[0.04]">
           {/* Left */}
           <div className="p-4 space-y-3">
-            {/* AquaScore card */}
-            <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-3.5">
+            {/* AquaScore card — dominant anchor */}
+            <div className="relative rounded-xl border border-teal-400/[0.12] bg-white/[0.02] p-3.5">
+              <div className="absolute -inset-1 rounded-xl bg-teal-400/[0.03] blur-sm pointer-events-none" />
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/20">AquaScore™ · 29526 Conway, SC</span>
                 <span className="text-[8px] text-white/15">2m ago</span>
               </div>
               <div className="flex items-end gap-2.5 mb-2.5">
-                <span className="font-[Sora,system-ui,sans-serif] text-[2.75rem] font-black leading-none tracking-tight text-teal-400">28</span>
+                <span className="font-[Sora,system-ui,sans-serif] text-[3.5rem] font-black leading-none tracking-tight text-teal-400 drop-shadow-[0_0_20px_rgba(45,212,191,0.3)]">28</span>
                 <div className="pb-1"><span className="block text-[10px] font-bold text-amber-400/80">AT RISK</span><span className="text-[9px] text-white/15">of 100</span></div>
               </div>
               <div className="relative h-[3px] rounded-full bg-white/[0.03] overflow-hidden mb-1.5">
@@ -406,8 +407,8 @@ function HeroMockup() {
             </div>
           </div>
 
-          {/* Right */}
-          <div className="p-4 space-y-3">
+          {/* Right — secondary */}
+          <div className="p-4 space-y-3 opacity-80">
             {/* Coaching */}
             <div className="rounded-xl border border-amber-400/[0.08] bg-amber-400/[0.02] p-3.5">
               <div className="flex items-center gap-2 mb-1.5">
@@ -659,6 +660,147 @@ function LandingNav() {
   );
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   AQUASCORE REVEAL — The "holy shit" moment
+   ═══════════════════════════════════════════════════════════════ */
+function AquaScoreReveal() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: true, amount: 0.4 });
+  const [score, setScore] = useState(100);
+  const [phase, setPhase] = useState<"waiting" | "dropping" | "landed" | "recovered">("waiting");
+
+  useEffect(() => {
+    if (!isInView) return;
+    setPhase("dropping");
+    const dur = 2800;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / dur, 1);
+      // Ease-out with a slight bounce at the end
+      const eased = p < 0.85
+        ? 1 - Math.pow(1 - (p / 0.85), 3)
+        : 1 + Math.sin((p - 0.85) / 0.15 * Math.PI) * 0.02;
+      const current = Math.round(100 - (100 - 28) * Math.min(eased, 1));
+      setScore(current);
+      if (p < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        setScore(28);
+        setPhase("landed");
+        // After pause, show recovery
+        setTimeout(() => setPhase("recovered"), 2000);
+      }
+    };
+    requestAnimationFrame(tick);
+  }, [isInView]);
+
+  const circumference = 2 * Math.PI * 90;
+  const progress = score / 100;
+  const strokeOffset = circumference * (1 - progress);
+
+  // Color interpolation based on score
+  const getScoreColor = (s: number) => {
+    if (s > 70) return "rgb(45, 212, 191)"; // teal
+    if (s > 50) return "rgb(250, 204, 21)"; // yellow
+    if (s > 35) return "rgb(251, 146, 60)"; // orange
+    return "rgb(248, 113, 113)"; // red
+  };
+
+  const getTierLabel = (s: number) => {
+    if (s > 80) return "Excellent";
+    if (s > 60) return "Good";
+    if (s > 40) return "Fair";
+    return "At Risk";
+  };
+
+  const currentColor = getScoreColor(score);
+  const glowOpacity = phase === "landed" ? 0.25 : phase === "dropping" ? 0.1 : 0.05;
+
+  return (
+    <div ref={containerRef} className="mx-auto max-w-4xl">
+      <div className="rounded-2xl border border-white/[0.06] bg-[#0a0f1c]/80 p-8 md:p-12 backdrop-blur-xl overflow-hidden relative">
+        {/* Ambient glow that shifts color */}
+        <div className="absolute inset-0 pointer-events-none transition-all duration-1000" style={{ background: `radial-gradient(circle at 50% 40%, ${currentColor.replace("rgb", "rgba").replace(")", `,${glowOpacity})`)}, transparent 60%)` }} />
+
+        <div className="relative grid gap-10 md:grid-cols-[1fr_1.3fr] items-center">
+          {/* Score ring */}
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <svg width="220" height="220" viewBox="0 0 200 200" className="transform -rotate-90">
+                {/* Background ring */}
+                <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
+                {/* Progress ring */}
+                <circle
+                  cx="100" cy="100" r="90" fill="none"
+                  stroke={currentColor}
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeOffset}
+                  className="transition-all duration-100"
+                  style={{ filter: `drop-shadow(0 0 8px ${currentColor})` }}
+                />
+              </svg>
+              {/* Score number */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-[Sora,system-ui,sans-serif] text-[4.5rem] font-black leading-none tracking-tight transition-colors duration-300" style={{ color: currentColor }}>{score}</span>
+                <span className="mt-1 text-[11px] font-bold uppercase tracking-[0.15em] transition-colors duration-300" style={{ color: currentColor, opacity: 0.7 }}>{getTierLabel(score)}</span>
+              </div>
+            </div>
+            <p className="mt-4 text-center text-[11px] uppercase tracking-[0.12em] text-white/20">AquaScore™ · Conway, SC</p>
+          </div>
+
+          {/* Narrative */}
+          <div className="space-y-5">
+            <motion.div initial={{ opacity: 0 }} animate={phase !== "waiting" ? { opacity: 1 } : {}} transition={{ delay: 0.5, duration: 0.8 }}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/20">What the homeowner sees</p>
+              <p className="mt-2 text-xl font-bold leading-[1.4] text-white md:text-2xl">
+                "Sarah, your water scored a <span style={{ color: currentColor }} className="transition-colors duration-300">{score}</span>."
+              </p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={phase === "landed" || phase === "recovered" ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.3, duration: 0.6 }}>
+              <p className="text-[0.95rem] leading-[1.8] text-white/35">
+                That puts your home in the <span className="font-semibold text-red-400/70">At Risk</span> tier. Chloroform, haloacetic acids, and chromium-6 were all detected above health guidelines.
+              </p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={phase === "landed" || phase === "recovered" ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8, duration: 0.6 }}>
+              <p className="text-[0.85rem] leading-[1.7] text-white/25 italic">
+                "Let me show you exactly what that means for your family."
+              </p>
+              <p className="mt-1 text-[10px] text-white/15">↑ Built-in coaching prompt · visible only to the rep</p>
+            </motion.div>
+
+            {/* Before / After */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={phase === "recovered" ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.3, duration: 0.8 }}>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                  <span className="block text-[8px] uppercase tracking-wider text-white/15">Before testing</span>
+                  <span className="block mt-1 font-[Sora,system-ui,sans-serif] text-2xl font-bold text-white/25">—</span>
+                  <span className="block text-[9px] text-white/10">Unknown risk</span>
+                </div>
+                <div className="rounded-xl border border-red-400/[0.15] bg-red-400/[0.03] p-3 text-center">
+                  <span className="block text-[8px] uppercase tracking-wider text-red-400/40">Revealed</span>
+                  <span className="block mt-1 font-[Sora,system-ui,sans-serif] text-2xl font-bold text-red-400/80">28</span>
+                  <span className="block text-[9px] text-red-400/30">At Risk</span>
+                </div>
+                <div className="rounded-xl border border-teal-400/[0.15] bg-teal-400/[0.03] p-3 text-center">
+                  <span className="block text-[8px] uppercase tracking-wider text-teal-400/40">With system</span>
+                  <span className="block mt-1 font-[Sora,system-ui,sans-serif] text-2xl font-bold text-teal-400/80">93</span>
+                  <span className="block text-[9px] text-teal-400/30">Excellent</span>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-[11px] text-white/15">This is the moment they decide. Your rep never has to hard-sell again.</p>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MAIN LANDING PAGE
    ═══════════════════════════════════════════════════════════════ */
@@ -666,7 +808,7 @@ export function LandingPage() {
   const glow = useMouseGlow();
   return (
     <div className="min-h-screen bg-[#080d19] font-[Inter,system-ui,-apple-system,sans-serif] text-white/90" style={{ WebkitFontSmoothing: "antialiased" }}>
-      <SEO title="AquaReport — The Operating System for Water Treatment Sales" description="21-step Demo Wizard for water treatment dealers. Real water data, live testing, AquaScore™, and built-in rep coaching — close 2–3× more deals at every in-home consultation." canonical="https://aquareport.org" ogImage="https://aquareport.org/og-image.png" schema={[organizationSchema, softwareAppSchema, websiteSchema, faqSchema(HOMEPAGE_FAQS)]} />
+      <SEO title="AquaReport — The Sales Operating System for Water Treatment Dealers" description="21-step Demo Wizard for water treatment dealers. Real water data, live testing, AquaScore™, and built-in rep coaching — designed to help dealers close more in-home consultations." canonical="https://aquareport.org" ogImage="https://aquareport.org/og-image.png" schema={[organizationSchema, softwareAppSchema, websiteSchema, faqSchema(HOMEPAGE_FAQS)]} />
 
       {/* Mouse-reactive ambient glow */}
       <motion.div className="pointer-events-none fixed inset-0 z-30" style={{ background: `radial-gradient(800px circle at ${glow.x}px ${glow.y}px, rgba(45,212,191,0.03), transparent 40%)` } as never} />
@@ -724,7 +866,7 @@ export function LandingPage() {
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-12 px-6 md:grid-cols-4">
           {([
             ["21", "guided steps", "Psychologically sequenced from rapport to close."],
-            ["2–3×", "close rate lift", "Personalized demos convert dramatically better."],
+            ["Higher", "close rates", "Dealers report measurably better results with personalized, data-driven demos."],
             ["<1 day", "rep onboarding", "New hires present like a 10-year veteran."],
             ["100%", "offline ready", "Basements, rural, bad wifi — never miss a sale."],
           ] as const).map(([num, label, desc]) => (
@@ -803,6 +945,37 @@ export function LandingPage() {
         </div>
       </section>
 
+
+      {/* ═══ FULL PLATFORM — Beyond the Demo ═══ */}
+      <section className="border-t border-white/[0.04] py-20 md:py-24">
+        <div className="mx-auto max-w-[1280px] px-6">
+          <Reveal>
+            <div className="mx-auto mb-12 max-w-3xl text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">Full Platform</p>
+              <h2 className="mt-4 font-[Sora,system-ui,sans-serif] text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.08] tracking-tight text-white">
+                The Demo Wizard closes deals.<br /><span className="bg-gradient-to-r from-white/60 to-white/25 bg-clip-text text-transparent">The platform runs your operation.</span>
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {([
+              { icon: "📊", title: "Branded Reports", desc: "Professional water quality reports with AquaScore™ grading, contaminant breakdowns, and your company branding. Generate on the spot or send digitally." },
+              { icon: "👥", title: "CRM & Lead Tracking", desc: "Every consultation creates a lead record. Track demo status, follow-up schedules, and close dispositions — no separate CRM needed." },
+              { icon: "📈", title: "Dealer Analytics", desc: "See close rates by rep, demos per week, average AquaScore by territory. Data-driven management for growing teams." },
+              { icon: "🔗", title: "Consumer Portal", desc: "Every homeowner gets a branded link at myaquareport.com to review their water report. Shareable, professional, and always under your brand." },
+            ] as const).map((item, i) => (
+              <Reveal key={item.title} delay={i * 0.06}>
+                <div className="rounded-2xl border border-white/[0.05] bg-white/[0.015] p-5 h-full transition-colors duration-300 hover:border-white/[0.1]">
+                  <span className="text-2xl">{item.icon}</span>
+                  <h3 className="mt-3 text-[0.9rem] font-semibold tracking-tight text-white">{item.title}</h3>
+                  <p className="mt-2 text-[0.8rem] leading-[1.75] text-white/25">{item.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══ PREVIEW / LIVE DEMO ═══ */}
       <section id="preview" className="py-28 md:py-36 border-t border-white/[0.04]">
         <div className="mx-auto max-w-[1280px] px-6">
@@ -818,6 +991,26 @@ export function LandingPage() {
             </div>
           </Reveal>
           <LiveDemo />
+        </div>
+      </section>
+
+
+      {/* ═══ AQUASCORE REVEAL — The Unforgettable Moment ═══ */}
+      <section className="relative overflow-hidden border-t border-white/[0.04] py-28 md:py-36">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(45,212,191,.05),transparent_50%)]" />
+        <div className="mx-auto max-w-[1280px] px-6 relative">
+          <Reveal>
+            <div className="mx-auto max-w-3xl text-center mb-16">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">The Moment</p>
+              <h2 className="mt-4 font-[Sora,system-ui,sans-serif] text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.06] tracking-tight text-white">
+                This is what changes the conversation.
+              </h2>
+              <p className="mt-4 text-base leading-[1.8] text-white/30">
+                Every demo builds to this single reveal. The homeowner watches their score drop in real time — and suddenly, treatment isn't optional.
+              </p>
+            </div>
+          </Reveal>
+          <AquaScoreReveal />
         </div>
       </section>
 
@@ -902,8 +1095,9 @@ export function LandingPage() {
           <Reveal>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-400/60">From the Field</p>
             <h2 className="mt-4 font-[Sora,system-ui,sans-serif] text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.06] tracking-tight text-white">
-              Dealers don't switch to AquaReport.<br /><span className="bg-gradient-to-r from-white/60 to-white/25 bg-clip-text text-transparent">They upgrade to it.</span>
+              Early dealer feedback.<br /><span className="bg-gradient-to-r from-white/60 to-white/25 bg-clip-text text-transparent">Real results from the field.</span>
             </h2>
+            <p className="mt-4 text-[0.85rem] text-white/25">From dealers using AquaReport in live consultations.</p>
           </Reveal>
           <div className="mt-14 grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (

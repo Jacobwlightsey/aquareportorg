@@ -97,7 +97,7 @@ const FEATURE_DESCRIPTIONS: Record<string, { icon: LucideIcon; title: string; de
   "demo-wizard": {
     icon: Activity,
     title: "In-Home Demo Wizard",
-    description: "Interactive 12-step presentation tool for in-home water quality consultations.",
+    description: "Interactive 21-step presentation tool for in-home water quality consultations.",
   },
 };
 
