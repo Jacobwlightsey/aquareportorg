@@ -211,7 +211,7 @@ export const autoCreateLeadAndDeal = internalMutation({
       name,
       phone: args.customerPhone,
       email: args.customerEmail,
-      status: "new",
+      status: "new_lead",
       utilityCityState: args.city && args.state ? `${args.city}, ${args.state}` : undefined,
       source: args.source || "report",
       assignedTo: args.userId,

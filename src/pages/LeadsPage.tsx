@@ -23,8 +23,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "../../convex/_generated/api";
+import { LEAD_STAGES, type LeadStage, leadStageMeta } from "@/lib/pipeline";
 
-type LeadStatus = "new" | "contacted" | "closed";
+type LeadStatus = LeadStage;
 type ConsumerLeadStatus = "new" | "claimed" | "scheduled" | "completed";
 
 type PipelineState = {
@@ -41,7 +42,7 @@ export function LeadsPage() {
   const updateEnterpriseStatus = useMutation(api.leads.updateEnterpriseLeadStatus);
   const listConsumerLeads = useAction(api.dealerShared.listConsumerLeads);
   const claimConsumerLead = useAction(api.dealerShared.claimConsumerLead);
-  const [filter, setFilter] = useState<"all" | "new" | "contacted" | "closed">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "won" | "lost">("all");
   const [pipelineStatus, setPipelineStatus] = useState<ConsumerLeadStatus>("new");
   const [pipelineZip, setPipelineZip] = useState("");
   const [pipeline, setPipeline] = useState<PipelineState | null>(null);
@@ -78,11 +79,17 @@ export function LeadsPage() {
     );
   }
 
-  const filtered = filter === "all" ? leads : leads.filter((l) => l.status === filter);
+  const activeStatuses = ["new_lead", "new", "contacted", "appointment_set", "demo_completed", "proposal_sent", "negotiation"];
+  const wonStatuses = ["closed_won", "closed"];
+  const lostStatuses = ["closed_lost"];
+  const filtered = filter === "all" ? leads
+    : filter === "active" ? leads.filter((l) => activeStatuses.includes(l.status))
+    : filter === "won" ? leads.filter((l) => wonStatuses.includes(l.status))
+    : leads.filter((l) => lostStatuses.includes(l.status));
 
-  const newCount = leads.filter((l) => l.status === "new").length;
-  const contactedCount = leads.filter((l) => l.status === "contacted").length;
-  const closedCount = leads.filter((l) => l.status === "closed").length;
+  const activeCount = leads.filter((l) => activeStatuses.includes(l.status)).length;
+  const wonCount = leads.filter((l) => wonStatuses.includes(l.status)).length;
+  const lostCount = leads.filter((l) => lostStatuses.includes(l.status)).length;
 
   const handleStatusChange = async (leadId: any, status: LeadStatus) => {
     try {
@@ -131,25 +138,25 @@ export function LeadsPage() {
           <p className="text-[11px] text-muted-foreground">All</p>
         </button>
         <button
-          onClick={() => setFilter("new")}
-          className={`p-3 rounded-xl border text-center transition-colors ${filter === "new" ? "border-emerald-500 bg-emerald-500/5" : "hover:bg-muted/50"}`}
+          onClick={() => setFilter("active")}
+          className={`p-3 rounded-xl border text-center transition-colors ${filter === "active" ? "border-cyan-500 bg-cyan-500/5" : "hover:bg-muted/50"}`}
         >
-          <p className="text-2xl font-bold text-emerald-500">{newCount}</p>
-          <p className="text-[11px] text-muted-foreground">New</p>
+          <p className="text-2xl font-bold text-cyan-500">{activeCount}</p>
+          <p className="text-[11px] text-muted-foreground">Active</p>
         </button>
         <button
-          onClick={() => setFilter("contacted")}
-          className={`p-3 rounded-xl border text-center transition-colors ${filter === "contacted" ? "border-amber-500 bg-amber-500/5" : "hover:bg-muted/50"}`}
+          onClick={() => setFilter("won")}
+          className={`p-3 rounded-xl border text-center transition-colors ${filter === "won" ? "border-emerald-500 bg-emerald-500/5" : "hover:bg-muted/50"}`}
         >
-          <p className="text-2xl font-bold text-amber-500">{contactedCount}</p>
-          <p className="text-[11px] text-muted-foreground">Contacted</p>
+          <p className="text-2xl font-bold text-emerald-500">{wonCount}</p>
+          <p className="text-[11px] text-muted-foreground">Won</p>
         </button>
         <button
-          onClick={() => setFilter("closed")}
-          className={`p-3 rounded-xl border text-center transition-colors ${filter === "closed" ? "border-gray-500 bg-muted/50" : "hover:bg-muted/50"}`}
+          onClick={() => setFilter("lost")}
+          className={`p-3 rounded-xl border text-center transition-colors ${filter === "lost" ? "border-red-500 bg-red-500/5" : "hover:bg-muted/50"}`}
         >
-          <p className="text-2xl font-bold text-muted-foreground">{closedCount}</p>
-          <p className="text-[11px] text-muted-foreground">Closed</p>
+          <p className="text-2xl font-bold text-red-500">{lostCount}</p>
+          <p className="text-[11px] text-muted-foreground">Lost</p>
         </button>
       </div>
 
@@ -171,22 +178,14 @@ export function LeadsPage() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
-                    <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${
-                      lead.status === "new" ? "bg-emerald-500/10" : lead.status === "contacted" ? "bg-amber-500/10" : "bg-muted"
-                    }`}>
-                      <User className={`size-5 ${
-                        lead.status === "new" ? "text-emerald-500" : lead.status === "contacted" ? "text-amber-500" : "text-muted-foreground"
-                      }`} />
+                    <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${leadStageMeta(lead.status).color}/10`}>
+                      <User className="size-5 text-foreground/70" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-sm">{lead.name}</p>
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                          lead.status === "new" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" :
-                          lead.status === "contacted" ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400" :
-                          "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                        }`}>
-                          {lead.status === "new" ? "NEW" : lead.status === "contacted" ? "CONTACTED" : "CLOSED"}
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${leadStageMeta(lead.status).badge}`}>
+                          {leadStageMeta(lead.status).label.toUpperCase()}
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
@@ -218,38 +217,23 @@ export function LeadsPage() {
                     </div>
                   </div>
 
-                  {/* Status actions */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {lead.status === "new" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-8"
-                        onClick={() => handleStatusChange(lead._id, "contacted")}
-                      >
-                        <CheckCircle2 className="size-3" /> Mark Contacted
-                      </Button>
-                    )}
-                    {lead.status === "contacted" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-8"
-                        onClick={() => handleStatusChange(lead._id, "closed")}
-                      >
-                        <XCircle className="size-3" /> Close
-                      </Button>
-                    )}
-                    {lead.status === "closed" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-xs h-8"
-                        onClick={() => handleStatusChange(lead._id, "new")}
-                      >
-                        Reopen
-                      </Button>
-                    )}
+                  {/* Stage selector */}
+                  <div className="shrink-0 w-44">
+                    <Select
+                      value={lead.status}
+                      onValueChange={(val) => handleStatusChange(lead._id, val as LeadStatus)}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LEAD_STAGES.map((s) => (
+                          <SelectItem key={s.key} value={s.key} className="text-xs">
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>

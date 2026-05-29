@@ -297,6 +297,7 @@ const schema = defineSchema({
   demoSessions: defineTable({
     companyId: v.id("companies"),
     reportId: v.optional(v.id("reports")),
+    leadId: v.optional(v.id("leads")),
     userId: v.optional(v.id("users")),
     outcome: v.string(),
     notes: v.optional(v.string()),
@@ -358,6 +359,7 @@ const schema = defineSchema({
   appointments: defineTable({
     companyId: v.id("companies"),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     reportId: v.optional(v.id("reports")),
     assignedTo: v.id("users"),
     customerName: v.string(),
@@ -395,7 +397,8 @@ const schema = defineSchema({
 
   followUpMessages: defineTable({
     companyId: v.id("companies"),
-    sequenceId: v.id("followUpSequences"),
+    sequenceId: v.optional(v.id("followUpSequences")),
+    leadId: v.optional(v.id("leads")),
     dealId: v.optional(v.id("deals")),
     reportId: v.optional(v.id("reports")),
     recipientEmail: v.optional(v.string()),
@@ -418,6 +421,7 @@ const schema = defineSchema({
   proposals: defineTable({
     companyId: v.id("companies"),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     reportId: v.optional(v.id("reports")),
     demoSessionId: v.optional(v.id("demoSessions")),
     customerName: v.string(),
@@ -526,6 +530,7 @@ const schema = defineSchema({
   reviewRequests: defineTable({
     companyId: v.id("companies"),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     customerName: v.string(),
     customerEmail: v.optional(v.string()),
     customerPhone: v.optional(v.string()),
@@ -563,6 +568,7 @@ const schema = defineSchema({
     companyId: v.id("companies"),
     userId: v.id("users"),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     demoSessionId: v.optional(v.id("demoSessions")),
     dealValue: v.number(),
     commissionRate: v.number(), // percentage

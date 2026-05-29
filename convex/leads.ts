@@ -28,7 +28,7 @@ export const submitLead = mutation({
       phone: args.phone,
       email: args.email,
       message: args.message,
-      status: "new",
+      status: "new_lead",
       utilityCityState: `${report.utilityName} - ${report.city}, ${report.state}`,
       source: "customer_report",
     });
@@ -98,7 +98,7 @@ export const submitEnterpriseLead = mutation({
       phone: args.phone?.trim() || undefined,
       message: args.message?.trim() || undefined,
       source: args.source || "enterprise_pricing",
-      status: "new",
+      status: "new_lead",
       submittedByUserId: userId || undefined,
     });
 
@@ -143,7 +143,11 @@ export const getEnterpriseLeads = query({
 export const updateLeadStatus = mutation({
   args: {
     leadId: v.id("leads"),
-    status: v.union(v.literal("new"), v.literal("contacted"), v.literal("closed")),
+    status: v.union(
+      v.literal("new"), v.literal("contacted"), v.literal("closed"),
+      v.literal("new_lead"), v.literal("appointment_set"), v.literal("demo_completed"),
+      v.literal("proposal_sent"), v.literal("negotiation"), v.literal("closed_won"), v.literal("closed_lost")
+    ),
   },
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "sales_rep");
@@ -152,7 +156,9 @@ export const updateLeadStatus = mutation({
     if (!lead) throw new Error("Lead not found");
     if (membership.companyId !== lead.companyId) throw new Error("Access denied");
 
-    await ctx.db.patch(args.leadId, { status: args.status });
+    // Normalize legacy statuses
+    const normalizedStatus = args.status === "new" ? "new_lead" : args.status === "closed" ? "closed_won" : args.status;
+    await ctx.db.patch(args.leadId, { status: normalizedStatus });
     await audit(ctx, {
       companyId: membership.companyId,
       actorId: userId,
@@ -246,7 +252,7 @@ export const importLeads = mutation({
         email,
         phone,
         message: lead.message?.trim() || undefined,
-        status: "new",
+        status: "new_lead",
         source: lead.source || "crm_csv_import",
       });
 
@@ -281,7 +287,7 @@ export const getNewLeadCount = query({
     const newLeads = await ctx.db
       .query("leads")
       .withIndex("by_status", (q) =>
-        q.eq("companyId", membership.companyId).eq("status", "new")
+        q.eq("companyId", membership.companyId).eq("status", "new_lead")
       )
       .collect();
 
@@ -312,7 +318,7 @@ export const createFacebookLead = internalMutation({
       email: args.email,
       phone: args.phone,
       source: args.source,
-      status: "new",
+      status: "new_lead",
       fbLeadId: args.fbLeadId,
       fbFormId: args.fbFormId,
       fbFormName: args.fbFormName,
