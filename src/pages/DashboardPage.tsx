@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import {
   ArrowRight,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   DollarSign,
   FileText,
@@ -32,6 +35,7 @@ function timeAgo(ts: number) {
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const pipelineStats = useQuery(api.deals.getPipelineStats);
   const reports = useQuery(api.reports.getMyReports);
   const leads = useQuery(api.leads.getLeads);
@@ -41,17 +45,33 @@ export function DashboardPage() {
 
   const newLeads = leads?.filter((l) => l.status === "new")?.length ?? 0;
   const totalReports = reports?.length ?? 0;
+
+  const isToday = (d: Date) => {
+    const now = new Date();
+    return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  };
+
   const todayAppts =
     appointments?.filter((a) => {
-      const today = new Date();
       const d = new Date(a.scheduledAt);
       return (
-        d.getDate() === today.getDate() &&
-        d.getMonth() === today.getMonth() &&
-        d.getFullYear() === today.getFullYear() &&
+        d.getDate() === selectedDate.getDate() &&
+        d.getMonth() === selectedDate.getMonth() &&
+        d.getFullYear() === selectedDate.getFullYear() &&
         a.status !== "cancelled"
       );
     }) ?? [];
+
+  const prevDay = () => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(d);
+  };
+  const nextDay = () => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(d);
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -113,7 +133,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Calendar className="size-4 text-cyan-400" />
-                Today's Schedule
+                {isToday(selectedDate) ? "Today's Schedule" : "Schedule"}
               </CardTitle>
               <Button
                 variant="ghost"
@@ -124,6 +144,21 @@ export function DashboardPage() {
                 View all <ArrowRight className="size-3 ml-1" />
               </Button>
             </div>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <Button variant="ghost" size="icon" className="size-7" onClick={prevDay}>
+                <ChevronLeft className="size-4" />
+              </Button>
+              <button
+                className="text-xs font-medium px-2 py-0.5 rounded hover:bg-muted/50 transition-colors"
+                onClick={() => setSelectedDate(new Date())}
+                title="Go to today"
+              >
+                {selectedDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+              </button>
+              <Button variant="ghost" size="icon" className="size-7" onClick={nextDay}>
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-2.5">
             {todayAppts.length === 0 ? (
@@ -131,7 +166,7 @@ export function DashboardPage() {
                 <div className="rounded-2xl bg-muted/8 p-4 mb-3">
                   <Calendar className="size-8 text-muted-foreground/30" />
                 </div>
-                <p className="text-sm text-muted-foreground">No appointments today</p>
+                <p className="text-sm text-muted-foreground">No appointments {isToday(selectedDate) ? "today" : "this day"}</p>
                 <Button
                   size="sm"
                   variant="outline"

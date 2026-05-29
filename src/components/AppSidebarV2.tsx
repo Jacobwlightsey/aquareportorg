@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, Moon, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Sun, Users as UsersIcon, Users2, Wrench } from "lucide-react";
+import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, Home, Lock, LogOut, Mail, Map, Megaphone, Moon, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Sun, Users as UsersIcon, Users2, Wrench } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
@@ -34,8 +34,7 @@ import {
 
 const pipelineNav = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/pipeline", label: "Pipeline", icon: FolderKanban },
-  { href: "/customers", label: "Customers", icon: UsersIcon },
+  { href: "/customers", label: "Reports", icon: UsersIcon },
   { href: "/leads", label: "Leads", icon: Users2, badgeKey: "leads" },
   { href: "/appointments", label: "Appointments", icon: Calendar },
 ];
@@ -172,7 +171,7 @@ function SidebarNav() {
 
   // Build flat list of sections
   const sections: { label: string; color: string; items: typeof pipelineNav; section: string }[] = [];
-  if (hasAccess(role, "pipeline", featureAccess)) sections.push({ label: "PIPELINE", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
+  if (hasAccess(role, "pipeline", featureAccess)) sections.push({ label: "CRM", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
   if (hasAccess(role, "sales", featureAccess)) sections.push({ label: "SALES", color: "#34d399", items: salesNav, section: "sales" });
   if (hasAccess(role, "retention", featureAccess)) sections.push({ label: "RETENTION", color: "#fbbf24", items: retentionNav, section: "retention" });
   if (hasAccess(role, "intelligence", featureAccess)) sections.push({ label: "INTELLIGENCE", color: "#a78bfa", items: intelligenceNav, section: "intelligence" });

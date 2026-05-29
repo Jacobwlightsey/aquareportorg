@@ -121,18 +121,6 @@ export function LeadsPage() {
         </p>
       </div>
 
-      <ConsumerLeadPipeline
-        context={dealerContext}
-        pipeline={pipeline}
-        status={pipelineStatus}
-        zip={pipelineZip}
-        loading={pipelineLoading}
-        onStatus={setPipelineStatus}
-        onZip={setPipelineZip}
-        onRefresh={refreshPipeline}
-        onClaim={handleClaimConsumerLead}
-      />
-
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
         <button
@@ -352,6 +340,19 @@ export function LeadsPage() {
           ))}
         </div>
       )}
+
+      {/* Consumer Lead Pipeline — coming soon */}
+      <ConsumerLeadPipeline
+        context={dealerContext}
+        pipeline={pipeline}
+        status={pipelineStatus}
+        zip={pipelineZip}
+        loading={pipelineLoading}
+        onStatus={setPipelineStatus}
+        onZip={setPipelineZip}
+        onRefresh={refreshPipeline}
+        onClaim={handleClaimConsumerLead}
+      />
     </div>
   );
 }
