@@ -60,6 +60,9 @@ const staticRoutes = [
   { path: "/book-demo", priority: "0.7", changefreq: "monthly" },
   // Pricing
   { path: "/pricing", priority: "0.9", changefreq: "monthly" },
+  // Signup & Login
+  { path: "/signup", priority: "0.6", changefreq: "monthly" },
+  { path: "/login", priority: "0.3", changefreq: "monthly" },
 ];
 
 // ─── Extract blog data from blogData.ts ──────────────────────────
@@ -122,12 +125,26 @@ function extractCityEntries() {
   try {
     const src = readFileSync(resolve(__dirname, "../src/lib/cityData.ts"), "utf-8");
     const slugs = [...src.matchAll(/slug:\s*"([^"]+)"/g)].map((m) => m[1]);
-    const names = [...src.matchAll(/name:\s*"([^"]+)"/g)].map((m) => m[1]);
-    const states = [...src.matchAll(/state:\s*"([^"]+)"/g)].map((m) => m[1]);
+    // cityData.ts uses "city:" not "name:" for the display name
+    const cities = [...src.matchAll(/city:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const states = [...src.matchAll(/(?<!\w)state:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const stateAbbrs = [...src.matchAll(/stateAbbr:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const utilities = [...src.matchAll(/utility:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const waterSources = [...src.matchAll(/waterSource:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const concerns = [...src.matchAll(/concerns:\s*"([^"]+)"/g)].map((m) => m[1]);
+    // Extract topContaminants arrays
+    const topContaminantsMatches = [...src.matchAll(/topContaminants:\s*\[([^\]]+)\]/g)].map((m) =>
+      [...m[1].matchAll(/"([^"]+)"/g)].map((c) => c[1]),
+    );
     return slugs.map((slug, i) => ({
       slug,
-      name: names[i] || slug.replace(/-/g, " "),
+      name: cities[i] || slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       state: states[i] || "",
+      stateAbbr: stateAbbrs[i] || "",
+      utility: utilities[i] || "",
+      waterSource: waterSources[i] || "",
+      concerns: concerns[i] || "",
+      topContaminants: topContaminantsMatches[i] || [],
     }));
   } catch {
     return [];
@@ -199,7 +216,13 @@ const SOFTWARE_SCHEMA = {
   operatingSystem: "Web",
   url: "https://aquareport.org",
   description: "The sales operating system for water treatment dealers. 21-step Demo Wizard with AquaScore™ grading, branded reports, and consumer delivery.",
-  offers: { "@type": "AggregateOffer", priceCurrency: "USD", lowPrice: "0", highPrice: "599", offerCount: "4" },
+  offers: {
+    "@type": "Offer",
+    price: "199",
+    priceCurrency: "USD",
+    description: "Starter plan — 20 reports/mo, branded reports, AquaScore™ grading",
+    url: "https://aquareport.org/pricing/",
+  },
 };
 
 const WEBSITE_SCHEMA = {
@@ -551,11 +574,13 @@ function injectSEOContent() {
 
     // Smart title: don't append " | AquaReport" if title already > 46c
     // (keeps total under ~60c for SERP display)
+    // Also cap any title at 65c to avoid SE Ranking "too long" warnings (>70c)
     let fullTitle;
     if (!title) {
       fullTitle = "AquaReport | Water Quality Report Software for Dealers";
     } else if (title.length > 46) {
-      fullTitle = title;
+      // Skip suffix, but still cap at 65c
+      fullTitle = title.length > 65 ? title.slice(0, 62) + "…" : title;
     } else {
       fullTitle = `${title} | AquaReport`;
     }
@@ -704,14 +729,27 @@ function injectSEOContent() {
     });
   }
 
-  // ── City water pages — with Breadcrumb schema
+  // ── City water pages — with Breadcrumb schema + rich content
   for (const c of cities) {
+    const cityLabel = `${c.name}, ${c.stateAbbr || c.state}`;
     const desc = `Detailed water quality data for ${c.name}, ${c.state} including contaminant levels, EPA comparisons, AquaScore™ grading, and treatment recommendations.`;
     const url = `${SITE}/water-quality/${c.slug}/`;
+    // Rich body: utility, water source, contaminants, concerns, cross-links
+    const contaminantList = c.topContaminants.length
+      ? `<h2>Key Contaminants Found</h2><ul>${c.topContaminants.map((t) => `<li>${escHtml(t)}</li>`).join("")}</ul>`
+      : "";
+    const utilityInfo = c.utility ? `<p><strong>Water utility:</strong> ${escHtml(c.utility)}.</p>` : "";
+    const sourceInfo = c.waterSource ? `<p><strong>Water source:</strong> ${escHtml(c.waterSource)}.</p>` : "";
+    const concernsInfo = c.concerns ? `<p>${escHtml(c.concerns)}</p>` : "";
+    // Cross-links to nearby cities (pick 5 random others)
+    const otherCities = cities.filter((o) => o.slug !== c.slug).slice(0, 8);
+    const crossLinks = otherCities.length
+      ? `<h2>More Cities</h2><ul>${otherCities.map((o) => `<li><a href="/water-quality/${o.slug}/">${escHtml(o.name)}, ${escHtml(o.stateAbbr || o.state)}</a></li>`).join("")}</ul>`
+      : "";
     writeRouteHtml(`/water-quality/${c.slug}`, {
-      title: `Water Quality in ${c.name}, ${c.state}`,
+      title: `Water Quality in ${cityLabel}`,
       description: desc,
-      content: `<main><h1>Water Quality in ${escHtml(c.name)}, ${escHtml(c.state)}</h1><p>${escHtml(desc)}</p><p><a href="/water-quality/">← All Cities</a> | <a href="/signup">Get Your Water Report →</a></p></main>`,
+      content: `<main><h1>Water Quality in ${escHtml(cityLabel)}</h1><p>${escHtml(desc)}</p>${utilityInfo}${sourceInfo}${contaminantList}${concernsInfo}${crossLinks}<p><a href="/water-quality/">← All Cities</a> | <a href="/signup">Get Your Water Report →</a></p></main>`,
       schema: breadcrumbSchema([
         { name: "Home", url: `${SITE}/` },
         { name: "Water Quality", url: `${SITE}/water-quality/` },
@@ -827,6 +865,32 @@ function injectSEOContent() {
     schema: breadcrumbSchema([
       { name: "Home", url: `${SITE}/` },
       { name: "Book a Demo", url: `${SITE}/book-demo/` },
+    ]),
+  });
+
+  // ── Signup page
+  writeRouteHtml("/signup", {
+    title: "Start Free Trial",
+    description: "Create your AquaReport account. Start with a free premium water quality report — no credit card required. Built for water treatment dealers.",
+    content: `<main><h1>Start Your Free Trial</h1><p>Create your AquaReport account and get started with professional water quality reports, AquaScore™ grading, and the 21-step Demo Wizard. No credit card required — your first premium report is free.</p><h2>What You Get</h2><ul><li>Professional branded water quality reports</li><li>AquaScore™ water quality grading (1-100)</li><li>Real-time EPA and EWG contaminant data</li><li>21-step Demo Wizard for in-home sales</li><li>Consumer report delivery portal</li></ul><p><a href="/pricing/">View Plans & Pricing</a> | <a href="/book-demo/">Book a Demo First</a></p></main>`,
+    schema: [
+      ORG_SCHEMA,
+      SOFTWARE_SCHEMA,
+      breadcrumbSchema([
+        { name: "Home", url: `${SITE}/` },
+        { name: "Sign Up", url: `${SITE}/signup/` },
+      ]),
+    ],
+  });
+
+  // ── Login page
+  writeRouteHtml("/login", {
+    title: "Log In",
+    description: "Log in to your AquaReport dealer dashboard. Manage water quality reports, run demos, and track leads.",
+    content: `<main><h1>Log In to AquaReport</h1><p>Access your dealer dashboard to manage water quality reports, run demos, and track your sales pipeline.</p><p><a href="/signup">Don't have an account? Start Free Trial →</a></p></main>`,
+    schema: breadcrumbSchema([
+      { name: "Home", url: `${SITE}/` },
+      { name: "Log In", url: `${SITE}/login/` },
     ]),
   });
 
