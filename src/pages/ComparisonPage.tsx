@@ -164,8 +164,8 @@ export function ComparisonPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
       <SEO
-        title="Best Water Treatment Dealer Software (2025 Comparison)"
-        description="Compare the best water treatment dealer software: AquaReport vs ServiceTitan vs Salesforce vs HubSpot vs Jobber. Feature-by-feature comparison, pricing, and which platform is right for your water business."
+        title="Best Water Treatment Dealer Software 2025"
+        description="Compare AquaReport vs ServiceTitan vs Salesforce vs HubSpot vs Jobber. Feature-by-feature comparison and pricing for water treatment dealers."
         canonical="https://aquareport.org/best-water-treatment-dealer-software"
         schema={[
           breadcrumbSchema([
@@ -284,7 +284,7 @@ export function ComparisonPage() {
         {/* AquaReport */}
         <div className="mb-10 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 to-slate-900/50 p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-4">
-            <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" loading="lazy" />
+            <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" width="84" height="24" loading="lazy" />
             <span className="rounded-full bg-cyan-500/20 px-3 py-0.5 text-xs font-semibold text-cyan-300">Best for Water Dealers</span>
           </div>
           <h3 className="text-xl font-bold text-white mb-3">AquaReport — Purpose-Built for Water Treatment</h3>
@@ -513,7 +513,7 @@ export function ComparisonPage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-4">
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" loading="lazy" />
+              <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" width="84" height="24" loading="lazy" />
             </div>
             <p className="text-sm leading-relaxed text-slate-400">
               Professional water quality reporting software for water treatment dealers.

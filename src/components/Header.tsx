@@ -13,7 +13,7 @@ export function Header() {
             to="/"
             className="flex items-center gap-2.5 font-semibold text-lg hover:opacity-80 transition-opacity"
           >
-            <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
+            <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" width="112" height="32" />
           </Link>
 
           <nav className="flex items-center gap-4">

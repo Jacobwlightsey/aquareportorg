@@ -15,7 +15,7 @@ export function PublicHeader({ navLinks = DEFAULT_NAV }: PublicHeaderProps) {
     <header className="border-b border-slate-800/60">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
+          <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" width="112" height="32" />
         </Link>
         <nav className="flex items-center gap-6">
           {navLinks.map((link) => (

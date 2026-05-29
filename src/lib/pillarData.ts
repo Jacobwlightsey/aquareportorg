@@ -25,7 +25,7 @@ export const pillarPages: PillarPage[] = [
     slug: "water-treatment-dealer-software",
     title: "Water Treatment Dealer Software",
     description:
-      "AquaReport is the all-in-one software platform for water treatment dealers. Create professional water quality reports, manage customers, and close more sales with data-driven tools built for your workflow.",
+      "AquaReport is the all-in-one software for water treatment dealers. Create professional water reports, manage customers, and close more sales with data-driven tools.",
     primaryKeyword: "water treatment dealer software",
     secondaryKeywords: [
       "software for water treatment dealers",
@@ -319,7 +319,7 @@ Dealers who invest in the right technology now are building the foundation for t
     slug: "water-quality-report-software",
     title: "Water Quality Report Software",
     description:
-      "Generate professional, branded water quality reports in minutes. AquaReport turns raw test data into polished customer reports with AquaScore™ ratings, EPA comparisons, and shareable digital links.",
+      "Generate branded water quality reports in minutes. AquaReport turns raw test data into polished reports with AquaScore™ ratings, EPA comparisons, and digital links.",
     primaryKeyword: "water quality report software",
     secondaryKeywords: [
       "water analysis reporting software",
@@ -602,7 +602,7 @@ On Growth and Pro plans, AquaReport can automatically trigger follow-up reminder
     slug: "digital-water-test-reports",
     title: "Digital Water Test Reports",
     description:
-      "Replace paper water test forms with professional digital reports. AquaReport helps water treatment dealers create, share, and track digital water quality reports from any device.",
+      "Replace paper water test forms with professional digital reports. AquaReport helps dealers create, share, and track water quality reports from any device.",
     primaryKeyword: "digital water test reports",
     secondaryKeywords: [
       "digital water analysis reports",
@@ -909,7 +909,7 @@ These aren't just features — they're conversion tools. Each element is designe
     slug: "water-testing-software-for-dealers",
     title: "Water Testing Software for Dealers",
     description:
-      "Streamline your water testing workflow with software built for dealers. AquaReport integrates field testing, report generation, customer management, and sales presentations into one mobile-friendly platform.",
+      "Streamline your water testing workflow with software built for dealers. AquaReport integrates field testing, report generation, and sales tools into one platform.",
     primaryKeyword: "water testing software for dealers",
     secondaryKeywords: [
       "water testing software",

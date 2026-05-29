@@ -315,7 +315,7 @@ export function AppSidebarV2() {
             onClick={() => setOpenMobile(false)}
             className="flex items-center gap-2.5 font-semibold text-lg"
           >
-            <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
+            <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" width="112" height="32" />
           </Link>
           <button
             onClick={toggleTheme}
