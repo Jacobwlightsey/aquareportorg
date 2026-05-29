@@ -9,7 +9,11 @@ export const organizationSchema = {
   description:
     "The sales operating system for water treatment dealers. 21-step Demo Wizard, AquaScore™ water grading, branded reports, and built-in rep coaching — designed to help dealers close more in-home consultations.",
   foundingDate: "2025",
-  founder: { "@type": "Person", name: "Jacob Lightsey" },
+  founder: {
+    "@type": "Person",
+    name: "Jacob Lightsey",
+    url: "https://aquareport.org/about/jacob-lightsey",
+  },
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "sales",
@@ -19,6 +23,18 @@ export const organizationSchema = {
   areaServed: [
     { "@type": "Country", name: "United States" },
     { "@type": "Country", name: "Canada" },
+  ],
+  sameAs: [
+    // Add platform URLs here as profiles are created:
+    // "https://linkedin.com/company/aquareport",
+    // "https://twitter.com/aquareport",
+    // "https://crunchbase.com/organization/aquareport",
+    // "https://www.producthunt.com/products/aquareport",
+    // "https://www.g2.com/products/aquareport",
+    // "https://www.capterra.com/p/aquareport",
+    // "https://www.facebook.com/aquareport",
+    // "https://www.youtube.com/@aquareport",
+    "https://github.com/Jacobwlightsey/aquareportorg",
   ],
   knowsAbout: [
     "Water Quality Testing",
@@ -174,6 +190,7 @@ export function profilePageSchema({
   image,
   jobTitle,
   worksFor,
+  sameAs = [],
 }: {
   name: string;
   description: string;
@@ -181,6 +198,7 @@ export function profilePageSchema({
   image?: string;
   jobTitle: string;
   worksFor: string;
+  sameAs?: string[];
 }) {
   return {
     "@context": "https://schema.org",
@@ -192,8 +210,12 @@ export function profilePageSchema({
       url,
       image,
       jobTitle,
-      worksFor: { "@type": "Organization", name: worksFor },
-      sameAs: [],
+      worksFor: {
+        "@type": "Organization",
+        name: worksFor,
+        url: "https://aquareport.org",
+      },
+      sameAs,
     },
   };
 }
