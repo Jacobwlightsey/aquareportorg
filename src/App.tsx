@@ -20,6 +20,7 @@ const PillarPage = lazy(() => import("./pages/PillarPage"));
 const BlogPage = lazy(() => import("./pages/BlogPage").then((m) => ({ default: m.BlogPage })));
 const BlogArticlePage = lazy(() => import("./pages/BlogArticlePage").then((m) => ({ default: m.BlogArticlePage })));
 const AuthorPage = lazy(() => import("./pages/AuthorPage").then((m) => ({ default: m.AuthorPage })));
+const ComparisonPage = lazy(() => import("./pages/ComparisonPage").then((m) => ({ default: m.ComparisonPage })));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then((m) => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import("./pages/TermsPage").then((m) => ({ default: m.TermsPage })));
 const CityWaterPage = lazy(() => import("./pages/CityWaterPage").then((m) => ({ default: m.CityWaterPage })));
@@ -104,6 +105,7 @@ function App() {
 
           {/* Author / E-E-A-T */}
           <Route path="/about/jacob-lightsey" element={<AuthorPage />} />
+          <Route path="/best-water-treatment-dealer-software" element={<ComparisonPage />} />
 
           {/* Water Quality City Pages */}
           <Route path="/water-quality" element={<WaterQualityIndexPage />} />
