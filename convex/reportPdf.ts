@@ -105,25 +105,34 @@ function computePdfAquaScore(contaminants: any[]) {
     const legal = c?.legal_limit;
     const health = c?.health_guideline;
 
+    // Compute legal penalty
+    let legalPenalty = 0;
     if (legal && legal > 0 && val > 0) {
       const ratio = val / legal;
-      if (ratio > 1.5) score -= 12;       // Significantly over legal limit
-      else if (ratio > 1.0) score -= 8;   // Over legal limit
-      else if (ratio > 0.75) score -= 3;  // Approaching legal limit
-      else if (ratio > 0.5) score -= 1;   // Moderate vs legal
+      if (ratio > 1.5) legalPenalty = 12;
+      else if (ratio > 1.0) legalPenalty = 8;
+      else if (ratio > 0.75) legalPenalty = 3;
+      else if (ratio > 0.5) legalPenalty = 1;
     } else if (c?.over_legal) {
-      score -= 8;
-    } else if (health && health > 0 && val > 0) {
+      legalPenalty = 8;
+    }
+
+    // Compute health penalty
+    let healthPenalty = 0;
+    if (health && health > 0 && val > 0) {
       const ratio = val / health;
-      if (ratio > 3.0) score -= 6;        // Far above health guideline
-      else if (ratio > 1.5) score -= 4;   // Well above health guideline
-      else if (ratio > 1.0) score -= 2;   // Above health guideline
+      if (ratio > 3.0) healthPenalty = 6;
+      else if (ratio > 1.5) healthPenalty = 4;
+      else if (ratio > 1.0) healthPenalty = 2;
     } else if (c?.over_health) {
       const timesAbove = c?.times_above_ewg;
-      if (timesAbove && timesAbove > 3) score -= 6;
-      else if (timesAbove && timesAbove > 1.5) score -= 4;
-      else score -= 2;
+      if (timesAbove && timesAbove > 3) healthPenalty = 6;
+      else if (timesAbove && timesAbove > 1.5) healthPenalty = 4;
+      else healthPenalty = 2;
     }
+
+    // Apply the worse of the two penalties
+    score -= Math.max(legalPenalty, healthPenalty);
   }
 
   return Math.max(0, Math.min(100, Math.round(score)));
