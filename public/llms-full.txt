@@ -1,0 +1,98 @@
+# AquaReport — Full Product Reference
+
+> The sales operating system for water treatment dealers.
+
+## Company Overview
+AquaReport is a B2B SaaS platform built specifically for water treatment dealers and water quality professionals. Founded in 2025 by Jacob Lightsey, AquaReport provides everything a water dealer needs to present professional water quality data, run compelling in-home sales demos, and manage their customer pipeline.
+
+The platform serves dealers in the United States and Canada, pulling real-time contaminant data from EPA, EWG, and Health Canada databases.
+
+**Website:** https://aquareport.org
+**Consumer Portal:** https://myaquareport.com
+**Support:** support@aquareport.org
+
+## Problem We Solve
+Most water treatment dealers still rely on handwritten test results, paper forms, and generic CRMs. This leads to:
+- Unprofessional presentations that lose sales
+- No way to visualize complex water data for homeowners
+- Lost leads and missed follow-ups
+- No data-driven approach to selling filtration systems
+
+AquaReport replaces paper forms, spreadsheets, and generic tools with a purpose-built platform for the water treatment industry.
+
+## Core Features
+
+### AquaScore™ Water Quality Grading
+A proprietary 1–100 scoring system that transforms complex EPA contaminant data into a single, intuitive score. Higher scores mean cleaner water. The algorithm considers legal limits, health guidelines, and contaminant severity with tiered penalty weights.
+
+### 21-Step Demo Wizard
+The flagship sales tool — an interactive, psychology-driven presentation designed for in-home water consultations. The wizard guides sales reps through:
+1. Customer greeting and setup
+2. Local water data presentation (pulled live by ZIP/postal code)
+3. Contaminant education with visual breakdowns
+4. Live water test results entry and instant scoring
+5. Before/after score comparison with filtration
+6. Solution recommendation and pricing
+7. Proposal generation and closing
+
+Each step is designed around proven sales psychology — building concern, demonstrating value, and closing with data.
+
+### Professional Water Quality Reports
+Branded digital reports featuring:
+- Overall AquaScore™ with color-coded grading
+- Contaminant-by-contaminant breakdown vs. EPA legal limits and health guidelines
+- Filtration recommendations per contaminant
+- Interactive flipbook format for sharing
+- Company branding (logo, colors, contact info)
+- QR code linking to the consumer portal
+
+### Consumer Report Portal (myaquareport.com)
+Homeowners receive their water quality report on a branded, consumer-friendly page. No login required — just a shareable link. This reinforces the dealer's professionalism and gives homeowners a reference they can share with family.
+
+### Real-Time Water Data
+- US: EPA SDWIS + EWG Tap Water Database by ZIP code
+- Canada: Health Canada guidelines by postal code
+- Covers 100+ contaminants with legal limits, health guidelines, and detected levels
+
+### CRM & Lead Management
+- Lead tracking with customizable pipeline stages
+- Appointment scheduling and calendar integration
+- Proposal generation with auto-pricing
+- Commission tracking for sales teams
+- Automated follow-up reminders
+- Retention and review request campaigns
+
+### AI-Powered Sales Tools
+- AI-generated homeowner summaries (plain-language water quality explanation)
+- Sales talking points tailored to specific water issues
+- Objection handling suggestions
+- Rep coaching insights
+
+### Team Management
+- Multi-user accounts with role-based access (Owner, Manager, Rep)
+- Team performance analytics
+- Territory mapping with Google Maps integration
+- Centralized company branding and settings
+
+## Pricing Plans
+
+| Plan | Monthly Price | Reports/mo | Team Members | Key Features |
+|------|--------------|------------|--------------|--------------|
+| Starter | $199 | 20 | 2 | Branded reports, AquaScore, lead capture |
+| Growth | $349 | 50 | 5 | + Demo Wizard, live testing, AI summaries |
+| Pro | $599 | 150+ | 15 | + White-label, AI sales tools, territory intel |
+| Enterprise | Custom | Unlimited | Unlimited | + Dedicated support, custom integrations |
+
+**Free Trial:** 1 free premium report with all features unlocked. No credit card required.
+
+## Key Pages
+- [Water Treatment Dealer Software](https://aquareport.org/water-treatment-dealer-software): The all-in-one software platform for water treatment dealers.
+- [Water Quality Report Software](https://aquareport.org/water-quality-report-software): Professional water quality reporting software.
+- [Digital Water Test Reports](https://aquareport.org/digital-water-test-reports): Create digital water test reports that replace paper.
+- [Water Testing Software for Dealers](https://aquareport.org/water-testing-software-for-dealers): Water testing and reporting tools built for the field.
+- [Blog](https://aquareport.org/blog): Water quality insights for dealers and homeowners.
+- [Water Quality Index](https://aquareport.org/water-quality): City-by-city water quality data and AquaScore™ ratings.
+
+## Contact
+- Email: support@aquareport.org
+- Signup: https://aquareport.org/signup

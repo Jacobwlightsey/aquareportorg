@@ -93,7 +93,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
           style={{ boxShadow: `0 8px 32px ${colors.primary}10` }}
           onClick={() => setLightboxIdx(0)}
         >
-          <img src={productImage} alt={productName || "System"} className="w-full h-64 object-contain p-4" />
+          <img src={productImage} alt={productName || "System"} className="w-full h-64 object-contain p-4" loading="lazy" />
           {allImages.length > 1 && (
             <div className="px-4 pb-3 flex items-center justify-center gap-1.5">
               {allImages.map((_, i) => (
@@ -209,7 +209,7 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
                   if (idx >= 0) setLightboxIdx(idx);
                 }}
               >
-                <img src={prod.image} alt={prod.name} className="h-full w-full object-contain p-2" />
+                <img src={prod.image} alt={prod.name} className="h-full w-full object-contain p-2" loading="lazy" />
               </div>
             )}
             <h4 className="font-bold text-[16px]" style={{ color: colors.textPrimary }}>{prod.name}</h4>

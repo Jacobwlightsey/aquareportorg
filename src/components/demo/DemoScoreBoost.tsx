@@ -58,7 +58,7 @@ export function DemoScoreBoost({ projectedScore, boostedScore, company, report, 
                 <span className="text-[11px] font-bold" style={{ color: colors.success }}>FREE</span>
               </div>
               {roImage ? (
-                <img src={roImage} alt={roName} className="mx-auto h-48 object-contain" />
+                <img src={roImage} alt={roName} className="mx-auto h-48 object-contain" loading="lazy" />
               ) : (
                 <div className="mx-auto size-48 rounded-full flex items-center justify-center" style={{ background: `${colors.warning}08` }}>
                   <Droplets className="size-20" style={{ color: `${colors.warning}40` }} />
