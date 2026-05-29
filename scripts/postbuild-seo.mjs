@@ -38,6 +38,8 @@ const staticRoutes = [
   { path: "/water-testing-software-for-dealers", priority: "0.9", changefreq: "monthly" },
   // Comparison page
   { path: "/best-water-treatment-dealer-software", priority: "0.8", changefreq: "monthly" },
+  // Book demo
+  { path: "/book-demo", priority: "0.7", changefreq: "monthly" },
 ];
 
 // ─── Extract blog data from blogData.ts ──────────────────────────
@@ -478,7 +480,7 @@ function injectSEOContent() {
     const homeContent = `<header><h1>AquaReport — The Sales Operating System for Water Treatment Dealers</h1><p>21-step Demo Wizard for water treatment dealers. Real water data, live testing, AquaScore™ water grading, and built-in rep coaching — designed to help dealers close more in-home consultations.</p></header><nav><a href="/blog">Blog</a> <a href="/water-treatment-dealer-software">Water Treatment Dealer Software</a> <a href="/water-quality-report-software">Water Quality Report Software</a> <a href="/signup">Start Free Trial</a></nav>`;
     let homeHtml = indexHtml;
     const headInj = [
-      `<meta name="description" content="21-step Demo Wizard for water treatment dealers. Real water data, live testing, AquaScore™ water grading, and built-in rep coaching — designed to help dealers close more in-home consultations." />`,
+      `<meta name="description" content="21-step Demo Wizard for water dealers. Real EPA data, live testing, AquaScore™ grading, and rep coaching to close more in-home sales." />`,
       `<link rel="canonical" href="${SITE}/" />`,
       `<meta name="robots" content="index, follow" />`,
     ].join("\n    ");
@@ -501,27 +503,10 @@ function injectSEOContent() {
 
   // ── Blog articles
   for (const b of blogs) {
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: b.title,
-      description: b.description,
-      author: { "@type": "Person", name: "Jacob Lightsey" },
-      publisher: {
-        "@type": "Organization",
-        name: "AquaReport",
-        logo: { "@type": "ImageObject", url: `${SITE}/favicon.png` },
-      },
-      datePublished: b.datePublished,
-      dateModified: b.dateModified,
-      mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}/blog/${b.slug}` },
-    };
-
     writeRouteHtml(`/blog/${b.slug}`, {
       title: b.title,
       description: b.description,
       content: `<article><h1>${escHtml(b.title)}</h1><p>${escHtml(b.description)}</p><p>By Jacob Lightsey. Published ${b.datePublished}. Updated ${b.dateModified}.</p><a href="/blog">← Back to Blog</a></article>`,
-      schema,
     });
   }
 
@@ -599,42 +584,20 @@ function injectSEOContent() {
     content: `<main><h1>Sign In to AquaReport</h1><p>Access your dealer dashboard, reports, and tools.</p></main>`,
   });
 
+  // ── Book Demo
+  writeRouteHtml("/book-demo", {
+    title: "Book a Demo — AquaReport for Water Treatment Dealers",
+    description: "See AquaReport in action. Book a personalized demo to learn how the 21-step Demo Wizard helps water dealers close more in-home sales.",
+    content: `<main><h1>Book a Demo</h1><p>See how AquaReport's 21-step Demo Wizard helps water treatment dealers close more in-home consultations. Get a personalized walkthrough of water quality reports, AquaScore™ grading, and sales tools.</p><a href="/signup">Or Start Your Free Trial →</a></main>`,
+  });
+
   // ── Comparison page
   writeRouteHtml("/best-water-treatment-dealer-software", {
-    title: "Best Water Treatment Dealer Software (2025 Comparison)",
+    title: "Best Water Treatment Dealer Software 2025",
     description:
-      "Compare the best water treatment dealer software: AquaReport vs ServiceTitan vs Salesforce vs HubSpot vs Jobber. Feature-by-feature comparison, pricing, and which platform is right for your water business.",
+      "Compare AquaReport vs ServiceTitan vs Salesforce vs HubSpot vs Jobber. Feature-by-feature comparison and pricing for water treatment dealers.",
     content: `<main><h1>Best Water Treatment Dealer Software</h1><p>A head-to-head comparison of the top software platforms water treatment dealers actually use — from purpose-built water tools to general CRMs.</p><h2>Platforms Compared</h2><ul><li><strong>AquaReport</strong> — Purpose-built for water treatment dealers. AquaScore™ scoring, 21-step Demo Wizard, EPA data, branded reports. From $199/mo.</li><li><strong>ServiceTitan</strong> — General home services software for HVAC, plumbing, electrical. No water-specific features. Custom pricing.</li><li><strong>Salesforce</strong> — Enterprise CRM platform. Infinitely customizable but requires extensive setup. From $25/user/mo.</li><li><strong>HubSpot CRM</strong> — Marketing-focused CRM with free tier. No water industry features. Free to $1,200+/mo.</li><li><strong>Jobber</strong> — Field service management for small businesses. No water-specific reporting. From $49/mo.</li></ul><h2>Key Differentiator</h2><p>AquaReport is the only platform built exclusively for water treatment dealers — with real-time EPA data, proprietary water quality scoring, branded reports, a 21-step sales demo wizard, and a consumer delivery portal.</p><h2>FAQ</h2><dl><dt>Is AquaReport only for water treatment dealers?</dt><dd>Yes — every feature is designed around the water dealer workflow.</dd><dt>How does AquaReport compare to ServiceTitan for water dealers?</dt><dd>ServiceTitan excels at dispatch and scheduling but has no water-specific features. AquaReport provides water quality scoring, EPA data, branded reports, and an in-home demo wizard.</dd><dt>What makes AquaScore™ different?</dt><dd>AquaScore™ is a proprietary 1-100 scoring algorithm that considers EPA MCLs, EWG health guidelines, and contaminant severity to produce a single score homeowners understand instantly.</dd></dl><a href="/signup">Try AquaReport Free →</a></main>`,
-    schema: {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: [
-        {
-          "@type": "Question",
-          name: "Is AquaReport only for water treatment dealers?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Yes — AquaReport is purpose-built for water treatment dealers, water quality professionals, and water testing companies. Every feature is designed around the water dealer workflow.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How does AquaReport compare to ServiceTitan for water dealers?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "ServiceTitan is excellent for large home service companies but has no water-specific features. AquaReport fills that gap with water quality scoring, EPA data integration, branded water reports, and an in-home demo wizard.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "What makes AquaScore™ different from just showing test results?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "AquaScore™ is a proprietary 1-100 scoring algorithm that considers legal limits (EPA MCLs), health guidelines (EWG standards), and contaminant severity to produce a single score homeowners understand instantly.",
-          },
-        },
-      ],
-    },
+
   });
 
   return injected;
