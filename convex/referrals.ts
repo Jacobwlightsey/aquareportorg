@@ -55,28 +55,32 @@ function computeReferralAquaScore(contaminants: any[]) {
     const health = c?.health_guideline;
     const timesAbove = c?.times_above_ewg;
 
+    // Base penalty
+    score -= 0.5;
+
     // Compute legal penalty
     let legalPenalty = 0;
     if (legal && legal > 0 && val > 0) {
       const ratio = val / legal;
-      if (ratio > 1.5) legalPenalty = 12;
-      else if (ratio > 1.0) legalPenalty = 8;
-      else if (ratio > 0.75) legalPenalty = 3;
-      else if (ratio > 0.5) legalPenalty = 1;
+      if (ratio > 1.5) legalPenalty = 7;
+      else if (ratio > 1.0) legalPenalty = 4;
+      else if (ratio > 0.75) legalPenalty = 1;
+      else if (ratio > 0.5) legalPenalty = 0.5;
     } else if (c?.over_legal) {
-      legalPenalty = 8;
+      legalPenalty = 4;
     }
 
     // Compute health penalty
     let healthPenalty = 0;
     if (health && health > 0 && val > 0) {
       const ratio = val / health;
-      if (ratio > 3.0) healthPenalty = 6;
-      else if (ratio > 1.5) healthPenalty = 4;
+      if (ratio > 3.0) healthPenalty = 5;
+      else if (ratio > 1.5) healthPenalty = 3;
       else if (ratio > 1.0) healthPenalty = 2;
+      else if (ratio > 0.5) healthPenalty = 0.5;
     } else if (c?.over_health) {
-      if (timesAbove && timesAbove > 3) healthPenalty = 6;
-      else if (timesAbove && timesAbove > 1.5) healthPenalty = 4;
+      if (timesAbove && timesAbove > 3) healthPenalty = 5;
+      else if (timesAbove && timesAbove > 1.5) healthPenalty = 3;
       else healthPenalty = 2;
     }
 
