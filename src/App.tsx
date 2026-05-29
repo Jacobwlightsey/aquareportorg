@@ -27,6 +27,7 @@ const CityWaterPage = lazy(() => import("./pages/CityWaterPage").then((m) => ({ 
 const WaterQualityIndexPage = lazy(() => import("./pages/WaterQualityIndexPage").then((m) => ({ default: m.WaterQualityIndexPage })));
 const LearnHubPage = lazy(() => import("./pages/LearnHubPage").then((m) => ({ default: m.LearnHubPage })));
 const BookDemoPage = lazy(() => import("./pages/BookDemoPage").then((m) => ({ default: m.BookDemoPage })));
+const PricingPage = lazy(() => import("./pages/PricingPage").then((m) => ({ default: m.PricingPage })));
 
 // Public — shared / no auth
 const SpouseReviewPage = lazy(() => import("./pages/SpouseReviewPage").then((m) => ({ default: m.SpouseReviewPage })));
@@ -126,8 +127,7 @@ function App() {
 
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/pricing" element={<Navigate to="/#pricing" replace />} />
-            <Route path="/coverage" element={<Navigate to="/#coverage" replace />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/invite" element={<InvitePage />} />
             <Route element={<PublicOnlyRoute />}>
               <Route path="/login" element={<LoginPage />} />

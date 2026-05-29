@@ -10,6 +10,7 @@ export function SignupPage() {
         title="Sign Up Free — AquaReport Water Quality Report Software"
         description="Create your free AquaReport dealer account. Generate professional, branded water quality reports with AquaScore™ and close more water treatment sales."
         canonical="https://aquareport.org/signup"
+        noindex
       />
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 right-1/4 size-96 rounded-full bg-primary/10 blur-3xl" />

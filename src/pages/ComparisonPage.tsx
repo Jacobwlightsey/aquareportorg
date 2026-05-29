@@ -499,7 +499,7 @@ export function ComparisonPage() {
               Start Free <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
-              to="/#pricing"
+              to="/pricing"
               className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-8 py-4 text-lg font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
             >
               See Pricing
@@ -523,7 +523,7 @@ export function ComparisonPage() {
             <h4 className="mb-3 font-semibold text-white">Product</h4>
             <ul className="space-y-2 text-sm text-slate-400">
               <li><Link to="/#features" className="hover:text-white transition">Features</Link></li>
-              <li><Link to="/#pricing" className="hover:text-white transition">Pricing</Link></li>
+              <li><Link to="/pricing" className="hover:text-white transition">Pricing</Link></li>
               <li><Link to="/signup" className="hover:text-white transition">Get Started</Link></li>
             </ul>
           </div>

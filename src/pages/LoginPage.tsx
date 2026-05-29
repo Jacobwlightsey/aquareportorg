@@ -10,6 +10,7 @@ export function LoginPage() {
         title="Sign In — AquaReport Dealer Portal"
         description="Sign in to your AquaReport dealer account. Access your water quality reports, customer data, and sales tools."
         canonical="https://aquareport.org/login"
+        noindex
       />
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-1/4 size-96 rounded-full bg-primary/10 blur-3xl" />

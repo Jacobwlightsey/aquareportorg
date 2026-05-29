@@ -1130,7 +1130,7 @@ export function LandingPage() {
               <ul className="space-y-2 text-[0.8rem] text-white/20">
                 <li><a href="#wizard" className="transition hover:text-white/50">Demo Wizard</a></li>
                 <li><a href="#features" className="transition hover:text-white/50">Features</a></li>
-                <li><a href="#pricing" className="transition hover:text-white/50">Pricing</a></li>
+                <li><a href="/pricing" className="transition hover:text-white/50">Pricing</a></li>
                 <li><a href="#coverage-map" className="transition hover:text-white/50">Coverage</a></li>
               </ul>
             </div>

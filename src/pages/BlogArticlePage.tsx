@@ -491,7 +491,7 @@ export function BlogArticlePage() {
                 </li>
                 <li>
                   <Link
-                    to="/#pricing"
+                    to="/pricing"
                     className="text-slate-400 hover:text-white"
                   >
                     Pricing
