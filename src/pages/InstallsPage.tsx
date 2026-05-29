@@ -62,7 +62,7 @@ export function InstallsPage() {
   const rejectInstall = useMutation(api.installs.rejectInstall);
   const completeInstall = useMutation(api.installs.completeInstall);
 
-  const [showSchedule, setShowSchedule] = useState<Id<"proposals"> | null>(null);
+  const [showSchedule, setShowSchedule] = useState<Id<"contracts"> | null>(null);
   const [datePicks, setDatePicks] = useState<string[]>(["", "", ""]);
   const [scheduleNotes, setScheduleNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -86,7 +86,7 @@ export function InstallsPage() {
     setSubmitting(true);
     try {
       await suggestDates({
-        proposalId: showSchedule,
+        contractId: showSchedule,
         dates: validDates,
         notes: scheduleNotes || undefined,
       });
@@ -138,7 +138,7 @@ export function InstallsPage() {
                       variant="outline"
                       className="text-red-400 border-red-500/20 hover:bg-red-500/10"
                       onClick={async () => {
-                        await rejectInstall({ proposalId: p._id });
+                        await rejectInstall({ contractId: p._id });
                         toast.success("Sent back for reschedule");
                       }}
                     >
@@ -148,7 +148,7 @@ export function InstallsPage() {
                       size="sm"
                       className="bg-green-600 hover:bg-green-500 text-white"
                       onClick={async () => {
-                        await approveInstall({ proposalId: p._id });
+                        await approveInstall({ contractId: p._id });
                         toast.success("Install approved!");
                       }}
                     >
@@ -183,7 +183,7 @@ export function InstallsPage() {
                   size="sm"
                   variant="outline"
                   onClick={async () => {
-                    await completeInstall({ proposalId: p._id });
+                    await completeInstall({ contractId: p._id });
                     toast.success("Marked as completed!");
                   }}
                 >
@@ -265,7 +265,7 @@ export function InstallsPage() {
           <Wrench className="size-12 mx-auto text-muted-foreground/30" />
           <p className="text-lg font-semibold text-foreground">No installs yet</p>
           <p className="text-sm text-muted-foreground">
-            Signed proposals will appear here for install scheduling.
+            Signed contracts will appear here for install scheduling.
           </p>
         </div>
       )}

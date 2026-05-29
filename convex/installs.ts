@@ -2,33 +2,33 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getMembership, requireRole } from "./security";
 
-/** Get all proposals with install scheduling data for the company */
+/** Get all contracts with install scheduling data for the company */
 export const getInstalls = query({
   args: {},
   handler: async (ctx) => {
     const result = await getMembership(ctx);
     if (!result) return [];
-    const proposals = await ctx.db
-      .query("proposals")
+    const contracts = await ctx.db
+      .query("contracts")
       .withIndex("by_company", (q) => q.eq("companyId", result.membership.companyId))
       .collect();
-    // Only return proposals that have signed status or install scheduling started
-    return proposals.filter(
-      (p) => p.status === "signed" || p.status === "countersigned" || p.status === "completed" || p.installStatus
+    // Only return contracts that have signed status or install scheduling started
+    return contracts.filter(
+      (c) => c.status === "signed" || c.status === "countersigned" || c.status === "completed" || c.installStatus
     );
   },
 });
 
-/** Sales rep suggests install dates for a proposal */
+/** Sales rep suggests install dates for a contract */
 export const suggestInstallDates = mutation({
   args: {
-    proposalId: v.id("proposals"),
+    contractId: v.id("contracts"),
     dates: v.array(v.number()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, "sales_rep");
-    await ctx.db.patch(args.proposalId, {
+    await ctx.db.patch(args.contractId, {
       suggestedInstallDates: args.dates,
       installStatus: "dates_sent",
       installNotes: args.notes,
@@ -43,16 +43,16 @@ export const customerSelectDate = mutation({
     selectedDate: v.number(),
   },
   handler: async (ctx, args) => {
-    const proposals = await ctx.db
-      .query("proposals")
+    const contracts = await ctx.db
+      .query("contracts")
       .withIndex("by_shareToken", (q) => q.eq("shareToken", args.shareToken))
       .collect();
-    const proposal = proposals[0];
-    if (!proposal) throw new Error("Proposal not found");
-    if (!proposal.suggestedInstallDates?.includes(args.selectedDate)) {
+    const contract = contracts[0];
+    if (!contract) throw new Error("Contract not found");
+    if (!contract.suggestedInstallDates?.includes(args.selectedDate)) {
       throw new Error("Invalid date selection");
     }
-    await ctx.db.patch(proposal._id, {
+    await ctx.db.patch(contract._id, {
       customerSelectedDate: args.selectedDate,
       installStatus: "customer_selected",
     });
@@ -62,16 +62,16 @@ export const customerSelectDate = mutation({
 /** Owner approves the install date */
 export const approveInstall = mutation({
   args: {
-    proposalId: v.id("proposals"),
+    contractId: v.id("contracts"),
   },
   handler: async (ctx, args) => {
     const { userId } = await requireRole(ctx, "owner");
-    const proposal = await ctx.db.get(args.proposalId);
-    if (!proposal || !proposal.customerSelectedDate) {
+    const contract = await ctx.db.get(args.contractId);
+    if (!contract || !contract.customerSelectedDate) {
       throw new Error("No date selected");
     }
-    await ctx.db.patch(args.proposalId, {
-      installDate: proposal.customerSelectedDate,
+    await ctx.db.patch(args.contractId, {
+      installDate: contract.customerSelectedDate,
       installApproved: true,
       installApprovedBy: userId,
       installApprovedAt: Date.now(),
@@ -83,12 +83,12 @@ export const approveInstall = mutation({
 /** Owner rejects / requests reschedule */
 export const rejectInstall = mutation({
   args: {
-    proposalId: v.id("proposals"),
+    contractId: v.id("contracts"),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, "owner");
-    await ctx.db.patch(args.proposalId, {
+    await ctx.db.patch(args.contractId, {
       customerSelectedDate: undefined,
       installApproved: false,
       installStatus: "dates_sent",
@@ -100,11 +100,11 @@ export const rejectInstall = mutation({
 /** Mark install as completed */
 export const completeInstall = mutation({
   args: {
-    proposalId: v.id("proposals"),
+    contractId: v.id("contracts"),
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, "owner");
-    await ctx.db.patch(args.proposalId, {
+    await ctx.db.patch(args.contractId, {
       installStatus: "completed",
     });
   },

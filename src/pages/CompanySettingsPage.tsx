@@ -351,7 +351,7 @@ function CompanySection({ company, onUpdate }: { company: Record<string, unknown
    Branding Section
    ═══════════════════════════════════════════════════════════════════ */
 
-function BrandingSection({ company, onUpdate }: { company: Record<string, unknown>; onUpdate: (args: Record<string, string | string[] | undefined>) => Promise<unknown> }) {
+function BrandingSection({ company, onUpdate }: { company: Record<string, unknown>; onUpdate: (args: Record<string, string | number | string[] | undefined>) => Promise<unknown> }) {
   const [color, setColor] = useState((company.primaryColor as string) || "#2563eb");
   const [logoUrl, setLogoUrl] = useState((company.logoUrl as string) || "");
   const [productName, setProductName] = useState((company.solutionProductName as string) || "Whole Home Advanced Filtration System");
