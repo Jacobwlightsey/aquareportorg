@@ -139,7 +139,7 @@ function computePdfAquaScore(contaminants: any[]) {
     score -= Math.max(legalPenalty, healthPenalty);
   }
 
-  return Math.max(0, Math.min(100, Math.round(score)));
+  return Math.max(1, Math.min(100, Math.round(score)));
 }
 
 function finiteNumber(value: unknown, fallback = 0): number {
@@ -225,7 +225,7 @@ export const generateReportPdf = action({
     // Compute score: contaminant-based + field reading adjustment (matches frontend)
     const baseScore = computePdfAquaScore(contaminants);
     const fieldAdj = computePdfFieldReadingAdjustment(report);
-    const finalScore = Math.max(0, Math.min(100, Math.round(baseScore + fieldAdj)));
+    const finalScore = Math.max(1, Math.min(100, Math.round(baseScore + fieldAdj)));
 
     const html = buildReportHtml({
       customerName: report.customerName || "Homeowner",

@@ -259,3 +259,70 @@ export const sendScoreChangedEmail = action({
     });
   },
 });
+
+// ─── Follow-up / Retention / Review Request emails ───────────────
+
+export const sendFollowUpEmail = action({
+  args: {
+    to: v.string(),
+    customerName: v.string(),
+    subject: v.string(),
+    body: v.string(),
+    companyName: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    return await sendEmail(args.to, {
+      subject: args.subject,
+      preview: `Follow-up from ${args.companyName || "your water treatment dealer"}`,
+      eyebrow: "Follow-up",
+      title: `Hi ${args.customerName}`,
+      body: args.body,
+      cta: undefined,
+      secondary: `Sent by ${args.companyName || "AquaReport"}.`,
+    });
+  },
+});
+
+export const sendRetentionReminderEmail = action({
+  args: {
+    to: v.string(),
+    customerName: v.string(),
+    companyName: v.optional(v.string()),
+    reminderType: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    const type = args.reminderType || "service";
+    return await sendEmail(args.to, {
+      subject: `${type === "filter_change" ? "Filter Change" : "Service"} Reminder — ${args.companyName || "Your Water Dealer"}`,
+      preview: `Your ${type === "filter_change" ? "filter change" : "annual service"} is coming up.`,
+      eyebrow: "Reminder",
+      title: `Hi ${args.customerName}`,
+      body: type === "filter_change"
+        ? `It's time to replace your water filtration filter. Regular filter changes ensure your system keeps performing at its best and your water stays clean.`
+        : `Your annual water system service is coming up. Regular maintenance keeps your filtration system running efficiently and your family's water safe.`,
+      cta: undefined,
+      secondary: `Questions? Contact ${args.companyName || "your dealer"} directly.`,
+    });
+  },
+});
+
+export const sendReviewRequestEmail = action({
+  args: {
+    to: v.string(),
+    customerName: v.string(),
+    companyName: v.optional(v.string()),
+    googleReviewUrl: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    const reviewUrl = args.googleReviewUrl || "https://g.page/review";
+    return await sendEmail(args.to, {
+      subject: `How was your experience with ${args.companyName || "us"}?`,
+      preview: `We'd love to hear about your water treatment experience.`,
+      eyebrow: "Review request",
+      title: `Hi ${args.customerName}`,
+      body: `Thank you for choosing ${args.companyName || "us"} for your water treatment needs! We hope you're enjoying clean, filtered water. If you have a moment, we'd really appreciate a quick Google review — it helps other families find quality water treatment.`,
+      cta: { label: "Leave a Review", href: reviewUrl },
+      secondary: "Thank you for your time!",
+    });
+  },
+});
