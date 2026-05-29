@@ -106,7 +106,7 @@ export function LeadsPage() {
     }
   };
 
-  const handleEnterpriseStatusChange = async (leadId: any, status: LeadStatus) => {
+  const handleEnterpriseStatusChange = async (leadId: any, status: "new" | "contacted" | "closed") => {
     try {
       await updateEnterpriseStatus({ leadId, status });
       toast.success(`Enterprise lead marked as ${status}`);
