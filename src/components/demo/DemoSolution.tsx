@@ -108,7 +108,7 @@ export function DemoSolution({ score, company, report: _report, onNext: _onNext,
           </div>
           <div className="p-5">
             {company.solutionProductImage && (
-              <img src={company.solutionProductImage} alt={company.solutionProductName} className="w-full max-h-48 object-contain rounded-xl mb-4 bg-white/5 p-4" />
+              <img src={company.solutionProductImage} alt={company.solutionProductName} className="w-full max-h-48 object-contain rounded-xl mb-4 bg-white/5 p-4" loading="lazy" />
             )}
             <h3 className="text-[20px] font-bold" style={{ color: colors.textPrimary }}>{company.solutionProductName}</h3>
             {company.solutionProductDescription && (

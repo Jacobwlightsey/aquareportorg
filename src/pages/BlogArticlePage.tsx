@@ -304,7 +304,7 @@ export function BlogArticlePage() {
         <header className="border-b border-slate-800/60">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" />
+              <img src="/aquareport-logo.png" alt="AquaReport" className="h-8 w-auto" width="97" height="28" />
             </Link>
             <nav className="flex items-center gap-6">
               <Link
@@ -473,7 +473,7 @@ export function BlogArticlePage() {
           <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-4">
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" />
+                <img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" width="73" height="21" loading="lazy" />
               </div>
               <p className="text-sm leading-relaxed text-slate-400">
                 Professional water quality reporting software for water

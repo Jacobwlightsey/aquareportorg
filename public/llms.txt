@@ -1,0 +1,44 @@
+# AquaReport
+
+> The sales operating system for water treatment dealers.
+
+AquaReport helps water treatment dealers create professional water quality reports, run interactive in-home sales demos, and manage their customer pipeline — all from one platform.
+
+## Key Facts
+- Website: https://aquareport.org
+- Consumer portal: https://myaquareport.com
+- Founded: 2025 by Jacob Lightsey
+- Available in: United States and Canada
+- Category: B2B SaaS — Water Treatment Industry
+
+## Core Features
+- **AquaScore™ Water Quality Grading**: Proprietary 1-100 scoring system that turns complex EPA contaminant data into a single score homeowners understand instantly.
+- **21-Step Demo Wizard**: An interactive, psychology-driven sales presentation tool designed for in-home water consultations. Walks reps through water data, live testing, score reveals, and solution recommendations.
+- **Professional Water Quality Reports**: Branded, digital reports with contaminant breakdowns, EPA comparisons, and filtration recommendations. Shareable via link.
+- **Consumer Report Portal (myaquareport.com)**: Homeowners receive their report on a branded consumer-facing page.
+- **Real-Time EPA & Health Canada Data**: Pulls live contaminant data by ZIP code or postal code from EPA, EWG, and Health Canada databases.
+- **CRM & Lead Management**: Track leads, appointments, proposals, commissions, and follow-ups.
+- **AI Sales Tools**: AI-generated talking points, homeowner summaries, and objection handling.
+- **Team Management**: Multi-user support with role-based access for sales organizations.
+
+## Pricing
+- **Starter**: $199/month — 20 reports/mo, 2 team members
+- **Growth**: $349/month — 50 reports/mo, 5 team members, Demo Wizard, AI summaries
+- **Pro**: $599/month — 150+ reports/mo, 15 team members, white-label branding
+- **Enterprise**: Custom pricing — unlimited reports, dedicated support
+- **Free Trial**: 1 free premium report with all features unlocked
+
+## Key Pages
+- [Water Treatment Dealer Software](https://aquareport.org/water-treatment-dealer-software)
+- [Water Quality Report Software](https://aquareport.org/water-quality-report-software)
+- [Digital Water Test Reports](https://aquareport.org/digital-water-test-reports)
+- [Water Testing Software for Dealers](https://aquareport.org/water-testing-software-for-dealers)
+- [Blog](https://aquareport.org/blog)
+- [Water Quality Index](https://aquareport.org/water-quality)
+
+## Contact
+- Email: support@aquareport.org
+- Signup: https://aquareport.org/signup
+
+## For More Detail
+See the full version: https://aquareport.org/llms-full.txt

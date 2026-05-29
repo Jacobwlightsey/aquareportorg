@@ -1,3 +1,6 @@
+# AquaReport — https://aquareport.org
+# Water quality reporting platform for water treatment dealers
+
 User-agent: *
 Allow: /
 Allow: /water-quality/
@@ -27,5 +30,44 @@ Disallow: /training
 Disallow: /attribution
 Disallow: /audiences
 Disallow: /demo/preview
+
+# AI search crawlers — welcome
+User-agent: GPTBot
+Allow: /
+Allow: /blog/
+Allow: /water-quality/
+Allow: /water-treatment-dealer-software
+Allow: /water-quality-report-software
+Allow: /digital-water-test-reports
+Allow: /water-testing-software-for-dealers
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /reports/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: CCBot
+Allow: /
 
 Sitemap: https://aquareport.org/sitemap.xml

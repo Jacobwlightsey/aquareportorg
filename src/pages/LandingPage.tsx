@@ -535,7 +535,7 @@ function LandingNav() {
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? "border-b border-white/[0.06] bg-[#080d19]/90 backdrop-blur-xl" : "bg-transparent"}`}>
       <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6">
         <a href="/" className="flex items-center gap-2 text-[1rem] font-bold text-white">
-          <img src="/aquareport-logo.png" alt="AquaReport" className="h-7 w-auto" />
+          <img src="/aquareport-logo.png" alt="AquaReport" className="h-7 w-auto" width="85" height="24" />
         </a>
         <nav className="hidden items-center gap-7 text-[0.84rem] text-white/35 md:flex">
           {NAV_LINKS.map((l) => <a key={l.href} href={l.href} className="transition-colors hover:text-white/70">{l.label}</a>)}
@@ -1122,7 +1122,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-[1280px] px-6">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <a href="/" className="flex items-center gap-2"><img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" /></a>
+              <a href="/" className="flex items-center gap-2"><img src="/aquareport-logo.png" alt="AquaReport" className="h-6 w-auto" width="73" height="21" loading="lazy" /></a>
               <p className="mt-3 text-[0.8rem] leading-relaxed text-white/20">Water intelligence platform and 21-step Demo Wizard for water treatment dealers.</p>
             </div>
             <div>
