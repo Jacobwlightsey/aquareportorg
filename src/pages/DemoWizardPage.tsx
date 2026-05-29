@@ -47,7 +47,7 @@ import { DemoImpact } from "@/components/demo/DemoImpact";
 import { DemoLiveTest } from "@/components/demo/DemoLiveTest";
 import { DemoScoreTransform } from "@/components/demo/DemoScoreTransform";
 import { DemoScoreImprovement } from "@/components/demo/DemoScoreImprovement";
-import { DemoBeforeAfter } from "@/components/demo/DemoBeforeAfter";
+// DemoBeforeAfter removed — merged into DemoScoreImprovement
 import { DemoSystemInfo } from "@/components/demo/DemoSystemInfo";
 import { DemoPricing, type PricingState } from "@/components/demo/DemoPricing";
 import { DemoCostComparison, type CostBreakdown } from "@/components/demo/DemoCostComparison";
@@ -117,7 +117,7 @@ const ALL_STEPS: StepDef[] = [
   { key: "scoreImprovement",    label: "Improvement",     color: "#8b5cf6" },   // Score improvement reveal → 94
   { key: "system",              label: "System",          color: "#3b82f6" },   // Filtration system product page
   { key: "trust",               label: "Proof",           color: "#22c55e" },   // Trust proof (directly after system)
-  { key: "beforeAfter",         label: "Before & After",  color: "#8b5cf6" },   // Chemical before/after comparison
+  // beforeAfter removed — merged into scoreImprovement
   // ── Justify ──
   { key: "comparison",          label: "Expenses",        color: "#ec4899" },   // What unfiltered water costs
   { key: "pricing",             label: "Investment",      color: "#10b981" },   // Investment overview
@@ -962,6 +962,7 @@ function DemoWizardInner() {
             <DemoScoreImprovement
               currentScore={score ?? 0}
               projectedScore={projectedScore ?? score ?? 0}
+              contaminants={contaminants}
               onNext={goNext}
             />
           )}
@@ -976,14 +977,7 @@ function DemoWizardInner() {
               country={company?.country}
             />
           )}
-          {stepKey === "beforeAfter" && (
-            <DemoBeforeAfter
-              score={score ?? 0}
-              projectedScore={projectedScore ?? 94}
-              contaminants={contaminants}
-              onNext={goNext}
-            />
-          )}
+          {/* beforeAfter step removed — merged into scoreImprovement */}
           {stepKey === "pricing" && (
             <DemoPricing
               company={resolvedCompany}
