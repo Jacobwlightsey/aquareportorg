@@ -40,6 +40,8 @@ const staticRoutes = [
   { path: "/best-water-treatment-dealer-software", priority: "0.8", changefreq: "monthly" },
   // Book demo
   { path: "/book-demo", priority: "0.7", changefreq: "monthly" },
+  // Pricing
+  { path: "/pricing", priority: "0.9", changefreq: "monthly" },
 ];
 
 // ─── Extract blog data from blogData.ts ──────────────────────────
@@ -569,19 +571,12 @@ function injectSEOContent() {
     content: `<main><h1>Terms of Service</h1><p>AquaReport terms of service. By using our platform, you agree to these terms.</p></main>`,
   });
 
-  // ── Signup
-  writeRouteHtml("/signup", {
-    title: "Start Your Free Trial",
+  // ── Pricing (standalone page)
+  writeRouteHtml("/pricing", {
+    title: "Pricing — Water Treatment Dealer Software",
     description:
-      "Sign up for AquaReport — get 1 free premium water quality report with all features unlocked. No credit card required.",
-    content: `<main><h1>Start Your Free Trial</h1><p>Create your AquaReport account and generate your first professional water quality report for free. No credit card required.</p></main>`,
-  });
-
-  // ── Login
-  writeRouteHtml("/login", {
-    title: "Sign In",
-    description: "Sign in to your AquaReport dealer dashboard.",
-    content: `<main><h1>Sign In to AquaReport</h1><p>Access your dealer dashboard, reports, and tools.</p></main>`,
+      "AquaReport plans from $199/mo. Every plan includes a free premium report. No credit card required to start.",
+    content: `<main><h1>AquaReport Pricing</h1><p>One closed deal pays for the year. Every plan includes a free premium report. No credit card required.</p><h2>Plans</h2><ul><li><strong>Starter — $199/mo</strong>: 20 reports/mo, 2 team members, branded reports, AquaScore™ grading, flipbook sharing, lead capture.</li><li><strong>Growth — $349/mo</strong>: 50 reports/mo, 5 team members, everything in Starter plus Demo Wizard, live test results, AI homeowner summaries, lead analytics.</li><li><strong>Pro — $599/mo</strong>: 150+ reports/mo, 15 team members, everything in Growth plus white-label branding, AI sales talking points, territory intelligence, priority support.</li><li><strong>Enterprise — Custom</strong>: Unlimited reports, custom domains, onboarding, and dedicated support.</li></ul><p>Annual billing saves up to 33%. All plans include AquaScore™ water quality grading and branded digital reports.</p><a href="/signup">Start Free Trial →</a></main>`,
   });
 
   // ── Book Demo

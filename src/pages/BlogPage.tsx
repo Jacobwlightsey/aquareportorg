@@ -33,7 +33,7 @@ export function BlogPage() {
                 Home
               </Link>
               <Link
-                to="/#pricing"
+                to="/pricing"
                 className="hidden text-sm text-slate-400 transition-colors hover:text-white md:block"
               >
                 Pricing
@@ -139,7 +139,7 @@ export function BlogPage() {
                 </li>
                 <li>
                   <Link
-                    to="/#pricing"
+                    to="/pricing"
                     className="text-slate-400 hover:text-white"
                   >
                     Pricing
