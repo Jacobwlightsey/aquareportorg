@@ -647,7 +647,7 @@ export function CustomerDetailPage() {
             <StatCard
               label="SCORE BREAKDOWN"
               value={`${score ?? "--"} / 100`}
-              description={`Legal: -${overLegal.length * 7} · Health: -${overHealth.length * 3} · Detection: -${Math.max(contaminants.length - overLegal.length - overHealth.length, 0)}`}
+              description={score != null ? `Total penalty: -${100 - score} · ${overLegal.length > 0 ? `${overLegal.length} legal · ` : ""}${overHealth.length} health · ${Math.max(contaminants.length - overLegal.length - overHealth.length, 0)} detected` : ""}
             />
           </div>
 

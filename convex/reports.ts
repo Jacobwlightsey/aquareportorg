@@ -64,6 +64,7 @@ function calculateAquaScoreFromContaminants(contaminants: any[]): number | undef
     const val = c?.detected_level ?? c?.value ?? 0;
     const legal = c?.legal_limit;
     const health = c?.health_guideline;
+    const timesAbove = c?.times_above_ewg;
 
     // Base penalty: every detected contaminant matters
     score -= 1;
@@ -74,12 +75,20 @@ function calculateAquaScoreFromContaminants(contaminants: any[]): number | undef
       else if (ratio > 1.0) score -= 5;  // over legal limit
       else if (ratio > 0.75) score -= 2; // approaching limit
       else if (ratio > 0.5) score -= 0.5;
+    } else if (c?.over_legal) {
+      // Flag set but no ratio data — apply moderate legal penalty
+      score -= 5;
     } else if (health && health > 0 && val > 0) {
       const ratio = val / health;
       if (ratio > 3.0) score -= 7;       // extreme
       else if (ratio > 1.5) score -= 4;  // serious
       else if (ratio > 1.0) score -= 2;  // over health guideline
       else if (ratio > 0.5) score -= 0.5;
+    } else if (c?.over_health) {
+      // Flag set but no ratio data — use times_above_ewg or flat penalty
+      if (timesAbove && timesAbove > 3) score -= 7;
+      else if (timesAbove && timesAbove > 1.5) score -= 4;
+      else score -= 2;
     }
   }
 

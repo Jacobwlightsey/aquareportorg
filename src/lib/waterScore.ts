@@ -119,12 +119,14 @@ export function calculateAquaScoreFromContaminants(
   // Uses actual detected-value / limit ratios — matches backend (convex/reports.ts).
   // Every detected contaminant gets a −1 base penalty.
   // Violations against legal limits or health guidelines add additional deductions.
+  // Falls back to flat penalties when ratio data is missing but flags are set.
   let score = 100;
 
   for (const c of contaminants) {
     const val = (c as any)?.detected_level ?? (c as any)?.value ?? 0;
     const legal = (c as any)?.legal_limit;
     const health = (c as any)?.health_guideline;
+    const timesAbove = (c as any)?.times_above_ewg;
 
     // Base penalty: every detected contaminant matters
     score -= 1;
@@ -135,12 +137,20 @@ export function calculateAquaScoreFromContaminants(
       else if (ratio > 1.0) score -= 5;  // over legal limit
       else if (ratio > 0.75) score -= 2; // approaching limit
       else if (ratio > 0.5) score -= 0.5;
+    } else if (c.over_legal) {
+      // Flag set but no ratio data — apply moderate legal penalty
+      score -= 5;
     } else if (health && health > 0 && val > 0) {
       const ratio = val / health;
       if (ratio > 3.0) score -= 7;       // extreme
       else if (ratio > 1.5) score -= 4;  // serious
       else if (ratio > 1.0) score -= 2;  // over health guideline
       else if (ratio > 0.5) score -= 0.5;
+    } else if (c.over_health) {
+      // Flag set but no ratio data — use times_above_ewg or flat penalty
+      if (timesAbove && timesAbove > 3) score -= 7;
+      else if (timesAbove && timesAbove > 1.5) score -= 4;
+      else score -= 2;
     }
   }
 
