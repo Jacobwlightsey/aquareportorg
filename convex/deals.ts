@@ -238,3 +238,32 @@ export const autoCreateLeadAndDeal = internalMutation({
     return { leadId, dealId };
   },
 });
+
+// Update deal stage by report ID (used by proposal generation, etc.)
+export const updateDealStageByReport = mutation({
+  args: {
+    reportId: v.id("reports"),
+    stage: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const result = await getMembership(ctx);
+    if (!result) throw new Error("Not authenticated");
+
+    const deal = await ctx.db
+      .query("deals")
+      .withIndex("by_report", (q) => q.eq("reportId", args.reportId))
+      .first();
+
+    if (!deal || deal.companyId !== result.membership.companyId) return; // silently skip if no deal
+
+    if (deal.stage === args.stage) return; // already at this stage
+
+    const history = deal.stageHistory ? JSON.parse(deal.stageHistory) : [];
+    history.push({ stage: args.stage, timestamp: Date.now(), userId: String(result.membership.userId) });
+    const update: any = { stage: args.stage, stageHistory: JSON.stringify(history) };
+    if (args.stage === "closed_won" || args.stage === "closed_lost") {
+      update.closedAt = Date.now();
+    }
+    await ctx.db.patch(deal._id, update);
+  },
+});

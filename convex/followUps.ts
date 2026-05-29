@@ -170,3 +170,34 @@ export const processDueFollowUps = internalMutation({
     return { processed };
   },
 });
+
+// Create a standalone follow-up task (not from a sequence)
+export const createFollowUpTask = mutation({
+  args: {
+    leadId: v.optional(v.id("leads")),
+    dealId: v.optional(v.id("deals")),
+    reportId: v.optional(v.id("reports")),
+    customerName: v.optional(v.string()),
+    scheduledAt: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const result = await getMembership(ctx);
+    if (!result) throw new Error("Not authenticated");
+
+    const followUpDate = args.scheduledAt || (Date.now() + 2 * 24 * 60 * 60 * 1000); // default 2 days
+
+    return await ctx.db.insert("followUpMessages", {
+      companyId: result.membership.companyId,
+      leadId: args.leadId,
+      dealId: args.dealId,
+      reportId: args.reportId,
+      channel: "email",
+      stepIndex: 0,
+      status: "pending",
+      scheduledAt: followUpDate,
+      subject: `Follow-up: ${args.customerName || "Customer"}`,
+      body: args.notes || "Follow-up from demo session",
+    });
+  },
+});

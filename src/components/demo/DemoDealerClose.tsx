@@ -5,7 +5,7 @@
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
   Calendar, Check, CircleSlash, ClipboardCopy, ExternalLink,
-  Loader2, Mail, MessageSquare, Send, Share2, Timer, X,
+  Loader2, Mail, MessageSquare, Send, Share2, Star, Timer, X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -35,10 +35,10 @@ interface Props {
 }
 
 const OUTCOMES = [
-  { key: "sold", label: "Sold", icon: Check, color: colors.success },
-  { key: "follow_up", label: "Follow-Up Needed", icon: Calendar, color: colors.warning },
-  { key: "not_interested", label: "Not Interested", icon: X, color: colors.critical },
-  { key: "no_show", label: "No Show", icon: CircleSlash, color: "#6b7280" },
+  { key: "sold", label: "Sold", icon: Check, color: colors.success, hint: "→ Commission created · Stage → Closed Won" },
+  { key: "follow_up", label: "Follow-Up Needed", icon: Calendar, color: colors.warning, hint: "→ Follow-up task created · Stage → Demo Completed" },
+  { key: "not_interested", label: "Not Interested", icon: X, color: colors.critical, hint: "→ Stage → Closed Lost" },
+  { key: "no_show", label: "No Show", icon: CircleSlash, color: "#6b7280", hint: "→ Stage → New Lead (reschedule)" },
 ];
 
 function formatTime(seconds: number) {
@@ -88,6 +88,14 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
     api.dealerShared.getStorageUrl,
     customProposalStorageId ? { storageId: customProposalStorageId } : "skip",
   );
+
+  const updateDealStage = useMutation(api.deals.updateDealStageByReport);
+  const createFollowUp = useMutation(api.followUps.createFollowUpTask);
+  const [creatingFollowUp, setCreatingFollowUp] = useState(false);
+
+  const createReviewRequest = useMutation(api.retention.createReviewRequest);
+  const [creatingReview, setCreatingReview] = useState(false);
+  const [reviewSent, setReviewSent] = useState(false);
 
   const [referralUrl, setReferralUrl] = useState("");
   const [creatingReferral, setCreatingReferral] = useState(false);
@@ -172,16 +180,21 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
               <button
                 key={o.key}
                 onClick={() => setOutcome(o.key)}
-                className="flex items-center gap-2 rounded-xl p-3 transition-all cursor-pointer"
+                className="flex flex-col items-start gap-1 rounded-xl p-3 transition-all cursor-pointer"
                 style={{
                   background: isSelected ? `${o.color}12` : `${colors.textFaint}08`,
                   border: `1px solid ${isSelected ? `${o.color}30` : colors.border}`,
                 }}
               >
-                <o.icon className="size-4 shrink-0" style={{ color: isSelected ? o.color : colors.textFaint }} />
-                <span className="text-[14px] font-medium" style={{ color: isSelected ? colors.textPrimary : colors.textMuted }}>
-                  {o.label}
-                </span>
+                <div className="flex items-center gap-2">
+                  <o.icon className="size-4 shrink-0" style={{ color: isSelected ? o.color : colors.textFaint }} />
+                  <span className="text-[14px] font-medium" style={{ color: isSelected ? colors.textPrimary : colors.textMuted }}>
+                    {o.label}
+                  </span>
+                </div>
+                {isSelected && (
+                  <span className="text-[11px] pl-6" style={{ color: `${o.color}cc` }}>{o.hint}</span>
+                )}
               </button>
             );
           })}
@@ -281,11 +294,26 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>Follow-Up</p>
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => toast.info("Coming soon — follow-up scheduling will be available in a future update.")}
-            className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer"
+            onClick={async () => {
+              setCreatingFollowUp(true);
+              try {
+                await createFollowUp({
+                  reportId: report._id,
+                  customerName: report.customerName,
+                  notes: notes.trim() || undefined,
+                });
+                toast.success("Follow-up scheduled for 2 days from now!");
+              } catch (e: any) {
+                toast.error(e.message || "Failed to create follow-up");
+              }
+              setCreatingFollowUp(false);
+            }}
+            disabled={creatingFollowUp}
+            className="flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer disabled:opacity-50"
             style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
           >
-            <Calendar className="size-4 shrink-0" style={{ color: colors.primary }} />Schedule Follow-Up
+            {creatingFollowUp ? <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: colors.primary }} /> : <Calendar className="size-4 shrink-0" style={{ color: colors.primary }} />}
+            {creatingFollowUp ? "Scheduling…" : "Schedule Follow-Up"}
           </button>
           {(() => {
             const effectiveUrl = proposalUrl || resolvedCustomUrl;
@@ -306,7 +334,12 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
                   setGeneratingProposal(true);
                   try {
                     const result = await generateProposal({ reportId: report._id });
-                    if (result.ok && result.pdfUrl) { setProposalUrl(result.pdfUrl); toast.success("Proposal PDF generated!"); }
+                    if (result.ok && result.pdfUrl) {
+                      setProposalUrl(result.pdfUrl);
+                      toast.success("Proposal PDF generated!");
+                      // Auto-update deal to proposal_sent (#14)
+                      updateDealStage({ reportId: report._id, stage: "proposal_sent" }).catch(() => {});
+                    }
                     else toast.error((result as any).message || "Could not generate proposal.");
                   } catch (e: any) { toast.error(e.message || "Proposal generation failed"); }
                   finally { setGeneratingProposal(false); }
@@ -335,6 +368,38 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
           </button>
         ) : (
           <DemoQRCode url={spouseReviewUrl} size={120} label="Spouse Review Link (expires 72h)" companyColor="#ec4899" />
+        )}
+
+        {/* Send Review Request (#15) */}
+        {!reviewSent ? (
+          <button
+            onClick={async () => {
+              setCreatingReview(true);
+              try {
+                await createReviewRequest({
+                  customerName: report.customerName || "Customer",
+                  customerEmail: report.customerEmail,
+                  customerPhone: report.customerPhone,
+                  delayDays: 3,
+                });
+                setReviewSent(true);
+                toast.success("Review request scheduled (3 days after today)!");
+              } catch (e: any) {
+                toast.error(e.message || "Failed to send review request");
+              }
+              setCreatingReview(false);
+            }}
+            disabled={creatingReview}
+            className="w-full flex items-center gap-2 rounded-xl p-3 text-left text-[14px] font-medium cursor-pointer disabled:opacity-50"
+            style={{ background: `${colors.textFaint}08`, color: colors.textSecondary }}
+          >
+            {creatingReview ? <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: "#f59e0b" }} /> : <Star className="size-4 shrink-0" style={{ color: "#f59e0b" }} />}
+            {creatingReview ? "Sending…" : "Send Review Request"}
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-xl p-3 text-[14px] font-medium" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+            <Check className="size-4" /> Review request scheduled
+          </div>
         )}
       </div>
 

@@ -995,14 +995,89 @@ export const saveDemoSession = mutation({
           .first();
         if (linkedLead) {
           const outcomeToLeadStatus: Record<string, string> = {
-            sold: "won",
-            follow_up: "follow_up",
-            not_interested: "lost",
-            no_show: "no_show",
+            sold: "closed_won",
+            follow_up: "demo_completed",
+            not_interested: "closed_lost",
+            no_show: "new_lead",
           };
-          const newStatus = outcomeToLeadStatus[args.outcome] || "contacted";
+          const newStatus = outcomeToLeadStatus[args.outcome] || "demo_completed";
           if (linkedLead.status !== newStatus) {
             await ctx.db.patch(linkedLead._id, { status: newStatus });
+          }
+
+          // --- Auto-create commission when sold (#11) ---
+          if (args.outcome === "sold") {
+            let dealValue = 0;
+            if (args.pricingSnapshot) {
+              try {
+                const ps = JSON.parse(args.pricingSnapshot);
+                dealValue = ps.totalPrice || ps.total || 0;
+              } catch { /* ignore */ }
+            }
+            if (deal) {
+              dealValue = dealValue || deal.dealValue || 0;
+            }
+            if (dealValue > 0) {
+              // Determine commission rate from company settings (default 10%)
+              const company = await ctx.db.get(member.companyId);
+              const commissionRate = (company as any)?.defaultCommissionRate ?? 10;
+              await ctx.db.insert("commissions", {
+                companyId: member.companyId,
+                userId,
+                dealId: deal?._id,
+                leadId: linkedLead._id,
+                demoSessionId: sessionId,
+                dealValue,
+                commissionRate,
+                commissionAmount: Math.round(dealValue * commissionRate) / 100,
+                status: "pending",
+                period: new Date().toISOString().slice(0, 7), // "2026-05"
+                customerName: customerName || linkedLead.name,
+              });
+            }
+          }
+
+          // --- Auto-create follow-up task when follow_up (#13) ---
+          if (args.outcome === "follow_up") {
+            const followUpDate = Date.now() + 2 * 24 * 60 * 60 * 1000; // 2 days from now
+            await ctx.db.insert("followUpMessages", {
+              companyId: member.companyId,
+              leadId: linkedLead._id,
+              dealId: deal?._id,
+              reportId: args.reportId,
+              channel: "email",
+              stepIndex: 0,
+              status: "pending",
+              scheduledAt: followUpDate,
+              subject: `Follow-up: ${customerName || linkedLead.name}`,
+              body: args.notes || "Follow-up from demo session",
+            });
+          }
+        } else if (args.outcome === "sold" && deal) {
+          // No linked lead but deal exists — still create commission
+          let dealValue = 0;
+          if (args.pricingSnapshot) {
+            try {
+              const ps = JSON.parse(args.pricingSnapshot);
+              dealValue = ps.totalPrice || ps.total || 0;
+            } catch { /* ignore */ }
+          }
+          dealValue = dealValue || deal.dealValue || 0;
+          if (dealValue > 0) {
+            const company = await ctx.db.get(member.companyId);
+            const commissionRate = (company as any)?.defaultCommissionRate ?? 10;
+            await ctx.db.insert("commissions", {
+              companyId: member.companyId,
+              userId,
+              dealId: deal._id,
+              demoSessionId: sessionId,
+              dealValue,
+              commissionRate,
+              commissionAmount: Math.round(dealValue * commissionRate) / 100,
+              status: "pending",
+              period: new Date().toISOString().slice(0, 7),
+              customerName: customerName || deal.customerName,
+            });
           }
         }
       }

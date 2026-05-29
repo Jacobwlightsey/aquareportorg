@@ -48,6 +48,7 @@ export const getMyDayAppointments = query({
 export const createAppointment = mutation({
   args: {
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     reportId: v.optional(v.id("reports")),
     assignedTo: v.optional(v.id("users")),
     customerName: v.string(),

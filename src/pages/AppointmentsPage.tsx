@@ -53,9 +53,11 @@ const STATUS_COLORS: Record<string, string> = {
 export function AppointmentsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const appointments = useQuery(api.appointments.getAppointments, {}) ?? [];
+  const leads = useQuery(api.leads.getLeads) ?? [];
   const createAppointment = useMutation(api.appointments.createAppointment);
   const updateAppointment = useMutation(api.appointments.updateAppointment);
 
+  const [selectedLeadId, setSelectedLeadId] = useState<string>("");
   const [form, setForm] = useState({
     customerName: "",
     customerPhone: "",
@@ -110,9 +112,11 @@ export function AppointmentsPage() {
         durationMinutes: parseInt(form.durationMinutes) || 60,
         type: form.type,
         notes: form.notes || undefined,
+        ...(selectedLeadId && selectedLeadId !== "_none" ? { leadId: selectedLeadId as any } : {}),
       });
       toast.success("Appointment scheduled");
       setShowCreate(false);
+      setSelectedLeadId("");
       setForm({
         customerName: "",
         customerPhone: "",
@@ -287,6 +291,41 @@ export function AppointmentsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Link to existing lead */}
+            {leads.length > 0 && (
+              <div className="space-y-2">
+                <Label>Link to Lead <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Select
+                  value={selectedLeadId}
+                  onValueChange={(val) => {
+                    setSelectedLeadId(val);
+                    if (val && val !== "_none") {
+                      const lead = leads.find((l: any) => l._id === val);
+                      if (lead) {
+                        setForm((f) => ({
+                          ...f,
+                          customerName: lead.name || f.customerName,
+                          customerPhone: lead.phone || f.customerPhone,
+                          customerEmail: lead.email || f.customerEmail,
+                        }));
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a lead…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">No lead (manual entry)</SelectItem>
+                    {leads.map((lead: any) => (
+                      <SelectItem key={lead._id} value={lead._id}>
+                        {lead.name}{lead.phone ? ` — ${lead.phone}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Customer Name *</Label>
               <Input

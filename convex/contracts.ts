@@ -46,13 +46,31 @@ export const createContract = mutation({
     const result = await getMembership(ctx);
     if (!result) throw new Error("Not authenticated");
     const shareToken = "ctr_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    return await ctx.db.insert("contracts", {
+    const contractId = await ctx.db.insert("contracts", {
       companyId: result.membership.companyId,
       ...args,
       status: "draft",
       shareToken,
       createdBy: result.membership.userId,
     });
+
+    // Auto-create install appointment if installDate is provided (#16)
+    if (args.installDate) {
+      await ctx.db.insert("appointments", {
+        companyId: result.membership.companyId,
+        assignedTo: result.membership.userId,
+        customerName: args.customerName,
+        customerEmail: args.customerEmail,
+        customerAddress: args.customerAddress,
+        scheduledAt: args.installDate,
+        durationMinutes: 120,
+        type: "install",
+        status: "scheduled",
+        notes: `Install for contract ${shareToken}`,
+      });
+    }
+
+    return contractId;
   },
 });
 
