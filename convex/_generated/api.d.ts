@@ -33,6 +33,7 @@ import type * as integrations from "../integrations.js";
 import type * as leads from "../leads.js";
 import type * as lib_proposalTemplate from "../lib/proposalTemplate.js";
 import type * as lib_reportTemplate from "../lib/reportTemplate.js";
+import type * as installs from "../installs.js";
 import type * as marketing from "../marketing.js";
 import type * as proposalPdf from "../proposalPdf.js";
 import type * as proposals from "../proposals.js";
@@ -82,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   leads: typeof leads;
   "lib/proposalTemplate": typeof lib_proposalTemplate;
   "lib/reportTemplate": typeof lib_reportTemplate;
+  installs: typeof installs;
   marketing: typeof marketing;
   proposalPdf: typeof proposalPdf;
   proposals: typeof proposals;

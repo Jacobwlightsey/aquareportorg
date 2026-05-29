@@ -77,8 +77,13 @@ export function DemoBeforeAfter({ score, projectedScore, contaminants, onNext }:
             {top.map((c, i) => (
               <div
                 key={c.contaminant_id || i}
-                className="flex items-center gap-2 py-1.5"
-                style={{ borderBottom: `1px solid ${colors.border}` }}
+                className="flex items-center gap-2 py-1.5 transition-all duration-700"
+                style={{
+                  borderBottom: `1px solid ${colors.border}`,
+                  opacity: revealed ? 0.35 : 1,
+                  textDecoration: revealed ? "line-through" : "none",
+                  transitionDelay: revealed ? `${i * 100}ms` : "0ms",
+                }}
               >
                 <SeverityDot c={c} />
                 <span className="text-[13px] truncate flex-1" style={{ color: colors.textSecondary }}>
@@ -87,7 +92,7 @@ export function DemoBeforeAfter({ score, projectedScore, contaminants, onNext }:
                 <span className="text-[12px] font-semibold shrink-0" style={{
                   color: c.over_legal ? colors.critical : c.over_health ? colors.warning : colors.textFaint,
                 }}>
-                  {c.detected_level} {c.unit}
+                  {revealed ? "0.00" : c.detected_level} {c.unit}
                 </span>
               </div>
             ))}

@@ -54,6 +54,7 @@ const DemoAnalyticsPage = lazy(() => import("./pages/DemoAnalyticsPage").then((m
 const AppointmentsPage = lazy(() => import("./pages/AppointmentsPage").then((m) => ({ default: m.AppointmentsPage })));
 const ProposalsPage = lazy(() => import("./pages/ProposalsPage").then((m) => ({ default: m.ProposalsPage })));
 const CommissionsPage = lazy(() => import("./pages/CommissionsPage").then((m) => ({ default: m.CommissionsPage })));
+const InstallsPage = lazy(() => import("./pages/InstallsPage").then((m) => ({ default: m.InstallsPage })));
 
 // Authenticated — retention & intelligence
 const RetentionPage = lazy(() => import("./pages/RetentionPage").then((m) => ({ default: m.RetentionPage })));
@@ -150,6 +151,7 @@ function App() {
               <Route path="/demo-analytics" element={<TrialGate page="demo-analytics"><DemoAnalyticsPage /></TrialGate>} />
               <Route path="/proposals" element={<TrialGate page="proposals"><ProposalsPage /></TrialGate>} />
               <Route path="/commissions" element={<TrialGate page="commissions"><CommissionsPage /></TrialGate>} />
+              <Route path="/installs" element={<TrialGate page="installs"><InstallsPage /></TrialGate>} />
 
               {/* Retention */}
               <Route path="/retention" element={<TrialGate page="retention"><RetentionPage /></TrialGate>} />

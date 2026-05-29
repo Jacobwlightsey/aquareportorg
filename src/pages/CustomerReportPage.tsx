@@ -27,6 +27,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
+import { computeAquaScore } from "@/lib/waterScore";
 
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY;
 
@@ -576,7 +577,16 @@ export function CustomerReportPage() {
   const overHealth = contaminants.filter((c) => c.over_health);
   const overLegal = contaminants.filter((c) => c.over_legal);
   const highRisk = contaminants.filter((c) => severity(c) === "critical" || severity(c) === "high");
-  const score = report?.waterScore ?? 50;
+  const score = useMemo(() => {
+    if (!report) return 50;
+    try {
+      const parsed = JSON.parse(report.contaminants || "[]");
+      return computeAquaScore(report.waterScore, parsed, {
+        chlorine: report.chlorine, hardness: report.hardness,
+        tds: report.tds, ph: report.ph,
+      });
+    } catch { return report.waterScore ?? 50; }
+  }, [report]);
 
   const houseUrl = report?.customerAddress && report?.customerCity && report?.customerState && report?.customerZip
     ? streetViewUrl(report.customerAddress, report.customerCity, report.customerState, report.customerZip)

@@ -1,5 +1,5 @@
 import { useAction, useMutation, useQuery } from "convex/react";
-import { Copy, FileText, Loader2, Megaphone, Printer, Sparkles, Swords, Trash2 } from "lucide-react";
+import { Copy, FileText, Loader2, Megaphone, Printer, Sparkles, Swords, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,9 @@ export function MarketingPage() {
   const [showDoorHanger, setShowDoorHanger] = useState(false);
   const [showCompetitor, setShowCompetitor] = useState(false);
 
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
+  const [previewContent, setPreviewContent] = useState<typeof content[0] | null>(null);
+  const updateContent = useMutation(api.marketing.updateContent);
   const [socialForm, setSocialForm] = useState({ platform: "facebook", topic: "" });
   const [competitorForm, setCompetitorForm] = useState({
     competitorName: "",
@@ -86,13 +89,15 @@ export function MarketingPage() {
     title: string,
     body: string,
     type: string,
-    platform?: string
+    platform?: string,
+    imageUrl?: string
   ) => {
     try {
       await createContent({
         title,
         content: body,
         type,
+        imageUrl: imageUrl || undefined,
         platform: platform || undefined,
       });
       toast.success("Content saved");
@@ -194,10 +199,14 @@ export function MarketingPage() {
             content.map((c) => (
               <Card
                 key={c._id}
-                className="hover:border-border transition-colors"
+                className="hover:border-border transition-colors cursor-pointer"
+                onClick={() => setPreviewContent(c)}
               >
                 <CardContent className="p-3 sm:p-4">
                   <div className="flex items-start justify-between gap-3">
+                    {c.imageUrl && (
+                      <img src={c.imageUrl} alt="" className="size-14 rounded-lg object-cover shrink-0" />
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-sm">{c.title}</p>
@@ -214,7 +223,7 @@ export function MarketingPage() {
                         {c.content}
                       </p>
                     </div>
-                    <div className="flex gap-0.5 shrink-0">
+                    <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                       <Button
                         size="icon"
                         variant="ghost"
@@ -368,10 +377,10 @@ export function MarketingPage() {
                         type="button"
                         className="relative aspect-square rounded-md overflow-hidden border border-border hover:border-cyan-400/50 transition-colors group"
                         onClick={() => {
-                          navigator.clipboard.writeText(photo.url);
-                          toast.success(`"${photo.label}" URL copied — paste into your post!`);
+                          setSelectedImageUrl(photo.url);
+                          toast.success(`"${photo.label}" selected!`);
                         }}
-                        title={`${photo.label} — click to copy URL`}
+                        title={`${photo.label} — click to attach`}
                       >
                         <img src={photo.thumb} alt={photo.label} className="w-full h-full object-cover" loading="lazy" />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -380,8 +389,19 @@ export function MarketingPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">Click any image to copy its URL for your social post.</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Click any image to attach it to your post.</p>
                 </div>
+                {selectedImageUrl && (
+                  <div className="relative rounded-lg overflow-hidden border border-border">
+                    <img src={selectedImageUrl} alt="Selected" className="w-full h-32 object-cover" />
+                    <button
+                      onClick={() => setSelectedImageUrl("")}
+                      className="absolute top-1.5 right-1.5 size-6 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                )}
                 <Textarea
                   value={generated}
                   onChange={(e) => setGenerated(e.target.value)}
@@ -405,9 +425,11 @@ export function MarketingPage() {
                         `${socialForm.platform} post`,
                         generated,
                         "social_post",
-                        socialForm.platform
+                        socialForm.platform,
+                        selectedImageUrl || undefined
                       );
                       setShowGenerate(false);
+                      setSelectedImageUrl("");
                     }}
                   >
                     Save to Library
@@ -559,6 +581,36 @@ export function MarketingPage() {
               Add
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Content Preview Dialog */}
+      <Dialog open={!!previewContent} onOpenChange={() => setPreviewContent(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          {previewContent && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 flex-wrap">
+                  {previewContent.title}
+                  {previewContent.platform && (
+                    <Badge variant="outline" className="text-[10px]">{previewContent.platform}</Badge>
+                  )}
+                </DialogTitle>
+              </DialogHeader>
+              {previewContent.imageUrl && (
+                <img src={previewContent.imageUrl} alt="" className="w-full rounded-lg object-cover max-h-64" />
+              )}
+              <p className="text-sm text-foreground whitespace-pre-wrap">{previewContent.content}</p>
+              <div className="flex gap-2 pt-2">
+                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(previewContent.content); toast.success("Copied!"); }}>
+                  <Copy className="size-3 mr-1" /> Copy Text
+                </Button>
+                <Button size="sm" variant="destructive" onClick={async () => { await deleteContent({ contentId: previewContent._id }); setPreviewContent(null); toast.success("Deleted"); }}>
+                  <Trash2 className="size-3 mr-1" /> Delete
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

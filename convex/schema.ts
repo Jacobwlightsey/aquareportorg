@@ -16,6 +16,7 @@ const schema = defineSchema({
     solutionProductImage: v.optional(v.string()),
     solutionProductDescription: v.optional(v.string()),
     solutionProductBullets: v.optional(v.array(v.string())),
+    solutionRetailValue: v.optional(v.number()),
     additionalProducts: v.optional(v.array(v.object({
       name: v.string(),
       description: v.string(),
@@ -464,6 +465,13 @@ const schema = defineSchema({
     depositAmount: v.optional(v.number()),
     depositPaid: v.optional(v.boolean()),
     installDate: v.optional(v.number()),
+    suggestedInstallDates: v.optional(v.array(v.number())),
+    customerSelectedDate: v.optional(v.number()),
+    installApproved: v.optional(v.boolean()),
+    installApprovedBy: v.optional(v.id("users")),
+    installApprovedAt: v.optional(v.number()),
+    installStatus: v.optional(v.string()), // "pending_dates" | "dates_sent" | "customer_selected" | "approved" | "completed"
+    installNotes: v.optional(v.string()),
     createdBy: v.id("users"),
   })
     .index("by_company", ["companyId"])

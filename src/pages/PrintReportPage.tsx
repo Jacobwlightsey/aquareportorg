@@ -3,6 +3,7 @@ import { AlertTriangle, Check, Droplets, Factory, Home, Info, MapPin, Phone, Pri
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
+import { computeAquaScore } from "@/lib/waterScore";
 
 interface Contaminant {
   name?: string;
@@ -114,7 +115,15 @@ export function PrintReportPage() {
     );
   }
 
-  const score = report.waterScore ?? 50;
+  const score = useMemo(() => {
+    try {
+      const parsed = JSON.parse(report.contaminants || "[]");
+      return computeAquaScore(report.waterScore, parsed, {
+        chlorine: report.chlorine, hardness: report.hardness,
+        tds: report.tds, ph: report.ph,
+      });
+    } catch { return report.waterScore ?? 50; }
+  }, [report.contaminants, report.waterScore, report.chlorine, report.hardness, report.tds, report.ph]);
   const companyColor = report.companyColor || "#0b5d91";
   const accent = "#28a9df";
   const dateStr = new Date(report.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });

@@ -49,6 +49,7 @@ const TAB_CONTAMINANT_MAPPING: Record<string, string[]> = {
 interface ImpactInfo {
   title: string;
   subtitle: string;
+  image?: string;
   cards: { emoji: string; heading: string; body: string }[];
 }
 
@@ -56,6 +57,7 @@ const TAB_INFO: Record<string, ImpactInfo> = {
   family_health: {
     title: "Family Safety",
     subtitle: "How your water affects the people you love.",
+    image: "https://images.unsplash.com/photo-1544776193-352d25ca82cd?w=800&q=80",
     cards: [
       { emoji: "👶", heading: "Children & Development", body: "Kids absorb contaminants faster than adults. Lead, nitrates, and PFAS are linked to developmental issues, learning delays, and immune system disruption in children." },
       { emoji: "🤰", heading: "Pregnancy & Fertility", body: "Many contaminants found in your water — including nitrates, arsenic, and disinfection byproducts — are associated with complications during pregnancy." },
@@ -65,6 +67,7 @@ const TAB_INFO: Record<string, ImpactInfo> = {
   skin_and_hair: {
     title: "Skin & Hair",
     subtitle: "What every shower is doing to you.",
+    image: "https://images.unsplash.com/photo-1585747860036-4cb1f5a58f05?w=800&q=80",
     cards: [
       { emoji: "🚿", heading: "Chlorine in Your Shower", body: "You absorb more chlorine through a 10-minute hot shower than drinking 8 glasses of water. Steam opens pores and allows chemicals directly into your bloodstream." },
       { emoji: "💇", heading: "Dry Hair & Breakage", body: "Hard water minerals coat hair strands, making them brittle, dull, and resistant to color treatments. Chlorine strips natural oils." },
@@ -74,6 +77,7 @@ const TAB_INFO: Record<string, ImpactInfo> = {
   appliances_plumbing: {
     title: "Home & Appliances",
     subtitle: "The hidden damage hard water does to your home.",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
     cards: [
       { emoji: "🔧", heading: "Plumbing Scale", body: "Hard water deposits build up inside pipes, reducing flow and water pressure over time. Eventually this leads to expensive re-piping." },
       { emoji: "🫧", heading: "Water Heater Efficiency", body: "Just ¼ inch of scale on heating elements reduces efficiency by 25%. Your water heater works harder and costs more every month." },
@@ -83,6 +87,7 @@ const TAB_INFO: Record<string, ImpactInfo> = {
   taste_or_smell: {
     title: "Taste & Quality",
     subtitle: "What you're actually tasting and smelling.",
+    image: "https://images.unsplash.com/photo-1559839914-17aae19cec71?w=800&q=80",
     cards: [
       { emoji: "🥤", heading: "Chlorine Taste", body: "That pool-water taste comes from chlorine and chloramine disinfectants. It affects drinking water, coffee, tea, ice cubes, and cooking." },
       { emoji: "🍳", heading: "Cooking Quality", body: "Contaminants in your water affect the taste of everything you cook — pasta, soups, rice, and even baked goods." },
@@ -92,6 +97,7 @@ const TAB_INFO: Record<string, ImpactInfo> = {
   bottled_water_costs: {
     title: "Bottled Water",
     subtitle: "What you're already spending to avoid your tap.",
+    image: "https://images.unsplash.com/photo-1536939459926-301728c3e68c?w=800&q=80",
     cards: [
       { emoji: "💰", heading: "Monthly Costs", body: "The average family spends $50-80/month on bottled water. That's $600-960/year — often more than a whole-home filtration system costs monthly." },
       { emoji: "🌍", heading: "Environmental Impact", body: "A family of four uses ~1,000 plastic bottles per year. 80% end up in landfills. Each takes 450 years to decompose." },
@@ -101,6 +107,7 @@ const TAB_INFO: Record<string, ImpactInfo> = {
   stains_buildup: {
     title: "Hard Water",
     subtitle: "The silent damage happening right now.",
+    image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&q=80",
     cards: [
       { emoji: "🪞", heading: "Fixtures & Glass", body: "White crusty deposits on faucets, showerheads, and glass doors are calcium and magnesium scale. They get worse over time and are increasingly hard to remove." },
       { emoji: "👕", heading: "Laundry", body: "Hard water makes clothes fade faster, feel stiff, and look dingy. You end up using 50% more detergent and still get worse results." },
@@ -110,6 +117,7 @@ const TAB_INFO: Record<string, ImpactInfo> = {
   peace_of_mind: {
     title: "Peace of Mind",
     subtitle: "Every contaminant above safe levels in your water.",
+    image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=800&q=80",
     cards: [
       { emoji: "🛡️", heading: "Know What's In Your Water", body: "Most families never test their water. You now have real data — and the ability to act on it. That's already a step most people never take." },
       { emoji: "📊", heading: "Continuous Protection", body: "A whole-home system doesn't just filter once — it protects every drop from every faucet, shower, and appliance 24/7." },
@@ -191,6 +199,13 @@ export function DemoImpact({ contaminants = [], onNext: _onNext, onBack: _onBack
               {info.subtitle}
             </p>
           </div>
+
+          {/* Category hero image */}
+          {info.image && (
+            <div className="rounded-2xl overflow-hidden mb-5" style={{ border: `1px solid ${colors.border}` }}>
+              <img src={info.image} alt={info.title} className="w-full h-40 object-cover" loading="lazy" />
+            </div>
+          )}
 
           {/* Personalized household callout — uses intake data */}
           {concerns && (

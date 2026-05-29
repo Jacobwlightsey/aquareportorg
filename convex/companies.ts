@@ -128,6 +128,7 @@ export const updateCompany = mutation({
     solutionProductImage: v.optional(v.string()),
     solutionProductDescription: v.optional(v.string()),
     solutionProductBullets: v.optional(v.array(v.string())),
+    solutionRetailValue: v.optional(v.number()),
     additionalProducts: v.optional(v.array(v.object({
       name: v.string(),
       description: v.string(),

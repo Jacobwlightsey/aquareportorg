@@ -2,8 +2,8 @@
    Product, warranty, how it works. Surface cards, designTokens.
    ──── */
 
-import { Check, Droplets, Info, Shield, Sparkles } from "lucide-react";
-
+import { Check, ChevronLeft, ChevronRight, Droplets, Info, Shield, Sparkles, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { colors } from "@/lib/designTokens";
 
 interface Props {
@@ -46,6 +46,7 @@ const STEP_COLORS = ["#3b82f6", colors.success, "#8b5cf6", colors.warning, color
 export function DemoSystemInfo({ company, report, onNext }: Props) {
   const color = company?.primaryColor || report.companyColor || "#2563eb";
   const cfg = company?.demoConfig;
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const productName = company?.solutionProductName || report.solutionProductName || null;
   const productBullets = company?.solutionProductBullets?.length ? company.solutionProductBullets : report.solutionProductBullets?.length ? report.solutionProductBullets : [];
@@ -57,6 +58,16 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
   const howItWorks = cfg?.howItWorksSteps?.length ? cfg.howItWorksSteps : DEFAULT_HOW_IT_WORKS;
   const callouts = cfg?.systemCallouts?.length ? cfg.systemCallouts : DEFAULT_CALLOUTS;
   const additionalProducts = company?.additionalProducts || report.additionalProducts || [];
+
+  // Build gallery of all product images for slideshow
+  const allImages = useMemo(() => {
+    const imgs: { src: string; label: string }[] = [];
+    if (productImage) imgs.push({ src: productImage, label: productName || "Main System" });
+    additionalProducts.forEach((p: any) => {
+      if (p.image) imgs.push({ src: p.image, label: p.name });
+    });
+    return imgs;
+  }, [productImage, productName, additionalProducts]);
 
   const hasContent = productName || productBullets.length || productImage || systemIncludes.length;
 
@@ -77,8 +88,20 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
 
       {/* Product image */}
       {productImage ? (
-        <div className="rounded-2xl bg-white overflow-hidden shadow-2xl" style={{ boxShadow: `0 8px 32px ${colors.primary}10` }}>
+        <div
+          className="rounded-2xl bg-white overflow-hidden shadow-2xl cursor-pointer hover:shadow-3xl transition-shadow"
+          style={{ boxShadow: `0 8px 32px ${colors.primary}10` }}
+          onClick={() => setLightboxIdx(0)}
+        >
           <img src={productImage} alt={productName || "System"} className="w-full h-64 object-contain p-4" />
+          {allImages.length > 1 && (
+            <div className="px-4 pb-3 flex items-center justify-center gap-1.5">
+              {allImages.map((_, i) => (
+                <div key={i} className="size-2 rounded-full" style={{ background: i === 0 ? color : `${colors.textFaint}40` }} />
+              ))}
+              <span className="text-[10px] ml-2" style={{ color: colors.textFaint }}>{allImages.length} images — tap to view</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="rounded-2xl h-48 flex flex-col items-center justify-center" style={{ background: `${colors.primary}06` }}>
@@ -179,7 +202,13 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
         <div key={i} className="rounded-2xl overflow-hidden" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <div className="p-5">
             {prod.image && (
-              <div className="rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center h-32">
+              <div
+                className="rounded-xl bg-white overflow-hidden mb-3 flex items-center justify-center h-32 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => {
+                  const idx = allImages.findIndex((img) => img.src === prod.image);
+                  if (idx >= 0) setLightboxIdx(idx);
+                }}
+              >
                 <img src={prod.image} alt={prod.name} className="h-full w-full object-contain p-2" />
               </div>
             )}
@@ -228,6 +257,69 @@ export function DemoSystemInfo({ company, report, onNext }: Props) {
       >
         Continue →
       </button>
+
+      {/* ─── Image Lightbox / Slideshow ─── */}
+      {lightboxIdx !== null && allImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxIdx(null)}
+        >
+          <div className="relative max-w-3xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            {/* Close */}
+            <button
+              onClick={() => setLightboxIdx(null)}
+              className="absolute -top-12 right-0 size-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* Image */}
+            <div className="rounded-2xl bg-white overflow-hidden shadow-2xl">
+              <img
+                src={allImages[lightboxIdx].src}
+                alt={allImages[lightboxIdx].label}
+                className="w-full max-h-[70vh] object-contain p-4"
+              />
+              <div className="px-4 pb-3 flex items-center justify-between">
+                <p className="text-[14px] font-semibold text-gray-800">{allImages[lightboxIdx].label}</p>
+                <p className="text-[12px] text-gray-400">{lightboxIdx + 1} / {allImages.length}</p>
+              </div>
+            </div>
+
+            {/* Prev / Next arrows */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={() => setLightboxIdx((lightboxIdx - 1 + allImages.length) % allImages.length)}
+                  className="absolute left-[-56px] top-1/2 -translate-y-1/2 size-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="size-6" />
+                </button>
+                <button
+                  onClick={() => setLightboxIdx((lightboxIdx + 1) % allImages.length)}
+                  className="absolute right-[-56px] top-1/2 -translate-y-1/2 size-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="size-6" />
+                </button>
+              </>
+            )}
+
+            {/* Dot indicators */}
+            {allImages.length > 1 && (
+              <div className="flex justify-center gap-2 mt-4">
+                {allImages.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setLightboxIdx(i)}
+                    className="size-3 rounded-full transition-all cursor-pointer"
+                    style={{ background: i === lightboxIdx ? "white" : "rgba(255,255,255,0.3)" }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

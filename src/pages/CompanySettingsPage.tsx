@@ -362,6 +362,9 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
       ? (company.solutionProductBullets as string[]).join("\n")
       : "Reduces chemicals, heavy metals, and harmful contaminants\nProtects your health and home\nImproves taste, skin, and hair\nHigh capacity, low maintenance"
   );
+  const [retailValue, setRetailValue] = useState<number | "">(
+    (company.solutionRetailValue as number) || ""
+  );
   const [logoUploading, setLogoUploading] = useState(false);
   const [productImageUploading, setProductImageUploading] = useState(false);
 
@@ -380,6 +383,7 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
         ? (company.solutionProductBullets as string[]).join("\n")
         : "Reduces chemicals, heavy metals, and harmful contaminants\nProtects your health and home\nImproves taste, skin, and hair\nHigh capacity, low maintenance"
     );
+    setRetailValue((company.solutionRetailValue as number) || "");
   }, [company]);
 
   /** Upload an image to Convex file storage and save to company record */
@@ -425,8 +429,9 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
       solutionProductName: productName.trim() || undefined,
       solutionProductDescription: productDescription.trim() || undefined,
       solutionProductBullets: productBullets.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 6),
+      solutionRetailValue: typeof retailValue === "number" ? retailValue : undefined,
     });
-  }, [color, productName, productDescription, productBullets]);
+  }, [color, productName, productDescription, productBullets, retailValue]);
 
   const presetColors = ["#2563eb", "#0891b2", "#059669", "#d97706", "#dc2626", "#7c3aed", "#db2777", "#1e293b"];
 
@@ -501,6 +506,7 @@ function BrandingSection({ company, onUpdate }: { company: Record<string, unknow
 
       <div><Label className="text-xs text-muted-foreground">Product Name</Label><Input value={productName} onChange={(e) => setProductName(e.target.value)} /></div>
       <div><Label className="text-xs text-muted-foreground">Product Description</Label><Textarea value={productDescription} onChange={(e) => setProductDescription(e.target.value)} rows={2} /></div>
+      <div><Label className="text-xs text-muted-foreground">Retail Value ($)</Label><Input type="number" placeholder="e.g. 12995" value={retailValue} onChange={(e) => setRetailValue(e.target.value ? Number(e.target.value) : "")} /></div>
       <div><Label className="text-xs text-muted-foreground">Benefits (one per line)</Label><Textarea value={productBullets} onChange={(e) => setProductBullets(e.target.value)} rows={3} /></div>
     </SettingsSection>
   );

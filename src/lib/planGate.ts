@@ -72,6 +72,7 @@ export const PAGE_MIN_PLAN: Record<string, Plan> = {
   appointments: "starter",
   proposals: "starter",
   commissions: "starter",
+  installs: "starter",
   reviews: "starter",
 
   // ── Growth ($349/mo) ──

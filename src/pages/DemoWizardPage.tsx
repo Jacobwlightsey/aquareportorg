@@ -315,6 +315,8 @@ function DemoWizardInner() {
     stopRecording,
   } = useAudioRecording();
   const [audioUploading, setAudioUploading] = useState(false);
+  const [showRecordingConsent, setShowRecordingConsent] = useState(false);
+  const [consentDismissed, setConsentDismissed] = useState(false);
   const autoStartedRef = useRef(false);
   const generateUploadUrl = useMutation(api.demoCoach.generateAudioUploadUrl);
   const attachAudio = useMutation(api.demoCoach.attachAudio);
@@ -332,32 +334,61 @@ function DemoWizardInner() {
     return () => { clearTimeout(t); document.removeEventListener("pointerdown", handler); };
   }, [showCoachingTip]);
 
-  // Auto-start recording for enterprise/admin users
+  // Show consent notice before auto-starting recording for enterprise/admin users
   useEffect(() => {
-    if (autoStartedRef.current) return;
+    if (autoStartedRef.current || consentDismissed) return;
     if (!audioSupported || !canUseAICoach) return;
     autoStartedRef.current = true;
+    setShowRecordingConsent(true);
+  }, [audioSupported, canUseAICoach, consentDismissed]);
+
+  const handleConsentAccept = useCallback(() => {
+    setShowRecordingConsent(false);
     startRecording().catch(() => {
       // Mic permission denied — silently skip, demo still works
     });
-  }, [audioSupported, canUseAICoach, startRecording]);
+  }, [startRecording]);
+
+  const handleConsentDecline = useCallback(() => {
+    setShowRecordingConsent(false);
+    setConsentDismissed(true);
+  }, []);
 
   // skipScoreAnimation from company config (Sprint 1 flag #2)
   const skipScoreAnimation = !!(company as any)?.demoConfig?.skipScoreAnimation;
 
-  /* ─── Active steps based on demo mode ─── */
+  /* ─── Active steps based on demo mode + company step config ─── */
   const activeSteps: StepDef[] = useMemo(() => {
+    const stepCfg = (company as any)?.demoStepConfig as
+      | { order?: string[]; disabled?: string[] }
+      | undefined;
     const companyModes = (company as any)?.demoConfig?.demoModes as
       | Record<string, string[]>
       | undefined;
 
+    const stepMap = new Map(ALL_STEPS.map((s) => [s.key, s]));
+
+    // If company has custom step config (order + disabled), use it as the master list
+    if (stepCfg?.order?.length) {
+      const disabledSet = new Set(stepCfg.disabled ?? []);
+      const seen = new Set<string>();
+      const ordered = stepCfg.order
+        .filter((k) => stepMap.has(k) && !seen.has(k) && !disabledSet.has(k))
+        .map((k) => { seen.add(k); return stepMap.get(k)!; });
+      // Add any new steps not in the saved order
+      for (const s of ALL_STEPS) {
+        if (!seen.has(s.key) && !disabledSet.has(s.key)) ordered.push(s);
+      }
+      return ordered;
+    }
+
+    // Fallback: use demo mode presets
     const modeKeys = companyModes?.[demoMode] ?? DEFAULT_MODE_STEPS[demoMode];
 
     if (!modeKeys || modeKeys.length === 0) {
       return [...ALL_STEPS];
     }
 
-    const stepMap = new Map(ALL_STEPS.map((s) => [s.key, s]));
     return modeKeys
       .map((k) => stepMap.get(k))
       .filter((s): s is StepDef => s !== undefined);
@@ -1117,6 +1148,36 @@ function DemoWizardInner() {
           onClose={() => setShowEndModal(false)}
           onFinished={exitDemo}
         />
+      )}
+
+      {/* ─── Recording Consent Notice ─── */}
+      {showRecordingConsent && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1530]/95 backdrop-blur-xl p-6 text-center space-y-4 shadow-2xl mx-4">
+            <div className="size-12 mx-auto rounded-full bg-cyan-500/10 flex items-center justify-center">
+              <Mic className="size-6 text-cyan-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Recording Notice</h3>
+            <p className="text-sm text-white/70 leading-relaxed">
+              For quality assurance and training purposes, this demo presentation may be recorded.
+              The recording helps us improve our service to you.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleConsentDecline}
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 transition-colors"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleConsentAccept}
+                className="flex-1 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-cyan-400 transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ─── Presentation Mode CSS (injected) ─── */}
