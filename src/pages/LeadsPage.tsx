@@ -2,11 +2,14 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import {
   CheckCircle2,
   Clock,
+  LayoutGrid,
+  List,
   Loader2,
   Mail,
   MapPin,
   MessageSquare,
   Phone,
+  Table2,
   User,
   Users,
   XCircle,
@@ -24,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "../../convex/_generated/api";
 import { LEAD_STAGES, type LeadStage, leadStageMeta } from "@/lib/pipeline";
+import { LeadDetailSheet } from "@/components/LeadDetailSheet";
 
 type LeadStatus = LeadStage;
 type ConsumerLeadStatus = "new" | "claimed" | "scheduled" | "completed";
@@ -43,6 +47,8 @@ export function LeadsPage() {
   const listConsumerLeads = useAction(api.dealerShared.listConsumerLeads);
   const claimConsumerLead = useAction(api.dealerShared.claimConsumerLead);
   const [filter, setFilter] = useState<"all" | "active" | "won" | "lost">("all");
+  const [viewMode, setViewMode] = useState<"cards" | "table" | "kanban">("cards");
+  const [selectedLead, setSelectedLead] = useState<any>(null);
   const [pipelineStatus, setPipelineStatus] = useState<ConsumerLeadStatus>("new");
   const [pipelineZip, setPipelineZip] = useState("");
   const [pipeline, setPipeline] = useState<PipelineState | null>(null);
@@ -121,11 +127,37 @@ export function LeadsPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Manage quote requests, enterprise inquiries, and Pro consumer lead opportunities
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Manage quote requests, enterprise inquiries, and Pro consumer lead opportunities
+          </p>
+        </div>
+        {/* View toggle */}
+        <div className="flex items-center gap-1 rounded-lg border p-1">
+          <button
+            onClick={() => setViewMode("cards")}
+            className={`p-1.5 rounded ${viewMode === "cards" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            title="Card view"
+          >
+            <LayoutGrid className="size-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            className={`p-1.5 rounded ${viewMode === "table" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            title="Table view"
+          >
+            <Table2 className="size-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("kanban")}
+            className={`p-1.5 rounded ${viewMode === "kanban" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            title="Kanban view"
+          >
+            <List className="size-4" />
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -171,10 +203,96 @@ export function LeadsPage() {
             </p>
           </CardContent>
         </Card>
+      ) : viewMode === "table" ? (
+        /* TABLE VIEW */
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left">
+                  <th className="p-3 font-medium text-muted-foreground">Name</th>
+                  <th className="p-3 font-medium text-muted-foreground">Phone</th>
+                  <th className="p-3 font-medium text-muted-foreground">Email</th>
+                  <th className="p-3 font-medium text-muted-foreground">Location</th>
+                  <th className="p-3 font-medium text-muted-foreground">Stage</th>
+                  <th className="p-3 font-medium text-muted-foreground">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((lead) => {
+                  const meta = leadStageMeta(lead.status);
+                  return (
+                    <tr
+                      key={lead._id}
+                      onClick={() => setSelectedLead(lead)}
+                      className="border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
+                    >
+                      <td className="p-3 font-medium">{lead.name}</td>
+                      <td className="p-3 text-muted-foreground">{lead.phone || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{lead.email || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{lead.utilityCityState || "—"}</td>
+                      <td className="p-3">
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${meta.badge}`}>
+                          {meta.label.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="p-3 text-muted-foreground">{new Date(lead._creationTime).toLocaleDateString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : viewMode === "kanban" ? (
+        /* KANBAN VIEW */
+        <div className="flex gap-3 overflow-x-auto pb-4">
+          {LEAD_STAGES.map((stage) => {
+            const stageLeads = filtered.filter((l) => l.status === stage.key);
+            const meta = leadStageMeta(stage.key);
+            return (
+              <div key={stage.key} className="min-w-[240px] max-w-[280px] flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${meta.badge}`}>
+                    {stage.label.toUpperCase()}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{stageLeads.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {stageLeads.map((lead) => (
+                    <Card
+                      key={lead._id}
+                      className="cursor-pointer hover:border-foreground/20 transition-colors"
+                      onClick={() => setSelectedLead(lead)}
+                    >
+                      <CardContent className="p-3">
+                        <p className="font-medium text-sm">{lead.name}</p>
+                        <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1 text-[11px] text-muted-foreground">
+                          {lead.phone && <span className="flex items-center gap-1"><Phone className="size-2.5" />{lead.phone}</span>}
+                          {lead.utilityCityState && <span className="flex items-center gap-1"><MapPin className="size-2.5" />{lead.utilityCityState}</span>}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {stageLeads.length === 0 && (
+                    <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                      No leads
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
+        /* CARD VIEW (default) */
         <div className="space-y-3">
           {filtered.map((lead) => (
-            <Card key={lead._id} className={lead.status === "new" ? "border-emerald-500/30 bg-emerald-500/[0.02]" : ""}>
+            <Card
+              key={lead._id}
+              className={`cursor-pointer hover:border-foreground/20 transition-colors ${lead.status === "new" ? "border-emerald-500/30 bg-emerald-500/[0.02]" : ""}`}
+              onClick={() => setSelectedLead(lead)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -190,12 +308,12 @@ export function LeadsPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
                         {lead.phone && (
-                          <a href={`tel:${lead.phone}`} className="flex items-center gap-1 hover:text-foreground">
+                          <a href={`tel:${lead.phone}`} className="flex items-center gap-1 hover:text-foreground" onClick={(e) => e.stopPropagation()}>
                             <Phone className="size-3" /> {lead.phone}
                           </a>
                         )}
                         {lead.email && (
-                          <a href={`mailto:${lead.email}`} className="flex items-center gap-1 hover:text-foreground">
+                          <a href={`mailto:${lead.email}`} className="flex items-center gap-1 hover:text-foreground" onClick={(e) => e.stopPropagation()}>
                             <Mail className="size-3" /> {lead.email}
                           </a>
                         )}
@@ -218,7 +336,7 @@ export function LeadsPage() {
                   </div>
 
                   {/* Stage selector */}
-                  <div className="shrink-0 w-44">
+                  <div className="shrink-0 w-44" onClick={(e) => e.stopPropagation()}>
                     <Select
                       value={lead.status}
                       onValueChange={(val) => handleStatusChange(lead._id, val as LeadStatus)}
@@ -241,6 +359,13 @@ export function LeadsPage() {
           ))}
         </div>
       )}
+
+      {/* Lead Detail Sheet */}
+      <LeadDetailSheet
+        lead={selectedLead}
+        open={!!selectedLead}
+        onClose={() => setSelectedLead(null)}
+      />
 
       {enterpriseLeads.length > 0 && (
         <div className="space-y-3 pt-4">

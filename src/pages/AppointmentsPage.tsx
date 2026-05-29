@@ -1,7 +1,10 @@
 import { useMutation, useQuery } from "convex/react";
 import {
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Clock,
+  LayoutList,
   MapPin,
   Phone,
   Plus,
@@ -52,6 +55,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function AppointmentsPage() {
   const [showCreate, setShowCreate] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [calMonth, setCalMonth] = useState(() => new Date());
   const appointments = useQuery(api.appointments.getAppointments, {}) ?? [];
   const leads = useQuery(api.leads.getLeads) ?? [];
   const createAppointment = useMutation(api.appointments.createAppointment);
@@ -149,9 +154,27 @@ export function AppointmentsPage() {
         icon={Calendar}
         iconColor="text-cyan-400"
         actions={
-          <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="size-4 mr-1" /> Schedule
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 rounded-lg border p-1">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 rounded ${viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                title="List view"
+              >
+                <LayoutList className="size-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("calendar")}
+                className={`p-1.5 rounded ${viewMode === "calendar" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                title="Calendar view"
+              >
+                <Calendar className="size-4" />
+              </button>
+            </div>
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="size-4 mr-1" /> Schedule
+            </Button>
+          </div>
         }
       />
 
@@ -162,8 +185,62 @@ export function AppointmentsPage() {
         <StatCard label="Upcoming" value={upcoming.length} color="text-amber-400" icon={MapPin} />
       </div>
 
-      {/* Day-grouped list */}
-      {grouped.length === 0 ? (
+      {/* Calendar or List */}
+      {viewMode === "calendar" ? (
+        (() => {
+          const year = calMonth.getFullYear();
+          const month = calMonth.getMonth();
+          const firstDay = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const days = Array.from({ length: 42 }, (_, i) => {
+            const d = i - firstDay + 1;
+            if (d < 1 || d > daysInMonth) return null;
+            return d;
+          });
+          const monthLabel = calMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+          return (
+            <div className="rounded-xl border bg-card">
+              <div className="flex items-center justify-between p-4 border-b">
+                <button onClick={() => setCalMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-muted"><ChevronLeft className="size-5" /></button>
+                <h3 className="font-semibold">{monthLabel}</h3>
+                <button onClick={() => setCalMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-muted"><ChevronRight className="size-5" /></button>
+              </div>
+              <div className="grid grid-cols-7">
+                {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
+                  <div key={d} className="p-2 text-center text-[10px] font-medium text-muted-foreground uppercase">{d}</div>
+                ))}
+                {days.map((day, i) => {
+                  if (day === null) return <div key={i} className="min-h-[80px] border-t border-r last:border-r-0 bg-muted/30" />;
+                  const dayStart = new Date(year, month, day).getTime();
+                  const dayEnd = dayStart + 86400000;
+                  const dayAppts = appointments.filter((a) => a.scheduledAt >= dayStart && a.scheduledAt < dayEnd);
+                  const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+                  return (
+                    <div key={i} className={`min-h-[80px] border-t border-r last:border-r-0 p-1 ${isToday ? "bg-cyan-500/5" : ""}`}>
+                      <span className={`text-xs font-medium ${isToday ? "bg-cyan-500 text-white rounded-full size-6 flex items-center justify-center" : "text-muted-foreground"}`}>
+                        {day}
+                      </span>
+                      <div className="mt-0.5 space-y-0.5">
+                        {dayAppts.slice(0, 3).map((a) => {
+                          const tc = TYPE_COLORS[a.type] || TYPE_COLORS.demo;
+                          return (
+                            <div key={a._id} className={`text-[10px] px-1 py-0.5 rounded ${tc.bg} ${tc.text} truncate`}>
+                              {new Date(a.scheduledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} {a.customerName}
+                            </div>
+                          );
+                        })}
+                        {dayAppts.length > 3 && (
+                          <span className="text-[10px] text-muted-foreground pl-1">+{dayAppts.length - 3} more</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()
+      ) : grouped.length === 0 ? (
         <EmptyState
           icon={Calendar}
           title="No appointments scheduled"
