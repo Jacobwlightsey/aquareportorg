@@ -88,7 +88,7 @@ function computeReferralAquaScore(contaminants: any[]) {
     score -= Math.max(legalPenalty, healthPenalty);
   }
 
-  return Math.max(0, Math.min(100, Math.round(score)));
+  return Math.max(1, Math.min(100, Math.round(score)));
 }
 
 async function insertReferral(row: Record<string, unknown>) {

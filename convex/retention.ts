@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 import { getMembership } from "./security";
 
 // ─── Service Agreements ──────────────────────────────────────────
@@ -296,7 +297,16 @@ export const processDueReminders = internalMutation({
 
     let processed = 0;
     for (const reminder of pending) {
-      // TODO: Call email action in production
+      // Send email if customer has an email address
+      if (reminder.customerEmail) {
+        const company = await ctx.db.get(reminder.companyId);
+        await ctx.scheduler.runAfter(0, api.email.sendRetentionReminderEmail, {
+          to: reminder.customerEmail,
+          customerName: reminder.customerName,
+          companyName: (company as any)?.name,
+          reminderType: reminder.reminderType,
+        });
+      }
       await ctx.db.patch(reminder._id, {
         status: "sent",
         sentAt: now,
@@ -325,7 +335,16 @@ export const processDueReviewRequests = internalMutation({
 
     let processed = 0;
     for (const req of pending) {
-      // TODO: Call email action with Google Review link CTA in production
+      // Send review request email if customer has an email address
+      if (req.customerEmail) {
+        const company = await ctx.db.get(req.companyId);
+        await ctx.scheduler.runAfter(0, api.email.sendReviewRequestEmail, {
+          to: req.customerEmail,
+          customerName: req.customerName,
+          companyName: (company as any)?.name,
+          googleReviewUrl: req.googleReviewUrl || (company as any)?.googleReviewUrl,
+        });
+      }
       await ctx.db.patch(req._id, {
         status: "sent",
         sentAt: now,

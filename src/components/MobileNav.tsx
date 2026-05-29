@@ -1,18 +1,18 @@
 
 import {
-  FolderKanban,
+  FileText,
   Home,
   Plus,
   Settings,
-  Users,
+  Users2,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const tabs = [
   { href: "/dashboard", icon: Home, label: "Home" },
-  { href: "/pipeline", icon: FolderKanban, label: "Pipeline" },
+  { href: "/leads", icon: Users2, label: "Leads" },
   { href: "/customers/new", icon: Plus, label: "New", accent: true },
-  { href: "/customers", icon: Users, label: "Customers" },
+  { href: "/customers", icon: FileText, label: "Reports" },
   { href: "/settings", icon: Settings, label: "More" },
 ] as const;
 
