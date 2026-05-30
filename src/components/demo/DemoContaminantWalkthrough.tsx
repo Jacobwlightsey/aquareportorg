@@ -302,7 +302,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBa
       )}
 
       {/* Categorized list */}
-      <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+      <div className="swipe-disabled space-y-2 max-h-[50vh] overflow-y-auto pr-1">
         {categories.map((cat) => {
           const items = grouped[cat];
           const catLegal = items.filter((c) => c.over_legal).length;

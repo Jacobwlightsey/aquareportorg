@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getMembership } from "./security";
 
 export const getSequences = query({
@@ -158,8 +159,14 @@ export const processDueFollowUps = internalMutation({
 
     let processed = 0;
     for (const msg of pending) {
-      // TODO: In production, call email/SMS action here
-      // await ctx.scheduler.runAfter(0, internal.email.sendFollowUp, { messageId: msg._id });
+      // Send the follow-up email if recipient email is available
+      if (msg.recipientEmail && msg.subject && msg.body) {
+        await ctx.scheduler.runAfter(0, internal.email.sendFollowUpEmail, {
+          to: msg.recipientEmail,
+          subject: msg.subject,
+          body: msg.body,
+        });
+      }
       await ctx.db.patch(msg._id, {
         status: "sent",
         sentAt: now,

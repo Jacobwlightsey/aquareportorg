@@ -207,7 +207,7 @@ function useSwipeNavigation(goNext: () => void, goBack: () => void) {
     (e: React.TouchEvent) => {
       if (!touchStart.current) return;
 
-      // Flag #3: skip swipe if the touch started inside a .swipe-disabled container
+      // Skip swipe if the touch started inside a .swipe-disabled container
       const target = touchStart.current.target as HTMLElement | null;
       if (target?.closest?.(".swipe-disabled")) {
         touchStart.current = null;
@@ -217,7 +217,15 @@ function useSwipeNavigation(goNext: () => void, goBack: () => void) {
       const dx = e.changedTouches[0].clientX - touchStart.current.x;
       const dy = e.changedTouches[0].clientY - touchStart.current.y;
       touchStart.current = null;
-      if (Math.abs(dx) < 50 || Math.abs(dy) > 30) return;
+
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      // Ratio-based detection: horizontal must be at least 2× vertical,
+      // minimum 80px horizontal travel, and max 60px vertical drift.
+      // Prevents iPad scrolling from triggering page navigation.
+      if (absDx < 80 || absDy > 60 || (absDy > 0 && absDx / absDy < 2)) return;
+
       if (dx < 0) goNext();
       else goBack();
     },
@@ -449,14 +457,12 @@ function DemoWizardInner() {
     [report?.contaminants],
   );
 
+  // "Before Water Test" score — contaminant data only, NO field readings.
+  // This ensures Before ≠ After in the Score Journey (Bug fix: was including
+  // report field readings which made Before identical to After).
   const reportBaseScore = useMemo(() => {
     if (!report) return undefined;
-    return computeAquaScore(report.waterScore, contaminants, {
-      chlorine: report.chlorine,
-      hardness: report.hardness,
-      tds: report.tds,
-      ph: report.ph,
-    });
+    return computeAquaScore(report.waterScore, contaminants, {});
   }, [report, contaminants]);
 
   const score = useMemo(() => {

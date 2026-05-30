@@ -360,7 +360,7 @@ export function DemoAssistant({
         {activeTab === "chat" ? (
           <>
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <div className="swipe-disabled flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {messages.length === 0 && (
                 <div className="text-center py-6">
                   <Bot className="mx-auto size-8 text-white/20 mb-2" />
@@ -402,7 +402,7 @@ export function DemoAssistant({
 
             {/* Quick Prompts */}
             {messages.length < 3 && quickPrompts.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide">
+              <div className="swipe-disabled flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide">
                 {quickPrompts.map((p) => (
                   <button
                     key={p}
@@ -442,7 +442,7 @@ export function DemoAssistant({
           </>
         ) : (
           /* Objection Cards (Sprint 3D) */
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 safe-area-bottom">
+          <div className="swipe-disabled flex-1 overflow-y-auto px-4 py-3 space-y-3 safe-area-bottom">
             <p className="text-xs text-white/40 text-center mb-2">
               Tap a card for personalized talking points
             </p>
