@@ -198,7 +198,6 @@ const KANBAN_STAGES = LEAD_STAGES.filter((s) => s.key !== "closed_lost");
 
 /* ─── Main Page ─── */
 export function PipelinePage() {
-  const navigate = useNavigate();
   const leads = useQuery(api.leads.getLeads) ?? [];
   const updateStatus = useMutation(api.leads.updateLeadStatus);
   const createLead = useMutation(api.leads.createLead);

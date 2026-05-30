@@ -304,11 +304,8 @@ export function FormsPage() {
           icon={ClipboardList}
           title="No forms yet"
           description="Create your first form to start collecting customer agreements and requests."
-          action={
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus className="size-4 mr-1" /> Create Form
-            </Button>
-          }
+          actionLabel="Create Form"
+          onAction={() => setShowCreate(true)}
         />
       ) : (
         <div className="space-y-2.5">
