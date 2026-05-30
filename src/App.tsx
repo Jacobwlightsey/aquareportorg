@@ -51,6 +51,7 @@ const GenerateReportPage = lazy(() => import("./pages/GenerateReportPage").then(
 
 // Authenticated — sales & analytics
 const PipelinePage = lazy(() => import("./pages/PipelinePage").then((m) => ({ default: m.PipelinePage })));
+const FormsPage = lazy(() => import("./pages/FormsPage").then((m) => ({ default: m.FormsPage })));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage })));
 const DemoAnalyticsPage = lazy(() => import("./pages/DemoAnalyticsPage").then((m) => ({ default: m.DemoAnalyticsPage })));
 const AppointmentsPage = lazy(() => import("./pages/AppointmentsPage").then((m) => ({ default: m.AppointmentsPage })));
@@ -151,6 +152,7 @@ function App() {
               {/* Sales */}
               <Route path="/analytics" element={<TrialGate page="analytics"><AnalyticsPage /></TrialGate>} />
               <Route path="/demo-analytics" element={<TrialGate page="demo-analytics"><DemoAnalyticsPage /></TrialGate>} />
+              <Route path="/forms" element={<TrialGate page="forms"><FormsPage /></TrialGate>} />
               <Route path="/proposals" element={<TrialGate page="proposals"><ProposalsPage /></TrialGate>} />
               <Route path="/commissions" element={<TrialGate page="commissions"><CommissionsPage /></TrialGate>} />
               <Route path="/installs" element={<TrialGate page="installs"><InstallsPage /></TrialGate>} />

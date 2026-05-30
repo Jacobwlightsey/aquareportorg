@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, Moon, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Sun, Users as UsersIcon, Users2, Wrench } from "lucide-react";
+import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, ClipboardList, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, Moon, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Sun, Users as UsersIcon, Users2, Wrench } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
@@ -45,6 +45,7 @@ const actionsNav = [
 ];
 
 const salesNav = [
+  { href: "/forms", label: "Forms", icon: ClipboardList },
   { href: "/proposals", label: "Proposals", icon: FileText },
   { href: "/commissions", label: "Commissions", icon: DollarSign },
   { href: "/installs", label: "Installs", icon: Wrench },
