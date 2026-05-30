@@ -142,12 +142,12 @@ export function DemoInvestmentBreakdown({ company, pricingState, onPricingChange
 
       {/* System showcase — value before price */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        {/* System image */}
+        {/* System image — use dealer's uploaded product image, fall back to generic */}
         <div className="rounded-2xl overflow-hidden flex items-center justify-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <img
-            src="/assets/demo/12_system.webp"
-            alt="Whole-home water filtration system"
-            className="w-full h-full object-cover rounded-2xl max-h-[280px]"
+            src={(company?.solutionProductImage as string) || "/assets/demo/12_system.webp"}
+            alt={company?.name ? `${company.name} water system` : "Whole-home water filtration system"}
+            className={`w-full max-h-[280px] rounded-2xl ${(company?.solutionProductImage as string) ? "object-contain p-4" : "h-full object-cover"}`}
           />
         </div>
 

@@ -163,6 +163,9 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
             ${animatedEffective}
           </span>
           <span className="text-[22px] font-medium ml-2" style={{ color: colors.textMuted }}>/mo</span>
+          <span className="text-[16px] font-medium ml-3" style={{ color: colors.textFaint }}>
+            / ~${Math.round(effectiveMonthly / 4.33)}/week
+          </span>
         </div>
         {totalDeducted > 0 && (
           <div className="mt-2 animate-in fade-in duration-300">

@@ -178,33 +178,33 @@ function ContaminantDetailModal({ c, onClose, agency, healthSource }: { c: any; 
           <div>
             <div className="flex items-end justify-between mb-2">
               <span className="text-[28px] font-bold" style={{ color: colors.textPrimary }}>
-                {c.detected_level} <span className="text-[14px] font-normal" style={{ color: colors.textFaint }}>{c.unit}</span>
+                {c.detected_level} <span className="text-[14px] font-normal" style={{ color: colors.textMuted }}>{c.unit}</span>
               </span>
             </div>
             <SeverityBar ratio={ratio} />
             <div className="flex justify-between mt-1.5">
-              <span className="text-[11px]" style={{ color: colors.textFaint }}>0</span>
-              {c.health_guideline != null && <span className="text-[11px]" style={{ color: colors.textFaint }}>Health: {c.health_guideline} {c.unit}</span>}
-              {c.legal_limit != null && <span className="text-[11px]" style={{ color: colors.textFaint }}>Legal: {c.legal_limit} {c.unit}</span>}
+              <span className="text-[12px]" style={{ color: colors.textMuted }}>0</span>
+              {c.health_guideline != null && <span className="text-[12px] font-medium" style={{ color: colors.textMuted }}>Health: {c.health_guideline} {c.unit}</span>}
+              {c.legal_limit != null && <span className="text-[12px] font-medium" style={{ color: colors.textMuted }}>Legal: {c.legal_limit} {c.unit}</span>}
             </div>
           </div>
 
           {/* What is this contaminant */}
           <div className="rounded-xl p-4 space-y-1.5" style={{ background: `${colors.textFaint}08` }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.textFaint }}>What Is It</p>
-            <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.what}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: colors.textMuted }}>What Is It</p>
+            <p className="text-[14px] leading-relaxed" style={{ color: colors.textPrimary }}>{info.what}</p>
           </div>
 
           {/* Health effects */}
           <div className="rounded-xl p-4 space-y-1.5" style={{ background: `${colors.critical}06` }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.critical}90` }}>❤️ Health Effects</p>
-            <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.health}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: colors.critical }}>❤️ Health Effects</p>
+            <p className="text-[14px] leading-relaxed" style={{ color: colors.textPrimary }}>{info.health}</p>
           </div>
 
           {/* Home effects */}
           <div className="rounded-xl p-4 space-y-1.5" style={{ background: `${colors.warning}06` }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: `${colors.warning}90` }}>🏠 Home Effects</p>
-            <p className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>{info.home}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: colors.warning }}>🏠 Home Effects</p>
+            <p className="text-[14px] leading-relaxed" style={{ color: colors.textPrimary }}>{info.home}</p>
           </div>
         </div>
       </div>
@@ -272,7 +272,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBa
           FULL BREAKDOWN
         </p>
         <h2 className="text-[28px] font-bold mt-3 tracking-tight">{totalCount} Contaminants Detected</h2>
-        <p className="text-[15px] mt-2" style={{ color: colors.textMuted }}>
+        <p className="text-[15px] mt-2" style={{ color: colors.textSecondary }}>
           Tap any contaminant for details
         </p>
       </div>
@@ -292,7 +292,7 @@ export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBa
         <div className="rounded-xl p-4 text-center" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
           <Shield className="size-5 mx-auto mb-1" style={{ color: colors.textMuted }} />
           <p className="text-[22px] font-bold" style={{ color: colors.textPrimary }}>{sorted.length}</p>
-          <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: colors.textFaint }}>Total Found</p>
+          <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: colors.textMuted }}>Total Found</p>
         </div>
       </div>
 
@@ -316,23 +316,23 @@ export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBa
                 className="w-full flex items-center justify-between p-3 text-left cursor-pointer transition-colors hover:opacity-80"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[14px] font-semibold truncate" style={{ color: colors.textPrimary }}>{cat}</span>
-                  <span className="text-[12px] font-medium shrink-0" style={{ color: colors.textFaint }}>({items.length})</span>
+                  <span className="text-[15px] font-semibold truncate" style={{ color: colors.textPrimary }}>{cat}</span>
+                  <span className="text-[13px] font-medium shrink-0" style={{ color: colors.textMuted }}>({items.length})</span>
                   {catLegal > 0 && (
-                    <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-bold" style={{ background: `${colors.critical}15`, color: colors.critical }}>
+                    <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ background: `${colors.critical}15`, color: colors.critical }}>
                       {catLegal} HIGH
                     </span>
                   )}
                   {catHealth > 0 && (
-                    <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-bold" style={{ background: `${colors.warning}15`, color: colors.warning }}>
+                    <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ background: `${colors.warning}15`, color: colors.warning }}>
                       {catHealth} ELEVATED
                     </span>
                   )}
                 </div>
                 {isExpanded ? (
-                  <ChevronUp className="size-4 shrink-0" style={{ color: colors.textFaint }} />
+                  <ChevronUp className="size-4 shrink-0" style={{ color: colors.textMuted }} />
                 ) : (
-                  <ChevronDown className="size-4 shrink-0" style={{ color: colors.textFaint }} />
+                  <ChevronDown className="size-4 shrink-0" style={{ color: colors.textMuted }} />
                 )}
               </button>
 
@@ -352,14 +352,14 @@ export function DemoContaminantWalkthrough({ contaminants, onNext, onBack: _onBa
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <SeverityIcon c={c} />
-                          <span className="text-[14px] truncate" style={{ color: colors.textSecondary }}>{contaminantName(c)}</span>
+                          <span className="text-[15px] font-medium truncate" style={{ color: colors.textPrimary }}>{contaminantName(c)}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-2">
                           {c.detected_level != null && (
-                            <span className="text-[13px]" style={{ color: colors.textMuted }}>{c.detected_level} {c.unit}</span>
+                            <span className="text-[14px] font-medium" style={{ color: colors.textSecondary }}>{c.detected_level} {c.unit}</span>
                           )}
                           {c.times_above_ewg != null && c.times_above_ewg > 1 && (
-                            <span className="text-[11px] font-semibold" style={{ color: `${colors.warning}90` }}>{c.times_above_ewg}×</span>
+                            <span className="text-[12px] font-bold" style={{ color: colors.warning }}>{c.times_above_ewg}×</span>
                           )}
                           <SeverityBadge c={c} />
                         </div>
