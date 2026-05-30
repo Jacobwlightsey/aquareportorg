@@ -89,7 +89,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
     customProposalStorageId ? { storageId: customProposalStorageId } : "skip",
   );
 
-  const updateDealStage = useMutation(api.deals.updateDealStageByReport);
+  const advanceLeadStage = useMutation(api.leads.advanceLeadByReport);
   const createFollowUp = useMutation(api.followUps.createFollowUpTask);
   const [creatingFollowUp, setCreatingFollowUp] = useState(false);
 
@@ -338,7 +338,7 @@ export function DemoDealerClose({ report, score, companyColor, demoTime, onEndDe
                       setProposalUrl(result.pdfUrl);
                       toast.success("Proposal PDF generated!");
                       // Auto-update deal to proposal_sent (#14)
-                      updateDealStage({ reportId: report._id, stage: "proposal_sent" }).catch(() => {});
+                      advanceLeadStage({ reportId: report._id, stage: "forms_sent" }).catch(() => {});
                     }
                     else toast.error((result as any).message || "Could not generate proposal.");
                   } catch (e: any) { toast.error(e.message || "Proposal generation failed"); }

@@ -477,3 +477,29 @@ export const createFacebookLead = internalMutation({
     return leadId;
   },
 });
+
+// ─── Advance lead stage by reportId (replaces deals.updateDealStageByReport) ─
+export const advanceLeadByReport = mutation({
+  args: {
+    reportId: v.id("reports"),
+    stage: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const result = await getMembership(ctx);
+    if (!result) return; // silently skip if not authenticated
+
+    const lead = await ctx.db
+      .query("leads")
+      .withIndex("by_report", (q) => q.eq("reportId", args.reportId))
+      .first();
+
+    if (!lead || lead.companyId !== result.membership.companyId) return; // silently skip
+
+    await advanceLeadStage(
+      ctx,
+      lead._id,
+      args.stage,
+      String(result.userId),
+    );
+  },
+});

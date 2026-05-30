@@ -16,6 +16,7 @@ export { LandingPage } from "./LandingPage";
 export { LeadsPage } from "./LeadsPage";
 export { LoginPage } from "./LoginPage";
 export { FormsPage } from "./FormsPage";
+export { ContractSignPage } from "./ContractSignPage";
 export { PipelinePage } from "./PipelinePage";
 export { ReportsPage } from "./ReportsPage";
 export { ReportV2Page } from "./ReportV2Page";

@@ -36,6 +36,7 @@ const CustomerReportPage = lazy(() => import("./pages/CustomerReportPage").then(
 const FlipbookPage = lazy(() => import("./pages/FlipbookPage").then((m) => ({ default: m.FlipbookPage })));
 const PrintReportPage = lazy(() => import("./pages/PrintReportPage").then((m) => ({ default: m.PrintReportPage })));
 const ReportV2PublicPage = lazy(() => import("./pages/ReportV2PublicPage").then((m) => ({ default: m.ReportV2PublicPage })));
+const ContractSignPage = lazy(() => import("./pages/ContractSignPage").then((m) => ({ default: m.ContractSignPage })));
 
 // Authenticated — core
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
@@ -100,6 +101,9 @@ function App() {
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />
           <Route path="/r/:shareToken/print" element={<PrintReportPage />} />
           <Route path="/r/:shareToken/v2" element={<ReportV2PublicPage />} />
+
+          {/* Customer-facing contract/form signing — public, no auth */}
+          <Route path="/contract/:token" element={<ContractSignPage />} />
 
           {/* Legal */}
           <Route path="/privacy" element={<PrivacyPage />} />

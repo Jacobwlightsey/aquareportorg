@@ -171,6 +171,7 @@ const schema = defineSchema({
   })
     .index("by_company", ["companyId"])
     .index("by_status", ["companyId", "status"])
+    .index("by_report", ["reportId"])
     .index("by_fb_lead", ["companyId", "fbLeadId"])
     .index("by_assigned", ["companyId", "assignedTo"]),
 
