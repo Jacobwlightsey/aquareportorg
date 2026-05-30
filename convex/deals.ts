@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getMembership } from "./security";
+import { advanceLeadStage } from "./pipelineHelpers";
 
 export const getDeals = query({
   args: {},
@@ -175,8 +176,9 @@ export const getPipelineStats = query({
 // ─── Auto-create lead + deal on report creation ──────────────────
 
 /**
- * Called internally after a report is saved. Creates a lead and deal
- * so the pipeline funnel and leads page reflect real activity.
+ * Called internally after a report is saved. Creates a lead (if needed),
+ * links the report to the lead, creates a deal for backward compat,
+ * and auto-advances the lead to "report_created".
  */
 export const autoCreateLeadAndDeal = internalMutation({
   args: {
@@ -203,7 +205,10 @@ export const autoCreateLeadAndDeal = internalMutation({
       .first();
     if (existingDeal) return { leadId: existingDeal.leadId, dealId: existingDeal._id };
 
-    // Create lead
+    // Create lead with initial stageHistory
+    const stageHistory = JSON.stringify([
+      { stage: "new_lead", timestamp: Date.now(), userId: String(args.userId) },
+    ]);
     const leadId = await ctx.db.insert("leads", {
       companyId: args.companyId,
       reportId: args.reportId,
@@ -215,12 +220,19 @@ export const autoCreateLeadAndDeal = internalMutation({
       utilityCityState: args.city && args.state ? `${args.city}, ${args.state}` : undefined,
       source: args.source || "report",
       assignedTo: args.userId,
+      address: args.customerAddress,
+      city: args.city,
+      state: args.state,
+      stageHistory,
     });
 
-    // Create deal
-    const stageHistory = JSON.stringify([
-      { stage: "new_lead", timestamp: Date.now(), userId: String(args.userId) },
-    ]);
+    // Link report → lead
+    await ctx.db.patch(args.reportId, { leadId });
+
+    // Auto-advance lead to "report_created"
+    await advanceLeadStage(ctx, leadId, "report_created", String(args.userId));
+
+    // Create deal (backward compat — will be removed in Phase 2)
     const dealId = await ctx.db.insert("deals", {
       companyId: args.companyId,
       reportId: args.reportId,

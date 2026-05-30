@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getMembership } from "./security";
+import { advanceLeadStage } from "./pipelineHelpers";
 
 export const getAppointments = query({
   args: {
@@ -69,12 +70,19 @@ export const createAppointment = mutation({
     const result = await getMembership(ctx);
     if (!result) throw new Error("Not authenticated");
     const { membership } = result;
-    return await ctx.db.insert("appointments", {
+    const appointmentId = await ctx.db.insert("appointments", {
       companyId: membership.companyId,
       ...args,
       assignedTo: args.assignedTo || membership.userId,
       status: "scheduled",
     });
+
+    // Auto-advance lead to "scheduled" if linked
+    if (args.leadId) {
+      await advanceLeadStage(ctx, args.leadId, "scheduled", String(membership.userId));
+    }
+
+    return appointmentId;
   },
 });
 

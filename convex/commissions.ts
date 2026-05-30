@@ -69,6 +69,7 @@ export const createCommission = mutation({
   args: {
     userId: v.id("users"),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     demoSessionId: v.optional(v.id("demoSessions")),
     dealValue: v.number(),
     commissionRate: v.number(),
@@ -86,6 +87,7 @@ export const createCommission = mutation({
       companyId: result.membership.companyId,
       userId: args.userId,
       dealId: args.dealId,
+      leadId: args.leadId,
       demoSessionId: args.demoSessionId,
       dealValue: args.dealValue,
       commissionRate: args.commissionRate,

@@ -36,6 +36,7 @@ const CustomerReportPage = lazy(() => import("./pages/CustomerReportPage").then(
 const FlipbookPage = lazy(() => import("./pages/FlipbookPage").then((m) => ({ default: m.FlipbookPage })));
 const PrintReportPage = lazy(() => import("./pages/PrintReportPage").then((m) => ({ default: m.PrintReportPage })));
 const ReportV2PublicPage = lazy(() => import("./pages/ReportV2PublicPage").then((m) => ({ default: m.ReportV2PublicPage })));
+const ContractSignPage = lazy(() => import("./pages/ContractSignPage").then((m) => ({ default: m.ContractSignPage })));
 
 // Authenticated — core
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
@@ -51,6 +52,7 @@ const GenerateReportPage = lazy(() => import("./pages/GenerateReportPage").then(
 
 // Authenticated — sales & analytics
 const PipelinePage = lazy(() => import("./pages/PipelinePage").then((m) => ({ default: m.PipelinePage })));
+const FormsPage = lazy(() => import("./pages/FormsPage").then((m) => ({ default: m.FormsPage })));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage })));
 const DemoAnalyticsPage = lazy(() => import("./pages/DemoAnalyticsPage").then((m) => ({ default: m.DemoAnalyticsPage })));
 const AppointmentsPage = lazy(() => import("./pages/AppointmentsPage").then((m) => ({ default: m.AppointmentsPage })));
@@ -99,6 +101,9 @@ function App() {
           <Route path="/r/:shareToken/flipbook" element={<FlipbookPage />} />
           <Route path="/r/:shareToken/print" element={<PrintReportPage />} />
           <Route path="/r/:shareToken/v2" element={<ReportV2PublicPage />} />
+
+          {/* Customer-facing contract/form signing — public, no auth */}
+          <Route path="/contract/:token" element={<ContractSignPage />} />
 
           {/* Legal */}
           <Route path="/privacy" element={<PrivacyPage />} />
@@ -151,6 +156,7 @@ function App() {
               {/* Sales */}
               <Route path="/analytics" element={<TrialGate page="analytics"><AnalyticsPage /></TrialGate>} />
               <Route path="/demo-analytics" element={<TrialGate page="demo-analytics"><DemoAnalyticsPage /></TrialGate>} />
+              <Route path="/forms" element={<TrialGate page="forms"><FormsPage /></TrialGate>} />
               <Route path="/proposals" element={<TrialGate page="proposals"><ProposalsPage /></TrialGate>} />
               <Route path="/commissions" element={<TrialGate page="commissions"><CommissionsPage /></TrialGate>} />
               <Route path="/installs" element={<TrialGate page="installs"><InstallsPage /></TrialGate>} />

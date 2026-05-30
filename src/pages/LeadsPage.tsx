@@ -85,8 +85,8 @@ export function LeadsPage() {
     );
   }
 
-  const activeStatuses = ["new_lead", "new", "contacted", "appointment_set", "demo_completed", "proposal_sent", "negotiation"];
-  const wonStatuses = ["closed_won", "closed"];
+  const activeStatuses = ["new_lead", "new", "call_to_set", "contacted", "scheduled", "appointment_set", "report_created", "demo_done", "demo_completed", "forms_sent", "proposal_sent", "negotiation"];
+  const wonStatuses = ["sold", "installed", "closed_won", "closed"];
   const lostStatuses = ["closed_lost"];
   const filtered = filter === "all" ? leads
     : filter === "active" ? leads.filter((l) => activeStatuses.includes(l.status))

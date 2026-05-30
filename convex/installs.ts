@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getMembership, requireRole } from "./security";
+import { advanceLeadStage } from "./pipelineHelpers";
 
 /** Get all contracts with install scheduling data for the company */
 export const getInstalls = query({
@@ -103,9 +104,14 @@ export const completeInstall = mutation({
     contractId: v.id("contracts"),
   },
   handler: async (ctx, args) => {
-    await requireRole(ctx, "owner");
+    const { userId } = await requireRole(ctx, "owner");
+    const contract = await ctx.db.get(args.contractId);
     await ctx.db.patch(args.contractId, {
       installStatus: "completed",
     });
+    // Auto-advance lead to "installed"
+    if (contract?.leadId) {
+      await advanceLeadStage(ctx, contract.leadId, "installed", String(userId));
+    }
   },
 });

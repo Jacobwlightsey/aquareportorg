@@ -80,6 +80,7 @@ const schema = defineSchema({
   reports: defineTable({
     companyId: v.id("companies"),
     generatedBy: v.optional(v.id("users")),
+    leadId: v.optional(v.id("leads")),
     zip: v.string(),
     utilityName: v.string(),
     pwsid: v.string(),
@@ -121,7 +122,8 @@ const schema = defineSchema({
   })
     .index("by_company", ["companyId"])
     .index("by_generatedBy", ["generatedBy"])
-    .index("by_shareToken", ["shareToken"]),
+    .index("by_shareToken", ["shareToken"])
+    .index("by_lead", ["leadId"]),
 
   leads: defineTable({
     companyId: v.id("companies"),
@@ -131,6 +133,8 @@ const schema = defineSchema({
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
     message: v.optional(v.string()),
+    // Unified pipeline status — one lead = one customer journey
+    // new_lead → call_to_set → scheduled → report_created → demo_done → forms_sent → sold → installed | closed_lost
     status: v.string(),
     utilityCityState: v.optional(v.string()),
     source: v.optional(v.string()),
@@ -151,10 +155,25 @@ const schema = defineSchema({
     aiScoreFactors: v.optional(v.string()), // JSON
     lastViewedAt: v.optional(v.number()),
     viewCount: v.optional(v.number()),
+    // ─── Merged from deals table (CRM rework) ─────────────────────
+    dealValue: v.optional(v.number()),
+    equipmentList: v.optional(v.string()), // JSON array
+    priority: v.optional(v.string()), // "hot" | "warm" | "cold"
+    expectedCloseDate: v.optional(v.number()),
+    lostReason: v.optional(v.string()),
+    closedAt: v.optional(v.number()),
+    stageHistory: v.optional(v.string()), // JSON array [{stage, timestamp, userId}]
+    notes: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zip: v.optional(v.string()),
   })
     .index("by_company", ["companyId"])
     .index("by_status", ["companyId", "status"])
-    .index("by_fb_lead", ["companyId", "fbLeadId"]),
+    .index("by_report", ["reportId"])
+    .index("by_fb_lead", ["companyId", "fbLeadId"])
+    .index("by_assigned", ["companyId", "assignedTo"]),
 
   enterpriseLeads: defineTable({
     name: v.string(),
@@ -452,6 +471,8 @@ const schema = defineSchema({
     companyId: v.id("companies"),
     proposalId: v.optional(v.id("proposals")),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
+    formType: v.optional(v.string()), // "customer_agreement" | "referral" | "service_request" | "water_test_booking"
     customerName: v.string(),
     customerEmail: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
@@ -480,6 +501,7 @@ const schema = defineSchema({
   })
     .index("by_company", ["companyId"])
     .index("by_deal", ["dealId"])
+    .index("by_lead", ["leadId"])
     .index("by_shareToken", ["shareToken"])
     .index("by_status", ["companyId", "status"]),
 
@@ -487,6 +509,7 @@ const schema = defineSchema({
   serviceAgreements: defineTable({
     companyId: v.id("companies"),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     customerId: v.optional(v.string()), // customer identifier
     customerName: v.string(),
     customerEmail: v.optional(v.string()),
@@ -512,6 +535,7 @@ const schema = defineSchema({
     companyId: v.id("companies"),
     agreementId: v.optional(v.id("serviceAgreements")),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     customerName: v.string(),
     customerEmail: v.optional(v.string()),
     customerPhone: v.optional(v.string()),

@@ -45,11 +45,11 @@ export function CommissionsPage() {
   const markPaid = useMutation(api.commissions.markPaid);
   const createCommission = useMutation(api.commissions.createCommission);
   const teamMembers = useQuery(api.companies.getTeamMembers) ?? [];
-  const deals = useQuery(api.deals.getDeals) ?? [];
+  const leads = useQuery(api.leads.getLeads) ?? [];
 
   const [form, setForm] = useState({
     userId: "",
-    dealId: "",
+    leadId: "",
     dealValue: "",
     commissionRate: "10",
     customerName: "",
@@ -86,7 +86,7 @@ export function CommissionsPage() {
     try {
       await createCommission({
         userId: form.userId as any,
-        dealId: form.dealId ? (form.dealId as any) : undefined,
+        leadId: form.leadId ? (form.leadId as any) : undefined,
         dealValue: parseFloat(form.dealValue),
         commissionRate: parseFloat(form.commissionRate),
         customerName: form.customerName || undefined,
@@ -94,26 +94,29 @@ export function CommissionsPage() {
       });
       toast.success("Commission added");
       setShowCreate(false);
-      setForm({ userId: "", dealId: "", dealValue: "", commissionRate: "10", customerName: "" });
+      setForm({ userId: "", leadId: "", dealValue: "", commissionRate: "10", customerName: "" });
     } catch {
       toast.error("Failed to create commission");
     }
   };
 
-  const handleDealSelect = (dealId: string) => {
-    const deal = deals.find((d) => d._id === dealId);
-    if (deal) {
+  const handleLeadSelect = (leadId: string) => {
+    const lead = leads.find((l) => l._id === leadId);
+    if (lead) {
       setForm({
         ...form,
-        dealId,
-        dealValue: String(deal.dealValue ?? 0),
-        customerName: deal.customerName,
-        userId: deal.assignedTo ? String(deal.assignedTo) : form.userId,
+        leadId,
+        dealValue: String(lead.dealValue ?? 0),
+        customerName: lead.name,
+        userId: lead.assignedTo ? String(lead.assignedTo) : form.userId,
       });
     }
   };
 
-  const wonDeals = deals.filter((d) => d.stage === "closed_won");
+  // Show leads that reached sold/installed (won deals)
+  const wonLeads = leads.filter((l) =>
+    l.status === "sold" || l.status === "installed" || l.status === "closed_won"
+  );
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto">
@@ -331,24 +334,24 @@ export function CommissionsPage() {
           <DialogHeader>
             <DialogTitle>Add Commission</DialogTitle>
             <DialogDescription>
-              Record a commission for a team member. Link to a closed deal or enter manually.
+              Record a commission for a team member. Link to a won lead or enter manually.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {wonDeals.length > 0 && (
+            {wonLeads.length > 0 && (
               <div className="space-y-2">
-                <Label>Link to Deal (optional)</Label>
+                <Label>Link to Lead (optional)</Label>
                 <Select
-                  value={form.dealId}
-                  onValueChange={handleDealSelect}
+                  value={form.leadId}
+                  onValueChange={handleLeadSelect}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a won deal..." />
+                    <SelectValue placeholder="Select a won lead..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {wonDeals.map((deal) => (
-                      <SelectItem key={deal._id} value={deal._id}>
-                        {deal.customerName} · ${(deal.dealValue ?? 0).toLocaleString()}
+                    {wonLeads.map((lead) => (
+                      <SelectItem key={lead._id} value={lead._id}>
+                        {lead.name} · ${(lead.dealValue ?? 0).toLocaleString()}
                       </SelectItem>
                     ))}
                   </SelectContent>
