@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getMembership } from "./security";
+import { advanceLeadStage } from "./pipelineHelpers";
 
 
 export const getProposals = query({
@@ -43,6 +44,7 @@ export const getProposalByToken = query({
 export const createProposal = mutation({
   args: {
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
     reportId: v.optional(v.id("reports")),
     demoSessionId: v.optional(v.id("demoSessions")),
     customerName: v.string(),
@@ -68,7 +70,7 @@ export const createProposal = mutation({
       shareToken,
       createdBy: membership.userId,
     });
-    // Auto-update deal stage if linked
+    // Auto-update deal stage if linked (backward compat)
     if (args.dealId) {
       const deal = await ctx.db.get(args.dealId);
       if (deal && deal.companyId === membership.companyId && deal.stage !== "closed_won") {
@@ -79,6 +81,10 @@ export const createProposal = mutation({
           stageHistory: JSON.stringify(history),
         });
       }
+    }
+    // Auto-advance lead to "forms_sent" if linked
+    if (args.leadId) {
+      await advanceLeadStage(ctx, args.leadId, "forms_sent", String(membership.userId));
     }
     return id;
   },

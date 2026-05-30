@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getMembership } from "./security";
+import { advanceLeadStage } from "./pipelineHelpers";
 
 export const getContracts = query({
   args: {},
@@ -32,6 +33,8 @@ export const createContract = mutation({
   args: {
     proposalId: v.optional(v.id("proposals")),
     dealId: v.optional(v.id("deals")),
+    leadId: v.optional(v.id("leads")),
+    formType: v.optional(v.string()),
     customerName: v.string(),
     customerEmail: v.optional(v.string()),
     customerAddress: v.optional(v.string()),
@@ -53,6 +56,11 @@ export const createContract = mutation({
       shareToken,
       createdBy: result.membership.userId,
     });
+
+    // Auto-advance lead to "forms_sent" if linked
+    if (args.leadId) {
+      await advanceLeadStage(ctx, args.leadId, "forms_sent", String(result.membership.userId));
+    }
 
     // Auto-create install appointment if installDate is provided (#16)
     if (args.installDate) {
@@ -92,6 +100,10 @@ export const signContract = mutation({
         customerSignedAt: Date.now(),
         status: "signed",
       });
+      // Auto-advance lead to "sold" when customer signs
+      if (contract.leadId) {
+        await advanceLeadStage(ctx, contract.leadId, "sold");
+      }
     } else {
       await ctx.db.patch(contract._id, {
         dealerSignature: args.signature,

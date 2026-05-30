@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { audit, getMembership, requireRole, trackUsage } from "./security";
+import { advanceLeadStage } from "./pipelineHelpers";
 
 export const submitLead = mutation({
   args: {
@@ -144,10 +145,17 @@ export const updateLeadStatus = mutation({
   args: {
     leadId: v.id("leads"),
     status: v.union(
+      // Legacy stages (still accepted, auto-normalized)
       v.literal("new"), v.literal("contacted"), v.literal("closed"),
-      v.literal("new_lead"), v.literal("appointment_set"), v.literal("demo_completed"),
-      v.literal("proposal_sent"), v.literal("negotiation"), v.literal("closed_won"), v.literal("closed_lost")
+      v.literal("appointment_set"), v.literal("demo_completed"),
+      v.literal("proposal_sent"), v.literal("negotiation"), v.literal("closed_won"),
+      // New unified pipeline stages
+      v.literal("new_lead"), v.literal("call_to_set"), v.literal("scheduled"),
+      v.literal("report_created"), v.literal("demo_done"), v.literal("forms_sent"),
+      v.literal("sold"), v.literal("installed"), v.literal("closed_lost")
     ),
+    force: v.optional(v.boolean()),
+    lostReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, membership } = await requireRole(ctx, "sales_rep");
@@ -156,16 +164,24 @@ export const updateLeadStatus = mutation({
     if (!lead) throw new Error("Lead not found");
     if (membership.companyId !== lead.companyId) throw new Error("Access denied");
 
-    // Normalize legacy statuses
-    const normalizedStatus = args.status === "new" ? "new_lead" : args.status === "closed" ? "closed_won" : args.status;
-    await ctx.db.patch(args.leadId, { status: normalizedStatus });
+    // Use forward-only advanceLeadStage with stageHistory
+    const changed = await advanceLeadStage(
+      ctx, args.leadId, args.status, String(userId),
+      { force: args.force }
+    );
+
+    // Set lostReason if closing as lost
+    if (args.lostReason && args.status === "closed_lost") {
+      await ctx.db.patch(args.leadId, { lostReason: args.lostReason });
+    }
+
     await audit(ctx, {
       companyId: membership.companyId,
       actorId: userId,
       action: "lead.status_updated",
       entityType: "lead",
       entityId: String(args.leadId),
-      metadata: { status: args.status },
+      metadata: { status: args.status, changed },
     });
   },
 });

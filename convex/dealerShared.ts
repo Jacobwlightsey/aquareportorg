@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { advanceLeadStage } from "./pipelineHelpers";
 import {
   activePlan,
   audit,
@@ -979,13 +980,7 @@ export const saveDemoSession = mutation({
           await ctx.db.patch(deal._id, patch);
         }
       }
-      // Also update lead status
-      const lead = await ctx.db
-        .query("leads")
-        .withIndex("by_company", (q) => q.eq("companyId", member.companyId))
-        .filter((q) => q.eq(q.field("reportShareToken"), undefined)) // fallback - try by name
-        .first();
-      // Better: find lead linked to this report's share token
+      // Also update lead status via unified pipeline
       const report = await ctx.db.get(args.reportId);
       if (report?.shareToken) {
         const linkedLead = await ctx.db
@@ -994,6 +989,21 @@ export const saveDemoSession = mutation({
           .filter((q) => q.eq(q.field("reportShareToken"), report.shareToken))
           .first();
         if (linkedLead) {
+          // Map demo outcome → pipeline stage
+          const outcomeToStageNew: Record<string, string> = {
+            sold: "sold",
+            follow_up: "demo_done",
+            not_interested: "closed_lost",
+            no_show: "scheduled", // stay at scheduled
+            completed: "demo_done",
+          };
+          const targetStage = outcomeToStageNew[args.outcome] || "demo_done";
+          await advanceLeadStage(ctx, linkedLead._id, targetStage, String(userId));
+          if (args.outcome === "not_interested") {
+            await ctx.db.patch(linkedLead._id, { lostReason: args.notes || "Not interested after demo" });
+          }
+
+          // Legacy: also update lead.status field for backward compat
           const outcomeToLeadStatus: Record<string, string> = {
             sold: "closed_won",
             follow_up: "demo_completed",
