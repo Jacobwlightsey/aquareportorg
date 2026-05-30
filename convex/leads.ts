@@ -311,6 +311,116 @@ export const getNewLeadCount = query({
   },
 });
 
+// ─── Create a lead directly from the pipeline / dashboard ─────────
+export const createLead = mutation({
+  args: {
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    message: v.optional(v.string()),
+    source: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zip: v.optional(v.string()),
+    dealValue: v.optional(v.number()),
+    priority: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { userId, membership } = await requireRole(ctx, "sales_rep");
+    if (!args.name.trim()) throw new Error("Name is required");
+
+    const leadId = await ctx.db.insert("leads", {
+      companyId: membership.companyId,
+      name: args.name.trim(),
+      email: args.email || undefined,
+      phone: args.phone || undefined,
+      message: args.message || undefined,
+      source: args.source || "pipeline",
+      status: "new_lead",
+      address: args.address || undefined,
+      city: args.city || undefined,
+      state: args.state || undefined,
+      zip: args.zip || undefined,
+      dealValue: args.dealValue || undefined,
+      priority: args.priority || undefined,
+      stageHistory: JSON.stringify([
+        { stage: "new_lead", timestamp: Date.now(), userId: String(userId) },
+      ]),
+    });
+
+    await audit(ctx, {
+      companyId: membership.companyId,
+      actorId: userId,
+      action: "lead.created",
+      entityType: "lead",
+      entityId: String(leadId),
+      metadata: { source: args.source || "pipeline" },
+    });
+
+    return leadId;
+  },
+});
+
+// ─── Get pipeline stats computed from leads ──────────────────────
+export const getPipelineStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const result = await getMembership(ctx);
+    if (!result) return null;
+    const { membership } = result;
+    const leads = await ctx.db
+      .query("leads")
+      .withIndex("by_company", (q) => q.eq("companyId", membership.companyId))
+      .collect();
+
+    const stages = [
+      "new_lead", "call_to_set", "scheduled", "report_created",
+      "demo_done", "forms_sent", "sold", "installed", "closed_lost",
+    ];
+    const byStage: Record<string, { count: number; value: number }> = {};
+    for (const s of stages) byStage[s] = { count: 0, value: 0 };
+
+    let totalValue = 0;
+    let wonValue = 0;
+    let wonCount = 0;
+
+    for (const lead of leads) {
+      const stage = lead.status || "new_lead";
+      if (byStage[stage]) {
+        byStage[stage].count++;
+        byStage[stage].value += lead.dealValue ?? 0;
+      }
+      totalValue += lead.dealValue ?? 0;
+      if (stage === "sold" || stage === "installed") {
+        wonValue += lead.dealValue ?? 0;
+        wonCount++;
+      }
+    }
+
+    const activeLeads = leads.filter(
+      (l) => l.status !== "sold" && l.status !== "installed" && l.status !== "closed_lost"
+    );
+    const closedCount = leads.filter(
+      (l) => l.status === "sold" || l.status === "installed" || l.status === "closed_lost"
+    ).length;
+
+    return {
+      byStage,
+      totalLeads: leads.length,
+      activeLeads: activeLeads.length,
+      totalPipelineValue: activeLeads.reduce((s, l) => s + (l.dealValue ?? 0), 0),
+      wonValue,
+      wonCount,
+      avgDealSize: wonCount > 0 ? Math.round(wonValue / wonCount) : 0,
+      winRate:
+        closedCount > 0
+          ? Math.round((wonCount / closedCount) * 100)
+          : 0,
+    };
+  },
+});
+
 // ─── Create a lead from Facebook Lead Ads (Zapier webhook) ────────
 export const createFacebookLead = internalMutation({
   args: {

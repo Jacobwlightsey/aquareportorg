@@ -13,6 +13,7 @@ import {
   Target,
   TrendingUp,
   Users,
+  Users2,
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -36,14 +37,14 @@ function timeAgo(ts: number) {
 export function DashboardPage() {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const pipelineStats = useQuery(api.deals.getPipelineStats);
+  const pipelineStats = useQuery(api.leads.getPipelineStats);
   const reports = useQuery(api.reports.getMyReports);
   const leads = useQuery(api.leads.getLeads);
   const appointments = useQuery(api.appointments.getAppointments, {});
   const company = useQuery(api.companies.getMyCompany);
   const recentActivity = useQuery(api.reports.getRecentActivity, { limit: 8 });
 
-  const newLeads = leads?.filter((l) => l.status === "new")?.length ?? 0;
+  const newLeads = leads?.filter((l) => l.status === "new_lead" || l.status === "new")?.length ?? 0;
   const totalReports = reports?.length ?? 0;
 
   const isToday = (d: Date) => {
@@ -96,7 +97,7 @@ export function DashboardPage() {
         <StatCard
           label="Pipeline Value"
           value={`$${(pipelineStats?.totalPipelineValue ?? 0).toLocaleString()}`}
-          subtitle={`${pipelineStats?.activeDeals ?? 0} active deals`}
+          subtitle={`${pipelineStats?.activeLeads ?? 0} active leads`}
           icon={FolderKanban}
           color="text-cyan-400"
           onClick={() => navigate("/pipeline")}
@@ -232,12 +233,12 @@ export function DashboardPage() {
             <CardContent className="grid grid-cols-2 gap-2 lg:grid-cols-1">
               {[
                 { icon: FileText, label: "New Report", href: "/customers/new" },
-                { icon: FolderKanban, label: "Add Deal", href: "/pipeline" },
+                { icon: Users2, label: "Add Lead", href: "/pipeline" },
                 { icon: Calendar, label: "Schedule", href: "/appointments" },
                 { icon: FileText, label: "Proposal", href: "/proposals" },
               ].map((a) => (
                 <Button
-                  key={a.href}
+                  key={a.label}
                   variant="outline"
                   className="justify-start text-xs h-9"
                   onClick={() => navigate(a.href)}
@@ -249,7 +250,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Pipeline Funnel */}
+          {/* Pipeline Funnel — using new lead stages */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -259,12 +260,14 @@ export function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-2.5">
               {[
-                { label: "New Leads", key: "new_lead", color: "bg-blue-500" },
-                { label: "Appt Set", key: "appointment_set", color: "bg-cyan-500" },
-                { label: "Demo Done", key: "demo_completed", color: "bg-violet-500" },
-                { label: "Proposal Sent", key: "proposal_sent", color: "bg-amber-500" },
-                { label: "Negotiation", key: "negotiation", color: "bg-orange-500" },
-                { label: "Won", key: "closed_won", color: "bg-emerald-500" },
+                { label: "New Leads", key: "new_lead", color: "bg-slate-500" },
+                { label: "Call to Set", key: "call_to_set", color: "bg-blue-500" },
+                { label: "Scheduled", key: "scheduled", color: "bg-cyan-500" },
+                { label: "Report Created", key: "report_created", color: "bg-indigo-500" },
+                { label: "Demo Done", key: "demo_done", color: "bg-amber-500" },
+                { label: "Forms Sent", key: "forms_sent", color: "bg-orange-500" },
+                { label: "Sold", key: "sold", color: "bg-emerald-500" },
+                { label: "Installed", key: "installed", color: "bg-green-600" },
               ].map((s) => {
                 const data = pipelineStats?.byStage?.[s.key];
                 const count = (data as any)?.count ?? 0;

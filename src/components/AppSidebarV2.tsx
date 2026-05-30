@@ -1,6 +1,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, Home, Lock, LogOut, Mail, Map, Megaphone, Moon, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Sun, Users as UsersIcon, Users2, Wrench } from "lucide-react";
+import { Activity, BookOpen, Building2, Calendar, ChartNoAxesCombined, CreditCard, DollarSign, FileText, FolderKanban, Home, Lock, LogOut, Mail, Map, Megaphone, Moon, MousePointerClick, RefreshCw, Settings, ShieldCheck, Star, Sun, Users as UsersIcon, Users2, Wrench } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useFreeTrial } from "@/hooks/useFreeTrial";
 import { PAGE_MIN_PLAN, PLAN_RANK, planLabel, type Plan } from "@/lib/planGate";
@@ -34,30 +34,32 @@ import {
 
 const pipelineNav = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/customers", label: "Reports", icon: UsersIcon },
+  { href: "/pipeline", label: "Pipeline", icon: FolderKanban },
   { href: "/leads", label: "Leads", icon: Users2, badgeKey: "leads" },
+];
+
+const actionsNav = [
   { href: "/appointments", label: "Appointments", icon: Calendar },
+  { href: "/customers", label: "Reports", icon: UsersIcon },
+  { href: "/demo-analytics", label: "Demos", icon: Activity },
 ];
 
 const salesNav = [
-  { href: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
-  { href: "/demo-analytics", label: "Demo Stats", icon: Activity },
   { href: "/proposals", label: "Proposals", icon: FileText },
   { href: "/commissions", label: "Commissions", icon: DollarSign },
   { href: "/installs", label: "Installs", icon: Wrench },
 ];
 
 const retentionNav = [
-  { href: "/retention", label: "Retention", icon: RefreshCw },
+  { href: "/retention", label: "Service", icon: RefreshCw },
   { href: "/follow-ups", label: "Follow-Ups", icon: Mail },
   { href: "/reviews", label: "Reviews", icon: Star },
 ];
 
 const intelligenceNav = [
-  { href: "/territory-map", label: "Territory Map", icon: Map },
+  { href: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
+  { href: "/territory-map", label: "Territory", icon: Map },
   { href: "/marketing", label: "Marketing", icon: Megaphone },
-  { href: "/attribution", label: "Attribution", icon: MousePointerClick },
-  { href: "/audiences", label: "Audiences", icon: Users2 },
   { href: "/training", label: "Training", icon: BookOpen },
 ];
 
@@ -171,10 +173,11 @@ function SidebarNav() {
 
   // Build flat list of sections
   const sections: { label: string; color: string; items: typeof pipelineNav; section: string }[] = [];
-  if (hasAccess(role, "pipeline", featureAccess)) sections.push({ label: "CRM", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
+  if (hasAccess(role, "pipeline", featureAccess)) sections.push({ label: "PIPELINE", color: "#22d3ee", items: pipelineNav, section: "pipeline" });
+  if (hasAccess(role, "pipeline", featureAccess)) sections.push({ label: "ACTIONS", color: "#60a5fa", items: actionsNav, section: "pipeline" });
   if (hasAccess(role, "sales", featureAccess)) sections.push({ label: "SALES", color: "#34d399", items: salesNav, section: "sales" });
   if (hasAccess(role, "retention", featureAccess)) sections.push({ label: "RETENTION", color: "#fbbf24", items: retentionNav, section: "retention" });
-  if (hasAccess(role, "intelligence", featureAccess)) sections.push({ label: "INTELLIGENCE", color: "#a78bfa", items: intelligenceNav, section: "intelligence" });
+  if (hasAccess(role, "intelligence", featureAccess)) sections.push({ label: "INTEL", color: "#a78bfa", items: intelligenceNav, section: "intelligence" });
   if (hasAccess(role, "settings", featureAccess)) sections.push({ label: "SETTINGS", color: "#71717a", items: settingsNav, section: "settings" });
   if (isAdmin) sections.push({ label: "PLATFORM", color: "#fb7185", items: [{ href: "/admin", label: "Admin Dashboard", icon: ShieldCheck }], section: "settings" });
 
