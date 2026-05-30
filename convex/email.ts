@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -256,6 +256,79 @@ export const sendScoreChangedEmail = action({
       secondary: dropped
         ? "Consider scheduling a re-test to verify your home's water quality."
         : "Your score history is available in MyAquaReport.",
+    });
+  },
+});
+
+// ─── Internal actions for cron-driven emails ─────────────────────
+
+/**
+ * Follow-up email — called from the processDueFollowUps cron.
+ * Sends the follow-up message content the dealer configured in their sequence.
+ */
+export const sendFollowUpEmail = internalAction({
+  args: {
+    to: v.string(),
+    subject: v.string(),
+    body: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    return await sendEmail(args.to, {
+      subject: args.subject,
+      preview: args.subject,
+      eyebrow: "Follow-up",
+      title: args.subject,
+      body: args.body,
+      cta: { label: "View your report", href: consumerUrl() },
+    });
+  },
+});
+
+/**
+ * Service reminder email — called from the processDueReminders cron.
+ * Notifies the customer that a service visit is due.
+ */
+export const sendServiceReminderEmail = internalAction({
+  args: {
+    to: v.string(),
+    customerName: v.string(),
+    reminderType: v.string(),
+    notes: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    const typeLabel = args.reminderType.replace(/_/g, " ");
+    return await sendEmail(args.to, {
+      subject: `Service Reminder: ${typeLabel}`,
+      preview: `It's time for your ${typeLabel}.`,
+      eyebrow: "Service reminder",
+      title: `${args.customerName}, your ${typeLabel} is due.`,
+      body: `It's time for your scheduled ${typeLabel}. Contact your water professional to book your next appointment.${args.notes ? ` Note: ${args.notes}` : ""}`,
+      cta: { label: "View details", href: consumerUrl() },
+      secondary: "This reminder was sent based on your service agreement schedule.",
+    });
+  },
+});
+
+/**
+ * Review request email — called from the processDueReviewRequests cron.
+ * Asks the customer to leave a Google review.
+ */
+export const sendReviewRequestEmail = internalAction({
+  args: {
+    to: v.string(),
+    customerName: v.string(),
+    googleReviewUrl: v.optional(v.string()),
+  },
+  handler: async (_ctx, args) => {
+    const reviewUrl = args.googleReviewUrl || consumerUrl();
+    return await sendEmail(args.to, {
+      subject: "How was your experience?",
+      preview: "We'd love your feedback.",
+      eyebrow: "Your feedback",
+      title: `${args.customerName}, how was your experience?`,
+      body: "We hope you're enjoying cleaner, safer water. If you have a moment, we'd really appreciate a quick review — it helps other families discover better water quality.",
+      cta: { label: "Leave a review", href: reviewUrl },
+      secondary: "Thank you for choosing a local water quality professional.",
     });
   },
 });

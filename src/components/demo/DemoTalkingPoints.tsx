@@ -235,7 +235,7 @@ export function DemoTalkingPoints({ currentStep, company: _company, customerConc
         </div>
 
         {/* Content area — scrollable */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        <div className="swipe-disabled flex-1 overflow-y-auto px-5 py-4 space-y-5">
           {/* Step content */}
           <div className="rounded-2xl p-4" style={{ background: colors.surface, border: `1px solid ${colors.border}` }}>
             <p className="text-[14px] leading-relaxed" style={{ color: colors.textSecondary }}>

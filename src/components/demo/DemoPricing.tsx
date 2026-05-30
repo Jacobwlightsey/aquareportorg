@@ -89,16 +89,18 @@ export function DemoPricing({ company, onNext: _onNext, onBack: _onBack, onPrici
 
   const householdSize = concerns?.householdSize ?? 2;
 
-  // Use actual entered values from the Expenses step (exact match, including $0)
+  // Use entered values from the Expenses step when available and > 0.
+  // Fall back to defaults so the deduction section is always interactive,
+  // even when the rep skips the Expenses step or enters $0.
   const itemCost = (item: typeof EXPENSE_ITEMS[0]) => {
-    if (costBreakdown && item.id in costBreakdown) {
+    if (costBreakdown && item.id in costBreakdown && costBreakdown[item.id] > 0) {
       return costBreakdown[item.id];
     }
     return item.fallback;
   };
 
-  // Only show expense items that have an actual cost > 0
-  const visibleExpenseItems = EXPENSE_ITEMS.filter((item) => itemCost(item) > 0);
+  // Always show all expense items — fallback guarantees cost > 0
+  const visibleExpenseItems = EXPENSE_ITEMS;
 
   const totalDeducted = visibleExpenseItems.filter(e => deducted.has(e.id)).reduce((sum, e) => sum + itemCost(e), 0);
   const effectiveMonthly = Math.max(0, systemCostMonthly - totalDeducted);
